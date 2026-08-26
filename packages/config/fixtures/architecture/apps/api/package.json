@@ -1,0 +1,8 @@
+{
+  "name": "@habituar/api-fixture",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./server": "./src/server.ts"
+  }
+}

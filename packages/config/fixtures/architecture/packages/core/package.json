@@ -1,0 +1,8 @@
+{
+  "name": "@habituar/core-fixture",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./tasks": "./src/tasks.ts"
+  }
+}

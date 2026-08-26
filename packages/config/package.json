@@ -1,0 +1,33 @@
+{
+  "name": "@habituar/config",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./tsconfig/base.json": "./tsconfig/base.json",
+    "./tsconfig/nest.json": "./tsconfig/nest.json",
+    "./tsconfig/web.json": "./tsconfig/web.json",
+    "./tsconfig/mobile.json": "./tsconfig/mobile.json",
+    "./eslint/base": "./eslint/base.js",
+    "./eslint/api": "./eslint/api.js",
+    "./eslint/shared-package": "./eslint/shared-package.js",
+    "./eslint/react": "./eslint/react.js"
+  },
+  "scripts": {
+    "lint": "eslint eslint.config.js eslint/*.js eslint/*.cjs fixtures/*.js *.test.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --exclude 'fixtures/**' --testTimeout=20000"
+  },
+  "devDependencies": {
+    "@commitlint/lint": "21.2.2",
+    "@commitlint/load": "21.2.2",
+    "@eslint/js": "10.0.1",
+    "@types/node": "22.20.1",
+    "eslint": "10.9.1",
+    "eslint-plugin-boundaries": "7.2.0",
+    "eslint-plugin-react-hooks": "7.1.1",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.68.0",
+    "vitest": "4.1.11"
+  }
+}

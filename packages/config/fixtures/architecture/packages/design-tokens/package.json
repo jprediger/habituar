@@ -1,0 +1,8 @@
+{
+  "name": "@habituar/design-tokens-fixture",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./colors": "./src/colors.ts"
+  }
+}

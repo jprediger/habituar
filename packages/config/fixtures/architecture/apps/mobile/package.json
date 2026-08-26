@@ -1,0 +1,8 @@
+{
+  "name": "@habituar/mobile-fixture",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./screen": "./src/screen.ts"
+  }
+}

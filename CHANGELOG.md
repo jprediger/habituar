@@ -23,6 +23,8 @@ versionamento segue [SemVer](https://semver.org/lang/pt-BR/).
 ## [Não publicado]
 
 ### Adicionado
+- `[core]` Falhas esperadas passam a usar um catálogo fechado de códigos e uma união de
+  resultado que separa sucesso de falha sem lançar exceções.
 - `[core]` Uniões fechadas ganham uma proteção exaustiva que também interrompe payloads
   com variantes inesperadas em runtime.
 - `[api]` Cada resposta e linha de log HTTP compartilha um `correlationId`, preservado

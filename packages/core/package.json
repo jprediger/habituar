@@ -12,6 +12,10 @@
       "types": "./dist/contract/api-contract.d.ts",
       "import": "./dist/contract/api-contract.js"
     },
+    "./failure": {
+      "types": "./dist/contract/failure.d.ts",
+      "import": "./dist/contract/failure.js"
+    },
     "./health/schema": {
       "types": "./dist/health/health.schema.d.ts",
       "import": "./dist/health/health.schema.js"

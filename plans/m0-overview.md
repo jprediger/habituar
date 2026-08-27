@@ -125,7 +125,7 @@ Bloqueia as fases 3, 4 e 5.
 | 7 | ✅ `build(core): add package build, exports map and lint setup` |
 | 8 | ✅ `feat(core): add assertNever for closed unions` |
 | 9 | `feat(core): add branded identifier schema helper` |
-| 10 | `feat(core): add closed catalog of failure codes` |
+| 10 | ✅ `feat(core): add closed catalog of failure codes` |
 | 11 | ✅ `feat(core): add health status schema` |
 | 12 | ✅ `feat(core): declare the v1 health route in the contract` — reimplementado em 6b |
 | 13 | `feat(core): commit the generated openapi document` |

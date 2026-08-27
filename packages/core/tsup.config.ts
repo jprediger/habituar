@@ -6,6 +6,7 @@ export default defineConfig({
   entry: {
     'type/assert-never': 'src/type/assert-never.ts',
     'contract/api-contract': 'src/contract/api-contract.ts',
+    'contract/failure': 'src/contract/failure.ts',
     'health/health.schema': 'src/health/health.schema.ts',
     'health/health.contract': 'src/health/health.contract.ts',
   },

@@ -23,6 +23,8 @@ versionamento segue [SemVer](https://semver.org/lang/pt-BR/).
 ## [Não publicado]
 
 ### Adicionado
+- `[api]` Cada resposta e linha de log HTTP compartilha um `correlationId`, preservado
+  durante todo o fluxo assíncrono da requisição.
 - `[api]` A API passa a negar por padrão toda rota que não se declare pública; no M0,
   somente `GET /v1/health` permanece acessível sem autenticação.
 - `[api]` O serviço valida e tipa a configuração de ambiente no boot; ausência da URL

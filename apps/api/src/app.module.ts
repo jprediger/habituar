@@ -5,6 +5,7 @@ import { ORPCModule } from '@orpc/nest'
 import { AuthenticationGuard } from './authorization/authentication.guard.js'
 import { environmentSchema } from './environment/environment.schema.js'
 import { HealthModule } from './health/health.module.js'
+import { PlatformModule } from './platform/platform.module.js'
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { HealthModule } from './health/health.module.js'
     // Sem configuração de propósito: o oRPC já valida a resposta contra o `output` do
     // contrato, então corpo fora do schema falha aqui e não vira resposta errada.
     ORPCModule.forRoot({}),
+    PlatformModule,
     HealthModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: AuthenticationGuard }],

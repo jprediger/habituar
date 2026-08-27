@@ -5,6 +5,7 @@ import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import tseslint from 'typescript-eslint'
 import boundaries from 'eslint-plugin-boundaries'
+import importX from 'eslint-plugin-import-x'
 import filenamePlugin from './filename.js'
 
 const configPackageRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..')
@@ -102,6 +103,8 @@ export const BOUNDARIES_DEPENDENCIES_RULE = [
   },
 ]
 
+export const EXTRANEOUS_DEPENDENCIES_RULE = ['error', { includeTypes: true }]
+
 /** Estado é união discriminada, efeito é injetado, entrada desconhecida passa por parse. */
 export const typeRules = {
   '@typescript-eslint/no-explicit-any': 'error',
@@ -139,12 +142,13 @@ export const baseConfig = tseslint.config(
     languageOptions: {
       parserOptions: { projectService: true },
     },
-    plugins: { boundaries, habituar: filenamePlugin },
+    plugins: { boundaries, 'import-x': importX, habituar: filenamePlugin },
     settings: boundariesSettings(),
     rules: {
       ...typeRules,
       'no-restricted-syntax': ['error', ...DISCIPLINE_RESTRICTIONS],
       'boundaries/dependencies': BOUNDARIES_DEPENDENCIES_RULE,
+      'import-x/no-extraneous-dependencies': EXTRANEOUS_DEPENDENCIES_RULE,
       'habituar/filename-kebab-case': 'error',
     },
   },

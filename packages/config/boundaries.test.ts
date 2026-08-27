@@ -30,6 +30,18 @@ async function expectBoundaryFailure(file: string, message: string): Promise<voi
   expect(diagnostics[0]?.message).toContain(message)
 }
 
+async function expectUndeclaredDependencyFailure(file: string): Promise<void> {
+  const result = await lintArchitectureFile(file)
+  const diagnostics = result?.messages ?? []
+
+  expect(diagnostics).toEqual([
+    expect.objectContaining({
+      ruleId: 'import-x/no-extraneous-dependencies',
+      severity: 2,
+    }),
+  ])
+}
+
 describe('política arquitetural do monorepo', () => {
   it('permite app importar package', async () => {
     await expectAllowed('apps/mobile/src/app-to-package.ts')
@@ -78,5 +90,9 @@ describe('política arquitetural do monorepo', () => {
       'apps/mobile/src/unknown-local.ts',
       'Todo alvo local precisa pertencer a apps/* ou packages/*',
     )
+  })
+
+  it('proíbe dependência disponível por hoisting mas ausente do package.json do workspace', async () => {
+    await expectUndeclaredDependencyFailure('apps/mobile/src/undeclared-dependency.ts')
   })
 })

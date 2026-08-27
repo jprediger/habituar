@@ -23,6 +23,16 @@ versionamento segue [SemVer](https://semver.org/lang/pt-BR/).
 ## [Não publicado]
 
 ### Adicionado
+- `[infra]` O monorepo passa a ser **ESM em todos os workspaces**, sobre **NestJS 12** e
+  **oRPC**, com **zod 4**. A decisão anterior fixava CommonJS porque o ESM do Nest era
+  alpha; o que de fato prendia o app na versão 11 era o peer do `@ts-rest/nest`, que não
+  publica desde junho de 2025. O `@orpc/nest` mantém a verificação do contrato em
+  compilação — e contrato implementado pela metade passa a ser erro de `tsc`, não de
+  runtime. `packages/core` deixa de precisar de build dual. O SWC permanece obrigatório:
+  `emitDecoratorMetadata` é problema de decorator, não de formato de módulo.
+- `[api]` Log correlacionado passa a usar `pino` e `pino-http` diretos. O `nestjs-pino`
+  fica de fora: trava em NestJS 11 e não compraria complexidade material sobre o
+  middleware que o contexto de requisição já exige.
 - `[api]` `GET /v1/health` responde `{ status, version }`. É a primeira rota do serviço,
   implementada a partir do contrato compartilhado — retorno fora do schema declarado é
   erro de compilação, e não resposta errada em produção.
@@ -30,8 +40,7 @@ versionamento segue [SemVer](https://semver.org/lang/pt-BR/).
   `apps/api` o implementa; os clientes o consomem como tipo.
 - `[infra]` Regras de desenvolvimento, política de acessibilidade e guia de contribuição.
 - `[infra]` D4 fecha o backend em **NestJS**, registra as alternativas avaliadas (Hono,
-  Fastify, Nitro, Hapi, tRPC) e define o contrato da API declarado em `packages/core`
-  com `@ts-rest/nest`.
+  Fastify, Nitro, Hapi, tRPC) e define o contrato da API declarado em `packages/core`.
 - `[infra]` `CLAUDE.md` reexpresso no idioma do Nest: DI e decorators deixam de ser
   banidos; herança de provider, `forwardRef`, `class-validator` e CQRS prematuro
   continuam fora.

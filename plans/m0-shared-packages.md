@@ -17,17 +17,18 @@ Não são opinião; foram lidas do código.
 | `assertionStyle: 'never'` proíbe `as` — mas o plugin **ignora `as const`** (verificado na fonte da regra, `consistent-type-assertions.js`) | União fechada e branded type se fazem com `as const` + `.brand()` do zod. `satisfies` também é livre |
 | `ban-ts-comment` aceita `ts-expect-error` **com descrição** | Teste de tipo (id A ≠ id B) é possível sem `as` |
 | `tsconfig/base.json` não carrega `lib: DOM` | `core` não compila DOM por construção. Nada a fazer |
-| `tsconfig/nest.json` usa `moduleResolution: node` | node10 **ignora o campo `exports`**. `apps/api` não resolveria `@habituar/core/health/contract`. Corrigido na fase 0 |
-| `@ts-rest/core@3.52.1` tem peer `zod ^3.22.3` e tipagem colada em zod 3 | `zod@3.25.76`, não zod 4 |
-| `@ts-rest/react-query` tem peer `react ^16 \|\| ^17 \|\| ^18` | Não usar. Hooks escritos à mão sobre `@tanstack/react-query` — que é o que "hook é esperto" pedia de qualquer jeito |
+| `tsconfig/nest.json` usa `moduleResolution: node` | node10 **ignora o campo `exports`**. `apps/api` não resolveria `@habituar/core/health/contract`. **Corrigido:** `nodenext` desde o passo 2 |
+| **oRPC valida por Standard Schema** (substituiu o `@ts-rest` em 27/08/2026) | **zod 4**. O pin em `zod@3.25.76`, que existia por causa do `@ts-rest`, foi removido |
+| `@orpc/tanstack-query@1.15.0` não tem peer de React — só `@orpc/client` e `@tanstack/query-core` | A restrição que reprovava o `@ts-rest/react-query` sumiu. Reavaliar no passo 16: se o utilitário gerado não devolver a união do `toQueryState`, hook à mão continua sendo o certo |
 | `commitlint` `scope-enum` = `api web mobile core tokens config deps release docs` | Mudança em `turbo.json` vai como `build(deps)` |
 
 ---
 
 ## 1. `packages/core` — layout
 
-**Estado da fatia inicial:** passos 7, 11 e 12 concluídos. O pacote já gera ESM+CJS e
-declara seus subpaths; o schema de health nasce no zod e compõe o contrato versionado
+**Estado da fatia inicial:** passos 7, 11 e 12 concluídos; o passo 6b reimplementa o
+contrato sobre oRPC e reduz o build a ESM único. O pacote declara seus subpaths; o schema
+de health nasce no zod e compõe o contrato versionado
 consumido por `apps/api`. Os demais arquivos desta árvore continuam sendo o alvo do M0.
 
 Fatia vertical. Sem `index.ts` em lugar nenhum — barrel é proibido em `packages/*`.
@@ -78,7 +79,7 @@ Convenções: arquivo `kebab-case` com sufixo de papel (`.schema.ts`, `.contract
   "private": true,
   "type": "module",
   "exports": {
-    "./contract":      { "types": "./dist/contract/api-contract.d.ts", "import": "./dist/contract/api-contract.js", "require": "./dist/contract/api-contract.cjs" },
+    "./contract":      { "types": "./dist/contract/api-contract.d.ts", "import": "./dist/contract/api-contract.js" },
     "./failure":       { "…": "dist/contract/failure" },
     "./assert-never":  { "…": "dist/type/assert-never" },
     "./branded-id":    { "…": "dist/identity/branded-id" },
@@ -98,11 +99,11 @@ Convenções: arquivo `kebab-case` com sufixo de papel (`.schema.ts`, `.contract
   },
   "peerDependencies": { "react": "^19.0.0", "@tanstack/react-query": "^5.0.0" },
   "peerDependenciesMeta": { "react": { "optional": true }, "@tanstack/react-query": { "optional": true } },
-  "dependencies": { "@ts-rest/core": "3.52.1", "zod": "3.25.76" },
+  "dependencies": { "@orpc/contract": "1.15.0", "zod": "4.1.13" },
   "devDependencies": {
     "@habituar/config": "workspace:*",
     "@tanstack/react-query": "catalog:",
-    "@ts-rest/open-api": "3.52.1",
+    "@orpc/openapi": "1.15.0",
     "@types/node": "22.20.1",
     "eslint": "10.9.1",
     "react": "catalog:",
@@ -153,37 +154,35 @@ entry: {                                   // espelha 1:1 o mapa de exports
   'contract/failure': 'src/contract/failure.ts',
   // …
 },
-format: ['esm', 'cjs'], dts: true, splitting: true, sourcemap: true,
+format: ['esm'], dts: true, splitting: true, sourcemap: true,
 clean: true, target: 'es2022'
 ```
 
-Com `"type": "module"`, o tsup emite `.js`/`.d.ts` (ESM) e `.cjs`/`.d.cts` (CJS) — que é
-exatamente o que `apps/api` em CommonJS precisa. Se a geração de `.d.ts` duplicar demais
-entre entries, o fallback é `bundle: false` + `tsc --emitDeclarationOnly`.
+**Só ESM desde o passo 6b.** O build dual existia para servir `apps/api` em CommonJS; com
+o monorepo inteiro em ESM, a condição `require` não tem consumidor e a saída `.cjs`/`.d.cts`
+seria peso morto. Se a geração de `.d.ts` duplicar demais entre entries, o fallback é
+`bundle: false` + `tsc --emitDeclarationOnly`.
 
 ---
 
-## 2. Contrato ts-rest e o `/v1`
+## 2. Contrato oRPC e o `/v1`
 
 `/v1` aparece **uma vez**, na composição raiz. Nenhuma fatia conhece a versão — é o que
 torna `/v2` uma segunda composição sobre as mesmas fatias, e não um find-and-replace.
 
 ```ts
 // src/contract/api-contract.ts
-const c = initContract()
+import { oc } from '@orpc/contract'
 
 /** D15: a versão vive só aqui. Rota de fatia declara caminho sem prefixo. */
 export const API_VERSION = 'v1'
 
-export const apiContract = c.router(
-  { health: healthContract },
-  {
-    pathPrefix: `/${API_VERSION}`,
-    // Falha esperada tem uma forma só, em toda rota (CLAUDE.md §Erros).
-    commonResponses: { 400: failureSchema, 401: failureSchema, 403: failureSchema },
-  },
-)
+export const apiContract = oc.prefix(`/${API_VERSION}`).router({ health: healthContract })
 ```
+
+Falha esperada tem uma forma só em toda rota (`CLAUDE.md` §Erros). No passo 10, avaliar
+declará-la no mapa `errors` do contrato, que dá tipagem de erro ponta a ponta — se couber
+sem duplicar a definição do catálogo, é ganho; se duplicar, fica de fora.
 
 ```ts
 // src/health/health.schema.ts
@@ -191,7 +190,7 @@ export const healthStatusSchema = z.object({
   status: z.literal('ok'),
   version: z.string().min(1),
 })
-/** readonly sem espelhar o schema à mão, e sem tocar no schema que o ts-rest inspeciona. */
+/** readonly sem espelhar o schema à mão, e sem tocar no schema que o oRPC inspeciona. */
 export type HealthStatus = Readonly<z.infer<typeof healthStatusSchema>>
 ```
 
@@ -202,7 +201,8 @@ de sessão o torna inevitável. `version` sai da configuração de ambiente já 
 zod em `apps/api`; nenhum efeito colateral novo.
 
 `HealthStatus` é **o tipo do M0 que atravessa os três apps**: `apps/api` o devolve
-(verificado em compilação pelo `@ts-rest/nest`), os dois clientes o consomem pelo hook.
+(verificado em compilação pelo `@orpc/nest` — corpo fora do schema, valor fora da união e
+contrato implementado pela metade são erro de `tsc`), os dois clientes o consomem pelo hook.
 
 ### `openapi.json` — geração e gate de drift
 
@@ -353,7 +353,10 @@ Decisões e porquês:
 - **Sem Provider em `core`.** Provider seria JSX; o tsconfig de `core` não tem `jsx`, e o D2
   proíbe referência de plataforma. Cada app monta seu `QueryClientProvider` — que é visual
   e por plataforma — e chama `configureApiClient()` antes.
-- **`@ts-rest/react-query` fica de fora**: peer trava em React ≤18.
+- **`@orpc/tanstack-query` a avaliar no passo 16.** Ele não tem peer de React — a razão
+  que reprovava o `@ts-rest/react-query` desapareceu. O critério passa a ser o do D2: se o
+  utilitário não devolver a união discriminada do `toQueryState`, o hook à mão continua
+  sendo o certo.
 - Cache offline (D13, MMKV) é M4. O hook não sabe disso; o `QueryClient` de cada app sabe.
 
 ---
@@ -520,11 +523,12 @@ Declarado aqui porque tudo aponta para dentro.
 
 **`apps/api`**
 
-- `import { apiContract } from '@habituar/core/contract'` → implementa com `@ts-rest/nest`.
+- `import { apiContract } from '@habituar/core/contract'` → implementa com `@orpc/nest`.
 - `import { failureSchema, type FailureCode, type Outcome } from '@habituar/core/failure'`;
   o mapa `FailureCode → status HTTP` mora lá, não aqui.
-- Precisa de `nodenext` no `tsconfig/nest.json` e de `"type": "commonjs"` no próprio
-  `package.json` (o stub hoje diz `module`, contradizendo o `module: commonjs` do tsconfig).
+- Precisa de `nodenext` no `tsconfig/nest.json` — já entregue no passo 2. O `"type"` do
+  próprio `package.json` volta a ser `module`, igual ao resto do monorepo, a partir do
+  passo 6b.
 - Instala `@habituar/core` sem React — os peers são opcionais.
 
 **`apps/web` e `apps/mobile`**

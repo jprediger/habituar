@@ -8,52 +8,54 @@ que o M1 preenche.
 
 ---
 
-## 0. Decisão de módulo: CommonJS
+## 0. Decisão de módulo: ESM
 
-**Fato do repositório:** `packages/config/tsconfig/nest.json` já fixou `module: commonjs`,
-`useDefineForClassFields: false`, `verbatimModuleSyntax: false` e decorators legados. A
-decisão já estava tomada ali; o `"type": "module"` no stub de `apps/api/package.json` a
-**contradiz** — com ele, o `dist/*.js` emitido como CJS é lido pelo Node como ESM e o
-processo morre em `exports is not defined`.
+> **Revista em 27/08/2026.** Este plano fixava CommonJS. A decisão mudou; o histórico do
+> raciocínio anterior está preservado no `CHANGELOG.md` e na §2 de
+> [`m0-api-sequence.md`](m0-api-sequence.md).
 
-**Fatos externos, verificados em 26/08/2026:**
+**Fatos verificados em 27/08/2026:**
 
 | Fato | Consequência |
 |---|---|
-| `@nestjs/core` estável = **11.2.3**; ESM nativo só em `12.0.0-alpha.7` | ESM em Nest hoje é alpha. Fora |
-| esbuild — e portanto `tsx` e o transform padrão do Vitest — **não implementa** `emitDecoratorMetadata` | Runner baseado em esbuild quebra o DI do Nest. Fora |
-| SWC implementa `legacyDecorator` + `decoratorMetadata` | SWC é o transformador para build, dev e teste |
-| Node fixado em 22.23.2; `require(esm)` é default desde 22.12 | CJS consegue consumir `@habituar/core` |
+| `@nestjs/core@12.0.0` e `12.0.1` publicados em 27/08/2026 | ESM no Nest deixou de ser alpha |
+| `@nestjs/core@12.0.1` é `"type": "module"`, e seu `exports` não tem condição `require` | Nest 12 é **ESM-only**. Adotá-lo *é* a migração para ESM |
+| `@ts-rest/nest@3.52.1` tem peer `@nestjs/core: ^9 \|\| ^10 \|\| ^11`; última publicação em 2025-06-02 | Era ele, não o Nest, que prendia o app em CommonJS |
+| `@orpc/nest@1.15.0` tem peer `@nestjs/core: >=11.0.0`, 651 releases, último em 23/08/2026 | Substituto mantido, compatível com 11 e 12 |
+| `@nestjs/config@12.0.0`, `platform-express@12.0.1`, `testing@12.0.1`, `cli@12.0.0` | A família primária já está inteira em 12 |
+| esbuild — e portanto `tsx` e o transform padrão do Vitest — **não implementa** `emitDecoratorMetadata` | Runner baseado em esbuild quebra o DI do Nest. Fora, **em ESM também** |
+| SWC implementa `legacyDecorator` + `decoratorMetadata` sob `module.type: es6` | SWC segue sendo o transformador para build, dev e teste |
 
 **Resolução concreta:**
 
-1. `apps/api/package.json` → `"type": "commonjs"` explícito, não ausente — o campo é
-   resolvido pelo `package.json` mais próximo, então a raiz ESM não contamina.
-2. Transformador único: **SWC** (`.swcrc` com `module.type: "commonjs"`), usado por
+1. `apps/api/package.json` → `"type": "module"`, igual ao resto do monorepo. Não há mais
+   exceção de formato, e por isso as configs voltam a ser `.js`/`.ts` em vez de
+   `.mjs`/`.mts`.
+2. Transformador único: **SWC** (`.swcrc` com `module.type: "es6"`), usado por
    `nest build -b swc`, `nest start -b swc --watch` e `unplugin-swc` no Vitest.
    Um transformador só significa uma semântica só de decorator.
-3. `tsc` **não compila**, só verifica: `typecheck` = `tsc --noEmit`. O build por SWC é
-   seguro justamente porque esse portão existe separado.
-4. `packages/config/tsconfig/nest.json` → `module` e `moduleResolution` para **`nodenext`**.
-   `node` (node10) ignora o campo `exports`, e como barrel é proibido em `packages/*`,
-   `@habituar/core` só é consumível por subpath.
+3. `tsc` **não compila**, só verifica: `typecheck` = `tsc --noEmit`.
+4. `packages/config/tsconfig/nest.json` permanece em `nodenext`. O motivo original não
+   mudou: `node` (node10) ignora o campo `exports`, e como barrel é proibido em
+   `packages/*`, `@habituar/core` só é consumível por subpath.
 
-**`nodenext` e não `node16`.** Os dois resolvem o campo `exports`, que é o problema real.
-A diferença: desde o TS 5.8, `nodenext` permite `import` de pacote ESM-only a partir de
-arquivo CJS, apoiado no `require(esm)` do Node ≥22.12; `node16` recusa com TS1479.
+**O que a troca resgata.** `packages/core` deixa de precisar de build dual — o `tsup`
+emite só ESM e o `exports` perde a condição `require`. Some a exceção `"type": "commonjs"`
+e somem as extensões `.mjs`/`.mts`. Um formato só no monorepo inteiro.
 
-Essa recusa seria uma trava útil — se `core` perdesse a condição `require`, quebraria em
-compilação em vez de falhar em runtime. Mas `core` ser dual já é requisito estrutural, no
-`tsup.config.ts`, e o cenário contra o qual `node16` protege só falha de verdade se
-alguém introduzir top-level await. Divergir do padrão do ecossistema para blindar um caso
-já tornado improvável cobra depois. `nodenext` é o que o próprio template do Nest gera e
-é verdade sobre o Node 22.23.2 que o `.nvmrc` fixa.
+**O que a troca não resgata.** O SWC continua obrigatório, e com ele o `.swcrc` e o
+`dependency-injection.test.ts` que protege a emissão de metadata. Essa complexidade é
+sobre decorators, não sobre módulos, e não é recuperável por esta decisão.
 
-Sob `nodenext` o formato emitido continua decidido pelo `"type"` do `package.json` mais
-próximo — a decisão CJS fica intacta. E quem emite é o SWC; o `tsc` aqui só verifica.
+**Prova antes da adoção.** O quadrilátero **Nest 12 × ESM × SWC × Vitest × oRPC** foi
+montado num diretório descartável e executado antes de a decisão ser tomada: DI resolvida
+só pelo tipo do parâmetro, `GET /v1/health` respondendo 200 por HTTP real, `GET /health`
+respondendo 404, e as três quebras deliberadas de contrato falhando em `tsc`. Detalhe na
+§3 de [`m0-api-sequence.md`](m0-api-sequence.md).
 
-**Reversibilidade:** trocar CJS→ESM depois custa `.swcrc`, `type` e eventuais `__dirname`.
-É porta de mão dupla; ficar preso em NestJS 12-alpha não é.
+**Reversibilidade:** voltar para CJS custa `.swcrc`, `type` e extensões — porta de mão
+dupla. Voltar para `@ts-rest` deixa de ser possível a partir do Nest 12: as decisões são
+acopladas na saída, não no retorno.
 
 ---
 
@@ -62,26 +64,27 @@ próximo — a decisão CJS fica intacta. E quem emite é o SWC; o `tsc` aqui s�
 | # | Premissa |
 |---|---|
 | P1 | O contrato é exportado por subpath: `@habituar/core/contract` |
-| P2 | O prefixo de versão vive no contrato (`pathPrefix: '/v1'`), **não** em `setGlobalPrefix` |
-| P3 | `core` é buildado e publica **dual ESM+CJS**, com condição `require`. Sob `nodenext` um `core` ESM-only ainda resolveria via `require(esm)` do Node 22, então quem garante a saída CJS é o `tsup.config.ts` de `core`, não o compilador da API |
+| P2 | O prefixo de versão vive no contrato (`oc.prefix('/v1')`), **não** em `setGlobalPrefix` |
+| P3 | `core` é buildado e publica **só ESM**. Com o monorepo inteiro em ESM, a condição `require` não tem consumidor |
 | P4 | `.ts` cru em `core` não serve: o SWC compila arquivo a arquivo e nunca atravessa a fronteira do workspace. A API consome `dist/` + `.d.ts`, e o `^build` no `turbo.json` garante que existam |
-| P5 | `zod` fixado em `3.25.76` no repositório inteiro |
+| P5 | `zod` em **4.x** no repositório inteiro. O pin em `3.25.76` existia por causa do `@ts-rest` e foi removido |
 | P6 | `assertNever` e o union `FailureCode` moram em `@habituar/core` |
 | P7 | A resposta de `/v1/health` é `{ status: 'ok', version }` — sem timestamp, e portanto sem a porta `Clock` no M0 |
 
 ---
 
-## 2. Bloqueio verificado: zod 3, não zod 4
+## 2. Validação: Standard Schema, e por que `nestjs-zod` continua fora
 
-`@ts-rest/core@3.52.1` declara `peerDependencies: { zod: '^3.22.3' }`. O suporte a zod 4
-chega via Standard Schema em `3.53.0`, que hoje só existe como `3.53.0-rc.1` — e o issue
-ts-rest#852 documenta que os tipos do RC ainda referenciam `z.AnyZodObject` e
-`z.objectUtil`, removidos no zod 4: **quebra em compilação**, não é só peer warning.
+O oRPC valida por **Standard Schema**, então aceita zod 4 diretamente — some o bloqueio
+que prendia o repositório em `zod@3.25.76` (o RC do `@ts-rest` referenciava
+`z.AnyZodObject`, removido no zod 4; ts-rest#852).
 
-**Consequência:** `nestjs-zod` seria compatível, mas **não entra no M0**. A validação de
-borda já é feita pelo próprio `@ts-rest/nest`, que parseia request e response contra o
-schema do contrato. Um segundo pipe de zod agora é abstração para caso hipotético; entra
-quando existir entrada fora do contrato.
+**`nestjs-zod` continua fora**, e agora por dois motivos. O primeiro é o de sempre: o
+oRPC já parseia request e response contra o schema do contrato, e um segundo pipe de zod
+seria a segunda definição de validade que o D4 existe para evitar. O segundo é factual:
+`nestjs-zod@5.5.0` tem peer `@nestjs/common: ^10.0.0 || ^11.0.0` — não suporta Nest 12.
+
+Entra quando existir entrada fora do contrato, e se houver versão compatível.
 
 ---
 
@@ -89,13 +92,13 @@ quando existir entrada fora do contrato.
 
 ```
 apps/api/
-├── package.json              # "type": "commonjs"
+├── package.json              # "type": "module"
 ├── tsconfig.json             # extends @habituar/config/tsconfig/nest.json
 ├── tsconfig.build.json       # exclude: **/*.test.ts
 ├── .swcrc
 ├── nest-cli.json             # { "compilerOptions": { "builder": "swc", "typeCheck": false } }
 ├── eslint.config.js
-├── vitest.config.ts
+├── vitest.config.ts           # ambos .js/.ts: o workspace é ESM
 ├── drizzle.config.ts
 ├── docker-compose.yml
 ├── .env.example
@@ -147,25 +150,25 @@ Versões exatas; `save-exact=true` já está ativo.
 ```jsonc
 "dependencies": {
   "@habituar/core": "workspace:*",
-  "@nestjs/common": "11.2.3",
-  "@nestjs/core": "11.2.3",
-  "@nestjs/config": "4.0.4",
-  "@nestjs/platform-express": "11.2.3",
-  "@ts-rest/core": "3.52.1",
-  "@ts-rest/nest": "3.52.1",
+  "@nestjs/common": "12.0.1",
+  "@nestjs/core": "12.0.1",
+  "@nestjs/config": "12.0.0",
+  "@nestjs/platform-express": "12.0.1",
+  "@orpc/contract": "1.15.0",
+  "@orpc/nest": "1.15.0",
+  "@orpc/server": "1.15.0",
   "drizzle-orm": "0.45.2",
-  "nestjs-pino": "4.6.1",
   "pg": "8.23.0",
   "pino": "10.3.1",
   "pino-http": "11.0.0",
   "reflect-metadata": "0.2.2",
   "rxjs": "7.8.2",
-  "zod": "3.25.76"
+  "zod": "4.1.13"
 },
 "devDependencies": {
   "@habituar/config": "workspace:*",
-  "@nestjs/cli": "11.0.24",
-  "@nestjs/testing": "11.2.3",
+  "@nestjs/cli": "12.0.0",
+  "@nestjs/testing": "12.0.1",
   "@swc/cli": "0.8.1",
   "@swc/core": "1.16.1",
   "@testcontainers/postgresql": "12.1.0",
@@ -186,6 +189,10 @@ Versões exatas; `save-exact=true` já está ativo.
 em 5.9.3, e versão de TS divergente entre workspaces quebra o `projectService` do
 typescript-eslint. Migração de TS é PR próprio, de escopo `deps`.
 
+**`nestjs-pino` não entra.** Peer trava em `@nestjs/common ^11` e não publica desde
+2026-03-13. O log correlacionado usa `pino` e `pino-http` diretos, montados no mesmo
+middleware que o passo 24 cria para o `AsyncLocalStorage` — ver §10.
+
 **Scripts:**
 
 ```jsonc
@@ -201,12 +208,11 @@ typescript-eslint. Migração de TS é PR próprio, de escopo `deps`.
 
 ---
 
-## 5. `GET /v1/health` via `@ts-rest/nest`
+## 5. `GET /v1/health` via `@orpc/nest`
 
-**Estado:** walking skeleton entregue no passo 22. Enquanto o passo 21 não introduz a
-configuração de ambiente, a rota devolve a versão constante `0.0.0`; o passo 23 ainda
-adicionará `@PublicRoute()`. O contrato, o roteamento versionado, a validação da resposta
-e o teste HTTP ponta a ponta já estão ativos.
+**Estado:** walking skeleton entregue no passo 22 sobre `@ts-rest`, e reimplementado sobre
+oRPC no passo 6b. Enquanto o passo 21 não introduz a configuração de ambiente, a rota
+devolve a versão constante `0.0.0`; o passo 23 ainda adicionará `@PublicRoute()`.
 
 ```ts
 // src/health/health.controller.ts
@@ -215,24 +221,37 @@ export class HealthController {
   constructor(private readonly configService: ConfigService<Environment, true>) {}
 
   @PublicRoute()
-  @TsRestHandler(apiContract.health)
-  async handleHealthCheck() {
-    return tsRestHandler(apiContract.health, async () => ({
-      status: 200,
-      body: { status: 'ok', version: this.configService.get('APP_VERSION', { infer: true }) },
-    }))
+  @Implement(apiContract.health)
+  handleHealthRoutes() {
+    return implement(apiContract.health).router({
+      getHealth: implement(apiContract.health.getHealth).handler(() => ({
+        status: 'ok' as const,
+        version: this.configService.get('APP_VERSION', { infer: true }),
+      })),
+    })
   }
 }
 ```
 
-- **Verificação em compilação:** o tipo de retorno de `tsRestHandler` é derivado do
-  `responses` do contrato — status fora da união ou body fora do schema é erro de `tsc`.
-- **Verificação em runtime:** `TsRestModule.register({ validateResponses: true })` no
-  `AppModule`. Resposta fora do schema vira 500, não resposta errada em produção.
+- **Verificação em compilação.** O tipo do handler é derivado do `output` declarado no
+  contrato. Três quebras foram testadas contra `tsc` antes da adoção:
+
+  | Quebra | Erro |
+  |---|---|
+  | corpo fora do schema | `TS2322: Type 'number' is not assignable to type 'string'` |
+  | valor fora da união | `TS2322: Type '"degraded"' is not assignable to type '"ok"'` |
+  | contrato implementado pela metade | `TS2345: Property 'getReadiness' is missing` |
+
+  A terceira é mais forte do que o arranjo anterior: no `@ts-rest`, contrato incompleto
+  era pego por `validateResponses` em **runtime**; aqui é erro de compilação. A linha
+  *"Contrato implementado por inteiro, retorno dentro do schema"* do `CLAUDE.md` segue
+  imposta por compilação.
+
+- **Verificação em runtime.** `ORPCModule.forRoot({})` no `AppModule`.
 - `/health` **não toca o banco** no M0. É liveness, não readiness — readiness com
   `SELECT 1` entra quando houver o que ficar não-pronto.
 - Sem `class-validator`, sem `@nestjs/swagger`. O `openapi.json` é gerado em
-  `packages/core`, a partir do contrato.
+  `packages/core` a partir do contrato, agora com `@orpc/openapi`.
 
 ---
 
@@ -244,11 +263,14 @@ export const environmentSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']),
   PORT: z.coerce.number().int().positive().default(3000),
   APP_VERSION: z.string().min(1),
-  DATABASE_URL: z.string().url(),
+  DATABASE_URL: z.url(),
   LOG_LEVEL: z.enum(['trace', 'debug', 'info', 'warn', 'error']).default('info'),
 })
 export type Environment = z.infer<typeof environmentSchema>
 ```
+
+Em zod 4, `z.url()` é a forma corrente; `z.string().url()` ainda existe mas caminha para
+a obsolescência.
 
 Ligado por `ConfigModule.forRoot({ isGlobal: true, validate: (raw) => environmentSchema.parse(raw) })`
 e injetado como `ConfigService<Environment, true>` — `get('DATABASE_URL', { infer: true })`
@@ -426,8 +448,10 @@ o `Observable` de um interceptor é subscrito fora do `storage.run()` e o contex
 sessão. O id vem de `CryptoIdGenerator` (`crypto.randomUUID()`), **classe concreta
 injetada** — não porta com token e interface, porque a implementação é única.
 
-Log: `nestjs-pino` com `genReqId` lendo o `correlationId` do ALS e `customProps` o
-injetando em toda linha. Um ponto único de correlação.
+Log: **`pino-http` montado diretamente**, no mesmo middleware, com `genReqId` lendo o
+`correlationId` do ALS e um serializador injetando-o em toda linha. Um ponto único de
+correlação. O `nestjs-pino` não entra — peer travado em Nest 11 —, e o wrapper não compraria
+complexidade material: o ponto de montagem já existe por causa do `AsyncLocalStorage`.
 
 **Erros na borda.** Repare que **não existe filtro para falha de domínio** — falha
 esperada é retorno tipado, não exceção. O que existe é:
@@ -477,7 +501,8 @@ export default tseslint.config(
 ```
 
 Exige exportar `FRAMEWORK_BANS` de `packages/config/eslint/api.js` — senão o override
-local apagaria o ban de `class-validator`. Vai no commit da fase 0.
+local apagaria o ban de `class-validator`. É a metade pendente do passo 2, e o único
+resíduo da fase 0 que bloqueia um passo de API.
 
 ---
 
@@ -524,7 +549,7 @@ puxaria para cá era provar que `apps/api` declara suas dependências sob
 e no gate que já existe. **Risco a vigiar:** se aquele lint for relaxado por falso
 positivo com subpath exports, esta prova some junto.
 
-**`openapi.json`** é gerado e commitado em `packages/core`, não aqui.
+**`openapi.json`** é gerado e commitado em `packages/core`, não aqui — com `@orpc/openapi`.
 
 ---
 
@@ -534,17 +559,23 @@ Numeração global — ver [`m0-overview.md`](m0-overview.md).
 
 | # | Commit | Entrega | Risco que aposenta |
 |---|---|---|---|
-| 6 | `build(api): scaffold nest app on commonjs with swc toolchain` | manifests, `.swcrc`, `nest-cli.json`, `vitest.config.ts`, `main.ts`, `app.module.ts`, **um provider injetado trivial + teste provando que a metadata de DI sobrevive ao SWC dentro do Vitest** | **o triângulo CJS × SWC × Vitest** — o maior risco do marco |
+| 6 | ✅ `build(api): scaffold nest app with swc toolchain` | manifests, `.swcrc`, `nest-cli.json`, `vitest.config.ts`, `main.ts`, `app.module.ts`, **um provider injetado trivial + teste provando que a metadata de DI sobrevive ao SWC dentro do Vitest** | **o triângulo SWC × Vitest × decorators** — o maior risco do marco |
+| 6b | `feat(api): move the stack to esm, nest 12 and orpc` | `"type": "module"`, `.swcrc` em `es6`, `@nestjs/*@12`, `@orpc/nest`, zod 4, `packages/core` em ESM único. Reimplementa 12 e 22 | **o quadrilátero Nest 12 × ESM × SWC × Vitest × oRPC**, provado por spike antes da adoção |
 | 21 | `feat(api): parse process environment with zod at boot` | `environment/` + `ConfigModule` + testes | — |
-| 22 | `feat(api): serve the health route from the shared ts-rest contract` | `health/`, `validateResponses: true`, teste ponta a ponta | depende do passo 12 |
+| 22 | ✅ `feat(api): serve the health route from the shared contract` | `health/`, teste ponta a ponta | depende do passo 12; reimplementado em 6b |
 | 23 | `feat(api): deny every route that does not declare itself public` | `authorization/`, `APP_GUARD`, teste do 401 | — |
-| 24 | `feat(api): carry a correlation id through async request context` | `platform/` + `nestjs-pino` | — |
+| 24 | `feat(api): carry a correlation id through async request context` | `platform/` + `pino-http` direto | — |
 | 25 | `feat(api): translate closed failure codes at the http edge` | `errors/` + `APP_FILTER` + teste exaustivo | — |
 | 26 | `build(api): run postgres locally with a non-owner application role` | `docker-compose.yml`, `db/bootstrap.sql`, `drizzle.config.ts`, `.env.example` | — |
 | 27 | `feat(api): scope every database call through a tenant transaction` | `database/`, migração `0000`, ban de import do ORM | — |
 | 28 | `test(api): prove one institution cannot read another institution rows` | `testcontainers.setup.ts` + as 6 asserções | infra de teste com banco |
-| 29 | `ci: pull the postgres image before the workspace checks` | `.github/workflows/ci.yml` | banco no CI |
+| 29 | `ci(api): pull the postgres image before the workspace checks` | `.github/workflows/ci.yml` | banco no CI |
 
-Os passos 21, 23, 24 e 25 são independentes entre si e podem ser reordenados. **O passo 6
-não pode ser adiado nem paralelizado**: se o SWC não entregar `decoratorMetadata` dentro
-do Vitest, todo o resto muda de forma.
+Os passos 21, 23, 24 e 25 são independentes entre si e podem ser reordenados. **Os passos
+6 e 6b não podem ser adiados nem paralelizados**: se o SWC não entregar `decoratorMetadata`
+dentro do Vitest, todo o resto muda de forma. O passo **6b é atômico de propósito** — Nest
+12 é ESM-only e está fora do peer do `@ts-rest`, então separar ESM, framework e contrato em
+commits distintos deixaria o repositório quebrado entre eles.
+
+A sequência de execução acordada, com pré-requisitos e critérios de aceite por step, está
+em [`m0-api-sequence.md`](m0-api-sequence.md).

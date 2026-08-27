@@ -16,21 +16,27 @@ seguinte não vai tropeçar em toolchain.
 
 | Passo | Estado |
 |---|---|
-| 2 — `nodenext` no `tsconfig/nest.json` | concluído |
+| 2 — `nodenext` no `tsconfig/nest.json` | **parcial** — falta exportar `FRAMEWORK_BANS` |
 | 5 — `^build` em `typecheck`, `test` e `dev` | concluído |
-| 6 — scaffold da API em CommonJS com SWC | concluído, com o teste de metadata de DI passando |
+| 6 — scaffold da API com SWC | concluído, com o teste de metadata de DI passando |
 | 7 — build, `exports` e lint de `packages/core` | concluído |
 | 11 — schema de `health` | concluído |
 | 12 — rota `/v1/health` no contrato | concluído |
 | 22 — fatia `health` na API, a partir do contrato | concluído |
 
 `pnpm check` verde nos 10 tasks. O esqueleto anda ponta a ponta: o schema zod nasce em
-`packages/core`, o contrato o publica sob `/v1`, `apps/api` o implementa com
-`@ts-rest/nest` e o teste valida a resposta HTTP real contra o mesmo schema.
+`packages/core`, o contrato o publica sob `/v1`, `apps/api` o implementa, e o teste valida
+a resposta HTTP real contra o mesmo schema.
 
-**Falta na fase 0:** passo 1 (`catalog:`/`overrides:` e as opções do `.npmrc`), passo 3
-(`no-extraneous-dependencies`) e passo 4 (seletores de a11y/i18n). Nenhum deles bloqueia
-os passos de `core`, que são o caminho crítico agora.
+**Os passos 6, 12 e 22 são reimplementados no passo 6b**, que troca a plataforma para ESM,
+Nest 12 e oRPC. O que eles provaram continua valendo — metadata de DI sob SWC, contrato
+como fonte única, teste HTTP ponta a ponta —, mas a biblioteca por baixo muda. Sequência
+detalhada em [`m0-api-sequence.md`](m0-api-sequence.md).
+
+**Falta na fase 0:** passo 1 (`catalog:`/`overrides:` e as opções do `.npmrc`), a segunda
+metade do passo 2 (exportar `FRAMEWORK_BANS`), o passo 3 (`no-extraneous-dependencies`) e o
+passo 4 (seletores de a11y/i18n). Só o passo 2 bloqueia algo adiante: o ban local do ORM no
+passo 27.
 
 ---
 
@@ -41,10 +47,10 @@ entre os planos de área ou pontos que o repositório não respondia.
 
 | Decisão | Escolha | Por quê |
 |---|---|---|
-| Módulo de `apps/api` | CommonJS + SWC | ESM nativo no Nest só existe em `12.0.0-alpha`; esbuild — logo `tsx` e o transform padrão do Vitest — não implementa `emitDecoratorMetadata` e quebra o DI. `tsc` fica só como portão de tipo (`--noEmit`) |
-| Versão do contrato | `zod@3.25.76` + `@ts-rest/core@3.52.1` | O RC que fala zod 4 referencia `z.AnyZodObject`, removido — quebra em compilação (ts-rest#852). A 3.25.76 já publica `zod/v4`, então a migração depois é incremental |
-| Forma de `packages/core` | Compilado dual ESM+CJS (tsup), consumido só por `dist/` | SWC compila arquivo a arquivo e nunca atravessa fronteira de workspace. Condição de export apontando para `src/` criaria dois caminhos de resolução — a armadilha de módulo duplicado do D5 |
-| `tsconfig/nest.json` | `module` e `moduleResolution` → `nodenext` | Hoje é `node` (node10), que **ignora o campo `exports`** — e sem barrel o `exports` é o entrypoint público. `nodenext` e não `node16`: é o padrão do ecossistema, é o que o próprio template do Nest gera, e é verdade sobre o Node 22 que o `.nvmrc` fixa. `node16` compraria uma trava (TS1479 se `core` perdesse a saída CJS) contra um cenário que o `tsup.config.ts` dual já torna improvável |
+| Módulo do monorepo | **ESM em todos os workspaces** + SWC | Revista em 27/08/2026. `@nestjs/core@12` saiu estável e é ESM-only; o que prendia o app em CommonJS era o peer do `@ts-rest/nest` (`^9 \|\| ^10 \|\| ^11`), resolvido pela troca por oRPC. O SWC **continua obrigatório**: o problema do `emitDecoratorMetadata` é sobre decorators, não sobre formato de módulo, e o esbuild ignora a opção em silêncio. `tsc` fica só como portão de tipo (`--noEmit`) |
+| Contrato da API | **oRPC `1.15.0`** + **zod 4** | Revista em 27/08/2026. O `@ts-rest` não publica desde 2025-06-02 e trava o Nest em 11. O `@orpc/nest` tem peer `>=11.0.0`, valida por Standard Schema (destravando zod 4), e traz `@orpc/openapi` e `@orpc/tanstack-query`. Contrato incompleto passa a ser erro de `tsc`, não de runtime |
+| Forma de `packages/core` | Compilado **só ESM** (tsup), consumido só por `dist/` | Com o monorepo inteiro em ESM, a condição `require` deixa de ter consumidor. O consumo por `dist/` permanece: o SWC compila arquivo a arquivo e nunca atravessa fronteira de workspace, e export apontando para `src/` criaria dois caminhos de resolução — a armadilha de módulo duplicado do D5 |
+| `tsconfig/nest.json` | `module` e `moduleResolution` → `nodenext` | O algoritmo antigo (`node`, node10) **ignora o campo `exports`** — e sem barrel o `exports` é o entrypoint público. `nodenext` é o padrão do ecossistema e é verdade sobre o Node 22 que o `.nvmrc` fixa. Com todo o monorepo em ESM, o formato emitido deixa de depender do campo `type` de cada workspace |
 | Provas de infra no M0 | RLS e `expo-doctor` dentro; Dockerfile e build EAS fora | O teste de isolamento prova docker, migração e CI de uma vez. O Dockerfile existia para provar dependência declarada sob `hoisted` — o lint prova isso mais barato e no gate certo |
 | Corpo de `/v1/health` | `{ status, version }`, sem porta `Clock` | `checkedAt` é campo sem consumidor (quem chamou já sabe a hora), então não sustenta a porta. `Clock` entra no M1, com expiração deslizante de sessão |
 | Forma do hook | União discriminada via `toQueryState(query)` | Mais hooks são certeza, não hipótese. O escopo está no nome: cobre leitura. Mutation ganha o seu em M4 — esta união não será alargada para servir aos dois |
@@ -55,8 +61,10 @@ entre os planos de área ou pontos que o repositório não respondia.
 
 ### Decisões adjacentes, fechadas sem discussão
 
-- `nestjs-pino` desde o M0 — log JSON correlacionado é o formato que container precisa.
-- `nestjs-zod` **fora** — `@ts-rest/nest` já parseia request e response contra o contrato;
+- Log JSON correlacionado desde o M0. **`pino` + `pino-http` diretos, sem `nestjs-pino`**:
+  o wrapper trava em Nest 11 e não publica desde 2026-03-13, e o passo 24 já cria o
+  middleware onde o `pino-http` se monta. Dependência que não compra complexidade material.
+- `nestjs-zod` **fora** — o oRPC já parseia request e response contra o contrato;
   um segundo pipe seria a segunda definição de validade que o D4 existe para evitar.
 - `IdGenerator` como porta fica para o M1. `apps/api` usa `CryptoIdGenerator` concreto para
   o `correlationId` — consumidor real, classe concreta, sem token de injeção.
@@ -85,13 +93,13 @@ Bloqueia todas as outras.
 
 | # | Commit | Conteúdo |
 |---|---|---|
-| 1 | `chore(repo): move pnpm settings into the workspace manifest` | `nodeLinker`, `engineStrict` e `saveExact` saem do `.npmrc`; entram `catalog:` e `overrides:` |
+| 1 | `chore(config): move pnpm settings into the workspace manifest` | `nodeLinker`, `engineStrict` e `saveExact` saem do `.npmrc`; entram `catalog:` e `overrides:` |
 | 2 | `build(config): resolve packages with nodenext in the nest tsconfig` | `tsconfig/nest.json` → `nodenext`; exportar `FRAMEWORK_BANS` de `eslint/api.js` |
 | 3 | `feat(config): forbid undeclared dependencies in every workspace` | `no-extraneous-dependencies` + fixture no teste de fronteiras |
 | 4 | `feat(config): forbid hardcoded ui text and untyped interactive elements` | três seletores em `eslint/react.js` |
-| 5 | `build(repo): build shared packages before typecheck, test and dev` | `turbo.json`: `^build` em `typecheck`, `test` e `dev` |
+| 5 | ✅ `build(repo): build shared packages before typecheck, test and dev` | `turbo.json`: `^build` em `typecheck`, `test` e `dev` |
 
-### Fase 1 — O triângulo de risco da API
+### Fase 1 — O quadrilátero de risco da API
 
 Depende só da fase 0 e roda em paralelo com a fase 2. **É o único passo do marco que não
 pode ser adiado nem paralelizado**: se o SWC não entregar `decoratorMetadata` dentro do
@@ -99,7 +107,14 @@ Vitest 4, todo o resto muda de forma.
 
 | # | Commit |
 |---|---|
-| 6 | `build(api): scaffold nest app on commonjs with swc toolchain` |
+| 6 | ✅ `build(api): scaffold nest app with swc toolchain` |
+| 6b | `feat(api): move the stack to esm, nest 12 and orpc` |
+
+O passo **6b** reimplementa 6, 12 e 22 sobre ESM + Nest 12 + oRPC + zod 4, num commit
+atômico — Nest 12 é ESM-only e está fora do peer do `@ts-rest`, então separá-los deixaria
+o repositório quebrado entre commits. O quadrilátero **Nest 12 × ESM × SWC × Vitest ×
+oRPC** foi provado por spike antes de a decisão ser tomada; a evidência está na §3 de
+[`m0-api-sequence.md`](m0-api-sequence.md).
 
 ### Fase 2 — `packages/core` e `packages/design-tokens`
 
@@ -112,7 +127,7 @@ Bloqueia as fases 3, 4 e 5.
 | 9 | `feat(core): add branded identifier schema helper` |
 | 10 | `feat(core): add closed catalog of failure codes` |
 | 11 | ✅ `feat(core): add health status schema` |
-| 12 | ✅ `feat(core): declare the v1 health route in the contract` |
+| 12 | ✅ `feat(core): declare the v1 health route in the contract` — reimplementado em 6b |
 | 13 | `feat(core): commit the generated openapi document` |
 | 14 | `feat(core): add the typed api client factory` |
 | 15 | `feat(core): map query results into a discriminated view state` |
@@ -129,14 +144,14 @@ O passo 22 depende do passo 12. Os passos 21, 23, 24 e 25 são independentes ent
 | # | Commit |
 |---|---|
 | 21 | `feat(api): parse process environment with zod at boot` |
-| 22 | ✅ `feat(api): serve the health route from the shared ts-rest contract` |
+| 22 | ✅ `feat(api): serve the health route from the shared contract` — reimplementado em 6b |
 | 23 | `feat(api): deny every route that does not declare itself public` |
 | 24 | `feat(api): carry a correlation id through async request context` |
 | 25 | `feat(api): translate closed failure codes at the http edge` |
 | 26 | `build(api): run postgres locally with a non-owner application role` |
 | 27 | `feat(api): scope every database call through a tenant transaction` |
 | 28 | `test(api): prove one institution cannot read another institution rows` |
-| 29 | `ci: pull the postgres image before the workspace checks` |
+| 29 | `ci(api): pull the postgres image before the workspace checks` |
 
 ### Fase 4 — `apps/web`
 
@@ -165,9 +180,13 @@ Depende dos passos 16 e 20.
 
 | # | Commit |
 |---|---|
-| 39 | `ci: verify expo monorepo health and build every workspace` |
-| 40 | `docs: record m0 manual accessibility pass` |
-| 41 | `docs: correct the metro monorepo guidance in the implementation plan` |
+| 39 | `ci(config): verify expo monorepo health and build every workspace` |
+| 40 | `docs(docs): record m0 manual accessibility pass` |
+| 41 | `docs(docs): correct the metro monorepo guidance in the implementation plan` |
+
+> As mensagens dos passos 1, 29, 39, 40 e 41 foram corrigidas: o `commitlint.config.js` do
+> repositório define `scope-empty: never` e um `scope-enum` fechado, então `chore(repo):`,
+> `ci:` e `docs:` sem escopo falham no hook `commit-msg`.
 
 ---
 
@@ -191,7 +210,9 @@ Cada linha é verificável por comando, não por leitura.
 
 | Risco | Estado | Mitigação |
 |---|---|---|
-| `@ts-rest` sem release estável desde março/2025 | Aberto | ~14 meses de silêncio na peça central do D4. Seguir no M0 — trocar agora custa o marco inteiro — com reavaliação marcada no M1 |
+| ~~`@ts-rest` sem release estável~~ | **Fechado em 27/08/2026** | Substituído por oRPC no passo 6b. A troca saiu mais barata que o previsto porque existia uma rota só |
+| `@nestjs/core@12` tem dias de vida | Aberto | O spike do passo 6b cobre DI, roteamento, HTTP e teste. Preferir a API estável do Nest e evitar recurso novo do major |
+| `@orpc/nest` em `1.15.0` com `2.0.0-beta` no horizonte | Aberto | Trocamos "abandonado há 14 meses" por "em movimento rápido" — melhor, e não grátis. Versão exata fixada; reavaliação marcada no M1 |
 | `color-contrast` não roda em jsdom | Coberto em parte | O axe do M0 pega estrutura, papel e nome acessível; contraste vem do teste sobre os tokens. Playwright no M1 |
 | VoiceOver nunca passado | Pendente | Sem macOS no ambiente. Prender o item ao critério de aceite do M1 — pendente registrado tem a tendência conhecida de virar permanente |
 | Fechamento de dependências sob `hoisted` | Mitigado | Com o Dockerfile fora do M0, o lint é a única prova. Se ele der falso positivo com subpath exports e for relaxado, o buraco reabre em silêncio |

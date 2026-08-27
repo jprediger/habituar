@@ -51,8 +51,15 @@ Testes: `jest@29.7.0` (**não 30** — `jest-expo@57.0.5` depende de `babel-jest
 `jest-expo@57.0.5`, `@testing-library/react-native@14.0.1`, `test-renderer@1.2.0`
 (peer novo da RNTL 14, substitui `react-test-renderer`).
 
-**`@ts-rest/react-query` não é usado**: peer de React é `^16.8 || ^17 || ^18`. Os hooks
-são escritos à mão em `packages/core` — que é o que a regra "hook esperto em `core`" já
+**Utilitário de query do contrato — reavaliar no passo 16.** O `@ts-rest/react-query`
+estava fora porque seu peer de React travava em `^16.8 || ^17 || ^18`. Com a troca por
+oRPC (27/08/2026), o `@orpc/tanstack-query@1.15.0` **não tem peer de React** — só
+`@orpc/client` e `@tanstack/query-core >=5.80.2` —, então a razão factual desapareceu.
+
+O critério passa a ser o do D2, não o do peer: o hook precisa devolver a união
+discriminada do `toQueryState`, e a decisão de forma do hook do `m0-overview.md` continua
+valendo. Se o utilitário gerado não devolver essa união, hook escrito à mão em
+`packages/core` continua sendo o certo — que é o que a regra "hook esperto em `core`" já
 pedia.
 
 ---
@@ -382,8 +389,8 @@ Regras de acessibilidade já valendo no M0: `accessibilityRole` em todo interati
 O tipo é `HealthStatus`, inferido do schema zod do contrato — nunca escrito à mão.
 
 ```
-packages/core/src/health/          (zod → contrato ts-rest)
-        ├──► apps/api      @ts-rest/nest implementa; retorno fora do schema = erro de compilação
+packages/core/src/health/          (zod 4 → contrato oRPC)
+        ├──► apps/api      @orpc/nest implementa; retorno fora do schema = erro de compilação
         ├──► apps/web      useHealth() → src/routes/index.tsx
         └──► apps/mobile   useHealth() → src/app/index.tsx
 ```

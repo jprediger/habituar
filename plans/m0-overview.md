@@ -148,7 +148,7 @@ O passo 22 depende do passo 12. Os passos 21, 23, 24 e 25 são independentes ent
 | 23 | ✅ `feat(api): deny every route that does not declare itself public` |
 | 24 | ✅ `feat(api): carry a correlation id through async request context` |
 | 25 | ✅ `feat(api): translate closed failure codes at the http edge` |
-| 26 | `build(api): run postgres locally with a non-owner application role` |
+| 26 | ✅ `build(api): run postgres locally with a non-owner application role` |
 | 27 | `feat(api): scope every database call through a tenant transaction` |
 | 28 | `test(api): prove one institution cannot read another institution rows` |
 | 29 | `ci(api): pull the postgres image before the workspace checks` |

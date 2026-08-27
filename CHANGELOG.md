@@ -23,6 +23,8 @@ versionamento segue [SemVer](https://semver.org/lang/pt-BR/).
 ## [Não publicado]
 
 ### Adicionado
+- `[api]` O ambiente local ganha PostgreSQL 18 com roles separados para migração e
+  aplicação; o processo da API usa um role não-dono desde a primeira conexão.
 - `[api]` A borda HTTP traduz o catálogo fechado de falhas em status distintos e oculta
   detalhes de exceções inesperadas atrás de um `correlationId`.
 - `[core]` Falhas esperadas passam a usar um catálogo fechado de códigos e uma união de

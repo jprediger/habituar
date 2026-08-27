@@ -2,7 +2,7 @@
 import tseslint from 'typescript-eslint'
 import { baseConfig, DISCIPLINE_RESTRICTIONS } from './base.js'
 
-const FRAMEWORK_BANS = [
+export const FRAMEWORK_BANS = [
   {
     group: ['class-validator', 'class-transformer'],
     message: 'Validação é zod, no contrato em packages/core. DTO com class-validator seria uma segunda definição de validade (D4).',

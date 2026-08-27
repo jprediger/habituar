@@ -6,10 +6,15 @@ import { ESLint } from 'eslint'
 import ts from 'typescript'
 import { describe, expect, it } from 'vitest'
 
-async function expectLintFailure(file: string, ruleId: string, message: string): Promise<void> {
+async function expectLintFailure(
+  file: string,
+  ruleId: string,
+  message: string,
+  config = 'eslint.config.js',
+): Promise<void> {
   const eslint = new ESLint({
     cwd: import.meta.dirname,
-    overrideConfigFile: resolve(import.meta.dirname, 'fixtures/eslint.config.js'),
+    overrideConfigFile: resolve(import.meta.dirname, `fixtures/${config}`),
   })
   const [result] = await eslint.lintFiles([`fixtures/forbidden/${file}`])
   const messages = result?.messages ?? []
@@ -68,5 +73,16 @@ describe('fronteiras do pacote compartilhado', () => {
         (diagnostic) => diagnostic.code === 2584 && diagnostic.file?.fileName.endsWith('dom-in-core.ts'),
       ),
     ).toBe(true)
+  })
+})
+
+describe('restrições da API', () => {
+  it('preserva o ban de class-validator quando a API acrescenta restrições locais', async () => {
+    await expectLintFailure(
+      'class-validator-in-api.ts',
+      'no-restricted-imports',
+      'Validação é zod',
+      'api-eslint.config.js',
+    )
   })
 })

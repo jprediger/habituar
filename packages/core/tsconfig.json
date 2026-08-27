@@ -1,0 +1,11 @@
+{
+  "extends": "@habituar/config/tsconfig/base.json",
+  "_comment": "Resolução de bundler porque o fonte de core nunca é consumido cru: o tsup empacota cada entrypoint antes de qualquer app enxergar o pacote.",
+  "compilerOptions": {
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "noEmit": true,
+    "types": ["node"]
+  },
+  "include": ["src", "tsup.config.ts"]
+}

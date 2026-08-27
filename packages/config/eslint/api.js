@@ -19,6 +19,10 @@ export default tseslint.config(...baseConfig, {
     // runtime, e o Nest falha sem apontar a linha. Aqui o autofixer trabalha ao contrário.
     '@typescript-eslint/consistent-type-imports': ['error', { prefer: 'no-type-imports' }],
 
+    // Classe vazia continua sendo erro, menos quando existe por causa do decorator:
+    // módulo do Nest é declaração de grafo, não classe com comportamento.
+    '@typescript-eslint/no-extraneous-class': ['error', { allowWithDecorator: true }],
+
     'no-restricted-syntax': [
       'error',
       ...DISCIPLINE_RESTRICTIONS,

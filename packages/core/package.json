@@ -2,5 +2,42 @@
   "name": "@habituar/core",
   "version": "0.0.0",
   "private": true,
-  "type": "module"
+  "type": "module",
+  "exports": {
+    "./contract": {
+      "types": "./dist/contract/api-contract.d.ts",
+      "import": "./dist/contract/api-contract.js",
+      "require": "./dist/contract/api-contract.cjs"
+    },
+    "./health/schema": {
+      "types": "./dist/health/health.schema.d.ts",
+      "import": "./dist/health/health.schema.js",
+      "require": "./dist/health/health.schema.cjs"
+    },
+    "./health/contract": {
+      "types": "./dist/health/health.contract.d.ts",
+      "import": "./dist/health/health.contract.js",
+      "require": "./dist/health/health.contract.cjs"
+    }
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@ts-rest/core": "3.52.1",
+    "zod": "3.25.76"
+  },
+  "devDependencies": {
+    "@habituar/config": "workspace:*",
+    "@types/node": "22.20.1",
+    "eslint": "10.9.1",
+    "tsup": "8.5.1",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.68.0",
+    "vitest": "4.1.11"
+  }
 }

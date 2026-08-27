@@ -23,6 +23,11 @@ versionamento segue [SemVer](https://semver.org/lang/pt-BR/).
 ## [Não publicado]
 
 ### Adicionado
+- `[api]` `GET /v1/health` responde `{ status, version }`. É a primeira rota do serviço,
+  implementada a partir do contrato compartilhado — retorno fora do schema declarado é
+  erro de compilação, e não resposta errada em produção.
+- `[core]` Contrato da API em zod, com o prefixo de versão `/v1` definido num lugar só.
+  `apps/api` o implementa; os clientes o consomem como tipo.
 - `[infra]` Regras de desenvolvimento, política de acessibilidade e guia de contribuição.
 - `[infra]` D4 fecha o backend em **NestJS**, registra as alternativas avaliadas (Hono,
   Fastify, Nitro, Hapi, tRPC) e define o contrato da API declarado em `packages/core`

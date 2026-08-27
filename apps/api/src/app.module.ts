@@ -1,9 +1,10 @@
 import { Module } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
-import { APP_GUARD } from '@nestjs/core'
+import { APP_FILTER, APP_GUARD } from '@nestjs/core'
 import { ORPCModule } from '@orpc/nest'
 import { AuthenticationGuard } from './authorization/authentication.guard.js'
 import { environmentSchema } from './environment/environment.schema.js'
+import { UnhandledExceptionFilter } from './errors/unhandled-exception.filter.js'
 import { HealthModule } from './health/health.module.js'
 import { PlatformModule } from './platform/platform.module.js'
 
@@ -19,6 +20,9 @@ import { PlatformModule } from './platform/platform.module.js'
     PlatformModule,
     HealthModule,
   ],
-  providers: [{ provide: APP_GUARD, useClass: AuthenticationGuard }],
+  providers: [
+    { provide: APP_GUARD, useClass: AuthenticationGuard },
+    { provide: APP_FILTER, useClass: UnhandledExceptionFilter },
+  ],
 })
 export class AppModule {}

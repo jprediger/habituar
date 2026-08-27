@@ -33,18 +33,24 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Pull PostgreSQL test image
+        run: docker pull postgres:18-alpine
+
       - name: Verify forbidden boundaries
         run: pnpm test:boundaries
 
       - name: Check affected workspaces
         if: github.event_name == 'pull_request'
         env:
+          TESTCONTAINERS_RYUK_DISABLED: "true"
           TURBO_SCM_BASE: ${{ github.event.pull_request.base.sha }}
           TURBO_SCM_HEAD: ${{ github.event.pull_request.head.sha }}
         run: pnpm check:affected
 
       - name: Check all workspaces
         if: github.event_name == 'push'
+        env:
+          TESTCONTAINERS_RYUK_DISABLED: "true"
         run: pnpm check
 
       - name: Validate pull request commits

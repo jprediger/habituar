@@ -23,6 +23,8 @@ versionamento segue [SemVer](https://semver.org/lang/pt-BR/).
 ## [Não publicado]
 
 ### Adicionado
+- `[infra]` O CI pré-carrega o PostgreSQL 18 e executa as provas de isolamento sem o
+  container auxiliar Ryuk, desnecessário no runner efêmero.
 - `[api]` A suíte prova em PostgreSQL real que uma instituição não lê nem escreve linhas
   de outra, mesmo ao tentar burlar a query ou desligar a RLS.
 - `[api]` Todo acesso ao banco passa por uma transação que instala instituição, ator e

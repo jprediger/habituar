@@ -143,7 +143,7 @@ O passo 22 depende do passo 12. Os passos 21, 23, 24 e 25 são independentes ent
 
 | # | Commit |
 |---|---|
-| 21 | `feat(api): parse process environment with zod at boot` |
+| 21 | ✅ `feat(api): parse process environment with zod at boot` |
 | 22 | ✅ `feat(api): serve the health route from the shared contract` — reimplementado em 6b |
 | 23 | `feat(api): deny every route that does not declare itself public` |
 | 24 | `feat(api): carry a correlation id through async request context` |

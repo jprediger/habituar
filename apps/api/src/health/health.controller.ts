@@ -1,12 +1,12 @@
 import { Controller } from '@nestjs/common'
+import { ConfigService } from '@nestjs/config'
 import { apiContract } from '@habituar/core/contract'
 import { Implement, implement } from '@orpc/nest'
-
-// Passo 21 substitui esta constante pela configuração de ambiente parseada por zod no boot.
-const API_BUILD_VERSION = '0.0.0'
+import { Environment } from '../environment/environment.schema.js'
 
 @Controller()
 export class HealthController {
+  constructor(private readonly configService: ConfigService<Environment, true>) {}
 
   @Implement(apiContract.health)
   handleHealthRoutes() {
@@ -15,7 +15,10 @@ export class HealthController {
     // Corpo fora do schema e fatia implementada pela metade são erro de compilação aqui:
     // o tipo do router vem do `output` declarado no contrato.
     return health.router({
-      getHealth: health.getHealth.handler(() => ({ status: 'ok', version: API_BUILD_VERSION })),
+      getHealth: health.getHealth.handler(() => ({
+        status: 'ok',
+        version: this.configService.get('APP_VERSION', { infer: true }),
+      })),
     })
   }
 }

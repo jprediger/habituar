@@ -23,6 +23,9 @@ versionamento segue [SemVer](https://semver.org/lang/pt-BR/).
 ## [Não publicado]
 
 ### Adicionado
+- `[api]` O serviço valida e tipa a configuração de ambiente no boot; ausência da URL
+  do banco ou porta inválida impede a API de aceitar tráfego, e a rota de saúde expõe a
+  versão configurada da aplicação.
 - `[infra]` O monorepo passa a ser **ESM em todos os workspaces**, sobre **NestJS 12** e
   **oRPC**, com **zod 4**. A decisão anterior fixava CommonJS porque o ESM do Nest era
   alpha; o que de fato prendia o app na versão 11 era o peer do `@ts-rest/nest`, que não

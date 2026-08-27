@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config'
 import { APP_FILTER, APP_GUARD } from '@nestjs/core'
 import { ORPCModule } from '@orpc/nest'
 import { AuthenticationGuard } from './authorization/authentication.guard.js'
+import { DatabaseModule } from './database/database.module.js'
 import { environmentSchema } from './environment/environment.schema.js'
 import { UnhandledExceptionFilter } from './errors/unhandled-exception.filter.js'
 import { HealthModule } from './health/health.module.js'
@@ -18,6 +19,7 @@ import { PlatformModule } from './platform/platform.module.js'
     // contrato, então corpo fora do schema falha aqui e não vira resposta errada.
     ORPCModule.forRoot({}),
     PlatformModule,
+    DatabaseModule,
     HealthModule,
   ],
   providers: [

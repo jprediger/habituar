@@ -85,4 +85,13 @@ describe('restrições da API', () => {
       'api-eslint.config.js',
     )
   })
+
+  it('recusa acesso ao ORM fora do módulo de dados', async () => {
+    await expectLintFailure(
+      'drizzle-outside-database.ts',
+      'no-restricted-imports',
+      'Banco só é acessível pelo módulo de dados',
+      'api-eslint.config.js',
+    )
+  })
 })

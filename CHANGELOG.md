@@ -23,6 +23,8 @@ versionamento segue [SemVer](https://semver.org/lang/pt-BR/).
 ## [Não publicado]
 
 ### Adicionado
+- `[api]` Todo acesso ao banco passa por uma transação que instala instituição, ator e
+  sessão; a tabela-sonda do M0 força RLS e falha fechada sem contexto de tenant.
 - `[api]` O ambiente local ganha PostgreSQL 18 com roles separados para migração e
   aplicação; o processo da API usa um role não-dono desde a primeira conexão.
 - `[api]` A borda HTTP traduz o catálogo fechado de falhas em status distintos e oculta
@@ -59,3 +61,9 @@ versionamento segue [SemVer](https://semver.org/lang/pt-BR/).
 - `[infra]` `CLAUDE.md` reexpresso no idioma do Nest: DI e decorators deixam de ser
   banidos; herança de provider, `forwardRef`, `class-validator` e CQRS prematuro
   continuam fora.
+
+### Alterado
+- `[api]` `TenantContext` usa strings cruas apenas no M0; os branded types de instituição,
+  ator e sessão entram no M1, quando existirem os identificadores concretos.
+- `[api]` A tabela `tenant_probe` é uma prova descartável de RLS e será removida na
+  primeira migração do M1, antes de qualquer release ou dado de produção.

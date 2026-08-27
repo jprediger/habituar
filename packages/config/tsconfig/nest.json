@@ -3,7 +3,8 @@
   "_comment": "Único arquivo do repositório com decorators habilitados. Nada que o Metro ou o bundler do web empacote pode herdar daqui.",
   "_decorators_comment": "O Nest exige os decorators LEGADOS: os do TS 5 (Stage 3) não suportam decorator de parâmetro nem emissão de metadata.",
   "_class_fields_comment": "Explícito de propósito: o padrão muda com o target, e o Nest depende da semântica antiga de inicialização de campo.",
-  "_resolution_comment": "nodenext resolve o campo `exports` (o legado `node` o ignora, e packages/* não tem barrel). O formato emitido continua vindo do campo `type` do package.json mais próximo — apps/api é commonjs.",
+  "_resolution_comment": "nodenext resolve o campo `exports` (o legado `node` o ignora, e packages/* não tem barrel). O formato emitido vem do campo `type` do package.json mais próximo — apps/api é `module`, como todo o monorepo.",
+  "_esm_comment": "Consequência do ESM: import relativo cita a extensão EMITIDA (`./x.js`), porque nem o tsc nem o SWC reescrevem o especificador e o Node exige o caminho completo.",
   "_verbatim_comment": "Desligado: com ele, `import type` de uma classe injetada apaga a metadata de DI e o Nest falha em runtime sem apontar a linha.",
   "extends": "./base.json",
   "compilerOptions": {

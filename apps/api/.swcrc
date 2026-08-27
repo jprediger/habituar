@@ -6,6 +6,6 @@
     "transform": { "legacyDecorator": true, "decoratorMetadata": true },
     "keepClassNames": true
   },
-  "module": { "type": "commonjs" },
+  "module": { "type": "es6" },
   "sourceMaps": true
 }

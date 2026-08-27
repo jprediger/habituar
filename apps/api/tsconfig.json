@@ -1,8 +1,8 @@
 {
   "extends": "@habituar/config/tsconfig/nest.json",
+  "_comment": "vitest.config.ts entra no include porque o lint com tipos exige que todo .ts pertença a um projeto — e é o único arquivo de ferramenta fora de src.",
   "compilerOptions": {
-    "rootDir": "src",
     "outDir": "dist"
   },
-  "include": ["src"]
+  "include": ["src", "vitest.config.ts"]
 }

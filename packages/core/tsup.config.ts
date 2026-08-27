@@ -8,8 +8,8 @@ export default defineConfig({
     'health/health.schema': 'src/health/health.schema.ts',
     'health/health.contract': 'src/health/health.contract.ts',
   },
-  // Dual: apps/api roda em CommonJS e precisa da condição `require`.
-  format: ['esm', 'cjs'],
+  // Formato único: o monorepo inteiro é ESM, então não existe condição `require` a servir.
+  format: ['esm'],
   dts: true,
   splitting: true,
   sourcemap: true,

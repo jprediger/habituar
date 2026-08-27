@@ -2,7 +2,7 @@
   "name": "@habituar/api",
   "version": "0.0.0",
   "private": true,
-  "type": "commonjs",
+  "type": "module",
   "scripts": {
     "dev": "nest start --watch -b swc",
     "build": "nest build -b swc",
@@ -12,19 +12,18 @@
   },
   "dependencies": {
     "@habituar/core": "workspace:*",
-    "@nestjs/common": "11.2.3",
-    "@nestjs/core": "11.2.3",
-    "@nestjs/platform-express": "11.2.3",
-    "@ts-rest/core": "3.52.1",
-    "@ts-rest/nest": "3.52.1",
+    "@nestjs/common": "12.0.1",
+    "@nestjs/core": "12.0.1",
+    "@nestjs/platform-express": "12.0.1",
+    "@orpc/nest": "1.15.0",
     "reflect-metadata": "0.2.2",
     "rxjs": "7.8.2",
-    "zod": "3.25.76"
+    "zod": "4.4.3"
   },
   "devDependencies": {
     "@habituar/config": "workspace:*",
-    "@nestjs/cli": "11.0.24",
-    "@nestjs/testing": "11.2.3",
+    "@nestjs/cli": "12.0.0",
+    "@nestjs/testing": "12.0.1",
     "@swc/cli": "0.8.1",
     "@swc/core": "1.16.1",
     "@types/node": "22.20.1",

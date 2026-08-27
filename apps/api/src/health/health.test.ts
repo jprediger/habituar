@@ -2,7 +2,7 @@ import 'reflect-metadata'
 import { healthStatusSchema } from '@habituar/core/health/schema'
 import { NestFactory } from '@nestjs/core'
 import { describe, expect, it } from 'vitest'
-import { AppModule } from '../app.module'
+import { AppModule } from '../app.module.js'
 
 /** Sobe a aplicação numa porta livre: o teste exercita o roteamento real, não o controller. */
 async function startApi(): Promise<{ baseUrl: string; close: () => Promise<void> }> {

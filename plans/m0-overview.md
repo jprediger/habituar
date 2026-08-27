@@ -108,7 +108,7 @@ Vitest 4, todo o resto muda de forma.
 | # | Commit |
 |---|---|
 | 6 | ✅ `build(api): scaffold nest app with swc toolchain` |
-| 6b | `feat(api): move the stack to esm, nest 12 and orpc` |
+| 6b | ✅ `feat(api): move the stack to esm, nest 12 and orpc` |
 
 O passo **6b** reimplementa 6, 12 e 22 sobre ESM + Nest 12 + oRPC + zod 4, num commit
 atômico — Nest 12 é ESM-only e está fora do peer do `@ts-rest`, então separá-los deixaria

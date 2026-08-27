@@ -1,11 +1,12 @@
 import { Module } from '@nestjs/common'
-import { TsRestModule } from '@ts-rest/nest'
-import { HealthModule } from './health/health.module'
+import { ORPCModule } from '@orpc/nest'
+import { HealthModule } from './health/health.module.js'
 
 @Module({
   imports: [
-    // Resposta fora do schema do contrato vira 500 em vez de resposta errada em produção.
-    TsRestModule.register({ validateResponses: true }),
+    // Sem configuração de propósito: o oRPC já valida a resposta contra o `output` do
+    // contrato, então corpo fora do schema falha aqui e não vira resposta errada.
+    ORPCModule.forRoot({}),
     HealthModule,
   ],
 })

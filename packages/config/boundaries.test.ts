@@ -58,6 +58,10 @@ describe('política arquitetural do monorepo', () => {
     await expectAllowed('packages/core/src/internal-import.ts')
   })
 
+  it('permite import relativo que cita a extensão emitida pelo esm', async () => {
+    await expectAllowed('apps/mobile/src/emitted-extension-import.ts')
+  })
+
   it('permite entrypoint público explícito no primeiro nível de src', async () => {
     await expectAllowed('apps/mobile/src/public-entrypoint.ts')
   })

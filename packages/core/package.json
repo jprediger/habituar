@@ -6,18 +6,15 @@
   "exports": {
     "./contract": {
       "types": "./dist/contract/api-contract.d.ts",
-      "import": "./dist/contract/api-contract.js",
-      "require": "./dist/contract/api-contract.cjs"
+      "import": "./dist/contract/api-contract.js"
     },
     "./health/schema": {
       "types": "./dist/health/health.schema.d.ts",
-      "import": "./dist/health/health.schema.js",
-      "require": "./dist/health/health.schema.cjs"
+      "import": "./dist/health/health.schema.js"
     },
     "./health/contract": {
       "types": "./dist/health/health.contract.d.ts",
-      "import": "./dist/health/health.contract.js",
-      "require": "./dist/health/health.contract.cjs"
+      "import": "./dist/health/health.contract.js"
     }
   },
   "scripts": {
@@ -28,8 +25,8 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@ts-rest/core": "3.52.1",
-    "zod": "3.25.76"
+    "@orpc/contract": "1.15.0",
+    "zod": "4.4.3"
   },
   "devDependencies": {
     "@habituar/config": "workspace:*",

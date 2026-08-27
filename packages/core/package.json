@@ -4,6 +4,10 @@
   "private": true,
   "type": "module",
   "exports": {
+    "./assert-never": {
+      "types": "./dist/type/assert-never.d.ts",
+      "import": "./dist/type/assert-never.js"
+    },
     "./contract": {
       "types": "./dist/contract/api-contract.d.ts",
       "import": "./dist/contract/api-contract.js"

@@ -4,6 +4,7 @@ import { defineConfig } from 'tsup'
 // de exports É a declaração de entrypoint público, e entrada nova entra nos dois lugares.
 export default defineConfig({
   entry: {
+    'type/assert-never': 'src/type/assert-never.ts',
     'contract/api-contract': 'src/contract/api-contract.ts',
     'health/health.schema': 'src/health/health.schema.ts',
     'health/health.contract': 'src/health/health.contract.ts',

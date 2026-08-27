@@ -23,6 +23,8 @@ versionamento segue [SemVer](https://semver.org/lang/pt-BR/).
 ## [Não publicado]
 
 ### Adicionado
+- `[core]` Uniões fechadas ganham uma proteção exaustiva que também interrompe payloads
+  com variantes inesperadas em runtime.
 - `[api]` Cada resposta e linha de log HTTP compartilha um `correlationId`, preservado
   durante todo o fluxo assíncrono da requisição.
 - `[api]` A API passa a negar por padrão toda rota que não se declare pública; no M0,

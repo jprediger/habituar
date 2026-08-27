@@ -8,7 +8,9 @@ export default defineConfig({
   plugins: [swc.vite({ module: { type: 'es6' } })],
   test: {
     include: ['src/**/*.test.ts'],
+    globalSetup: ['src/database/testcontainers.setup.ts'],
     // Nest e pg não gostam de threads compartilhando handles.
     pool: 'forks',
+    hookTimeout: 120_000,
   },
 })

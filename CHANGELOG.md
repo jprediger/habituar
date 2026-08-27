@@ -23,6 +23,8 @@ versionamento segue [SemVer](https://semver.org/lang/pt-BR/).
 ## [Não publicado]
 
 ### Adicionado
+- `[api]` A suíte prova em PostgreSQL real que uma instituição não lê nem escreve linhas
+  de outra, mesmo ao tentar burlar a query ou desligar a RLS.
 - `[api]` Todo acesso ao banco passa por uma transação que instala instituição, ator e
   sessão; a tabela-sonda do M0 força RLS e falha fechada sem contexto de tenant.
 - `[api]` O ambiente local ganha PostgreSQL 18 com roles separados para migração e

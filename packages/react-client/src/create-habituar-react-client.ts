@@ -11,6 +11,10 @@ import type { HealthState } from './health-state.js'
 
 type ApiClient = ContractRouterClient<typeof apiContract>
 
+/**
+ * Forma pública de uma instância do cliente. Cliente oRPC, `QueryClient` e a chave de
+ * query de saúde nunca atravessam essa fronteira — só o Provider e o hook.
+ */
 export type HabituarReactClient = Readonly<{
   Provider(props: PropsWithChildren): ReactElement
   useHealth(): Readonly<{

@@ -8,6 +8,10 @@
       "types": "./dist/type/assert-never.d.ts",
       "import": "./dist/type/assert-never.js"
     },
+    "./branded-id": {
+      "types": "./dist/identity/branded-id.d.ts",
+      "import": "./dist/identity/branded-id.js"
+    },
     "./contract": {
       "types": "./dist/contract/api-contract.d.ts",
       "import": "./dist/contract/api-contract.js"
@@ -30,7 +34,8 @@
     "dev": "tsup --watch",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "openapi": "vitest run src/contract/openapi.test.ts -u"
   },
   "dependencies": {
     "@orpc/contract": "1.15.0",
@@ -38,6 +43,8 @@
   },
   "devDependencies": {
     "@habituar/config": "workspace:*",
+    "@orpc/openapi": "1.15.0",
+    "@orpc/zod": "1.15.0",
     "@types/node": "22.20.1",
     "eslint": "10.9.1",
     "tsup": "8.5.1",

@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "extends": "@habituar/config/tsconfig/web.json",
+  "_comment": "Configs entram no include porque o lint com tipos exige que todo .ts pertença a um projeto.",
+  "compilerOptions": {
+    "types": ["vite/client"],
+    "resolveJsonModule": true,
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
+  "include": ["src", "vite.config.ts", "vitest.config.ts"]
+}

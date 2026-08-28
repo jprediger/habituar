@@ -1,0 +1,10 @@
+{
+  "health": {
+    "title": "Estado do sistema",
+    "loading": "Verificando o estado do sistema…",
+    "readyStatusOk": "O sistema está operando normalmente.",
+    "readyVersion": "Versão {{version}}",
+    "failedMessage": "Não foi possível verificar o estado do sistema agora.",
+    "retry": "Verificar novamente"
+  }
+}

@@ -1,4 +1,7 @@
-import { COLOR } from './color'
+// Extensão explícita: `scripts/write-theme-css.ts` importa este módulo direto pelo
+// runtime nativo de TypeScript do Node, que exige o caminho real (sem resolução de
+// bundler). `allowImportingTsExtensions` no tsconfig cobre o typecheck do mesmo jeito.
+import { COLOR } from './color.ts'
 
 /**
  * Papéis de cor, tema claro. Valores são provisórios (D12): o que garante que trocar a

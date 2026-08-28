@@ -1,0 +1,43 @@
+@import 'tailwindcss';
+@import '@habituar/design-tokens/theme.css';
+
+/*
+ * `design-tokens` gera os namespaces que o Tailwind v4 reconhece nativamente
+ * (--color-*, --spacing-*, --font-weight-*). Tamanho de fonte, altura de linha e alvo de
+ * toque usam namespaces próprios do token (--font-size-*, --line-height-*,
+ * --interaction-*), que o Tailwind não mapeia sozinho — as utilities abaixo só apontam
+ * para essas variáveis, nunca introduzem um valor literal novo.
+ */
+@utility text-display {
+  font-size: var(--font-size-display);
+  line-height: var(--line-height-tight);
+}
+
+@utility text-title {
+  font-size: var(--font-size-title);
+  line-height: var(--line-height-tight);
+}
+
+@utility text-body {
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-normal);
+}
+
+@utility text-caption {
+  font-size: var(--font-size-caption);
+  line-height: var(--line-height-normal);
+}
+
+@utility min-h-tap-target {
+  min-height: var(--interaction-minimum-touch-target);
+}
+
+@utility min-w-tap-target {
+  min-width: var(--interaction-minimum-touch-target);
+}
+
+body {
+  @apply bg-surface text-text;
+  margin: 0;
+  min-height: 100dvh;
+}

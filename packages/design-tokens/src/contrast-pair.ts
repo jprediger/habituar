@@ -6,6 +6,7 @@ import type { ColorRole } from './semantic-color'
  */
 export type ContrastUsage = 'body-text' | 'large-text' | 'ui-component'
 
+/** Piso de contraste por uso; `contrast.test.ts` reprova qualquer par abaixo do seu mínimo. */
 export const MINIMUM_RATIO = {
   'body-text': 4.5,
   'large-text': 3,

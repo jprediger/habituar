@@ -1,0 +1,12 @@
+{
+  "extends": "@habituar/config/tsconfig/base.json",
+  "_comment": "bundler porque src é sempre empacotado pelo tsup antes de qualquer consumidor enxergar o pacote; allowImportingTsExtensions porque scripts/write-theme-css.ts roda direto pelo runtime nativo de TypeScript do Node (sem tsup, sem tsx) e por isso referencia os módulos de src pela extensão real.",
+  "compilerOptions": {
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "noEmit": true,
+    "allowImportingTsExtensions": true,
+    "types": ["node"]
+  },
+  "include": ["src", "scripts", "tsup.config.ts"]
+}

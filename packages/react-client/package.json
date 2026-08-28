@@ -1,0 +1,44 @@
+{
+  "name": "@habituar/react-client",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./react-client": {
+      "types": "./dist/react-client.d.ts",
+      "import": "./dist/react-client.js"
+    }
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@habituar/core": "workspace:*",
+    "@orpc/client": "1.15.0",
+    "@orpc/contract": "1.15.0",
+    "@orpc/openapi-client": "1.15.0",
+    "@tanstack/react-query": "5.102.8"
+  },
+  "peerDependencies": {
+    "react": "catalog:"
+  },
+  "devDependencies": {
+    "@habituar/config": "workspace:*",
+    "@testing-library/dom": "10.4.1",
+    "@testing-library/react": "16.3.3",
+    "@types/node": "22.20.1",
+    "@types/react": "catalog:",
+    "eslint": "10.9.1",
+    "jsdom": "27.4.0",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "tsup": "8.5.1",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.68.0",
+    "vitest": "4.1.11"
+  }
+}

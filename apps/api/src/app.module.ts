@@ -28,5 +28,8 @@ import { PlatformModule } from './platform/platform.module.js'
     ErrorsModule,
   ],
   providers: [{ provide: APP_FILTER, useClass: UnhandledExceptionFilter }],
+  // PlatformModule reexportado para quem compõe um módulo de teste em cima de AppModule
+  // sem precisar importar as duas fontes — ver platform/request-context.middleware.test.ts.
+  exports: [PlatformModule],
 })
 export class AppModule {}

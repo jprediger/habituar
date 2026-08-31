@@ -5,7 +5,6 @@ import { IncomingMessage } from 'node:http'
 import { setImmediate } from 'node:timers/promises'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { PublicRoute } from '../authorization/public-route.decorator.js'
-import { PlatformModule } from './platform.module.js'
 import { RequestContext } from './request-context.js'
 
 @Controller('request-context-test')
@@ -36,7 +35,7 @@ describe('request context middleware', () => {
   it('correlaciona a resposta e o log durante todo o fluxo assíncrono da requisição', async () => {
     const { AppModule } = await import('../app.module.js')
 
-    @Module({ imports: [AppModule, PlatformModule], controllers: [RequestContextTestController] })
+    @Module({ imports: [AppModule], controllers: [RequestContextTestController] })
     class TestAppModule {}
 
     const app = await NestFactory.create(TestAppModule, { abortOnError: false, logger: false })

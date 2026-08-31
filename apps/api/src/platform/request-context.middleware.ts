@@ -19,7 +19,7 @@ export class RequestContextMiddleware {
   use(request: IncomingMessage, response: ServerResponse, next: () => void): void {
     const correlationId = this.idGenerator.generate()
 
-    this.requestContext.run({ correlationId }, () => {
+    this.requestContext.run({ correlationId, tenant: undefined }, () => {
       response.setHeader('x-correlation-id', correlationId)
       this.logRequest(request, response, next)
     })

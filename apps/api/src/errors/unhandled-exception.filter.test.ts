@@ -10,7 +10,7 @@ describe('correlação lida sem lançar', () => {
   it('devolve a correlação da requisição em andamento', () => {
     const requestContext = new RequestContext()
 
-    requestContext.run({ correlationId: 'test-correlation-id' }, () => {
+    requestContext.run({ correlationId: 'test-correlation-id', tenant: undefined }, () => {
       expect(readCorrelationId(requestContext)).toBe('test-correlation-id')
     })
   })

@@ -34,6 +34,9 @@ versionamento segue [SemVer](https://semver.org/lang/pt-BR/).
 - `[core]` O catálogo fechado de falhas é declarado uma vez no contrato compartilhado
   (`.errors()`) e herdado por toda procedure; código de falha fora do catálogo é erro de
   compilação, não resposta errada em produção.
+- `[api]` `Database.withTenant` lê a instituição, o ator e a sessão do contexto da
+  requisição em vez de recebê-los por parâmetro; passar um tenant arbitrário exige o
+  método `withTenantOutsideRequest`, reservado a jobs e workers fora de uma requisição.
 - `[core]` Falhas esperadas passam a usar um catálogo fechado de códigos e uma união de
   resultado que separa sucesso de falha sem lançar exceções.
 - `[core]` Uniões fechadas ganham uma proteção exaustiva que também interrompe payloads

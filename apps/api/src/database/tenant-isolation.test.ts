@@ -3,7 +3,9 @@ import { sql } from 'drizzle-orm'
 import { Pool } from 'pg'
 import { afterAll, beforeAll, describe, expect, inject, it } from 'vitest'
 import { environmentSchema } from '../environment/environment.schema.js'
+import { RequestContext } from '../platform/request-context.js'
 import { Database, TenantContext } from './database.js'
+import { clearTenantProbeRows, seedTenantProbeRows } from './tenant-probe-fixture.js'
 
 const INSTITUTION_A = '10000000-0000-4000-8000-000000000001'
 const INSTITUTION_B = '20000000-0000-4000-8000-000000000002'
@@ -22,19 +24,15 @@ describe('isolamento entre instituições', () => {
     APP_VERSION: '0.0.0-test',
     DATABASE_URL: applicationUrl,
   })
-  const database = new Database(new ConfigService(environment))
+  const database = new Database(new ConfigService(environment), new RequestContext())
 
   beforeAll(async () => {
-    await ownerPool.query('delete from tenant_probe')
+    // Escopado às instituições deste arquivo: tenant-provenance.test.ts usa a mesma
+    // tabela no mesmo container de Postgres do setup global.
+    await clearTenantProbeRows(ownerPool, [INSTITUTION_A, INSTITUTION_B])
 
     for (const institutionId of [INSTITUTION_A, INSTITUTION_B]) {
-      await ownerPool.query('begin')
-      await ownerPool.query("select set_config('app.institution_id', $1, true)", [institutionId])
-      await ownerPool.query(
-        'insert into tenant_probe (institution_id, note) values ($1, $2), ($1, $3)',
-        [institutionId, `${institutionId}-one`, `${institutionId}-two`],
-      )
-      await ownerPool.query('commit')
+      await seedTenantProbeRows(ownerPool, institutionId, [`${institutionId}-one`, `${institutionId}-two`])
     }
   })
 
@@ -45,7 +43,7 @@ describe('isolamento entre instituições', () => {
   })
 
   it('lê somente as linhas da instituição definida na transação', async () => {
-    const rows = await database.withTenant(TENANT_A, async (transaction) => {
+    const rows = await database.withTenantOutsideRequest(TENANT_A, async (transaction) => {
       const result = await transaction.execute(sql`select institution_id from tenant_probe`)
       return result.rows
     })
@@ -58,7 +56,7 @@ describe('isolamento entre instituições', () => {
   })
 
   it('não deixa um where sempre verdadeiro burlar a política', async () => {
-    const rows = await database.withTenant(TENANT_A, async (transaction) => {
+    const rows = await database.withTenantOutsideRequest(TENANT_A, async (transaction) => {
       const result = await transaction.execute(
         sql`select institution_id from tenant_probe where true or institution_id = ${INSTITUTION_B}`,
       )
@@ -79,7 +77,7 @@ describe('isolamento entre instituições', () => {
   })
 
   it('barra insert de outra instituição pelo with check', async () => {
-    const insert = database.withTenant(TENANT_A, async (transaction) => {
+    const insert = database.withTenantOutsideRequest(TENANT_A, async (transaction) => {
       await transaction.execute(
         sql`insert into tenant_probe (institution_id, note) values (${INSTITUTION_B}, 'cross-tenant')`,
       )
@@ -89,7 +87,7 @@ describe('isolamento entre instituições', () => {
   })
 
   it('executa a aplicação com um role diferente do dono da tabela', async () => {
-    const identity = await database.withTenant(TENANT_A, async (transaction) => {
+    const identity = await database.withTenantOutsideRequest(TENANT_A, async (transaction) => {
       const result = await transaction.execute(
         sql`select current_user, tableowner from pg_tables where tablename = 'tenant_probe'`,
       )

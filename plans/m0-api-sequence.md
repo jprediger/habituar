@@ -81,7 +81,7 @@ todos os workspaces. Fundamentos:
 | `@orpc/nest@1.15.0` tem peer `@nestjs/core: >=11.0.0`; 651 releases, último em 23/08/2026 | Substituto mantido, e compatível com Nest 11 e 12 |
 | oRPC valida por **Standard Schema** | Destrava **zod 4**; o pin em `zod@3.25.76` deixa de existir |
 | `@orpc/openapi@1.15.0` existe | Cobre o passo 13 sem `@ts-rest/open-api` |
-| `@orpc/tanstack-query@1.15.0` tem peer só de `@orpc/client` e `@tanstack/query-core` | **Sem peer de React.** Some a restrição que reprovou o `@ts-rest/react-query` (§ `m0-clients.md`) |
+| `@orpc/tanstack-query@1.15.0` tem peer só de `@orpc/client` e `@tanstack/query-core` | Pode permanecer implementação interna de `@habituar/react-client`; `core` não importa React ou TanStack Query |
 | `@nestjs/core@12.0.1` é `"type": "module"`, sem condição `require` | Nest 12 é ESM-only. Adotá-lo **é** a migração para ESM |
 | `@nestjs/config@12.0.0`, `platform-express@12.0.1`, `testing@12.0.1`, `cli@12.0.0`, `bullmq@12.0.0` | A família primária já está inteira em 12 |
 
@@ -190,7 +190,7 @@ marcação correspondente em `plans/m0-overview.md`.
   forma de `packages/core`; tabela de riscos: fechar o risco do `@ts-rest` e abrir o de
   oRPC v2), `plans/m0-api.md` (§0, §1, §2, §4, §5, §10, §11, §14), `plans/m0-shared-packages.md`
   (contrato, `exports`, pin de zod, `@ts-rest/open-api` → `@orpc/openapi`),
-  `plans/m0-clients.md` (§ sobre `@ts-rest/react-query` → `@orpc/tanstack-query`),
+  `plans/m0-react-client.md` (OpenAPILink, TanStack Query e estados compartilhados),
   `plans/m0-api-sequence.md`, `CHANGELOG.md`.
 - **Pré-requisitos.** Nenhum.
 - **Aceite.** Nenhuma afirmação de estado ou de stack nos planos contradiz o repositório

@@ -19,8 +19,8 @@ Não são opinião; foram lidas do código.
 | `tsconfig/base.json` não carrega `lib: DOM` | `core` não compila DOM por construção. Nada a fazer |
 | `tsconfig/nest.json` usa `moduleResolution: node` | node10 **ignora o campo `exports`**. `apps/api` não resolveria `@habituar/core/health/contract`. **Corrigido:** `nodenext` desde o passo 2 |
 | **oRPC valida por Standard Schema** (substituiu o `@ts-rest` em 27/08/2026) | **zod 4**. O pin em `zod@3.25.76`, que existia por causa do `@ts-rest`, foi removido |
-| `@orpc/tanstack-query@1.15.0` não tem peer de React — só `@orpc/client` e `@tanstack/query-core` | A restrição que reprovava o `@ts-rest/react-query` sumiu. Reavaliar no passo 16: se o utilitário gerado não devolver a união do `toQueryState`, hook à mão continua sendo o certo |
-| `commitlint` `scope-enum` = `api web mobile core tokens config deps release docs` | Mudança em `turbo.json` vai como `build(deps)` |
+| React dentro de `core` contradiz a fronteira que torna o pacote utilizável pela API | Cliente, estado de query e hooks vivem em `@habituar/react-client`; ver `m0-react-client.md` |
+| `commitlint` ainda não conhece o workspace `react-client` | Acrescentar o escopo no passo 1, junto da criação do catálogo de versões |
 
 ---
 
@@ -50,19 +50,13 @@ packages/core/
     ├── health/                        # a única fatia do M0
     │   ├── health.schema.ts
     │   ├── health.contract.ts
-    │   ├── health.hook.ts
     │   └── health.test.ts
     ├── identity/
     │   ├── branded-id.ts              # padrão canônico de id (sem ids concretos no M0)
     │   └── branded-id.test.ts
-    ├── query/
-    │   ├── to-query-state.ts          # resultado de query → união discriminada
-    │   └── to-query-state.test.ts
-    ├── type/
+    └── type/
     │   ├── assert-never.ts
     │   └── assert-never.test.ts
-    └── client/
-        └── api-client.ts              # createApiClient / configureApiClient / getApiClient
 ```
 
 Convenções: arquivo `kebab-case` com sufixo de papel (`.schema.ts`, `.contract.ts`,
@@ -70,7 +64,7 @@ Convenções: arquivo `kebab-case` com sufixo de papel (`.schema.ts`, `.contract
 
 ### package.json
 
-`save-exact=true` já está ativo; peer ranges são a única coisa não-exata.
+`save-exact=true` já está ativo.
 
 ```jsonc
 {
@@ -83,11 +77,8 @@ Convenções: arquivo `kebab-case` com sufixo de papel (`.schema.ts`, `.contract
     "./failure":       { "…": "dist/contract/failure" },
     "./assert-never":  { "…": "dist/type/assert-never" },
     "./branded-id":    { "…": "dist/identity/branded-id" },
-    "./query-state":   { "…": "dist/query/to-query-state" },
-    "./api-client":    { "…": "dist/client/api-client" },
     "./health/schema":   { "…": "dist/health/health.schema" },
-    "./health/contract": { "…": "dist/health/health.contract" },
-    "./health/hook":     { "…": "dist/health/health.hook" }
+    "./health/contract": { "…": "dist/health/health.contract" }
   },
   "scripts": {
     "build": "tsup",
@@ -97,16 +88,12 @@ Convenções: arquivo `kebab-case` com sufixo de papel (`.schema.ts`, `.contract
     "test": "vitest run",
     "openapi": "vitest run src/contract/openapi.test.ts -u"
   },
-  "peerDependencies": { "react": "^19.0.0", "@tanstack/react-query": "^5.0.0" },
-  "peerDependenciesMeta": { "react": { "optional": true }, "@tanstack/react-query": { "optional": true } },
   "dependencies": { "@orpc/contract": "1.15.0", "zod": "4.1.13" },
   "devDependencies": {
     "@habituar/config": "workspace:*",
-    "@tanstack/react-query": "catalog:",
     "@orpc/openapi": "1.15.0",
     "@types/node": "22.20.1",
     "eslint": "10.9.1",
-    "react": "catalog:",
     "typescript": "catalog:",
     "vitest": "4.1.11"
   }
@@ -117,17 +104,8 @@ Convenções: arquivo `kebab-case` com sufixo de papel (`.schema.ts`, `.contract
 `require` por extenso. **Sem wildcard `"./*"`** — a lista explícita *é* a declaração de
 entrypoint público que o `CLAUDE.md` exige, e é o que o `boundaries/dependencies` cobra.
 
-**React e React Query como peer opcional, nunca dependência:**
-
-- O D5 diz que React duplicado não é suportado pelo Expo. Dependência direta num pacote
-  compartilhado é exatamente como a segunda cópia aparece.
-- Opcional para que `apps/api` instale `core` sem arrastar React para a imagem do Nest.
-- A versão exata sai do `catalog:` do `pnpm-workspace.yaml`, ditada pelo SDK do Expo.
-
-**Não existe um segundo pacote** (`packages/client`): o D5 congela a árvore em
-`core` / `design-tokens` / `config`. A separação real é por subpath — `./contract`,
-`./failure`, `./branded-id` são puros; só `./health/hook` toca React. `apps/api` pode
-travar isso com um `no-restricted-imports` em `@habituar/core/*/hook`.
+`core` não declara React, TanStack Query ou cliente oRPC. Essa separação é imposta por
+lint e mantém o pacote inteiro — não apenas alguns subpaths — seguro para `apps/api`.
 
 ### tsconfig.json
 
@@ -310,54 +288,12 @@ Divisão de responsabilidade:
 
 ---
 
-## 6. Cliente e hooks
+## 6. Contrato para clientes
 
-`src/client/api-client.ts` — puro, sem React:
-
-```ts
-export type ApiClientOptions = {
-  readonly baseUrl: string
-  readonly getAuthToken?: () => string | null
-}
-export function createApiClient(options: ApiClientOptions): ApiClient
-// Configurado uma vez no bootstrap de cada app. Não é estado — é configuração.
-export function configureApiClient(options: ApiClientOptions): void
-export function getApiClient(): ApiClient   // lança se não configurado
-```
-
-`getApiClient()` **lança** em vez de cair num default silencioso: se um hook rodar antes do
-bootstrap, o erro precisa apontar a causa, não produzir requisição para o lugar errado.
-
-`src/query/to-query-state.ts` — o resultado de query vira união discriminada:
-
-```ts
-export type QueryState<TValue> =
-  | { readonly status: 'loading' }
-  | { readonly status: 'ready'; readonly value: TValue }
-  | { readonly status: 'failed'; readonly failure: Failure }
-```
-
-O nome diz o escopo: **cobre leitura**. Mutation ganha o seu em M4, quando existirem as
-mutations otimistas e enfileiradas do D13 — o estado delas não é esta união, e alargar
-esta para servir aos dois seria a flag booleana disfarçada de tipo.
-
-`src/health/health.hook.ts` — a única coisa em `core` que toca React:
-
-```ts
-export const HEALTH_QUERY_KEY = ['health'] as const
-export function useHealth(): { readonly state: QueryState<HealthStatus>; readonly retry: () => void }
-```
-
-Decisões e porquês:
-
-- **Sem Provider em `core`.** Provider seria JSX; o tsconfig de `core` não tem `jsx`, e o D2
-  proíbe referência de plataforma. Cada app monta seu `QueryClientProvider` — que é visual
-  e por plataforma — e chama `configureApiClient()` antes.
-- **`@orpc/tanstack-query` a avaliar no passo 16.** Ele não tem peer de React — a razão
-  que reprovava o `@ts-rest/react-query` desapareceu. O critério passa a ser o do D2: se o
-  utilitário não devolver a união discriminada do `toQueryState`, o hook à mão continua
-  sendo o certo.
-- Cache offline (D13, MMKV) é M4. O hook não sabe disso; o `QueryClient` de cada app sabe.
+`core` publica o contrato e `HealthStatus`; não publica transporte, estado de query ou
+hooks. A seam React está especificada separadamente em
+[`m0-react-client.md`](m0-react-client.md). Assim, o mesmo pacote puro serve o adapter Nest
+e o cliente compartilhado sem instalar React no container da API.
 
 ---
 
@@ -383,14 +319,15 @@ packages/design-tokens/
     ├── color.ts            # primitivos (hex)
     ├── semantic-color.ts   # papéis, tema claro e escuro
     ├── spacing.ts          # escala 4pt, números sem unidade
+    ├── interaction.ts      # alvos mínimos e medidas semânticas de interação
     ├── typography.ts       # tamanhos (número), pesos, line-height (razão)
     ├── contrast.ts         # luminância relativa + razão WCAG 2.x
     ├── contrast-pair.ts    # tabela declarada de pares e uso
     └── contrast.test.ts    # gate D12
 ```
 
-`exports`: `./color`, `./semantic-color`, `./spacing`, `./typography`, `./contrast`,
-`./theme.css` → `./dist/theme.css`.
+`exports`: `./color`, `./semantic-color`, `./spacing`, `./interaction`, `./typography`,
+`./contrast`, `./theme.css` → `./dist/theme.css`.
 
 ### Forma dos tokens
 
@@ -399,6 +336,7 @@ cada plataforma adapta:
 
 ```ts
 export const SPACING = { none: 0, xs: 4, sm: 8, md: 12, lg: 16, xl: 24, xxl: 32 } as const
+export const INTERACTION = { minimumTouchTarget: 44 } as const
 export const FONT_SIZE = { caption: 12, body: 16, title: 20, display: 28 } as const
 export const LINE_HEIGHT = { tight: 1.25, normal: 1.5 } as const   // razão, não px
 export const SEMANTIC_COLOR_LIGHT = {
@@ -478,7 +416,6 @@ Tudo puro, sem mock de infraestrutura, `*.test.ts` ao lado do código.
 | `health/health.test.ts` | recusa `status` diferente de `ok` e versão vazia |
 | `contract/api-contract.test.ts` | **toda** rota do contrato começa com `/v1` (D15 mecanizado) |
 | `contract/openapi.test.ts` | o `openapi.json` commitado é exatamente o que o contrato gera |
-| `query/to-query-state.test.ts` | erro de rede vira `failed` com código do catálogo, não exceção |
 
 **`packages/design-tokens`**
 
@@ -486,8 +423,8 @@ Tudo puro, sem mock de infraestrutura, `*.test.ts` ao lado do código.
 |---|---|
 | `contrast.test.ts` | razões de referência (21 e 1); todo par declarado acima do mínimo, nos dois temas; nenhum papel de cor sem par declarado |
 
-Fora do M0, explicitamente: hook testado com Testing Library (isso é `apps/*`), schemas de
-ficha/permissão/métrica (M2/M3/M6), `Outcome` exercitado por regra de domínio real (M1).
+Fora deste plano: comportamento de hooks testado pela interface do `react-client`, schemas
+de ficha/permissão/métrica (M2/M3/M6), `Outcome` exercitado por regra de domínio real (M1).
 
 ---
 
@@ -504,20 +441,17 @@ Numeração global — ver [`m0-overview.md`](m0-overview.md).
 | 11 | `feat(core): add health status schema` | `health/health.schema.ts` + teste |
 | 12 | `feat(core): declare the v1 health route in the contract` | `health/health.contract.ts`, `contract/api-contract.ts` + teste de prefixo |
 | 13 | `feat(core): commit the generated openapi document` | `contract/openapi.test.ts` + `openapi.json` |
-| 14 | `feat(core): add the typed api client factory` | `client/api-client.ts` |
-| 15 | `feat(core): map query results into a discriminated view state` | `query/to-query-state.ts` + teste |
-| 16 | `feat(core): add the health query hook` | `health/health.hook.ts`; peers opcionais |
 | 17 | `build(tokens): add package build and lint setup` | manifests do `design-tokens` |
 | 18 | `feat(tokens): add color, spacing and typography scales` | escalas |
 | 19 | `feat(tokens): verify wcag 2.2 aa contrast of declared pairs` | `contrast.ts`, `contrast-pair.ts`, `contrast.test.ts` |
 | 20 | `feat(tokens): emit css theme variables for tailwind` | `scripts/write-theme-css.ts` |
 
 Ordem obrigatória dentro da fase: 10 antes de 12 (`commonResponses`); 12 antes de 13;
-7 antes de tudo; 15 antes de 16.
+7 antes de tudo. Os passos 14–16 pertencem ao plano do `react-client`.
 
 ---
 
-## 11. Contrato que os outros dois planos consomem
+## 11. Contrato que os outros planos consomem
 
 Declarado aqui porque tudo aponta para dentro.
 
@@ -529,14 +463,12 @@ Declarado aqui porque tudo aponta para dentro.
 - Precisa de `nodenext` no `tsconfig/nest.json` — já entregue no passo 2. O `"type"` do
   próprio `package.json` volta a ser `module`, igual ao resto do monorepo, a partir do
   passo 6b.
-- Instala `@habituar/core` sem React — os peers são opcionais.
+- Instala `@habituar/core` sem React ou peers de UI.
 
 **`apps/web` e `apps/mobile`**
 
-- `configureApiClient({ baseUrl })` uma vez no bootstrap, **antes** de qualquer hook.
-- `import { useHealth } from '@habituar/core/health/hook'` e
-  `import type { HealthStatus } from '@habituar/core/health/schema'`.
-- Cada app monta seu próprio `QueryClientProvider`; `core` não exporta Provider nenhum.
+- Consomem `@habituar/react-client`, que depende do contrato e do schema de health.
+- Cada app cria sua instância com uma origem de plataforma e monta o Provider retornado.
 - Web: `@import '@habituar/design-tokens/theme.css'`. Mobile: importa os objetos e usa os
   números direto.
 - Versão de `react` sai do `catalog:`, fixada pelo SDK do Expo.

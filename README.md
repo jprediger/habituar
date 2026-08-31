@@ -1,8 +1,9 @@
 # Habituar
 
 Plataforma web e mobile para apoiar a rotina de estudantes e o trabalho dos profissionais
-que os acompanham. O projeto está no marco M0: a fundação do monorepo e a borda da API
-estão de pé; os clientes web e mobile ainda estão em construção.
+que os acompanham. O projeto está no marco M0: um esqueleto executável ponta a ponta, sem
+regra de negócio. Os três apps sobem e mostram o mesmo `HealthStatus`, inferido do mesmo
+contrato zod.
 
 ## Estrutura atual
 
@@ -10,19 +11,20 @@ estão de pé; os clientes web e mobile ainda estão em construção.
 habituar/
 ├── apps/
 │   ├── api/                 # NestJS + Drizzle, com a borda já endurecida
-│   ├── mobile/              # workspace reservado para Expo Router
-│   └── web/                 # workspace reservado para Vite + React
+│   ├── mobile/              # Expo Router + React Native
+│   └── web/                 # Vite + React + Tailwind
 ├── packages/
 │   ├── config/              # presets compartilhados de TypeScript e ESLint
-│   ├── core/                # workspace reservado para domínio, contratos e hooks
-│   └── design-tokens/       # workspace reservado para tokens visuais
+│   ├── core/                # domínio, contratos, schemas e tipos puros
+│   ├── react-client/        # cliente e hooks React compartilhados, sem UI
+│   └── design-tokens/       # tokens visuais, com contraste verificado por teste
 ├── .github/workflows/ci.yml # validação automática
 ├── pnpm-workspace.yaml      # definição dos workspaces
-└── turbo.json               # pipeline de lint, tipos e testes
+└── turbo.json               # pipeline de build, lint, tipos e testes
 ```
 
-Neste estágio, `apps/*`, `packages/core` e `packages/design-tokens` possuem apenas seus
-manifests. O código de aplicação será introduzido nas próximas etapas do M0.
+Web e mobile não compartilham componente: compartilham `react-client` (dados, estados e
+ações) e `design-tokens` (cor, espaço, tipografia). Cada plataforma decide só o visual.
 
 ## Requisitos
 
@@ -42,6 +44,7 @@ pnpm check
 Comandos disponíveis na raiz:
 
 - `pnpm lint`: executa o lint dos workspaces.
+- `pnpm build`: constrói os pacotes compartilhados e o bundle do web.
 - `pnpm typecheck`: verifica os tipos.
 - `pnpm test`: executa os testes.
 - `pnpm check`: executa lint, typecheck e testes pelo Turborepo.
@@ -102,6 +105,41 @@ docker compose down -v && pnpm --filter @habituar/api db:up
 
 Os testes não usam esse container: `pnpm test` sobe um PostgreSQL próprio e descartável
 por testcontainers, então a suíte não depende do banco de desenvolvimento nem o suja.
+
+## Rodando o cliente web
+
+```bash
+pnpm --filter @habituar/web dev   # vite em http://localhost:5173
+```
+
+O bundle nunca conhece o endereço da API: ele chama `/v1` na própria origem. Em
+desenvolvimento, o proxy do Vite encaminha `/v1` para `http://localhost:3000`, então a API
+precisa estar no ar para a tela sair de *carregando*. Em homologação e produção a mesma
+origem pública serve os dois, e o proxy deixa de existir.
+
+## Rodando o app mobile
+
+```bash
+cp apps/mobile/.env.example apps/mobile/.env   # o .env não é versionado
+pnpm --filter @habituar/mobile start           # abre no Expo Go
+```
+
+Aqui a origem é explícita, porque app nativo não tem origem própria para herdar:
+
+| Ambiente | `EXPO_PUBLIC_API_ORIGIN` |
+|---|---|
+| Emulador Android | `http://10.0.2.2:3000` — `localhost` resolveria para o próprio emulador |
+| Aparelho na mesma rede | `http://<IP-LAN>:3000` |
+
+A variável não tem valor padrão: ausente, ou contendo `/v1`, o app falha antes do primeiro
+render em vez de errar a URL silenciosamente em runtime.
+
+```bash
+pnpm --filter @habituar/mobile expo:doctor   # alinhamento com o SDK, rodado também no CI
+```
+
+iOS continua suportado pela estrutura Expo, mas o passe de VoiceOver ainda não aconteceu —
+é bloqueante antes da primeira distribuição iOS.
 
 ## Fronteiras já impostas
 

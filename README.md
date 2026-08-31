@@ -1,15 +1,15 @@
 # Habituar
 
 Plataforma web e mobile para apoiar a rotina de estudantes e o trabalho dos profissionais
-que os acompanham. O projeto está no marco M0: a fundação do monorepo está pronta, mas as
-aplicações ainda não foram inicializadas.
+que os acompanham. O projeto está no marco M0: a fundação do monorepo e a borda da API
+estão de pé; os clientes web e mobile ainda estão em construção.
 
 ## Estrutura atual
 
 ```text
 habituar/
 ├── apps/
-│   ├── api/                 # workspace reservado para NestJS
+│   ├── api/                 # NestJS + Drizzle, com a borda já endurecida
 │   ├── mobile/              # workspace reservado para Expo Router
 │   └── web/                 # workspace reservado para Vite + React
 ├── packages/
@@ -28,6 +28,7 @@ manifests. O código de aplicação será introduzido nas próximas etapas do M0
 
 - Node.js 22.23.2
 - pnpm 10.33.0
+- Docker, para o PostgreSQL local e para os testes de isolamento
 
 Com `nvm`, use `nvm use`. O pnpm está fixado pelo campo `packageManager` do projeto.
 
@@ -46,6 +47,61 @@ Comandos disponíveis na raiz:
 - `pnpm check`: executa lint, typecheck e testes pelo Turborepo.
 - `pnpm check:affected`: verifica somente os workspaces afetados.
 - `pnpm test:boundaries`: prova que imports e construções proibidos são recusados.
+
+## Rodando a API localmente
+
+O único serviço em container é o PostgreSQL. A API roda como processo Node — Dockerfile e
+deploy estão fora do M0, com o motivo registrado na seção *Fora do M0* de
+[`plans/m0-api.md`](plans/m0-api.md).
+
+```bash
+cp apps/api/.env.example apps/api/.env   # o .env não é versionado
+pnpm --filter @habituar/api db:up        # sobe o postgres e espera ficar saudável
+pnpm --filter @habituar/api db:migrate   # aplica as migrações pendentes
+pnpm --filter @habituar/api dev          # nest em watch, recompilando com swc
+```
+
+O `.env.example` traz valores que só servem a desenvolvimento. Duas variáveis merecem
+atenção porque não são a mesma credencial por desenho:
+
+| Variável | Papel |
+|---|---|
+| `DATABASE_URL` | Role `habituar_app`, **não** dono das tabelas. É por onde a API fala com o banco, e é o que faz a RLS valer |
+| `DATABASE_MIGRATION_URL` | Role `habituar_owner`, dono das tabelas. Usado só pelo `db:migrate` |
+
+Se a porta 3000 já estiver ocupada na sua máquina, suba com `PORT=3100 pnpm --filter
+@habituar/api dev` — a porta vem de `PORT`, e a variável de ambiente vence o `.env`.
+
+### Verificando
+
+```bash
+curl -i http://localhost:3000/v1/health
+```
+
+Responde `200` com `{"status":"ok","version":"0.0.0"}`, mais `x-correlation-id` e os
+cabeçalhos de segurança (`x-content-type-options`, `x-frame-options`, `referrer-policy`).
+Qualquer outro caminho responde `404` no mesmo envelope de falha do contrato:
+
+```json
+{"defined":true,"code":"not_found","status":404,"message":"The requested resource was not found."}
+```
+
+`GET /v1/health` é a única rota pública, e é liveness — não toca o banco. Toda rota nova
+nasce negada pelo guard global; o 401 ainda não é alcançável porque não existe rota
+autenticada, e a sessão que preenche ator e instituição é do M1.
+
+### Banco
+
+O `docker-compose.yml` da raiz sobe `postgres:18-alpine` na porta **5433** e executa
+`apps/api/db/bootstrap.sql` na primeira criação do volume, que é o que cria os dois roles.
+Alterar esse arquivo depois só tem efeito recriando o volume:
+
+```bash
+docker compose down -v && pnpm --filter @habituar/api db:up
+```
+
+Os testes não usam esse container: `pnpm test` sobe um PostgreSQL próprio e descartável
+por testcontainers, então a suíte não depende do banco de desenvolvimento nem o suja.
 
 ## Fronteiras já impostas
 

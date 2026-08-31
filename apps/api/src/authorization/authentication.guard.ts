@@ -2,6 +2,7 @@ import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from
 import { Reflector } from '@nestjs/core'
 import { IS_PUBLIC_ROUTE } from './public-route.decorator.js'
 
+/** Nega toda rota por padrão. Só recusa; quem decide o que é público é `@PublicRoute()`. */
 @Injectable()
 export class AuthenticationGuard implements CanActivate {
   constructor(private readonly reflector: Reflector) {}

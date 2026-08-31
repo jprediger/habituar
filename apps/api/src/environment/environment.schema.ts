@@ -1,5 +1,6 @@
 import { z } from 'zod'
 
+/** Fonte única da configuração validada no boot. Ausência ou valor inválido nega tráfego. */
 export const environmentSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']),
   PORT: z.coerce.number().int().positive().default(3000),

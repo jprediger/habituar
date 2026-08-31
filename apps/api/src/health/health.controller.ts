@@ -5,6 +5,7 @@ import { Implement, implement } from '@orpc/nest'
 import { PublicRoute } from '../authorization/public-route.decorator.js'
 import { Environment } from '../environment/environment.schema.js'
 
+/** Dona da liveness do serviço. Não toca o banco — readiness é outra fatia, ainda ausente. */
 @Controller()
 export class HealthController {
   constructor(private readonly configService: ConfigService<Environment, true>) {}

@@ -28,7 +28,7 @@ describe('rota de saúde', () => {
       const response = await fetch(`${api.baseUrl}/v1/health`)
 
       expect(response.status).toBe(200)
-      const body = await response.json()
+      const body: unknown = await response.json()
 
       expect(healthStatusSchema.safeParse(body)).toMatchObject({ success: true })
       expect(body).toEqual({ status: 'ok', version: '1.2.3-test' })

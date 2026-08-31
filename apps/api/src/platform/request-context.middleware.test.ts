@@ -44,7 +44,7 @@ describe('request context middleware', () => {
 
     try {
       const response = await fetch(`${await app.getUrl()}/request-context-test`)
-      const body = await response.json()
+      const body: unknown = await response.json()
       const responseCorrelationId = response.headers.get('x-correlation-id')
 
       expect(responseCorrelationId).toMatch(/^[0-9a-f-]{36}$/u)

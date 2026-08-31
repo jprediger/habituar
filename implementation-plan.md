@@ -18,10 +18,12 @@ hipótese mais arriscada do produto (se os alunos não usarem, nada mais importa
 Sem valor de usuário. Existe para que nenhum marco seguinte tropece em toolchain.
 
 - Monorepo: pnpm workspaces + Turborepo, `nodeLinker: hoisted`, singletons de
-  React/React Native fixados, `watchFolders` limitado, `.watchmanconfig`
+  React/React Native fixados, Metro com autodetecção do monorepo e `.watchmanconfig`
 - `packages/config`: tsconfig base, eslint, **`eslint-plugin-boundaries` falhando o CI**
 - `packages/design-tokens`: escala de cor/espaço/tipografia, com **contraste verificado
   programaticamente** (D12)
+- `packages/react-client`: módulo headless criado por factory, compartilhando transporte,
+  cache, estados discriminados e hooks sem compartilhar UI
 - Postgres + Drizzle + primeira migração; `apps/api` com NestJS e `/health`
 - `apps/web` (Vite) e `apps/mobile` (Expo Router) rodando e consumindo `/health`
 - CI: lint, typecheck, testes, com filtro de afetados
@@ -59,7 +61,8 @@ com a query tentando burlar o filtro de propósito.
 - Resolução de permissão efetiva por requisição
 - Proteções contra escalonamento (D9), incluindo `institution_admin` **sem**
   `observation.read`
-- `usePermission()` em `packages/core`, consumido pelos dois apps
+- `usePermission()` em `packages/react-client`, consumido pelos dois apps; a resolução e
+  os tipos de permissão permanecem puros em `packages/core`
 
 **Pronto quando:** a matriz papel × escopo está testada, e um admin de instituição
 comprovadamente **não consegue** conceder acesso a observações que ele mesmo não possui.

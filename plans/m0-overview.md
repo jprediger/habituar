@@ -177,14 +177,14 @@ Depende dos passos 16 e 20. Plano autocontido em [`m0-mobile.md`](m0-mobile.md).
 | # | Commit |
 |---|---|
 | 39 | ✅ `ci(config): verify expo monorepo health and build every workspace` |
-| 41 | ✅ `docs(docs): correct the metro monorepo guidance in the implementation plan` |
+| 41 | ✅ `docs(docs): fix the metro monorepo guidance in the implementation plan` |
 | 42 | ✅ `docs(docs): document how to run the web and mobile clients` |
 
 > O passo 40 (registrar o passe manual de acessibilidade num arquivo) saiu do marco por
 > decisão: a limitação de VoiceOver continua registrada aqui e em `ACCESSIBILITY.md`, que
 > é onde ela bloqueia a distribuição. A numeração preserva o buraco de propósito.
 
-> As mensagens dos passos 1, 29, 39 e 41 foram corrigidas: o `commitlint.config.js` do
+> As mensagens dos passos 1, 29, 39, 41 e 42 foram corrigidas: o `commitlint.config.js` do
 > repositório define `scope-empty: never` e um `scope-enum` fechado, então `chore(repo):`,
 > `ci:` e `docs:` sem escopo falham no hook `commit-msg`.
 

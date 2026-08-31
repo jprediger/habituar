@@ -17,6 +17,15 @@
   reafirma a linha é ruído bilíngue. Comente decisão, restrição, armadilha — não fluxo.
 - **Texto de usuário sempre em pt-BR e sempre via i18n.** Literal de UI dentro de
   componente é erro. Mensagem de log e de erro interno é inglês.
+- **Toda classe e função exportada carrega um docblock de responsabilidade.** Uma ou duas
+  linhas respondendo *de que isto é dono* e, quando existe, *o que isto recusa*. Não é o
+  "o quê" que a regra acima proíbe: responsabilidade e fronteira não estão no corpo — o
+  leitor as reconstruiria lendo os call sites.
+- **Teste da tesoura.** Se apagar o docblock e um leitor competente recupera a mesma
+  informação em cinco segundos olhando a declaração, ele é ruído e sai.
+- **Descreve responsabilidade, não comportamento.** "Único caminho até o banco" sobrevive a
+  refatoração; "abre uma transação e chama `set_config`" envelhece na primeira mudança.
+- Sem `@param`, sem `@returns`, sem repetir a assinatura. Nada em membro privado.
 
 ## Estrutura
 
@@ -185,3 +194,4 @@ verdade — e o container facilita justamente essas coisas, então a vigilância
 | `kebab-case` em nomes de arquivo, formato e escopo de commit | lint local de nome + commitlint |
 | Contrato implementado por inteiro, retorno dentro do schema | `@ts-rest/nest` em compilação |
 | Sufixo de papel Nest, fatia vertical, porta vs. indireção, teste de comportamento, idioma do comentário | *review* |
+| Docblock de responsabilidade em classe e função exportada | *review* |

@@ -186,8 +186,9 @@ Versões exatas; `save-exact=true` já está ativo.
 ```
 
 `typescript` sai do `catalog:` de propósito: o `latest` do npm hoje é 7.x, mas o repo está
-em 5.9.3, e versão de TS divergente entre workspaces quebra o `projectService` do
-typescript-eslint. Migração de TS é PR próprio, de escopo `deps`.
+em 6.0.3 — o teto do `typescript-eslint`, que declara peer `<6.1.0` — e versão de TS
+divergente entre workspaces quebra o `projectService` dele. Migração de TS é PR próprio,
+de escopo `deps`.
 
 **`nestjs-pino` não entra.** Peer trava em `@nestjs/common ^11` e não publica desde
 2026-03-13. O log correlacionado usa `pino` e `pino-http` diretos, montados no mesmo

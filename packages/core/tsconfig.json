@@ -1,7 +1,9 @@
 {
   "extends": "@habituar/config/tsconfig/base.json",
   "_comment": "Resolução de bundler porque o fonte de core nunca é consumido cru: o tsup empacota cada entrypoint antes de qualquer app enxergar o pacote.",
+  "_ignoreDeprecations_comment": "O tsup injeta `baseUrl` no passo de dts (`baseUrl: compilerOptions.baseUrl || '.'`), e o TypeScript 6 recusa a opção sem esta liberação. Sai quando o tsup parar de injetá-la — ou quando o dts deixar de sair por ele.",
   "compilerOptions": {
+    "ignoreDeprecations": "6.0",
     "module": "ESNext",
     "moduleResolution": "bundler",
     "noEmit": true,

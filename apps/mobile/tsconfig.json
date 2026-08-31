@@ -1,0 +1,10 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "extends": "@habituar/config/tsconfig/mobile.json",
+  "_comment": "Lista fechada de tipos ambientes: sem ela o TypeScript carrega todo @types visível no node_modules hoisteado, e um @types/jsdom transitivo traz a lib DOM de volta — anulando a garantia do preset mobile de que primitivo de web não compila aqui.",
+  "compilerOptions": {
+    "resolveJsonModule": true,
+    "types": ["jest", "node"]
+  },
+  "include": ["src", "jest.setup.ts", ".expo/types/**/*.ts", "expo-env.d.ts"]
+}

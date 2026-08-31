@@ -1,6 +1,51 @@
 {
   "name": "@habituar/mobile",
-  "version": "0.0.0",
+  "main": "expo-router/entry",
+  "version": "1.0.0",
   "private": true,
-  "type": "module"
+  "type": "module",
+  "scripts": {
+    "start": "expo start",
+    "reset-project": "node ./scripts/reset-project.js",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "web": "expo start --web",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "jest",
+    "expo:doctor": "expo-doctor"
+  },
+  "dependencies": {
+    "@habituar/core": "workspace:*",
+    "@habituar/design-tokens": "workspace:*",
+    "@habituar/react-client": "workspace:*",
+    "expo": "~57.0.18",
+    "expo-constants": "~57.0.16",
+    "expo-linking": "~57.0.8",
+    "expo-router": "~57.0.17",
+    "expo-splash-screen": "~57.0.8",
+    "expo-status-bar": "~57.0.1",
+    "i18next": "26.4.0",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "react-i18next": "17.0.12",
+    "react-native": "catalog:",
+    "react-native-safe-area-context": "~5.7.0",
+    "react-native-screens": "~4.26.0",
+    "react-native-web": "~0.21.0"
+  },
+  "devDependencies": {
+    "@habituar/config": "workspace:*",
+    "@testing-library/react-native": "13.3.3",
+    "@types/jest": "29.5.14",
+    "@types/node": "22.20.1",
+    "@types/react": "catalog:",
+    "babel-preset-expo": "~57.0.9",
+    "eslint": "10.9.1",
+    "expo-doctor": "1.20.4",
+    "jest": "29.7.0",
+    "jest-expo": "~57.0.5",
+    "react-test-renderer": "19.2.3",
+    "typescript": "6.0.3"
+  }
 }

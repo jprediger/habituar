@@ -31,6 +31,9 @@ versionamento segue [SemVer](https://semver.org/lang/pt-BR/).
   sessão; a tabela-sonda do M0 força RLS e falha fechada sem contexto de tenant.
 - `[api]` O ambiente local ganha PostgreSQL 18 com roles separados para migração e
   aplicação; o processo da API usa um role não-dono desde a primeira conexão.
+- `[core]` O catálogo fechado de falhas é declarado uma vez no contrato compartilhado
+  (`.errors()`) e herdado por toda procedure; código de falha fora do catálogo é erro de
+  compilação, não resposta errada em produção.
 - `[api]` A borda HTTP traduz o catálogo fechado de falhas em status distintos e oculta
   detalhes de exceções inesperadas atrás de um `correlationId`.
 - `[core]` Falhas esperadas passam a usar um catálogo fechado de códigos e uma união de

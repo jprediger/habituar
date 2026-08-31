@@ -11,6 +11,13 @@ export type { TenantContext }
 
 type Transaction = NodePgTransaction<typeof schema, ExtractTablesWithRelations<typeof schema>>
 
+// Uma transação por requisição: uma pendurada não pode segurar conexão nem bloquear
+// vacuum indefinidamente. Valores pequenos de propósito neste marco sem carga real.
+const POOL_MAX_CONNECTIONS = 10
+const POOL_CONNECTION_TIMEOUT_MS = 5_000
+const POOL_STATEMENT_TIMEOUT_MS = 5_000
+const POOL_IDLE_IN_TRANSACTION_TIMEOUT_MS = 5_000
+
 /**
  * Único caminho até o banco. Toda leitura e escrita passa por uma transação com
  * instituição, ator e sessão instalados via `set_config` — nunca por uma conexão nua.
@@ -24,7 +31,13 @@ export class Database implements OnApplicationShutdown {
     configService: ConfigService<Environment, true>,
     private readonly requestContext: RequestContext,
   ) {
-    this.pool = new Pool({ connectionString: configService.get('DATABASE_URL', { infer: true }) })
+    this.pool = new Pool({
+      connectionString: configService.get('DATABASE_URL', { infer: true }),
+      max: POOL_MAX_CONNECTIONS,
+      connectionTimeoutMillis: POOL_CONNECTION_TIMEOUT_MS,
+      statement_timeout: POOL_STATEMENT_TIMEOUT_MS,
+      idle_in_transaction_session_timeout: POOL_IDLE_IN_TRANSACTION_TIMEOUT_MS,
+    })
     this.connection = drizzle(this.pool, { schema })
   }
 

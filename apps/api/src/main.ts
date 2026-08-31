@@ -3,12 +3,14 @@ import { NestFactory } from '@nestjs/core'
 import { AppModule } from './app.module.js'
 import { Environment } from './environment/environment.schema.js'
 import { AppLogger } from './platform/app-logger.js'
+import { configureHttpPosture } from './platform/http-posture.js'
 
 async function bootstrap(): Promise<void> {
   // `bufferLogs` segura o log do boot até trocarmos pelo `AppLogger`, que só existe
   // depois que o container resolve — sem isto, o boot loga no formato default do Nest.
   const app = await NestFactory.create(AppModule, { bufferLogs: true })
   app.useLogger(app.get(AppLogger))
+  configureHttpPosture(app)
   // Sem isto, o hook de desligamento do pool (`Database.onApplicationShutdown`) nunca
   // roda: o Nest só ouve SIGTERM/SIGINT quando os hooks são habilitados explicitamente.
   app.enableShutdownHooks()

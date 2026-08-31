@@ -47,11 +47,14 @@ Não existe equivalente automatizado do axe. A verificação é parcialmente man
 
 - `accessibilityRole`, `accessibilityLabel`, `accessibilityHint` e `accessibilityState`
   em todo elemento interativo.
-- `AccessibilityInfo` consultado para movimento reduzido e leitor de tela ativo.
+- Quando existir movimento ou comportamento condicionado ao leitor de tela,
+  `AccessibilityInfo` consulta a preferência correspondente. Sem comportamento
+  consumidor, não se adiciona hook preventivo.
 - Suporte a fonte ampliada do sistema sem quebra de layout e sem corte de texto.
 - Alvo de toque mínimo de 44×44 pt.
-- **Passe manual de VoiceOver e TalkBack** a cada marco, registrado (data, versão,
-  telas percorridas, achados). Passe não registrado não aconteceu.
+- **Passe manual nas tecnologias assistivas disponíveis** a cada marco, registrado
+  (data, versão, plataforma, telas percorridas, achados). Plataforma indisponível é
+  registrada como não verificada e vira bloqueante antes da primeira distribuição nela.
 
 ---
 
@@ -106,7 +109,7 @@ Estas são específicas deste produto e valem em ambas as plataformas.
 | Contraste dos tokens | teste unitário sobre o pacote de design tokens |
 | Navegação por teclado | teste de integração dos fluxos principais |
 | Rótulos e papéis no mobile | lint de props de acessibilidade + passe manual |
-| VoiceOver / TalkBack | passe manual por marco, registrado |
+| VoiceOver / TalkBack | passe manual por marco nas plataformas disponíveis; pendências registradas antes da distribuição |
 | Regras cognitivas | *review* — checklist do PR |
 
 Cerca de 30% das barreiras da WCAG são detectáveis por ferramenta automática. O CI verde
@@ -120,7 +123,7 @@ Toda tela nova responde sim a todas antes do merge:
 - [ ] Leitor de tela anuncia propósito, estado e mudanças relevantes
 - [ ] Contraste dentro do alvo, e nenhuma informação depende só de cor
 - [ ] Alvos de toque no tamanho mínimo
-- [ ] Funciona com fonte ampliada e com movimento reduzido
+- [ ] Funciona com fonte ampliada e, quando houver movimento, respeita a preferência de reduzi-lo
 - [ ] Toda ação destrutiva tem confirmação e desfazer
 - [ ] Nenhum texto de usuário hardcoded — tudo via i18n, em pt-BR simples
 - [ ] Nada se move, avança ou expira sozinho

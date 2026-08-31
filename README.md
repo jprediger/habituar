@@ -58,10 +58,10 @@ deploy estão fora do M0, com o motivo registrado na seção *Fora do M0* de
 [`plans/m0-api.md`](plans/m0-api.md).
 
 ```bash
-cp apps/api/.env.example apps/api/.env   # o .env não é versionado
-pnpm --filter @habituar/api db:up        # sobe o postgres e espera ficar saudável
-pnpm --filter @habituar/api db:migrate   # aplica as migrações pendentes
-pnpm --filter @habituar/api dev          # nest em watch, recompilando com swc
+cp apps/api/.env.example apps/api/.env     # o .env não é versionado
+pnpm --filter @habituar/api db:up          # sobe o postgres e espera ficar saudável
+pnpm --filter @habituar/api db:migrate     # aplica as migrações pendentes
+pnpm turbo run dev --filter @habituar/api  # nest em watch, recompilando com swc
 ```
 
 O `.env.example` traz valores que só servem a desenvolvimento. Duas variáveis merecem
@@ -72,8 +72,11 @@ atenção porque não são a mesma credencial por desenho:
 | `DATABASE_URL` | Role `habituar_app`, **não** dono das tabelas. É por onde a API fala com o banco, e é o que faz a RLS valer |
 | `DATABASE_MIGRATION_URL` | Role `habituar_owner`, dono das tabelas. Usado só pelo `db:migrate` |
 
-Se a porta 3000 já estiver ocupada na sua máquina, suba com `PORT=3100 pnpm --filter
-@habituar/api dev` — a porta vem de `PORT`, e a variável de ambiente vence o `.env`.
+O `dev` passa pelo Turborepo pelo mesmo motivo dos clientes: `apps/api` importa o contrato
+de `@habituar/core` pelo `dist`, que precisa existir antes.
+
+Se a porta 3000 já estiver ocupada na sua máquina, suba com `PORT=3100 pnpm turbo run dev
+--filter @habituar/api` — a porta vem de `PORT`, e a variável de ambiente vence o `.env`.
 
 ### Verificando
 
@@ -106,25 +109,33 @@ docker compose down -v && pnpm --filter @habituar/api db:up
 Os testes não usam esse container: `pnpm test` sobe um PostgreSQL próprio e descartável
 por testcontainers, então a suíte não depende do banco de desenvolvimento nem o suja.
 
-## Rodando o cliente web
+## Rodando os clientes
+
+Os dois apps consomem `@habituar/react-client` e `@habituar/design-tokens` pelo `dist`,
+não pelo fonte. Por isso o comando passa pelo Turborepo, que constrói os pacotes
+compartilhados antes de subir o app — `pnpm --filter <app> dev` pularia esse passo e
+falharia num checkout limpo:
 
 ```bash
-pnpm --filter @habituar/web dev   # vite em http://localhost:5173
+pnpm turbo run dev --filter @habituar/web      # vite em http://localhost:5173
+pnpm turbo run dev --filter @habituar/mobile   # metro, para abrir no Expo Go
 ```
+
+### Web
 
 O bundle nunca conhece o endereço da API: ele chama `/v1` na própria origem. Em
 desenvolvimento, o proxy do Vite encaminha `/v1` para `http://localhost:3000`, então a API
 precisa estar no ar para a tela sair de *carregando*. Em homologação e produção a mesma
 origem pública serve os dois, e o proxy deixa de existir.
 
-## Rodando o app mobile
+### Mobile
+
+O app exige uma origem explícita antes de subir, porque app nativo não tem origem própria
+para herdar:
 
 ```bash
 cp apps/mobile/.env.example apps/mobile/.env   # o .env não é versionado
-pnpm --filter @habituar/mobile start           # abre no Expo Go
 ```
-
-Aqui a origem é explícita, porque app nativo não tem origem própria para herdar:
 
 | Ambiente | `EXPO_PUBLIC_API_ORIGIN` |
 |---|---|

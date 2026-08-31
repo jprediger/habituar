@@ -109,9 +109,7 @@ que é onde ela bloqueia a distribuição.
 ## Verificação automatizada
 
 ```bash
-pnpm --filter @habituar/mobile lint
-pnpm --filter @habituar/mobile typecheck
-pnpm --filter @habituar/mobile test
+pnpm turbo run lint typecheck test --filter @habituar/mobile
 pnpm --filter @habituar/mobile expo:doctor
 ```
 

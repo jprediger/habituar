@@ -100,10 +100,7 @@ no M1, quando existir um fluxo real de autenticação.
 ## Verificação
 
 ```bash
-pnpm --filter @habituar/web lint
-pnpm --filter @habituar/web typecheck
-pnpm --filter @habituar/web test
-pnpm --filter @habituar/web build
+pnpm turbo run lint typecheck test build --filter @habituar/web
 ```
 
 ## Pronto quando

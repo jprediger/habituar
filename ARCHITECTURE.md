@@ -53,13 +53,29 @@ vezes em duas APIs distintas (ver D12). Este é o custo mais alto de toda a arqu
 
 Em vez de uma camada de UI única via React Native Web, o projeto separa:
 
-- **Lógica de negócio (compartilhada):** hooks, chamadas de API, validação, tipos, estado.
-  Sem nenhuma referência visual — nada de `View`, nada de `div`.
+- **Domínio e lógica dos clientes (compartilhados):** validação e tipos permanecem puros;
+  hooks, chamadas de API e estado ficam num módulo React headless. Nenhum deles contém
+  referência visual — nada de `View`, nada de `div`.
 - **UI (por plataforma):** cada plataforma monta sua própria árvore de componentes,
   idiomática ao seu ambiente — gestos e navegação nativa no mobile; HTML semântico,
   grids, hover e foco de teclado no web.
 
 Consistência visual vem de **design tokens**, não de componentes compartilhados.
+
+A lógica compartilhada dos clientes ocupa um módulo próprio, `@habituar/react-client`.
+Ele é **headless**: esconde o cliente oRPC, TanStack Query, cache, política de repetição e
+conversão para estados discriminados, mas não conhece DOM, React Native, navegação,
+componentes ou variáveis de ambiente. Cada app cria uma instância com uma factory e monta
+o `Provider` retornado; não existe singleton global configurável.
+
+`@habituar/core` permanece puro e utilizável pela API: contratos, schemas, falhas e tipos.
+Separar hooks apenas por subpath não bastaria, porque o manifesto, o build e os testes do
+pacote ainda dependeriam de React. Um pacote `api-client` adicional também fica fora por
+ora: sem consumidor não React, seria uma seam hipotética sobre um único transporte.
+
+O `react-client` passa no *deletion test*: removê-lo espalharia cliente HTTP, query keys,
+cache, transições de estado e políticas de falha por web e mobile. Sua interface pequena
+compra comportamento compartilhado real; não é apenas organização de arquivos.
 
 **Por quê:** React Native Web sempre cobra compromissos de CSS/layout (flex-only, grids
 complexos, hover, nuances de desktop) — e esses compromissos doem exatamente nas telas
@@ -109,9 +125,9 @@ Somam-se três encaixes concretos com decisões já tomadas:
 **A objeção antiga caiu.** Este registro dizia que o NestJS "estruturalmente atrapalha"
 o D4, porque sua validação idiomática são DTOs com `class-validator` em vez de zod. Isso
 continua verdade **do caminho idiomático** — e por isso ele não é usado aqui. O contrato
-zod vive em `packages/core` e chega ao Nest por `@ts-rest/nest` e `nestjs-zod`. DTO com
-`class-validator` é proibido: seria uma segunda definição de validade, exatamente o que o
-D4 existe para evitar.
+zod vive em `packages/core` e chega ao Nest pelo contrato oRPC. DTO com
+`class-validator` ou um segundo pipe de validação é proibido: seria outra definição de
+validade, exatamente o que o D4 existe para evitar.
 
 **Por que Drizzle e não Prisma:** o Prisma 7 removeu o motor em Rust (cliente puro TS,
 bundle de ~14MB para ~1.6MB, ~3x mais rápido) — os argumentos antigos contra ele estão
@@ -134,17 +150,18 @@ esse job para um worker em fila, que pode ser escrito em Go. O monorepo não imp
 | **Hapi** | Modelo de autenticação bom (`auth.default` torna *negar por padrão* configuração), mas os tipos vêm do DefinitelyTyped e **não fluem da validação para o handler**: usar o corpo validado exige `as` ou um tipo escrito à mão espelhando o schema. O Nest entrega a mesma garantia de autorização sem esse custo. |
 | **tRPC** | Camada de contrato, não framework. Abandona semântica REST, que o D15 e integrações futuras exigem. |
 
-### Contrato da API: ts-rest em `packages/core`
+### Contrato da API: oRPC em `packages/core`
 
 O contrato — rotas, métodos, schemas de request e response — é **declarado em
-`packages/core`**, em zod. `apps/api` o implementa via `@ts-rest/nest`; os dois apps o
-consomem como cliente tipado.
+`packages/core`**, em zod. `apps/api` o implementa via `@orpc/nest`; o
+`@habituar/react-client` o consome pelo `OpenAPILink`.
 
 ```
 packages/core/contract/
-        ├──► apps/api      implementa (verificado em compilação)
-        ├──► apps/web      cliente tipado
-        └──► apps/mobile   cliente tipado
+        ├──► apps/api                 implementa (verificado em compilação)
+        └──► packages/react-client    consome pelo OpenAPILink
+                    ├──► apps/web
+                    └──► apps/mobile
 ```
 
 Três propriedades, e todas foram exigência de alguma decisão anterior:
@@ -176,7 +193,8 @@ habituar/
 │   ├── web/             # Vite + React + Tailwind + shadcn/Radix
 │   └── api/             # NestJS + Drizzle
 ├── packages/
-│   ├── core/            # hooks, schemas zod, tipos, client de API — sem UI
+│   ├── core/            # contratos, schemas zod, falhas e tipos — sem framework
+│   ├── react-client/    # transporte, cache, estados e hooks React — sem UI
 │   ├── design-tokens/   # cores, espaçamento, tipografia (não componentes)
 │   └── config/          # eslint, tsconfig, boundaries
 ├── turbo.json
@@ -202,16 +220,20 @@ fronteiras ainda estão se movendo**. Aqui, ambas verdadeiras.
   duplicados quebram build ou runtime. Fixar singletons.
 - pnpm com linker isolado só é suportado a partir do SDK 54; em caso de problema, usar
   `nodeLinker: hoisted` no `pnpm-workspace.yaml`.
-- `watchFolders` deve ser limitado à raiz do workspace, com `.watchmanconfig`.
+- Desde o SDK 52, Metro detecta o monorepo; não configurar `watchFolders` ou caminhos de
+  resolução manualmente. Manter `.watchmanconfig` na raiz observada.
 - Symlinks do pnpm quebram no Windows sem Developer Mode — **não afeta este projeto**,
   que roda em WSL2 no filesystem Linux (`/home/...`, não `/mnt/c`).
 
 ### Regras de organização — impostas por lint, não por documentação
 
-- `packages/core` **não pode** importar `react-native` nem tocar no DOM.
+- `packages/core` **não pode** importar React, `react-native` nem tocar no DOM.
 - `packages/core` **não importa de `apps/*`**. Sem exceção: o contrato mora em `core`, e é
   a API que depende dele (D4).
-- `apps/*` consomem `packages/core`; cada app monta sua própria árvore visual.
+- `packages/react-client` depende de `core`, pode importar React e TanStack Query, mas não
+  importa DOM, React Native, Expo ou `apps/*`.
+- `apps/web` e `apps/mobile` consomem `react-client`; cada app monta sua própria árvore
+  visual e resolve sua própria configuração de ambiente.
 - Código específico de plataforma dentro de pacote compartilhado usa sufixos
   `.native.ts` / `.web.ts`, isolado o quanto antes.
 
@@ -453,9 +475,14 @@ camada de cache paralela.
 - **API:** container Docker (`turbo prune` para imagem enxuta).
 - **Postgres:** gerenciado, **em região brasileira** quando possível — escolha de região é
   controle de localização de dado, não prova de conformidade, mas simplifica a conversa.
-- **Web:** SPA estática em CDN.
+- **Web:** SPA estática em CDN. Cada ambiente expõe uma única origem pública; a CDN serve
+  a SPA e encaminha `/v1/*` para a API. O endereço interno do container não chega ao
+  bundle web.
 - **Mobile:** EAS Build + **EAS Update** — updates OTA de JS contornam a latência de
   revisão de loja para correções que não tocam código nativo.
+- **Ambientes:** local, homologação e produção usam origens, bancos e segredos separados.
+  O fornecedor de infraestrutura é deliberadamente uma porta de mão dupla e permanece
+  indefinido até o primeiro deploy.
 
 ---
 

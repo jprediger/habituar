@@ -6,7 +6,7 @@ export default {
     'scope-enum': [
       2,
       'always',
-      ['api', 'web', 'mobile', 'core', 'tokens', 'config', 'deps', 'release', 'docs'],
+      ['api', 'web', 'mobile', 'core', 'tokens', 'react-client', 'config', 'deps', 'release', 'docs'],
     ],
     'subject-case': [2, 'never', ['sentence-case', 'start-case', 'pascal-case', 'upper-case']],
     'subject-empty': [2, 'never'],

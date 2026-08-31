@@ -2,6 +2,21 @@ packages:
   - apps/*
   - packages/*
 
+nodeLinker: hoisted
+engineStrict: true
+saveExact: true
+
 onlyBuiltDependencies:
   - "@swc/core"
   - esbuild
+
+catalog:
+  react: 19.2.3
+  react-dom: 19.2.3
+  react-native: 0.86.3
+  "@types/react": 19.2.2
+
+overrides:
+  react: 19.2.3
+  react-dom: 19.2.3
+  react-native: 0.86.3

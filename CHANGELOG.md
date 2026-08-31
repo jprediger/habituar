@@ -37,6 +37,8 @@ versionamento segue [SemVer](https://semver.org/lang/pt-BR/).
 - `[api]` `Database.withTenant` lê a instituição, o ator e a sessão do contexto da
   requisição em vez de recebê-los por parâmetro; passar um tenant arbitrário exige o
   método `withTenantOutsideRequest`, reservado a jobs e workers fora de uma requisição.
+- `[api]` Um único logger (`pino`) cobre boot e requisição, com `LOG_LEVEL` realmente
+  aplicado e destino sobreponível por teste.
 - `[core]` Falhas esperadas passam a usar um catálogo fechado de códigos e uma união de
   resultado que separa sucesso de falha sem lançar exceções.
 - `[core]` Uniões fechadas ganham uma proteção exaustiva que também interrompe payloads
@@ -80,3 +82,7 @@ versionamento segue [SemVer](https://semver.org/lang/pt-BR/).
   ator e sessão entram no M1, quando existirem os identificadores concretos.
 - `[api]` A tabela `tenant_probe` é uma prova descartável de RLS e será removida na
   primeira migração do M1, antes de qualquer release ou dado de produção.
+
+### Segurança
+- `[api]` `authorization` e `cookie` nunca chegam ao log: são removidos na origem, dentro
+  do próprio processo, e não apenas mascarados no coletor.

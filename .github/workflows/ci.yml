@@ -53,6 +53,16 @@ jobs:
           TESTCONTAINERS_RYUK_DISABLED: "true"
         run: pnpm check
 
+      # Roda sempre, inclusive em pull request: o filtro de afetados não alcança um
+      # desalinhamento entre a versão instalada e a que o SDK do Expo espera, e é
+      # justamente esse desalinhamento que quebra o Metro em vez do lint.
+      - name: Verify expo monorepo health
+        run: pnpm --filter @habituar/mobile expo:doctor
+
+      # `pnpm check` não constrói os apps, então nada exercitava o bundle de produção.
+      - name: Build every workspace
+        run: pnpm build
+
       - name: Validate pull request commits
         if: github.event_name == 'pull_request'
         env:

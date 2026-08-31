@@ -12,5 +12,8 @@ export default defineConfig({
     // Nest e pg não gostam de threads compartilhando handles.
     pool: 'forks',
     hookTimeout: 120_000,
+    // O primeiro teste de cada arquivo paga o custo de subir um Nest real a frio; a
+    // suíte inteira sobe dezenas de apps reais, então o default de 5s é curto demais.
+    testTimeout: 20_000,
   },
 })

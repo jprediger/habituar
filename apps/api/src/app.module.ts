@@ -5,10 +5,12 @@ import { ORPCModule } from '@orpc/nest'
 import { AuthenticationGuard } from './authorization/authentication.guard.js'
 import { DatabaseModule } from './database/database.module.js'
 import { environmentSchema } from './environment/environment.schema.js'
+import { ErrorsModule } from './errors/errors.module.js'
 import { UnhandledExceptionFilter } from './errors/unhandled-exception.filter.js'
 import { HealthModule } from './health/health.module.js'
 import { PlatformModule } from './platform/platform.module.js'
 
+/** Composição raiz: liga cada fatia, na ordem em que a borda precisa vê-las. */
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -21,6 +23,8 @@ import { PlatformModule } from './platform/platform.module.js'
     PlatformModule,
     DatabaseModule,
     HealthModule,
+    // Último de propósito: o wildcard de 404 só deve capturar o que sobrou.
+    ErrorsModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: AuthenticationGuard },

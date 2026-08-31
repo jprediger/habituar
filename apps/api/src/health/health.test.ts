@@ -1,4 +1,5 @@
 import 'reflect-metadata'
+import { FAILURE_ERROR_MAP } from '@habituar/core/failure'
 import { healthStatusSchema } from '@habituar/core/health/schema'
 import { NestFactory } from '@nestjs/core'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -37,13 +38,20 @@ describe('rota de saúde', () => {
     }
   })
 
-  it('não responde no caminho sem a versão da api', async () => {
+  it('não responde no caminho sem a versão da api, e usa o mesmo envelope de falha', async () => {
     const api = await startApi()
 
     try {
       const response = await fetch(`${api.baseUrl}/health`)
+      const body: unknown = await response.json()
 
       expect(response.status).toBe(404)
+      expect(body).toEqual({
+        defined: true,
+        code: 'not_found',
+        status: 404,
+        message: FAILURE_ERROR_MAP.not_found.message,
+      })
     } finally {
       await api.close()
     }

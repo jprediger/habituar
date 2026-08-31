@@ -34,8 +34,6 @@ versionamento segue [SemVer](https://semver.org/lang/pt-BR/).
 - `[core]` O catálogo fechado de falhas é declarado uma vez no contrato compartilhado
   (`.errors()`) e herdado por toda procedure; código de falha fora do catálogo é erro de
   compilação, não resposta errada em produção.
-- `[api]` A borda HTTP traduz o catálogo fechado de falhas em status distintos e oculta
-  detalhes de exceções inesperadas atrás de um `correlationId`.
 - `[core]` Falhas esperadas passam a usar um catálogo fechado de códigos e uma união de
   resultado que separa sucesso de falha sem lançar exceções.
 - `[core]` Uniões fechadas ganham uma proteção exaustiva que também interrompe payloads
@@ -70,6 +68,11 @@ versionamento segue [SemVer](https://semver.org/lang/pt-BR/).
   continuam fora.
 
 ### Alterado
+- `[api]` A borda HTTP responde toda falha — declarada no contrato, rota negada pelo guard
+  ou rota inexistente — com o mesmo envelope de erro do oRPC; só a exceção inesperada foge
+  do catálogo, e continua oculta atrás de um `correlationId`. Antes, só a exceção não
+  tratada respeitava o catálogo fechado; guard e rota inexistente respondiam com o corpo
+  default do Nest.
 - `[api]` `TenantContext` usa strings cruas apenas no M0; os branded types de instituição,
   ator e sessão entram no M1, quando existirem os identificadores concretos.
 - `[api]` A tabela `tenant_probe` é uma prova descartável de RLS e será removida na

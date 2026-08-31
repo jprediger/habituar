@@ -1,4 +1,5 @@
 import 'reflect-metadata'
+import { FAILURE_ERROR_MAP } from '@habituar/core/failure'
 import { Controller, Get, Module } from '@nestjs/common'
 import { NestFactory } from '@nestjs/core'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -31,8 +32,15 @@ describe('authentication guard', () => {
 
     try {
       const response = await fetch(`${await app.getUrl()}/private-test`)
+      const body: unknown = await response.json()
 
       expect(response.status).toBe(401)
+      expect(body).toEqual({
+        defined: true,
+        code: 'unauthenticated',
+        status: 401,
+        message: FAILURE_ERROR_MAP.unauthenticated.message,
+      })
     } finally {
       await app.close()
     }

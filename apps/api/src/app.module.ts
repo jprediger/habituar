@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
-import { APP_FILTER, APP_GUARD } from '@nestjs/core'
+import { APP_FILTER } from '@nestjs/core'
 import { ORPCModule } from '@orpc/nest'
-import { AuthenticationGuard } from './authorization/authentication.guard.js'
+import { AuthorizationModule } from './authorization/authorization.module.js'
 import { DatabaseModule } from './database/database.module.js'
 import { environmentSchema } from './environment/environment.schema.js'
 import { ErrorsModule } from './errors/errors.module.js'
@@ -22,13 +22,11 @@ import { PlatformModule } from './platform/platform.module.js'
     ORPCModule.forRoot({}),
     PlatformModule,
     DatabaseModule,
+    AuthorizationModule,
     HealthModule,
     // Último de propósito: o wildcard de 404 só deve capturar o que sobrou.
     ErrorsModule,
   ],
-  providers: [
-    { provide: APP_GUARD, useClass: AuthenticationGuard },
-    { provide: APP_FILTER, useClass: UnhandledExceptionFilter },
-  ],
+  providers: [{ provide: APP_FILTER, useClass: UnhandledExceptionFilter }],
 })
 export class AppModule {}

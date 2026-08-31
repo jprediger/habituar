@@ -83,6 +83,11 @@ versionamento segue [SemVer](https://semver.org/lang/pt-BR/).
 - `[api]` A tabela `tenant_probe` é uma prova descartável de RLS e será removida na
   primeira migração do M1, antes de qualquer release ou dado de produção.
 
+### Corrigido
+- `[api]` SIGTERM agora fecha o pool de conexões antes do processo sair. O hook já
+  existia mas nunca era acionado; reinício e deploy deixavam conexão pendurada até o
+  timeout do Postgres.
+
 ### Segurança
 - `[api]` `authorization` e `cookie` nunca chegam ao log: são removidos na origem, dentro
   do próprio processo, e não apenas mascarados no coletor.

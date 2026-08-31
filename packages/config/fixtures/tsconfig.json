@@ -1,5 +1,6 @@
 {
   "extends": "../tsconfig/base.json",
-  "compilerOptions": { "noEmit": true },
+  "_comment": "Sem tipos ambientes: a prova é que a base não carrega a lib DOM, e um @types hoisteado (jsdom) a traria de volta — a fixture passaria por engano.",
+  "compilerOptions": { "noEmit": true, "types": [] },
   "include": ["forbidden/dom-in-core.ts"]
 }

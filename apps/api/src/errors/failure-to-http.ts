@@ -1,23 +1,28 @@
 import { assertNever } from '@habituar/core/assert-never'
-import { Failure, FailureCode } from '@habituar/core/failure'
+import { FAILURE_ERROR_MAP, Failure } from '@habituar/core/failure'
+import { ORPCErrorConstructorMap } from '@orpc/server'
 
-type HttpFailureResponse = {
-  readonly status: number
-  readonly body: { readonly code: FailureCode }
-}
+type FailureErrors = ORPCErrorConstructorMap<typeof FAILURE_ERROR_MAP>
 
-export function mapFailureToHttpResponse(failure: Failure): HttpFailureResponse {
+/**
+ * Único tradutor de `Outcome.failure` para o erro declarado do contrato. Lança sempre —
+ * o `throw` é mecanismo de transporte do framework, não uma exceção de domínio; a regra
+ * "falha esperada não é exceção" continua valendo dentro do domínio, que devolve `Outcome`.
+ * Nunca repassa `failure.message`: o texto que sai pela borda vem só da declaração no
+ * contrato, para que dado da requisição não vire canal de vazamento.
+ */
+export function mapFailureToHttpResponse(errors: FailureErrors, failure: Failure): never {
   switch (failure.code) {
     case 'invalid_input':
-      return { status: 422, body: { code: failure.code } }
+      throw errors.invalid_input()
     case 'unauthenticated':
-      return { status: 401, body: { code: failure.code } }
+      throw errors.unauthenticated()
     case 'forbidden':
-      return { status: 403, body: { code: failure.code } }
+      throw errors.forbidden()
     case 'not_found':
-      return { status: 404, body: { code: failure.code } }
+      throw errors.not_found()
     case 'conflict':
-      return { status: 409, body: { code: failure.code } }
+      throw errors.conflict()
     default:
       return assertNever(failure.code)
   }

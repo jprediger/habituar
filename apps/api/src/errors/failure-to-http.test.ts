@@ -1,62 +1,36 @@
-import 'reflect-metadata'
-import { Controller, Get, Module } from '@nestjs/common'
-import { NestFactory } from '@nestjs/core'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { PublicRoute } from '../authorization/public-route.decorator.js'
+import { FAILURE_CODES, FAILURE_ERROR_MAP, Failure } from '@habituar/core/failure'
+import { ORPCError } from '@orpc/client'
+import { createORPCErrorConstructorMap } from '@orpc/server'
+import { describe, expect, it } from 'vitest'
 import { mapFailureToHttpResponse } from './failure-to-http.js'
 
-@Controller('unhandled-error-test')
-class UnhandledErrorTestController {
-  @Get()
-  @PublicRoute()
-  throwUnexpectedError(): never {
-    throw new Error('sensitive infrastructure detail')
-  }
-}
+describe('tradução de outcome para o erro declarado do contrato', () => {
+  const errors = createORPCErrorConstructorMap(FAILURE_ERROR_MAP)
 
-describe('tradução de falhas na borda http', () => {
-  beforeEach(() => {
-    vi.stubEnv('NODE_ENV', 'test')
-    vi.stubEnv('APP_VERSION', '0.0.0-test')
-    vi.stubEnv('DATABASE_URL', 'postgresql://habituar_app:secret@localhost:5433/habituar')
-  })
-
-  afterEach(() => vi.unstubAllEnvs())
-
-  it.each([
-    ['invalid_input', 422],
-    ['unauthenticated', 401],
-    ['forbidden', 403],
-    ['not_found', 404],
-    ['conflict', 409],
-  ] as const)('traduz %s para o status %i', (code, status) => {
-    expect(mapFailureToHttpResponse({ code, message: 'Developer context' })).toEqual({
-      status,
-      body: { code },
-    })
-  })
-
-  it('não expõe a mensagem de uma exceção inesperada na resposta', async () => {
-    const { AppModule } = await import('../app.module.js')
-
-    @Module({ imports: [AppModule], controllers: [UnhandledErrorTestController] })
-    class TestAppModule {}
-
-    const app = await NestFactory.create(TestAppModule, { abortOnError: false, logger: false })
-    await app.listen(0)
+  it.each(FAILURE_CODES)('lança o erro declarado %s com o status do catálogo', (code) => {
+    const failure: Failure = { code, message: 'Developer context, never on the wire' }
 
     try {
-      const response = await fetch(`${await app.getUrl()}/unhandled-error-test`)
-      const body = await response.json()
-
-      expect(response.status).toBe(500)
-      expect(body).toEqual({
-        code: 'internal_error',
-        correlationId: response.headers.get('x-correlation-id'),
+      mapFailureToHttpResponse(errors, failure)
+      expect.unreachable('mapFailureToHttpResponse deveria lançar')
+    } catch (error) {
+      expect(error).toBeInstanceOf(ORPCError)
+      expect(error).toMatchObject({
+        code,
+        status: FAILURE_ERROR_MAP[code].status,
+        message: FAILURE_ERROR_MAP[code].message,
       })
-      expect(JSON.stringify(body)).not.toContain('sensitive infrastructure detail')
-    } finally {
-      await app.close()
+    }
+  })
+
+  it('nunca coloca a mensagem de domínio no erro que sai pela borda', () => {
+    try {
+      mapFailureToHttpResponse(errors, { code: 'not_found', message: 'internal detail: row 42' })
+      expect.unreachable('mapFailureToHttpResponse deveria lançar')
+    } catch (error) {
+      if (!(error instanceof ORPCError)) throw error
+
+      expect(JSON.stringify(error.toJSON())).not.toContain('internal detail')
     }
   })
 })

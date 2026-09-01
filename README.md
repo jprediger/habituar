@@ -75,13 +75,13 @@ atenção porque não são a mesma credencial por desenho:
 O `dev` passa pelo Turborepo pelo mesmo motivo dos clientes: `apps/api` importa o contrato
 de `@habituar/core` pelo `dist`, que precisa existir antes.
 
-Se a porta 3000 já estiver ocupada na sua máquina, suba com `PORT=3100 pnpm turbo run dev
+Se a porta 8080 já estiver ocupada na sua máquina, suba com `PORT=8090 pnpm turbo run dev
 --filter @habituar/api` — a porta vem de `PORT`, e a variável de ambiente vence o `.env`.
 
 ### Verificando
 
 ```bash
-curl -i http://localhost:3000/v1/health
+curl -i http://localhost:8080/v1/health
 ```
 
 Responde `200` com `{"status":"ok","version":"0.0.0"}`, mais `x-correlation-id` e os
@@ -124,7 +124,7 @@ pnpm turbo run dev --filter @habituar/mobile   # metro, para abrir no Expo Go
 ### Web
 
 O bundle nunca conhece o endereço da API: ele chama `/v1` na própria origem. Em
-desenvolvimento, o proxy do Vite encaminha `/v1` para `http://localhost:3000`, então a API
+desenvolvimento, o proxy do Vite encaminha `/v1` para `http://localhost:8080`, então a API
 precisa estar no ar para a tela sair de *carregando*. Em homologação e produção a mesma
 origem pública serve os dois, e o proxy deixa de existir.
 
@@ -139,8 +139,8 @@ cp apps/mobile/.env.example apps/mobile/.env   # o .env não é versionado
 
 | Ambiente | `EXPO_PUBLIC_API_ORIGIN` |
 |---|---|
-| Emulador Android | `http://10.0.2.2:3000` — `localhost` resolveria para o próprio emulador |
-| Aparelho na mesma rede | `http://<IP-LAN>:3000` |
+| Emulador Android | `http://10.0.2.2:8080` — `localhost` resolveria para o próprio emulador |
+| Aparelho na mesma rede | `http://<IP-LAN>:8080` |
 
 A variável não tem valor padrão: ausente, ou contendo `/v1`, o app falha antes do primeiro
 render em vez de errar a URL silenciosamente em runtime.

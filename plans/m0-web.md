@@ -12,7 +12,7 @@ CRUD, SSR, componentes compartilhados ou design system.
 - Usa Vite, React, Tailwind v4, shadcn/Radix, TanStack Router file-based, i18next, Vitest,
   Testing Library, jsdom e `axe-core` nas versões fixadas pelo workspace.
 - `src/habituar-client.ts` cria uma instância com `window.location.origin`.
-- Em dev, `server.proxy['/v1']` encaminha para `http://localhost:3000`.
+- Em dev, `server.proxy['/v1']` encaminha para `http://localhost:8080`.
 - Homologação e produção usam a mesma topologia de origem única; o bundle web não recebe
   nem conhece o endereço interno do container da API.
 

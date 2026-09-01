@@ -8,8 +8,8 @@ Sem login, CRUD, EAS Build, publicação, animação ou design system.
 
 ## Ambientes validados
 
-- Android Emulator com `EXPO_PUBLIC_API_ORIGIN=http://10.0.2.2:3000`.
-- Android físico na mesma rede, com `EXPO_PUBLIC_API_ORIGIN=http://<IP-LAN>:3000`.
+- Android Emulator com `EXPO_PUBLIC_API_ORIGIN=http://10.0.2.2:8080`.
+- Android físico na mesma rede, com `EXPO_PUBLIC_API_ORIGIN=http://<IP-LAN>:8080`.
 - iOS permanece suportado pela estrutura Expo, mas não é declarado manualmente validado
   no M0. VoiceOver precisa ser verificado antes da primeira distribuição iOS.
 

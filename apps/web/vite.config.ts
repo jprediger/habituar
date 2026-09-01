@@ -27,7 +27,7 @@ export default defineConfig({
     proxy: {
       // Único ambiente onde a origem da SPA e a da API divergem (D-clients): em
       // homologação/produção a mesma origem pública já serve as duas.
-      '/v1': 'http://localhost:3000',
+      '/v1': 'http://localhost:8080',
     },
   },
 })

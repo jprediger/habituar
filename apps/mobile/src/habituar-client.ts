@@ -12,7 +12,7 @@ function readApiOriginOrThrow(): string {
 
   if (typeof origin !== 'string' || origin.length === 0) {
     throw new Error(
-      'EXPO_PUBLIC_API_ORIGIN is required (e.g. http://10.0.2.2:3000 for the Android emulator) and was not set.',
+      'EXPO_PUBLIC_API_ORIGIN is required (e.g. http://10.0.2.2:8080 for the Android emulator) and was not set.',
     )
   }
 

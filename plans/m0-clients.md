@@ -50,7 +50,7 @@ sessões ou branches diferentes.
 
 | Ambiente    | Web                                                                  | Mobile                                                  |
 | ----------- | -------------------------------------------------------------------- | ------------------------------------------------------- |
-| Local       | `window.location.origin`; Vite encaminha `/v1` para `localhost:3000` | `EXPO_PUBLIC_API_ORIGIN` obrigatória                    |
+| Local       | `window.location.origin`; Vite encaminha `/v1` para `localhost:8080` | `EXPO_PUBLIC_API_ORIGIN` obrigatória                    |
 | Homologação | origem pública da SPA                                                | mesma origem pública, embutida na configuração do build |
 | Produção    | origem pública da SPA                                                | mesma origem pública, embutida na configuração do build |
 

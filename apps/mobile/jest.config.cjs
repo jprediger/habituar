@@ -8,8 +8,11 @@ module.exports = {
   // `jest-expo` (ver seu `jest-preset.js`) e só acrescenta `@orpc`.
   transform: {
     // `@orpc/*` publica `.mjs`; sem esta entrada nenhum transform bate nessa extensão e o
-    // arquivo passa cru pro `require()` do Jest.
-    '\\.mjs$': 'babel-jest',
+    // arquivo passa cru pro `require()` do Jest. O `caller` replica o que o próprio
+    // `jest-expo` passa pra entrada `.[jt]sx?`: sem ele o `babel-preset-expo` não sabe que
+    // o alvo é o Hermes e não habilita a sintaxe de static class block que o `@orpc/client`
+    // usa, quebrando o parse.
+    '\\.mjs$': ['babel-jest', { caller: { name: 'metro', bundler: 'metro', platform: 'ios' } }],
   },
   transformIgnorePatterns: [
     '/node_modules/(?!(.pnpm|react-native|@react-native|@react-native-community|expo|@expo|@expo-google-fonts|react-navigation|@react-navigation|@sentry/react-native|native-base|standard-navigation|@orpc))',

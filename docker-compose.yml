@@ -1,5 +1,9 @@
 services:
   postgres:
+    # Nome fixo em vez do gerado (`habituar-postgres-1`): o sufixo numérico não diz nada
+    # num serviço que nunca escala, e o nome estável é o que torna `docker logs`/`exec`
+    # previsíveis independentemente do diretório em que o repositório foi clonado.
+    container_name: habituar-postgres
     image: postgres:18-alpine
     environment:
       POSTGRES_DB: habituar

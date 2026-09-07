@@ -11,7 +11,8 @@
     "test": "vitest run",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
-    "db:up": "docker compose up -d --wait"
+    "db:up": "docker compose up -d --wait",
+    "db:seed:admin": "tsx src/database/seeds/admin.seed.ts"
   },
   "dependencies": {
     "@habituar/core": "workspace:*",
@@ -23,6 +24,9 @@
     "@orpc/contract": "1.15.0",
     "@orpc/nest": "1.15.0",
     "@orpc/server": "1.15.0",
+    "argon2": "0.45.1",
+    "cookie-parser": "1.4.7",
+    "dotenv": "17.4.2",
     "drizzle-orm": "0.45.2",
     "pg": "8.23.0",
     "pino": "10.3.1",
@@ -38,10 +42,12 @@
     "@swc/cli": "0.8.1",
     "@swc/core": "1.16.1",
     "@testcontainers/postgresql": "12.1.0",
+    "@types/cookie-parser": "1.4.10",
     "@types/node": "22.20.1",
     "@types/pg": "8.23.1",
     "drizzle-kit": "0.31.10",
     "eslint": "10.9.1",
+    "tsx": "4.23.13",
     "typescript": "6.0.3",
     "typescript-eslint": "8.68.0",
     "testcontainers": "12.1.0",

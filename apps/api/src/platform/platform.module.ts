@@ -11,7 +11,7 @@ import { RequestContext } from './request-context.js'
  */
 @Module({
   providers: [CryptoIdGenerator, RequestContext, RequestContextMiddleware, LogDestination, AppLogger],
-  exports: [RequestContext, AppLogger],
+  exports: [CryptoIdGenerator, RequestContext, AppLogger],
 })
 export class PlatformModule implements NestModule {
   configure(consumer: MiddlewareConsumer): void {

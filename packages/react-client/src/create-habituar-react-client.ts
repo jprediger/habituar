@@ -1,15 +1,51 @@
 import { apiContract } from '@habituar/core/contract'
+import { authenticationContextSchema } from '@habituar/core/auth/context'
+import { loginInputSchema, mobileSessionIssuedSchema, webSessionIssuedSchema } from '@habituar/core/auth/schema'
+import { getHomeDestination } from '@habituar/core/home-destination'
 import { healthStatusSchema } from '@habituar/core/health/schema'
+import type { AuthenticationContext, MembershipContext } from '@habituar/core/auth/context'
+import type { LoginInput } from '@habituar/core/auth/schema'
+import type { HomeDestination } from '@habituar/core/home-destination'
+import type { InstitutionId } from '@habituar/core/identity/ids'
 import { createORPCClient } from '@orpc/client'
 import type { ContractRouterClient } from '@orpc/contract'
 import { OpenAPILink } from '@orpc/openapi-client/fetch'
 import { QueryClient, useQuery } from '@tanstack/react-query'
-import { createContext, createElement, useContext } from 'react'
+import { createContext, createElement, useContext, useEffect, useRef, useState } from 'react'
 import type { PropsWithChildren, ReactElement } from 'react'
 import { toHealthState } from './health-state.js'
 import type { HealthState } from './health-state.js'
+import type { CredentialStorage } from './credential-storage.js'
 
 type ApiClient = ContractRouterClient<typeof apiContract>
+type TransportCredentials = 'include' | 'omit' | 'same-origin'
+
+/** Falhas esperadas do fluxo, deliberadamente sem detalhes do transporte ou da credencial. */
+export type AuthenticationFailure = 'invalid-credentials' | 'network' | 'no-memberships' | 'forbidden'
+
+/** Sessão pronta para navegação, já limitada ao vínculo institucional que a pessoa escolheu. */
+export type ActiveSession = Readonly<{
+  context: AuthenticationContext
+  membership: MembershipContext
+  destination: HomeDestination
+}>
+
+/** Estado público da autenticação; apps não conhecem cache, transporte ou erros técnicos. */
+export type AuthenticationState =
+  | Readonly<{ status: 'restoring' }>
+  | Readonly<{ status: 'unauthenticated' }>
+  | Readonly<{ status: 'authenticating' }>
+  | Readonly<{ status: 'selecting-membership'; context: AuthenticationContext }>
+  | Readonly<{ status: 'authenticated'; session: ActiveSession }>
+  | Readonly<{ status: 'failed'; failure: AuthenticationFailure }>
+
+/** Ações da máquina de autenticação, independentes de componentes visuais e routers. */
+export type AuthenticationActions = Readonly<{
+  login(input: LoginInput): Promise<void>
+  selectMembership(institutionId: InstitutionId): void
+  logout(): Promise<void>
+  retry(): void
+}>
 
 /**
  * Forma pública de uma instância do cliente. Cliente oRPC, `QueryClient` e a chave de
@@ -21,7 +57,14 @@ export type HabituarReactClient = Readonly<{
     state: HealthState
     retry(): void
   }>
+  useAuthentication(): Readonly<{ state: AuthenticationState; actions: AuthenticationActions }>
 }>
+
+class AuthenticationRequestError extends Error {
+  public constructor(public readonly status: number) {
+    super('Authentication request failed.')
+  }
+}
 
 /**
  * `/v1` já está embutido em cada rota do contrato pela composição raiz (D15) — a origem
@@ -63,14 +106,20 @@ export function createHabituarReactClient(
   options: Readonly<{
     origin: string
     fetch?: typeof globalThis.fetch
+    credentials?: TransportCredentials
+    credentialStorage?: CredentialStorage
   }>,
 ): HabituarReactClient {
   const baseUrl = parseOriginOrThrow(options.origin)
   const resolvedFetch = options.fetch ?? globalThis.fetch
+  const credentials = options.credentials ?? 'same-origin'
+
+  const fetchWithTransport: typeof globalThis.fetch = (input, init) =>
+    resolvedFetch(input, { ...init, credentials })
 
   const link = new OpenAPILink(apiContract, {
     url: baseUrl,
-    fetch: (request, init) => resolvedFetch(request, init),
+    fetch: fetchWithTransport,
   })
 
   const apiClient: ApiClient = createORPCClient(link)
@@ -84,13 +133,174 @@ export function createHabituarReactClient(
   // árvore; o hook precisa saber que está sob o Provider desta fábrica, não de outra.
   const instanceToken = Symbol('habituar-react-client-instance')
   const InstanceContext = createContext<symbol | undefined>(undefined)
+  const AuthenticationContext = createContext<
+    Readonly<{ state: AuthenticationState; actions: AuthenticationActions; restore: () => Promise<void> }> | undefined
+  >(undefined)
 
   // Query key privada ao pacote: nenhum caller monta ou repete essa chave, então o formato
   // interno pode mudar sem quebrar quem consome só `state`/`retry()`.
   const healthQueryKey = ['habituar-react-client', 'health'] as const
 
   function Provider(props: PropsWithChildren): ReactElement {
-    return createElement(InstanceContext.Provider, { value: instanceToken }, props.children)
+    const [authenticationState, setAuthenticationState] = useState<AuthenticationState>({ status: 'restoring' })
+    const retryOperation = useRef<'restore' | 'login' | 'logout'>('restore')
+    const lastLoginInput = useRef<LoginInput | undefined>(undefined)
+
+    async function request(path: string, init: RequestInit = {}): Promise<Response> {
+      const token = await options.credentialStorage?.read()
+      const headers = new Headers(init.headers)
+
+      if (token !== undefined) {
+        headers.set('Authorization', `Bearer ${token}`)
+      }
+
+      const response = await fetchWithTransport(`${baseUrl}/v1${path}`, { ...init, headers })
+
+      if (!response.ok) {
+        throw new AuthenticationRequestError(response.status)
+      }
+
+      return response
+    }
+
+    function resolveContext(context: AuthenticationContext): void {
+      if (context.memberships.length === 0) {
+        setAuthenticationState({ status: 'failed', failure: 'no-memberships' })
+        return
+      }
+
+      if (context.memberships.length > 1) {
+        setAuthenticationState({ status: 'selecting-membership', context })
+        return
+      }
+
+      const membership = context.memberships[0]
+
+      if (membership === undefined) {
+        setAuthenticationState({ status: 'failed', failure: 'no-memberships' })
+        return
+      }
+
+      setAuthenticationState({
+        status: 'authenticated',
+        session: { context, membership, destination: getHomeDestination(membership.role.environment) },
+      })
+    }
+
+    async function restore(): Promise<void> {
+      retryOperation.current = 'restore'
+
+      try {
+        if (options.credentialStorage && (await options.credentialStorage.read()) === undefined) {
+          setAuthenticationState({ status: 'unauthenticated' })
+          return
+        }
+
+        const response = await request('/auth/context')
+        resolveContext(authenticationContextSchema.parse(await response.json()))
+      } catch (error: unknown) {
+        if (error instanceof AuthenticationRequestError && error.status === 401) {
+          await options.credentialStorage?.remove()
+          queryClient.removeQueries({ queryKey: ['habituar-react-client', 'authentication'] })
+          setAuthenticationState({ status: 'unauthenticated' })
+          return
+        }
+
+        setAuthenticationState({ status: 'failed', failure: 'network' })
+      }
+    }
+
+    async function login(input: LoginInput): Promise<void> {
+      retryOperation.current = 'login'
+      lastLoginInput.current = input
+      setAuthenticationState({ status: 'authenticating' })
+
+      try {
+        const response = await request(options.credentialStorage ? '/auth/mobile/login' : '/auth/login', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify(loginInputSchema.parse(input)),
+        })
+
+        if (options.credentialStorage) {
+          const issued = mobileSessionIssuedSchema.parse(await response.json())
+          await options.credentialStorage.write(issued.sessionToken)
+        } else {
+          webSessionIssuedSchema.parse(await response.json())
+        }
+
+        queryClient.removeQueries({ queryKey: ['habituar-react-client', 'authentication'] })
+        await restore()
+      } catch (error: unknown) {
+        if (error instanceof AuthenticationRequestError && error.status === 401) {
+          setAuthenticationState({ status: 'failed', failure: 'invalid-credentials' })
+          return
+        }
+
+        setAuthenticationState({ status: 'failed', failure: 'network' })
+      }
+    }
+
+    function selectMembership(institutionId: InstitutionId): void {
+      if (authenticationState.status !== 'selecting-membership') return
+
+      const membership = authenticationState.context.memberships.find(
+        (candidate) => candidate.institution.id === institutionId,
+      )
+
+      if (membership === undefined) return
+
+      queryClient.removeQueries({ queryKey: ['habituar-react-client', 'authentication'] })
+      setAuthenticationState({
+        status: 'authenticated',
+        session: {
+          context: authenticationState.context,
+          membership,
+          destination: getHomeDestination(membership.role.environment),
+        },
+      })
+    }
+
+    async function logout(): Promise<void> {
+      retryOperation.current = 'logout'
+
+      try {
+        await request('/auth/logout', { method: 'POST' })
+        await options.credentialStorage?.remove()
+        queryClient.removeQueries({ queryKey: ['habituar-react-client', 'authentication'] })
+        setAuthenticationState({ status: 'unauthenticated' })
+      } catch (error: unknown) {
+        if (error instanceof AuthenticationRequestError && error.status === 401) {
+          await options.credentialStorage?.remove()
+          queryClient.removeQueries({ queryKey: ['habituar-react-client', 'authentication'] })
+          setAuthenticationState({ status: 'unauthenticated' })
+          return
+        }
+
+        setAuthenticationState({ status: 'failed', failure: 'network' })
+      }
+    }
+
+    function retry(): void {
+      if (retryOperation.current === 'login' && lastLoginInput.current !== undefined) {
+        void login(lastLoginInput.current)
+        return
+      }
+
+      if (retryOperation.current === 'logout') {
+        void logout()
+        return
+      }
+
+      setAuthenticationState({ status: 'restoring' })
+      void restore()
+    }
+
+    return createElement(
+      InstanceContext.Provider,
+      { value: instanceToken },
+      createElement(AuthenticationContext.Provider, { value: { state: authenticationState, actions: { login, selectMembership, logout, retry }, restore } }, props.children),
+    )
   }
 
   function useHealth(): Readonly<{ state: HealthState; retry(): void }> {
@@ -123,5 +333,24 @@ export function createHabituarReactClient(
     return { state: toHealthState(query), retry }
   }
 
-  return { Provider, useHealth }
+  function useAuthentication(): Readonly<{ state: AuthenticationState; actions: AuthenticationActions }> {
+    const activeInstanceToken = useContext(InstanceContext)
+    const authentication = useContext(AuthenticationContext)
+    const hasRestored = useRef(false)
+
+    if (activeInstanceToken !== instanceToken || authentication === undefined) {
+      throw new Error('useAuthentication() foi chamado fora do Provider da instância que o criou.')
+    }
+
+    useEffect(() => {
+      if (!hasRestored.current) {
+        hasRestored.current = true
+        void authentication.restore()
+      }
+    }, [authentication])
+
+    return authentication
+  }
+
+  return { Provider, useHealth, useAuthentication }
 }

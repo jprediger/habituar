@@ -20,6 +20,14 @@
       "types": "./dist/permissions/permission-catalog.d.ts",
       "import": "./dist/permissions/permission-catalog.js"
     },
+    "./roles": {
+      "types": "./dist/roles.d.ts",
+      "import": "./dist/roles.js"
+    },
+    "./home-destination": {
+      "types": "./dist/home-destination.d.ts",
+      "import": "./dist/home-destination.js"
+    },
     "./contract": {
       "types": "./dist/contract/api-contract.d.ts",
       "import": "./dist/contract/api-contract.js"
@@ -31,6 +39,10 @@
     "./auth/schema": {
       "types": "./dist/auth/auth.schema.d.ts",
       "import": "./dist/auth/auth.schema.js"
+    },
+    "./auth/context": {
+      "types": "./dist/auth/auth-context.d.ts",
+      "import": "./dist/auth/auth-context.js"
     },
     "./auth/contract": {
       "types": "./dist/auth/auth.contract.d.ts",

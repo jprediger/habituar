@@ -10,4 +10,7 @@ import { createHabituarReactClient } from '@habituar/react-client/react-client'
  * cópia aninhada de `@types/react` dentro de `node_modules` do próprio `react-client`
  * (TS2742) — não portável entre workspaces com `nodeLinker: hoisted`.
  */
-export const habituar: HabituarReactClient = createHabituarReactClient({ origin: window.location.origin })
+export const habituar: HabituarReactClient = createHabituarReactClient({
+  origin: window.location.origin,
+  credentials: 'include',
+})

@@ -87,6 +87,15 @@ describe('createHabituarReactClient', () => {
     expect(new URL(requests[0]?.url ?? '').pathname).toBe('/v1/health')
   })
 
+  it('inclui credenciais quando o transporte web assim exige', async () => {
+    const { fetch, requests } = createInMemoryFetch()
+    const client = createHabituarReactClient({ origin: ORIGIN, fetch, credentials: 'include' })
+    const { result } = renderHook(() => client.useHealth(), { wrapper: client.Provider })
+
+    await waitFor(() => { expect(result.current.state.status).toBe('ready') })
+    expect(requests[0]?.credentials).toBe('include')
+  })
+
   it('percorre loading até ready preservando o HealthStatus da resposta', async () => {
     const { fetch } = createInMemoryFetch()
     const client = createHabituarReactClient({ origin: ORIGIN, fetch })

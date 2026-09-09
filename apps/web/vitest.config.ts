@@ -7,6 +7,9 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
+      '@habituar/core/assert-never': fileURLToPath(new URL('../../packages/core/src/type/assert-never.ts', import.meta.url)),
+      '@habituar/core/auth/context': fileURLToPath(new URL('../../packages/core/src/auth/auth-context.ts', import.meta.url)),
+      '@habituar/core/home-destination': fileURLToPath(new URL('../../packages/core/src/home-destination.ts', import.meta.url)),
     },
   },
   test: {

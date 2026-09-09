@@ -1,10 +1,12 @@
 import { authenticatedUserSchema } from '@habituar/core/auth/schema'
 import type { AuthenticatedUser, LoginInput, RegisterInput } from '@habituar/core/auth/schema'
+import { authenticationContextSchema } from '@habituar/core/auth/context'
+import type { AuthenticationContext } from '@habituar/core/auth/context'
 import type { Outcome } from '@habituar/core/failure'
 import { Injectable } from '@nestjs/common'
 import { eq } from 'drizzle-orm'
 import { Database } from '../database/database.js'
-import { sessions, users } from '../database/schema.js'
+import { institutions, memberships, rolePermissions, roles, sessions, users } from '../database/schema.js'
 import { CryptoIdGenerator } from '../platform/id-generator.js'
 import { hashPassword, verifyPassword } from './password.js'
 import { hashSessionToken } from './session-token.js'
@@ -17,9 +19,11 @@ export type SessionIssued = Readonly<{
   sessionToken: string
 }>
 
+type AuthenticatedActor = Readonly<{ userId: string; sessionId: string }>
+
 /** Único ponto que transforma um registro cru de `users` num `AuthenticatedUser` — o `parse` é o que dá o brand a `id`. */
 function toAuthenticatedUser(user: { id: string; email: string; name: string }): AuthenticatedUser {
-  return authenticatedUserSchema.parse(user)
+  return authenticatedUserSchema.parse({ id: user.id, email: user.email, name: user.name })
 }
 
 /**
@@ -83,6 +87,61 @@ export class AuthenticationService {
     return this.database.withTenantOutsideRequest(SYSTEM_TENANT_CONTEXT, async (transaction) => {
       await transaction.delete(sessions).where(eq(sessions.id, sessionId))
       return { status: 'success', value: { ok: true } }
+    })
+  }
+
+  /** Resolve somente a identidade e os vínculos do ator já autenticado. */
+  async getContext(actor: AuthenticatedActor): Promise<Outcome<AuthenticationContext>> {
+    return this.database.withIdentity({ actorId: actor.userId, sessionId: actor.sessionId }, async (transaction) => {
+      const user = await transaction.query.users.findFirst({ where: eq(users.id, actor.userId) })
+      if (user === undefined) {
+        return { status: 'failure', failure: { code: 'unauthenticated', message: 'Session user no longer exists.' } }
+      }
+
+      const rows = await transaction
+        .select({
+          membershipId: memberships.id,
+          institutionId: institutions.id,
+          institutionName: institutions.name,
+          roleId: roles.id,
+          roleName: roles.name,
+          roleEnvironment: roles.environment,
+          permissionKey: rolePermissions.permissionKey,
+          permissionScope: rolePermissions.scope,
+        })
+        .from(memberships)
+        .innerJoin(institutions, eq(institutions.id, memberships.institutionId))
+        .innerJoin(roles, eq(roles.id, memberships.roleId))
+        .leftJoin(rolePermissions, eq(rolePermissions.roleId, roles.id))
+        .where(eq(memberships.userId, actor.userId))
+
+      const membershipsById = new Map<string, {
+        institution: { id: string; name: string }
+        role: { id: string; name: string; environment: string | null }
+        permissions: { key: string; scope: string }[]
+      }>()
+
+      for (const row of rows) {
+        const membership = membershipsById.get(row.membershipId)
+        const current = membership ?? {
+          institution: { id: row.institutionId, name: row.institutionName },
+          role: { id: row.roleId, name: row.roleName, environment: row.roleEnvironment },
+          permissions: [],
+        }
+        if (row.permissionKey !== null && row.permissionScope !== null) {
+          current.permissions.push({ key: row.permissionKey, scope: row.permissionScope })
+        }
+        membershipsById.set(row.membershipId, current)
+      }
+
+      return {
+        status: 'success',
+        value: authenticationContextSchema.parse({
+          user: toAuthenticatedUser(user),
+          memberships: [...membershipsById.values()],
+          isPlatformAdministrator: user.isPlatformAdministrator,
+        }),
+      }
     })
   }
 }

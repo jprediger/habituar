@@ -1,10 +1,46 @@
 {
-  "health": {
-    "title": "Estado do sistema",
-    "loading": "Verificando o estado do sistema…",
-    "readyStatusOk": "O sistema está operando normalmente.",
-    "readyVersion": "Versão {{version}}",
-    "failedMessage": "Não foi possível verificar o estado do sistema agora.",
-    "retry": "Verificar novamente"
+  "authentication": {
+    "loading": "Verificando sua sessão...",
+    "retry": "Tentar novamente",
+    "login": {
+      "title": "Entrar",
+      "description": "Use seu e-mail e senha para acessar seu ambiente.",
+      "emailLabel": "E-mail",
+      "passwordLabel": "Senha",
+      "submit": "Entrar",
+      "submitting": "Entrando..."
+    },
+    "panel": {
+      "label": "Apresentação do Habituar",
+      "message": "Uma rotina mais clara, no seu ritmo."
+    },
+    "selection": {
+      "title": "Escolha uma instituição",
+      "description": "Selecione onde você quer acessar agora."
+    },
+    "selectInstitution": "Selecione uma instituição",
+    "logout": "Sair",
+    "logoutSubmitting": "Saindo...",
+    "failure": {
+      "invalid-credentials": "E-mail ou senha inválidos.",
+      "network": "Não foi possível concluir a autenticação agora.",
+      "no-membershipsTitle": "Seu acesso ainda não está pronto",
+      "no-memberships": "Seu cadastro não possui vínculo institucional. Procure a pessoa responsável pelo cadastro.",
+      "forbidden": "Você não tem permissão para acessar este ambiente."
+    }
+  },
+  "home": {
+    "student-home": {
+      "title": "Seu ambiente de aluno",
+      "description": "Organize sua rotina, acompanhe tarefas e consulte sua agenda."
+    },
+    "professional-home": {
+      "title": "Seu ambiente profissional",
+      "description": "Acompanhe alunos, consultas, métricas e registros."
+    },
+    "monitor-home": {
+      "title": "Seu ambiente de monitor",
+      "description": "Consulte e acompanhe os alunos atribuídos a você."
+    }
   }
 }

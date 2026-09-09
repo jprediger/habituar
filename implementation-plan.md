@@ -44,6 +44,10 @@ O marco mais importante. Tudo se apoia nele e nada disso é barato de mudar depo
 - Wrapper `withTenant()` definindo `app.institution_id`, `app.actor_id`, `app.session_id`
 - Triggers de auditoria de escrita (D11)
 - Login/logout funcionando nos dois apps
+- Administrador geral global, fora de `memberships` e sem acesso administrativo implícito a
+  fichas, observações ou outros dados sensíveis
+- O `institution_admin` seedado e os vínculos locais existentes ficam legados até uma
+  migração reversível com snapshot restaurável; nenhuma linha é apagada silenciosamente
 
 **Pronto quando:** existem duas instituições com dados, e um **teste automatizado prova**
 que a instituição A não consegue ler linhas da B — executado como o role da aplicação,
@@ -59,8 +63,8 @@ com a query tentando burlar o filtro de propósito.
 - `roles`, `role_permissions` (com `scope`), templates seedados por instituição
 - `assignments` (staff ↔ aluno | grupo)
 - Resolução de permissão efetiva por requisição
-- Proteções contra escalonamento (D9), incluindo `institution_admin` **sem**
-  `observation.read`
+- Proteções contra escalonamento (D9); o administrador geral permanece fora do tenant e
+  **sem** `observation.read` implícito
 - `usePermission()` em `packages/react-client`, consumido pelos dois apps; a resolução e
   os tipos de permissão permanecem puros em `packages/core`
 

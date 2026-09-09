@@ -37,11 +37,31 @@ e **visibilidade ao profissional**, com os dados alimentando um ao outro.
 | **Profissional** | Responsável pelo acompanhamento | Fichas, agenda, consultas, métricas, relatórios |
 | **Monitor** | Apoio, sob supervisão do profissional | Acompanhamento dos alunos designados |
 | **Aluno** | Pessoa acompanhada | Rotina, tarefas, pomodoro, agenda |
-| **Admin da instituição** | Gestão da conta da escola | Usuários, papéis e permissões |
-| **Admin da plataforma** | Operação do SaaS | Provisionamento de instituições — **sem acesso a fichas** |
+| **Administrador geral** | Operação global do SaaS | Provisionamento de instituições — fora dos vínculos institucionais e **sem acesso a fichas** |
+| **Admin da instituição (legado)** | Conceito presente nos dados locais | Será migrado de forma reversível; não é uma persona administrativa nova |
 
 Ambas as plataformas (mobile e web) atendem **todas as personas** — ver
 `ARCHITECTURE.md`, decisão D1.
+
+### Administrador geral e dados legados
+
+O administrador geral é global: sua relação de administração pertence ao plano da
+plataforma e não é uma linha em `memberships`, nem um papel ligado a uma instituição. Ele
+administra o provisionamento do SaaS, mas não recebe por isso acesso a fichas, observações,
+consultas ou outros dados sensíveis de uma instituição.
+
+O papel `institution_admin` criado pelo seed atual e os vínculos locais que já o utilizam
+são mantidos como legado até a migração. A migração deve ser reversível e seguir esta ordem:
+
+1. registrar um snapshot verificável dos usuários, papéis, vínculos e permissões afetados;
+2. criar a representação global do administrador geral fora de `memberships` para cada
+   usuário confirmado;
+3. retirar o vínculo administrativo legado somente depois da validação do snapshot, mantendo
+   os dados necessários para restaurar exatamente o estado anterior.
+
+Nenhuma linha legada é apagada silenciosamente. O resultado da migração também não copia
+`role_permissions` institucionais para a representação global e não concede acesso implícito
+a dados sensíveis.
 
 ## 4. Modelo de domínio
 
@@ -100,10 +120,14 @@ anotações de consulta, exportável para apresentar aos professores.
 - Criação de tarefas atribuídas a alunos
 - Relatórios consolidados para apresentar aos professores
 
-### Admin da instituição
-- Gestão de usuários e vínculos
-- Edição de papéis e permissões a partir de um catálogo fechado (ver D8)
-- Configuração dos módulos ativos (grupos, monitores) via preset de tipo de organização
+### Admin da instituição (legado)
+- Não recebe uma superfície administrativa nova
+- É tratado apenas pela migração reversível dos dados locais já existentes
+
+### Administrador geral
+- Provisionamento de instituições do SaaS
+- Operação global sem vínculo institucional implícito
+- Nenhum acesso administrativo implícito a fichas, observações ou outros dados sensíveis
 
 ## 6. Requisitos não-funcionais
 

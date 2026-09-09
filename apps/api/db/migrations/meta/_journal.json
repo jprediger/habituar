@@ -15,6 +15,20 @@
       "when": 1788808697198,
       "tag": "0001_famous_stephen_strange",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1788984126098,
+      "tag": "0002_glamorous_blindfold",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1788796800000,
+      "tag": "0003_identity_bootstrap",
+      "breakpoints": true
     }
   ]
 }

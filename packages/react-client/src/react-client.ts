@@ -6,3 +6,11 @@
 export { createHabituarReactClient } from './create-habituar-react-client.js'
 export type { HabituarReactClient } from './create-habituar-react-client.js'
 export type { HealthState } from './health-state.js'
+export type {
+  ActiveSession,
+  AuthenticationActions,
+  AuthenticationFailure,
+  AuthenticationState,
+} from './create-habituar-react-client.js'
+export { createMemoryCredentialStorage } from './credential-storage.js'
+export type { CredentialStorage } from './credential-storage.js'

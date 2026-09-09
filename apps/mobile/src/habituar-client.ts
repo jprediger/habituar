@@ -1,4 +1,5 @@
 import { createHabituarReactClient } from '@habituar/react-client/react-client'
+import { sessionCredentialStorage } from './session-credential-storage.js'
 
 /**
  * Dono da origem da API neste app: só garante que a variável existe. A forma da origem
@@ -23,4 +24,7 @@ function readApiOriginOrThrow(): string {
  * Instância única do app: montada uma vez no módulo, consumida por `_layout.tsx` (Provider)
  * e pela tela (hook). Configuração inválida falha aqui, antes de qualquer render.
  */
-export const habituar = createHabituarReactClient({ origin: readApiOriginOrThrow() })
+export const habituar = createHabituarReactClient({
+  origin: readApiOriginOrThrow(),
+  credentialStorage: sessionCredentialStorage,
+})

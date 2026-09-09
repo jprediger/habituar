@@ -1,3 +1,4 @@
+import { RoleEnvironment } from '@habituar/core/roles'
 import { boolean, pgEnum, pgTable, text, timestamp, unique, uuid } from 'drizzle-orm/pg-core'
 
 export const tenantProbe = pgTable('tenant_probe', {
@@ -18,6 +19,7 @@ export const users = pgTable('users', {
   email: text().notNull().unique(),
   passwordHash: text('password_hash').notNull(),
   name: text().notNull(),
+  isPlatformAdministrator: boolean('is_platform_administrator').notNull().default(false),
   mustChangePassword: boolean('must_change_password').notNull().default(false),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
@@ -53,13 +55,22 @@ export const permissionScopeEnum = pgEnum('permission_scope', [
   'institution',
 ] as const)
 
+// O tipo vem do core; os literais são repetidos porque drizzle-kit carrega este arquivo
+// sem executar entrypoints ESM do pacote compartilhado durante a geração de migrations.
+const ROLE_ENVIRONMENT_VALUES = ['student', 'professional', 'monitor'] as const satisfies readonly [
+  RoleEnvironment,
+  ...RoleEnvironment[],
+]
+export const roleEnvironmentEnum = pgEnum('role_environment', ROLE_ENVIRONMENT_VALUES)
+
 export const roles = pgTable('roles', {
   id: uuid().primaryKey().defaultRandom(),
   institutionId: uuid('institution_id')
     .notNull()
     .references(() => institutions.id, { onDelete: 'cascade' }),
-  name: text().notNull(),
-  isSystem: boolean('is_system').notNull().default(false),
+    name: text().notNull(),
+    environment: roleEnvironmentEnum(),
+    isSystem: boolean('is_system').notNull().default(false),
   clonedFrom: uuid('cloned_from'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 })

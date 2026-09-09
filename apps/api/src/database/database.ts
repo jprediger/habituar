@@ -9,7 +9,8 @@ import * as schema from './schema.js'
 
 export type { TenantContext }
 
-type Transaction = NodePgTransaction<typeof schema, ExtractTablesWithRelations<typeof schema>>
+export type DatabaseTransaction = NodePgTransaction<typeof schema, ExtractTablesWithRelations<typeof schema>>
+export type IdentityContext = Readonly<{ actorId: string; sessionId: string }>
 
 // Uma transação por requisição: uma pendurada não pode segurar conexão nem bloquear
 // vacuum indefinidamente. Valores pequenos de propósito neste marco sem carga real.
@@ -47,7 +48,7 @@ export class Database implements OnApplicationShutdown {
    * falha fechada devolvendo zero linhas, e isto existe para que a causa apareça no
    * teste em vez de virar "sumiu linha" em produção.
    */
-  async withTenant<T>(run: (transaction: Transaction) => Promise<T>): Promise<T> {
+  async withTenant<T>(run: (transaction: DatabaseTransaction) => Promise<T>): Promise<T> {
     const tenant = this.requestContext.get().tenant
 
     if (tenant === undefined) {
@@ -64,15 +65,34 @@ export class Database implements OnApplicationShutdown {
    * requisição — job, worker, migração de dados — e é, por definição, curto e revisável:
    * todo uso legítimo aparece na busca pelo nome.
    */
-  async withTenantOutsideRequest<T>(tenant: TenantContext, run: (transaction: Transaction) => Promise<T>): Promise<T> {
+  async withTenantOutsideRequest<T>(
+    tenant: TenantContext,
+    run: (transaction: DatabaseTransaction) => Promise<T>,
+  ): Promise<T> {
     return this.runInTenantTransaction(tenant, run)
+  }
+
+  /**
+   * Caminho restrito para bootstrap de identidade antes de haver instituição ativa. Instala
+   * ator e sessão na transação para que as políticas RLS de leitura limitem os vínculos.
+   */
+  async withIdentity<T>(identity: IdentityContext, run: (transaction: DatabaseTransaction) => Promise<T>): Promise<T> {
+    return this.connection.transaction(async (transaction) => {
+      await transaction.execute(sql`
+        select set_config('app.institution_id', '', true),
+               set_config('app.actor_id', ${identity.actorId}, true),
+               set_config('app.session_id', ${identity.sessionId}, true)
+      `)
+
+      return run(transaction)
+    })
   }
 
   // O terceiro argumento de `set_config` limita o contexto à transação; a conexão
   // devolvida ao pool não pode carregar o tenant da requisição anterior.
   private async runInTenantTransaction<T>(
     tenant: TenantContext,
-    run: (transaction: Transaction) => Promise<T>,
+    run: (transaction: DatabaseTransaction) => Promise<T>,
   ): Promise<T> {
     return this.connection.transaction(async (transaction) => {
       await transaction.execute(sql`

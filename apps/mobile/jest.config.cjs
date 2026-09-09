@@ -28,8 +28,10 @@ module.exports = {
     // isso que existirá depois do build; sem build, o `.ts` real é o que existe no disco.
     '^(\\.{1,2}/.+)\\.js$': '$1',
     '^@habituar/core/assert-never$': '<rootDir>/../../packages/core/src/type/assert-never.ts',
+    '^@habituar/core/auth/context$': '<rootDir>/../../packages/core/src/auth/auth-context.ts',
     '^@habituar/core/contract$': '<rootDir>/../../packages/core/src/contract/api-contract.ts',
     '^@habituar/core/health/schema$': '<rootDir>/../../packages/core/src/health/health.schema.ts',
+    '^@habituar/core/home-destination$': '<rootDir>/../../packages/core/src/home-destination.ts',
     '^@habituar/design-tokens/interaction$': '<rootDir>/../../packages/design-tokens/src/interaction.ts',
     '^@habituar/design-tokens/semantic-color$': '<rootDir>/../../packages/design-tokens/src/semantic-color.ts',
     '^@habituar/design-tokens/spacing$': '<rootDir>/../../packages/design-tokens/src/spacing.ts',

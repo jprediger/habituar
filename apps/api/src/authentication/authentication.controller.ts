@@ -10,6 +10,13 @@ import { AuthenticationService } from './authentication.service.js'
 const SESSION_COOKIE_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000
 const SESSION_COOKIE_NAME = 'session'
 
+const SESSION_COOKIE_OPTIONS = {
+  httpOnly: true,
+  secure: true,
+  sameSite: 'lax' as const,
+  path: '/',
+}
+
 @Controller()
 export class AuthenticationController {
   constructor(private readonly authenticationService: AuthenticationService) {}
@@ -25,18 +32,36 @@ export class AuthenticationController {
   }
 
   @PublicRoute()
-  @Implement(apiContract.auth.login)
-  handleLogin(@Res({ passthrough: true }) response: Response) {
-    return implement(apiContract.auth.login).handler(async ({ input, errors }) => {
+  @Implement(apiContract.auth.loginWeb)
+  handleWebLogin(@Res({ passthrough: true }) response: Response) {
+    return implement(apiContract.auth.loginWeb).handler(async ({ input, errors }) => {
       const outcome = await this.authenticationService.login(input)
       if (outcome.status === 'failure') return mapFailureToHttpResponse(errors, outcome.failure)
 
       response.cookie(SESSION_COOKIE_NAME, outcome.value.sessionToken, {
-        httpOnly: true,
-        secure: true,
-        sameSite: 'lax',
+        ...SESSION_COOKIE_OPTIONS,
         maxAge: SESSION_COOKIE_MAX_AGE_MS,
       })
+      return { user: outcome.value.user }
+    })
+  }
+
+  @PublicRoute()
+  @Implement(apiContract.auth.loginMobile)
+  handleMobileLogin() {
+    return implement(apiContract.auth.loginMobile).handler(async ({ input, errors }) => {
+      const outcome = await this.authenticationService.login(input)
+      if (outcome.status === 'failure') return mapFailureToHttpResponse(errors, outcome.failure)
+      return outcome.value
+    })
+  }
+
+  @Implement(apiContract.auth.context)
+  handleContext(@Req() request: AuthenticatedRequest) {
+    return implement(apiContract.auth.context).handler(async ({ errors }) => {
+      if (request.actor === undefined) throw errors.unauthenticated()
+      const outcome = await this.authenticationService.getContext(request.actor)
+      if (outcome.status === 'failure') return mapFailureToHttpResponse(errors, outcome.failure)
       return outcome.value
     })
   }
@@ -49,8 +74,8 @@ export class AuthenticationController {
       if (request.actor === undefined) throw errors.unauthenticated()
 
       const outcome = await this.authenticationService.logout(request.actor.sessionId)
-      response.clearCookie(SESSION_COOKIE_NAME)
       if (outcome.status === 'failure') return mapFailureToHttpResponse(errors, outcome.failure)
+      response.clearCookie(SESSION_COOKIE_NAME, SESSION_COOKIE_OPTIONS)
       return outcome.value
     })
   }

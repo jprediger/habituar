@@ -311,15 +311,17 @@ Três detalhes decidem se isso realmente segura:
 
 **Permissões são código. Papéis são dados.**
 
-Um admin de instituição **compõe** papéis a partir de um catálogo fechado; não pode
-**inventar** capacidades — uma permissão só significa algo se existe um call site a
-verificando.
+O administrador geral opera fora dos vínculos institucionais e não recebe papel ou
+permissão de tenant por existir. A administração de instituição que aparece em dados
+legados será migrada de forma reversível; qualquer capacidade institucional futura ainda
+precisará passar pelo catálogo fechado e por uma concessão explícita.
 
 ```
 permissions        key ('ficha.read', 'observation.write', …), sensitive boolean
 roles              id, institution_id, name, is_system, cloned_from
 role_permissions   role_id, permission_key, scope ('own'|'assigned'|'institution')
 memberships        user ↔ institution ↔ role
+platform_administrators  user_id  -- global, sem institution_id ou membership
 assignments        staff ↔ (student | group)
 ```
 
@@ -332,13 +334,14 @@ A coluna `scope` funde as duas dimensões: `ficha.read@assigned` para um monitor
 2. **Não se concede o que não se possui.**
 3. Papel novo precisa **clonar um template** e então ser modificado.
 4. Hierarquia — só se atribui papel de nível igual ou inferior ao próprio.
-5. Admin da plataforma é invisível aos tenants e **não possui** leitura de ficha.
+5. Administrador geral é invisível aos tenants, não possui membership e **não possui** leitura de ficha.
 6. Toda mudança de permissão é auditada (ator, alvo, antes/depois).
 
-A regra 2 sustenta o resto por causa de um padrão: o template `institution_admin` **não
-inclui `observation.read`**. Logo o admin pode montar qualquer papel e ainda assim é
-incapaz de distribuir acesso a anotações clínicas — porque ele próprio não o tem. Dar
-ambos a uma pessoa é possível, mas vira ato deliberado e registrado.
+O template `institution_admin` que o seed atual criou é legado, não é template do modelo
+novo. Ele **não inclui `observation.read`**, mas isso não transforma o administrador geral
+em administrador de instituição: a migração preserva os dados afetados em snapshot
+restaurável, e a representação global não copia `role_permissions` nem ganha acesso
+implícito a fichas, observações ou outros dados sensíveis.
 
 **UX:** expor **bundles** ("Pode gerenciar registros de alunos") mapeando para permissões
 atômicas. Quarenta checkboxes são um gerador de configuração errada.

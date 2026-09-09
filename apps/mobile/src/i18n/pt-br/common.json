@@ -1,8 +1,18 @@
 {
-  "screenTitle": "Estado do sistema",
-  "loading": "Carregando estado do sistema…",
-  "readyStatusOk": "Sistema operacional",
-  "readyVersion": "Versão {{version}}",
-  "failedMessage": "Não foi possível verificar o estado do sistema.",
-  "retryLabel": "Verificar novamente"
+  "authentication": {
+    "login": "Entrar",
+    "selectInstitution": "Selecione uma instituição",
+    "logout": "Sair",
+    "failure": {
+      "invalid-credentials": "E-mail ou senha inválidos.",
+      "network": "Não foi possível concluir a autenticação agora.",
+      "no-memberships": "Seu cadastro não possui vínculo institucional. Procure a pessoa responsável pelo cadastro.",
+      "forbidden": "Você não tem permissão para acessar este ambiente."
+    }
+  },
+  "home": {
+    "student-home": "Organize sua rotina, acompanhe tarefas e consulte sua agenda.",
+    "professional-home": "Acompanhe alunos, consultas, métricas e registros.",
+    "monitor-home": "Consulte e acompanhe os alunos atribuídos a você."
+  }
 }

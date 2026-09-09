@@ -22,14 +22,18 @@ export const authenticatedUserSchema = z.object({
 })
 export type AuthenticatedUser = Readonly<z.infer<typeof authenticatedUserSchema>>
 
-export const sessionIssuedSchema = z.object({
+/** Resposta de login web: a credencial só é emitida no cookie httpOnly. */
+export const webSessionIssuedSchema = z.object({
   user: authenticatedUserSchema,
-  // Token opaco de sessão: viaja uma única vez, nesta resposta. O servidor guarda só o
-  // hash (ver session-token.ts do apps/api) — erro nunca carrega dado sensível, e isto
-  // vale também para o que a própria resposta de sucesso expõe depois deste ponto.
+})
+export type WebSessionIssued = Readonly<z.infer<typeof webSessionIssuedSchema>>
+
+/** Resposta de login mobile: token opaco para o adapter seguro nativo, nunca para web. */
+export const mobileSessionIssuedSchema = z.object({
+  user: authenticatedUserSchema,
   sessionToken: z.string().min(1),
 })
-export type SessionIssued = Readonly<z.infer<typeof sessionIssuedSchema>>
+export type MobileSessionIssued = Readonly<z.infer<typeof mobileSessionIssuedSchema>>
 
 export const logoutOutputSchema = z.object({ ok: z.literal(true) })
 export type LogoutOutput = Readonly<z.infer<typeof logoutOutputSchema>>

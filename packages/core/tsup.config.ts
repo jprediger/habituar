@@ -12,7 +12,10 @@ export default defineConfig({
     'health/health.contract': 'src/health/health.contract.ts',
     'identity/ids': 'src/identity/ids.ts',
     'permissions/permission-catalog': 'src/permissions/permission-catalog.ts',
+    roles: 'src/roles.ts',
+    'home-destination': 'src/home-destination.ts',
     'auth/auth.schema': 'src/auth/auth.schema.ts',
+    'auth/auth-context': 'src/auth/auth-context.ts',
     'auth/auth.contract': 'src/auth/auth.contract.ts',
   },
   // Formato único: o monorepo inteiro é ESM, então não existe condição `require` a servir.

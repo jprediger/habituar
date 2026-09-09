@@ -1,7 +1,9 @@
-import { Slot } from 'expo-router'
+import { Redirect, Slot, usePathname } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { habituar } from '../habituar-client'
+import { AuthenticationFixture } from './authentication-fixture'
+import { getMobileAuthenticationGuard } from './authentication-guard'
 import '../i18n/i18n'
 
 /**
@@ -14,8 +16,20 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <habituar.Provider>
         <StatusBar style="auto" />
-        <Slot />
+        <AuthenticationRouter />
       </habituar.Provider>
     </SafeAreaProvider>
   )
+}
+
+/** Aplica o guard antes do Slot para que deep links não montem conteúdo de outro ambiente. */
+function AuthenticationRouter() {
+  const pathname = usePathname()
+  const { state } = habituar.useAuthentication()
+  const guard = getMobileAuthenticationGuard(state, pathname)
+
+  if (guard.action === 'block') return null
+  if (guard.action === 'redirect') return <Redirect href={guard.route} />
+
+  return state.status === 'failed' ? <AuthenticationFixture /> : <Slot />
 }

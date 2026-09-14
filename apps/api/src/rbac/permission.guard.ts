@@ -1,7 +1,7 @@
 import { CanActivate, ExecutionContext, ForbiddenException, Injectable, UnauthorizedException } from '@nestjs/common'
 import { Reflector } from '@nestjs/core'
-import type { PermissionKey } from '@habituar/core/permissions'
-import type { AuthenticatedRequest } from '../authorization/authentication.guard.js'
+import { PermissionKey } from '@habituar/core/permissions'
+import { AuthenticatedRequest } from '../authorization/authentication.guard.js'
 import { PERMISSION_KEY } from './require-permission.decorator.js'
 import { RbacService } from './rbac.service.js'
 
@@ -22,7 +22,7 @@ export class PermissionGuard implements CanActivate {
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const required = this.reflector.getAllAndOverride<PermissionKey>(PERMISSION_KEY, [
+    const required = this.reflector.getAllAndOverride<PermissionKey | undefined>(PERMISSION_KEY, [
       context.getHandler(),
       context.getClass(),
     ])

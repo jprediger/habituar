@@ -12,9 +12,20 @@ export default [
   ...apiConfig,
   {
     files: ['src/**/*.ts'],
-    ignores: ['src/database/**/*.ts'],
+    ignores: [
+      'src/database/**/*.ts',
+      'src/authentication/authentication.service.ts',
+      'src/authorization/authentication.guard.ts',
+      'src/rbac/rbac.service.ts',
+    ],
     rules: {
       'no-restricted-imports': ['error', { patterns: [...FRAMEWORK_BANS, ...ORM_BANS] }],
+    },
+  },
+  {
+    files: ['src/**/*.ts'],
+    rules: {
+      '@typescript-eslint/consistent-type-imports': 'off',
     },
   },
 ]

@@ -60,7 +60,7 @@ describe('useAuthentication', () => {
     const hook = renderHook(() => client.useAuthentication(), { wrapper: client.Provider })
 
     await waitFor(() => { expect(hook.result.current.state.status).toBe('unauthenticated') })
-    await act(() => hook.result.current.actions.login({ email: 'person@example.com', password: 'wrong' }))
+    await act(async () => { await hook.result.current.actions.login({ email: 'person@example.com', password: 'wrong' }) })
     expect(hook.result.current.state).toEqual({ status: 'failed', failure: 'invalid-credentials' })
   })
 
@@ -84,7 +84,7 @@ describe('useAuthentication', () => {
     const hook = renderHook(() => client.useAuthentication(), { wrapper: client.Provider })
 
     await waitFor(() => { expect(hook.result.current.state.status).toBe('selecting-membership') })
-    act(() => { hook.result.current.actions.selectMembership(institutionIdSchema.parse('00000000-0000-4000-8000-000000000002')) })
+    await act(async () => { await hook.result.current.actions.selectMembership(institutionIdSchema.parse('00000000-0000-4000-8000-000000000002')) })
     expect(hook.result.current.state).toMatchObject({ status: 'authenticated', session: { destination: 'monitor-home' } })
   })
 
@@ -121,7 +121,7 @@ describe('useAuthentication', () => {
 
     await waitFor(() => { expect(hook.result.current.state).toEqual({ status: 'failed', failure: 'network' }) })
     shouldFail = false
-    act(() => { hook.result.current.actions.retry() })
+    await act(async () => { await hook.result.current.actions.retry() })
     await waitFor(() => { expect(hook.result.current.state.status).toBe('authenticated') })
   })
 
@@ -144,7 +144,7 @@ describe('useAuthentication', () => {
     await expect(storage.read()).resolves.toBe('persisted-token')
 
     revokeFails = false
-    act(() => { hook.result.current.actions.retry() })
+    await act(async () => { await hook.result.current.actions.retry() })
     await waitFor(() => { expect(hook.result.current.state.status).toBe('unauthenticated') })
     await expect(storage.read()).resolves.toBeUndefined()
   })

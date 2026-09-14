@@ -11,8 +11,7 @@ import { Button } from './components/ui/button.js'
 
 /** Renderiza a experiência visual de autenticação sem assumir dados ou transporte da sessão. */
 export function AuthenticationFixture(props: Readonly<{ route: '/login' | '/select-institution' | '/student' | '/professional' | '/monitor' }>): ReactElement | null {
-  const { t } = useTranslation()
-  const { state, actions } = habituar.useAuthentication()
+  const { state } = habituar.useAuthentication()
   const guard = getWebAuthenticationGuard(state, props.route)
 
   if (guard.action === 'block') return <AuthenticationLoading />
@@ -61,7 +60,7 @@ function LoginScreen(props: Readonly<{ failure?: Exclude<AuthenticationFailure, 
     <main className="auth-layout">
       <section className="auth-content" aria-labelledby="login-title">
         <div className="auth-form">
-          <p className="brand-name">Habituar</p>
+          <p className="brand-name">{t('authentication.brandName')}</p>
           <div className="auth-heading">
             <h1 id="login-title">{t('authentication.login.title')}</h1>
             <p>{t('authentication.login.description')}</p>
@@ -78,7 +77,9 @@ function LoginScreen(props: Readonly<{ failure?: Exclude<AuthenticationFailure, 
                 required
                 value={email}
                 aria-describedby={hasFailure ? failureId : undefined}
-                onChange={(event) => setEmail(event.target.value)}
+                onChange={(event) => {
+                  setEmail(event.target.value)
+                }}
               />
             </div>
             <div className="form-field">
@@ -91,7 +92,9 @@ function LoginScreen(props: Readonly<{ failure?: Exclude<AuthenticationFailure, 
                 required
                 value={password}
                 aria-describedby={hasFailure ? failureId : undefined}
-                onChange={(event) => setPassword(event.target.value)}
+                onChange={(event) => {
+                  setPassword(event.target.value)
+                }}
               />
             </div>
             <Button className="w-full" type="submit" disabled={isSubmitting} aria-describedby={isSubmitting ? 'login-progress' : undefined}>
@@ -99,7 +102,7 @@ function LoginScreen(props: Readonly<{ failure?: Exclude<AuthenticationFailure, 
             </Button>
             {isSubmitting ? <p id="login-progress" className="sr-only" role="status">{t('authentication.login.submitting')}</p> : null}
           </form>
-          {props.failure === 'network' ? <Button variant="link" onClick={() => actions.retry()}>{t('authentication.retry')}</Button> : null}
+          {props.failure === 'network' ? <Button variant="link" onClick={() => { void actions.retry()}}>{t('authentication.retry')}</Button> : null}
         </div>
       </section>
       <InstitutionalPanel />
@@ -114,7 +117,7 @@ function InstitutionalPanel(): ReactElement {
     <aside className="institutional-panel" aria-label={t('authentication.panel.label')}>
       <div className="panel-pattern" aria-hidden="true"><i /><i /><i /><i /><i /><i /></div>
       <div className="panel-copy">
-        <p className="brand-name">Habituar</p>
+        <p className="brand-name">{t('authentication.brandName')}</p>
         <p>{t('authentication.panel.message')}</p>
       </div>
     </aside>
@@ -129,12 +132,12 @@ function InstitutionSelectionScreen(): ReactElement {
 
   return (
     <section className="selection-card" aria-labelledby="selection-title">
-      <p className="brand-name">Habituar</p>
+      <p className="brand-name">{t('authentication.brandName')}</p>
       <h1 id="selection-title">{t('authentication.selection.title')}</h1>
       <p className="screen-description">{t('authentication.selection.description')}</p>
       <div className="selection-list">
-        {state.context.memberships.map((membership) => (
-          <Button key={membership.institution.id} variant="outline" className="selection-option" onClick={() => actions.selectMembership(membership.institution.id)}>
+        {state.memberships.map((membership) => (
+          <Button key={membership.institution.id} variant="outline" className="selection-option" onClick={() => {void actions.selectMembership(membership.institution.id)}}>
             <span>{membership.institution.name}</span>
             <span>{membership.role.name}</span>
           </Button>
@@ -151,10 +154,10 @@ function HomeScreen(props: Readonly<{ destination: HomeDestination }>): ReactEle
 
   return (
     <section className="home-card" aria-labelledby="home-title">
-      <p className="brand-name">Habituar</p>
+      <p className="brand-name">{t('authentication.brandName')}</p>
       <h1 id="home-title">{getHomeTitle(props.destination, t)}</h1>
       <p className="screen-description">{getHomeText(props.destination, t)}</p>
-      <Button variant="outline" onClick={() => void actions.logout()} disabled={isLoggingOut}>
+      <Button variant="outline" onClick={() => {void actions.logout()}} disabled={isLoggingOut}>
         {isLoggingOut ? t('authentication.logoutSubmitting') : t('authentication.logout')}
       </Button>
     </section>
@@ -166,7 +169,7 @@ function FailureScreen(props: Readonly<{ failure: 'no-memberships' }>): ReactEle
 
   return (
     <section className="home-card" aria-labelledby="failure-title">
-      <p className="brand-name">Habituar</p>
+      <p className="brand-name">{t('authentication.brandName')}</p>
       <h1 id="failure-title">{t('authentication.failure.no-membershipsTitle')}</h1>
       <p className="screen-description" role="alert">{getFailureText(props.failure, t)}</p>
     </section>

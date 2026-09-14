@@ -2,6 +2,8 @@
   "authentication": {
     "loading": "Verificando sua sessão...",
     "retry": "Tentar novamente",
+    "loginSuccess": "Login ✓ ({{destination}})",
+    "brandName": "Habituar",
     "login": {
       "title": "Entrar",
       "description": "Use seu e-mail e senha para acessar seu ambiente.",
@@ -9,6 +11,16 @@
       "passwordLabel": "Senha",
       "submit": "Entrar",
       "submitting": "Entrando..."
+    },
+    "register": {
+      "title": "Criar conta",
+      "description": "Crie sua conta para acessar o Habituar.",
+      "nameLabel": "Nome",
+      "emailLabel": "E-mail",
+      "passwordLabel": "Senha",
+      "submit": "Criar conta",
+      "submitting": "Criando conta...",
+      "success": "Cadastro realizado. Você já pode entrar."
     },
     "panel": {
       "label": "Apresentação do Habituar",
@@ -24,6 +36,7 @@
     "failure": {
       "invalid-credentials": "E-mail ou senha inválidos.",
       "network": "Não foi possível concluir a autenticação agora.",
+      "conflict": "Este e-mail já está em uso.",
       "no-membershipsTitle": "Seu acesso ainda não está pronto",
       "no-memberships": "Seu cadastro não possui vínculo institucional. Procure a pessoa responsável pelo cadastro.",
       "forbidden": "Você não tem permissão para acessar este ambiente."

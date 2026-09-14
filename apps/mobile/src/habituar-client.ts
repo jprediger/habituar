@@ -1,5 +1,5 @@
 import { createHabituarReactClient } from '@habituar/react-client/react-client'
-import { sessionCredentialStorage } from './session-credential-storage.js'
+import { sessionCredentialStorage } from './session-credential-storage'
 
 /**
  * Dono da origem da API neste app: só garante que a variável existe. A forma da origem

@@ -8,7 +8,10 @@
     "module": "ESNext",
     "moduleResolution": "bundler",
     "noEmit": true,
-    "types": ["node"]
+    "types": ["node"],
+    "paths": {
+      "@habituar/core/*": ["../core/dist/*.d.ts", "../core/dist/*"]
+    }
   },
   "include": ["src", "tsup.config.ts"]
 }

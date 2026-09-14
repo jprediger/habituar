@@ -1,5 +1,5 @@
 import { SetMetadata } from '@nestjs/common'
-import type { PermissionKey } from '@habituar/core/permissions'
+import { PermissionKey } from '@habituar/core/permissions'
 
 export const PERMISSION_KEY = 'habituar:required-permission'
 

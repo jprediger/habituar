@@ -1,7 +1,6 @@
-import { PostgreSqlContainer } from '@testcontainers/postgresql'
 import { drizzle } from 'drizzle-orm/node-postgres'
 import { migrate } from 'drizzle-orm/node-postgres/migrator'
-import { readFile } from 'node:fs/promises'
+import { access, readFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { Pool } from 'pg'
 import { TestProject } from 'vitest/node'
@@ -18,6 +17,22 @@ declare module 'vitest' {
 }
 
 export default async function setup(project: TestProject): Promise<() => Promise<void>> {
+  if (process.env.TESTCONTAINERS_RYUK_DISABLED === undefined) {
+    process.env.TESTCONTAINERS_RYUK_DISABLED = 'true'
+  }
+
+  if (process.env.DOCKER_HOST === undefined && typeof process.getuid === 'function') {
+    const podmanSocket = `/run/user/${String(process.getuid())}/podman/podman.sock`
+
+    try {
+      await access(podmanSocket)
+      process.env.DOCKER_HOST = `unix://${podmanSocket}`
+    } catch {
+      // Sem socket rootless detectável, Testcontainers usa a estratégia padrão.
+    }
+  }
+
+  const { PostgreSqlContainer } = await import('@testcontainers/postgresql')
   const container = await new PostgreSqlContainer('postgres:18-alpine')
     .withDatabase('habituar')
     .withUsername('postgres')

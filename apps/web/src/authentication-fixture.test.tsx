@@ -19,7 +19,7 @@ function createAuthenticatedState(environment: RoleEnvironment): AuthenticationS
 
   if (membership === undefined) throw new Error('Authentication fixture requires one membership.')
 
-  return { status: 'authenticated', session: { context, membership, destination: getHomeDestination(environment) } }
+  return { status: 'authenticated', session: { user: context.user, membership, destination: getHomeDestination(environment) } }
 }
 
 describe('web authentication routes', () => {
@@ -45,7 +45,7 @@ describe('web authentication routes', () => {
       isPlatformAdministrator: false,
     })
 
-    expect(getWebAuthenticationGuard({ status: 'selecting-membership', context }, '/professional')).toEqual({ action: 'redirect', route: '/select-institution' })
+    expect(getWebAuthenticationGuard({ status: 'selecting-membership', user: context.user, memberships: context.memberships }, '/professional')).toEqual({ action: 'redirect', route: '/select-institution' })
   })
 
   it('redirects an incompatible deep link without rendering its protected content', () => {

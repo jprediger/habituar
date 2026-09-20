@@ -33,6 +33,24 @@ export function getHomeDestinationText(destination: HomeDestination, t: TFunctio
       return t('home.professional-home.title')
     case 'monitor-home':
       return t('home.monitor-home.title')
+    case 'admin-home':
+      return t('home.admin-home.title')
+    default:
+      return assertNever(destination)
+  }
+}
+
+/** Frase de apoio do ambiente, para a tela dizer o que se faz ali antes de haver funções. */
+export function getHomeDescriptionText(destination: HomeDestination, t: TFunction): string {
+  switch (destination) {
+    case 'student-home':
+      return t('home.student-home.description')
+    case 'professional-home':
+      return t('home.professional-home.description')
+    case 'monitor-home':
+      return t('home.monitor-home.description')
+    case 'admin-home':
+      return t('home.admin-home.description')
     default:
       return assertNever(destination)
   }

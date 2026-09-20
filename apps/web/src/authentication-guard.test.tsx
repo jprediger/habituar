@@ -19,7 +19,7 @@ function createAuthenticatedState(environment: RoleEnvironment): AuthenticationS
 
   if (membership === undefined) throw new Error('Authentication fixture requires one membership.')
 
-  return { status: 'authenticated', session: { user: context.user, membership, destination: getHomeDestination(environment) } }
+  return { status: 'authenticated', session: { kind: 'institution', user: context.user, membership, destination: getHomeDestination(environment) } }
 }
 
 describe('web authentication routes', () => {
@@ -64,6 +64,28 @@ describe('web authentication routes', () => {
     expect(getWebAuthenticationGuard(createAuthenticatedState('student'), '/register')).toEqual({
       action: 'redirect',
       route: '/student',
+    })
+  })
+
+  it('sends a platform administrator to the administration screen', () => {
+    const user = authenticationContextSchema.parse({
+      user: { id: '20000000-0000-4000-8000-000000000001', email: 'person@example.com', name: 'Person' },
+      memberships: [],
+      isPlatformAdministrator: true,
+    }).user
+    const state: AuthenticationState = {
+      status: 'authenticated',
+      session: { kind: 'platform-administration', user, destination: 'admin-home' },
+    }
+
+    expect(getWebAuthenticationGuard(state, '/student')).toEqual({ action: 'redirect', route: '/admin' })
+    expect(getWebAuthenticationGuard(state, '/admin')).toEqual({ action: 'render' })
+  })
+
+  it('keeps an institution session out of the administration screen', () => {
+    expect(getWebAuthenticationGuard(createAuthenticatedState('professional'), '/admin')).toEqual({
+      action: 'redirect',
+      route: '/professional',
     })
   })
 

@@ -10,6 +10,7 @@ export type WebAuthenticationRoute =
   | '/student'
   | '/professional'
   | '/monitor'
+  | '/admin'
 
 // Rotas que existem justamente para quem ainda não tem sessão: negar acesso a elas
 // deixaria o visitante sem caminho de entrada.
@@ -54,6 +55,8 @@ function getDestinationPath(destination: HomeDestination): WebAuthenticationRout
       return '/professional'
     case 'monitor-home':
       return '/monitor'
+    case 'admin-home':
+      return '/admin'
     default:
       return assertNever(destination)
   }

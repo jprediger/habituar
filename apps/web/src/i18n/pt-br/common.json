@@ -2,7 +2,6 @@
   "authentication": {
     "loading": "Verificando sua sessão...",
     "retry": "Tentar novamente",
-    "loginSuccess": "Login ✓ ({{destination}})",
     "brandName": "Habituar",
     "login": {
       "title": "Entrar",
@@ -26,15 +25,10 @@
       "passwordHint": "Mínimo de {{minimum}} caracteres.",
       "haveAccount": "Já tem uma conta?"
     },
-    "panel": {
-      "label": "Apresentação do Habituar",
-      "message": "Uma rotina mais clara, no seu ritmo."
-    },
     "selection": {
       "title": "Escolha uma instituição",
       "description": "Selecione onde você quer acessar agora."
     },
-    "selectInstitution": "Selecione uma instituição",
     "logout": "Sair",
     "logoutSubmitting": "Saindo...",
     "failure": {
@@ -62,7 +56,16 @@
       "too-short": "Use pelo menos {{minimum}} caracteres."
     }
   },
+  "theme": {
+    "activateDark": "Ativar tema escuro",
+    "activateLight": "Ativar tema claro"
+  },
   "home": {
+    "signedInAs": "Conectado como {{name}}",
+    "institutionLabel": "Instituição",
+    "roleLabel": "Papel",
+    "accountLabel": "Conta",
+    "scopeLabel": "Alcance",
     "student-home": {
       "title": "Seu ambiente de aluno",
       "description": "Organize sua rotina, acompanhe tarefas e consulte sua agenda."
@@ -74,6 +77,11 @@
     "monitor-home": {
       "title": "Seu ambiente de monitor",
       "description": "Consulte e acompanhe os alunos atribuídos a você."
+    },
+    "admin-home": {
+      "title": "Administração geral",
+      "description": "Operação global do Habituar, fora dos vínculos institucionais.",
+      "scope": "Provisionamento de instituições. Sem acesso a fichas, observações ou dados de alunos."
     }
   }
 }

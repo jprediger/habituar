@@ -1,7 +1,6 @@
 import { SPACING } from '@habituar/design-tokens/spacing'
 import type { PropsWithChildren, ReactNode } from 'react'
 import { StyleSheet, View } from 'react-native'
-import { BrandLogo } from './brand-logo'
 import { Screen } from './components/ui/screen'
 import { Text } from './components/ui/text'
 
@@ -18,8 +17,6 @@ export function AuthenticationCard({
 
   return (
     <Screen>
-      <BrandLogo />
-
       <View style={styles.intro}>
         <Text accessibilityRole="header" size="display" weight="bold" isCentered>
           {heading}

@@ -2,6 +2,7 @@ import { loginInputSchema } from '@habituar/core/auth/schema'
 import { Link, Navigate, createFileRoute } from '@tanstack/react-router'
 import type { ReactElement } from 'react'
 import { useTranslation } from 'react-i18next'
+import authenticationHeroUrl from '../assets/authentication-hero.jpg'
 import { AuthenticationCard } from '../authentication-card.js'
 import { getWebAuthenticationGuard } from '../authentication-guard.js'
 import { getAuthenticationFailureText } from '../authentication-messages.js'
@@ -41,12 +42,16 @@ export function LoginRoute(): ReactElement {
   const isSubmitting = state.status === 'authenticating'
 
   return (
-    <AuthenticationCard title={t('authentication.login.title')}>
+    <AuthenticationCard
+      title={t('authentication.login.heading')}
+      hero={{ src: authenticationHeroUrl, alt: t('authentication.heroAlt') }}
+    >
       <form onSubmit={submit} noValidate className="flex flex-col gap-md">
-        <p className="text-caption text-text-muted">{t('authentication.login.description')}</p>
+        <p className="text-body text-text-muted">{t('authentication.login.description')}</p>
 
         <FormField
           id="login-email"
+          className="mt-md"
           label={t('authentication.login.emailLabel')}
           isRequired
           requiredMarkLabel={t('form.requiredMark')}
@@ -74,8 +79,10 @@ export function LoginRoute(): ReactElement {
           requiredMarkLabel={t('form.requiredMark')}
           error={password.error === undefined ? undefined : getFieldErrorText(password.error, t)}
           action={
-            <Button asChild variant="link" size="inline">
-              <Link to="/forgot-password">{t('authentication.login.forgotPassword')}</Link>
+            <Button asChild variant="link" size="inline" className="text-body">
+              <Link to="/forgot-password" className="text-primary">
+                {t('authentication.login.forgotPassword')}
+              </Link>
             </Button>
           }
         >
@@ -100,16 +107,18 @@ export function LoginRoute(): ReactElement {
         )}
 
         {/* Respiro maior antes da ação: o botão encerra o formulário, não é mais um campo. */}
-        <Button type="submit" disabled={isSubmitting} className="mt-sm">
+        <Button type="submit" disabled={isSubmitting} className="mt-lg">
           <SignInIcon />
           {isSubmitting ? t('authentication.login.submitting') : t('authentication.login.submit')}
         </Button>
       </form>
 
-      <p className="mt-xs text-center text-caption text-text-muted">
+      <p className="mt-xs text-center text-body text-text-muted">
         {t('authentication.login.noAccount')}{' '}
-        <Button asChild variant="link" size="inline">
-          <Link to="/register">{t('authentication.register.title')}</Link>
+        <Button asChild variant="link" size="inline" className="text-body">
+          <Link to="/register" className="text-primary">
+            {t('authentication.register.title')}
+          </Link>
         </Button>
       </p>
     </AuthenticationCard>

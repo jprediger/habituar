@@ -3,9 +3,11 @@
     "loading": "Verificando sua sessão...",
     "retry": "Tentar novamente",
     "brandName": "Habituar",
+    "heroAlt": "Folhagem verde iluminada pelo sol",
     "login": {
       "title": "Entrar",
-      "description": "Use seu e-mail e senha para acessar seu ambiente.",
+      "heading": "Que bom ter você de volta!",
+      "description": "Entre para acessar o seu ambiente.",
       "emailLabel": "E-mail",
       "passwordLabel": "Senha",
       "submit": "Entrar",
@@ -15,6 +17,7 @@
     },
     "register": {
       "title": "Criar conta",
+      "heading": "Vamos criar sua conta!",
       "description": "Crie sua conta para acessar o Habituar.",
       "nameLabel": "Nome",
       "emailLabel": "E-mail",

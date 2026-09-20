@@ -4,6 +4,7 @@ import { Link, Navigate, createFileRoute } from '@tanstack/react-router'
 import type { ReactElement } from 'react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import authenticationHeroUrl from '../assets/authentication-hero.jpg'
 import { AuthenticationCard } from '../authentication-card.js'
 import { getWebAuthenticationGuard } from '../authentication-guard.js'
 import { Button } from '../components/ui/button.js'
@@ -84,7 +85,10 @@ export function RegisterRoute(): ReactElement {
 
   if (guard.action === 'block') {
     return (
-      <AuthenticationCard title={t('authentication.register.title')}>
+      <AuthenticationCard
+        title={t('authentication.register.heading')}
+        hero={{ src: authenticationHeroUrl, alt: t('authentication.heroAlt') }}
+      >
         <p role="status" aria-live="polite" className="text-body">
           {t('authentication.loading')}
         </p>
@@ -97,7 +101,10 @@ export function RegisterRoute(): ReactElement {
   const isSubmitting = registerState.status === 'submitting'
 
   return (
-    <AuthenticationCard title={t('authentication.register.title')}>
+    <AuthenticationCard
+      title={t('authentication.register.heading')}
+      hero={{ src: authenticationHeroUrl, alt: t('authentication.heroAlt') }}
+    >
       {registerState.status === 'succeeded' ? (
         <div className="flex flex-col gap-sm">
           <p role="status" aria-live="polite" className="text-body">
@@ -109,10 +116,11 @@ export function RegisterRoute(): ReactElement {
         </div>
       ) : (
         <form onSubmit={submit} noValidate className="flex flex-col gap-md">
-          <p className="text-caption text-text-muted">{t('authentication.register.description')}</p>
+          <p className="text-body text-text-muted">{t('authentication.register.description')}</p>
 
           <FormField
             id="register-name"
+            className="mt-md"
             label={t('authentication.register.nameLabel')}
             isRequired
             requiredMarkLabel={t('form.requiredMark')}
@@ -183,16 +191,18 @@ export function RegisterRoute(): ReactElement {
             </p>
           )}
 
-          <Button type="submit" disabled={isSubmitting}>
+          <Button type="submit" disabled={isSubmitting} className="mt-lg">
             {isSubmitting ? t('authentication.register.submitting') : t('authentication.register.submit')}
           </Button>
         </form>
       )}
 
-      <p className="mt-xs text-center text-caption text-text-muted">
+      <p className="mt-xs text-center text-body text-text-muted">
         {t('authentication.register.haveAccount')}{' '}
-        <Button asChild variant="link" size="inline">
-          <Link to="/login">{t('authentication.login.title')}</Link>
+        <Button asChild variant="link" size="inline" className="text-body">
+          <Link to="/login" className="text-primary">
+            {t('authentication.login.title')}
+          </Link>
         </Button>
       </p>
     </AuthenticationCard>

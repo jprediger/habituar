@@ -1,6 +1,7 @@
 import { Link, createFileRoute } from '@tanstack/react-router'
 import type { ReactElement } from 'react'
 import { useTranslation } from 'react-i18next'
+import authenticationHeroUrl from '../assets/authentication-hero.jpg'
 import { AuthenticationCard } from '../authentication-card.js'
 import { Button } from '../components/ui/button.js'
 
@@ -17,7 +18,10 @@ export function ForgotPasswordRoute(): ReactElement {
   const { t } = useTranslation()
 
   return (
-    <AuthenticationCard title={t('authentication.forgotPassword.title')}>
+    <AuthenticationCard
+      title={t('authentication.forgotPassword.title')}
+      hero={{ src: authenticationHeroUrl, alt: t('authentication.heroAlt') }}
+    >
       <div className="flex flex-col gap-sm">
         <p className="text-body">{t('authentication.forgotPassword.unavailable')}</p>
         <Button asChild variant="outline">

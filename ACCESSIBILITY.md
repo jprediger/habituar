@@ -37,8 +37,33 @@ regras adicionais, não negociáveis, que a WCAG não cobre.
   foco igual à ordem visual.
 - Nenhum conteúdo depende exclusivamente de cor para transmitir informação.
 - Alvo de toque mínimo de 24×24 CSS px (WCAG 2.2, 2.5.8); usamos 44×44 como padrão.
+  Duas exceções caem para o piso de 24×24: link dentro de uma frase, que a própria 2.5.8
+  dispensa, e ação textual numa linha de rótulo — esticar essa linha para 44 afastaria o
+  rótulo do campo a que ele pertence, e a legibilidade do formulário custa mais do que os
+  20px de alvo. Fora desses dois casos, 44×44.
 - Formulário: `label` associado sempre, erro ligado ao campo por `aria-describedby`,
   e o erro descreve **como corrigir**.
+
+### Campo de formulário
+
+- **Campo obrigatório é marcado com `*` depois do rótulo, sempre.** A marca é visual: o
+  atributo `required` do controle é o que anuncia a obrigatoriedade à tecnologia
+  assistiva, então o asterisco vai com `aria-hidden` e não é lido duas vezes.
+- **O `*` carrega `title` com "Campo obrigatório"**, para quem usa mouse resolver a marca
+  sem legenda no rodapé do formulário. Assumimos que o asterisco é convenção conhecida o
+  bastante para dispensar a legenda; se um teste com usuário mostrar o contrário, a
+  legenda volta.
+- Campo opcional não recebe marca nenhuma. Marcar os dois lados dobra o ruído sem
+  acrescentar distinção.
+- **A validação aparece depois de sair do campo ou de tentar enviar**, nunca durante a
+  primeira digitação (WCAG 3.3.1): acusar erro em texto que a pessoa ainda está
+  escrevendo é interrupção, não ajuda.
+- **A mensagem de erro é texto, ligada por `aria-describedby`, e a borda vermelha é
+  reforço** — nunca o único sinal.
+- **Campo de senha tem alternância de visibilidade**, num `<button type="button">` com
+  `aria-pressed` e rótulo que muda entre mostrar e ocultar.
+- **A regra de validade vem do mesmo schema zod que a API cobra.** A tela não reimplementa
+  o que é válido; ela só decide quando mostrar a falha e com que texto.
 
 ## Regras técnicas — mobile
 
@@ -110,6 +135,7 @@ Estas são específicas deste produto e valem em ambas as plataformas.
 | Navegação por teclado | teste de integração dos fluxos principais |
 | Rótulos e papéis no mobile | lint de props de acessibilidade + passe manual |
 | VoiceOver / TalkBack | passe manual por marco nas plataformas disponíveis; pendências registradas antes da distribuição |
+| Marca de obrigatório e momento da validação | *review* — checklist de tela |
 | Regras cognitivas | *review* — checklist do PR |
 
 Cerca de 30% das barreiras da WCAG são detectáveis por ferramenta automática. O CI verde
@@ -125,5 +151,7 @@ Toda tela nova responde sim a todas antes do merge:
 - [ ] Alvos de toque no tamanho mínimo
 - [ ] Funciona com fonte ampliada e, quando houver movimento, respeita a preferência de reduzi-lo
 - [ ] Toda ação destrutiva tem confirmação e desfazer
+- [ ] Campo obrigatório marcado com `*`, e o `required` do controle anuncia a exigência
+- [ ] Erro aparece só depois de sair do campo ou tentar enviar, e diz como corrigir
 - [ ] Nenhum texto de usuário hardcoded — tudo via i18n, em pt-BR simples
 - [ ] Nada se move, avança ou expira sozinho

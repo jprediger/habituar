@@ -6,6 +6,7 @@ import { environmentSchema } from '../../environment/environment.schema.js'
 import { RequestContext } from '../../platform/request-context.js'
 import { Database } from '../database.js'
 import { roles } from '../schema.js'
+import { seedPermissionCatalog } from './permission-catalog.seed.js'
 import { seedRoleTemplates } from './role-templates.js'
 
 const INSTITUTION_ID = '93000000-0000-4000-8000-000000000009'
@@ -35,6 +36,11 @@ describe('templates de papel', () => {
   })
 
   it('é idempotente e mantém um template para cada ambiente', async () => {
+    // As concessões dos templates referenciam `permissions`.
+    await database.withTenantOutsideRequest(
+      { institutionId: INSTITUTION_ID, actorId: INSTITUTION_ID, sessionId: INSTITUTION_ID },
+      seedPermissionCatalog,
+    )
     await database.withTenantOutsideRequest(
       { institutionId: INSTITUTION_ID, actorId: INSTITUTION_ID, sessionId: INSTITUTION_ID },
       (transaction) => seedRoleTemplates(transaction, INSTITUTION_ID),

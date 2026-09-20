@@ -8,6 +8,7 @@ import { environmentSchema } from '../../environment/environment.schema.js'
 import { RequestContext } from '../../platform/request-context.js'
 import { Database } from '../database.js'
 import { institutions, users } from '../schema.js'
+import { DEFAULT_INSTITUTION_NAME } from './default-institution.js'
 import { seedPermissionCatalog } from './permission-catalog.seed.js'
 import { seedRoleTemplates } from './role-templates.js'
 
@@ -64,7 +65,7 @@ async function main(): Promise<void> {
 
       const [institution] = await transaction
         .insert(institutions)
-        .values({ name: process.env.ADMIN_INSTITUTION_NAME ?? 'Instituição Padrão' })
+        .values({ name: DEFAULT_INSTITUTION_NAME })
         .returning()
       if (institution === undefined) throw new Error('Falha ao criar instituição: insert não retornou linha')
 

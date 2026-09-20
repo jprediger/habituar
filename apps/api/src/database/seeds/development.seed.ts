@@ -7,9 +7,8 @@ import { environmentSchema } from '../../environment/environment.schema.js'
 import { RequestContext } from '../../platform/request-context.js'
 import { Database } from '../database.js'
 import { institutions } from '../schema.js'
+import { DEFAULT_INSTITUTION_NAME } from './default-institution.js'
 import { DEVELOPMENT_USERS, seedDevelopmentUsers } from './development-users.js'
-
-const DEFAULT_INSTITUTION_NAME = 'Instituição Padrão'
 
 /**
  * Popula a instituição do seed de admin com um usuário por ambiente, todos com a mesma
@@ -26,16 +25,15 @@ async function main(): Promise<void> {
   const password = process.env.DEV_SEED_PASSWORD
   if (password === undefined || password === '') throw new Error('Defina DEV_SEED_PASSWORD no .env')
 
-  const institutionName = process.env.ADMIN_INSTITUTION_NAME ?? DEFAULT_INSTITUTION_NAME
   const database = new Database(new ConfigService(environment), new RequestContext())
 
   try {
     const institution = await database.withTenantOutsideRequest(
       SYSTEM_TENANT_CONTEXT,
-      (transaction) => transaction.query.institutions.findFirst({ where: eq(institutions.name, institutionName) }),
+      (transaction) => transaction.query.institutions.findFirst({ where: eq(institutions.name, DEFAULT_INSTITUTION_NAME) }),
     )
     if (institution === undefined) {
-      throw new Error(`Instituição "${institutionName}" não existe; rode pnpm db:seed:admin primeiro`)
+      throw new Error(`Instituição "${DEFAULT_INSTITUTION_NAME}" não existe; rode pnpm db:seed:admin primeiro`)
     }
 
     const passwordHash = await hashPassword(password)
@@ -44,7 +42,7 @@ async function main(): Promise<void> {
       (transaction) => seedDevelopmentUsers(transaction, institution.id, passwordHash),
     )
 
-    console.log(`Usuários de desenvolvimento prontos em "${institutionName}":`)
+    console.log(`Usuários de desenvolvimento prontos em "${DEFAULT_INSTITUTION_NAME}":`)
     for (const { email } of Object.values(DEVELOPMENT_USERS)) console.log(`  ${email}`)
   } finally {
     await database.onApplicationShutdown()

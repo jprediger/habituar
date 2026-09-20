@@ -1,18 +1,17 @@
 import { SPACING } from '@habituar/design-tokens/spacing'
 import type { MembershipContext } from '@habituar/react-client/react-client'
 import { useTranslation } from 'react-i18next'
-import { StyleSheet, Text, View } from 'react-native'
+import { StyleSheet, View } from 'react-native'
 import { AuthenticationCard } from './authentication-card'
 import { Button } from './components/ui/button'
+import { Text } from './components/ui/text'
 import { habituar } from './habituar-client'
-import { useThemeTokens } from './theme/tokens'
 
 /** Escolha do vínculo ativo quando a conta tem mais de um; não decide destino algum. */
 export function InstitutionSelectionScreen({
   memberships,
 }: Readonly<{ memberships: readonly MembershipContext[] }>) {
   const { t } = useTranslation()
-  const { colors, fontSize } = useThemeTokens()
   const { actions } = habituar.useAuthentication()
 
   return (
@@ -29,7 +28,7 @@ export function InstitutionSelectionScreen({
               void actions.selectMembership(membership.institution.id)
             }}
           />
-          <Text style={{ color: colors.textMuted, fontSize: fontSize.caption, textAlign: 'center' }}>
+          <Text size="caption" tone="muted" isCentered>
             {membership.role.name}
           </Text>
         </View>

@@ -1,11 +1,11 @@
 import { SPACING } from '@habituar/design-tokens/spacing'
 import type { AuthenticationFailure } from '@habituar/react-client/react-client'
 import { useTranslation } from 'react-i18next'
-import { StyleSheet, Text, View } from 'react-native'
+import { StyleSheet, View } from 'react-native'
 import { getAuthenticationFailureRecovery, getAuthenticationFailureText } from './authentication-messages'
 import { Button } from './components/ui/button'
+import { Text } from './components/ui/text'
 import { habituar } from './habituar-client'
-import { useThemeTokens } from './theme/tokens'
 
 /**
  * O que a tela mostra quando a autenticação falha: o texto da falha e a saída que ela
@@ -14,17 +14,12 @@ import { useThemeTokens } from './theme/tokens'
  */
 export function AuthenticationFailureAlert({ failure }: Readonly<{ failure: AuthenticationFailure }>) {
   const { t } = useTranslation()
-  const { colors, fontSize } = useThemeTokens()
   const { actions } = habituar.useAuthentication()
   const recovery = getAuthenticationFailureRecovery(failure)
 
   return (
     <View style={styles.container}>
-      <Text
-        accessibilityRole="alert"
-        accessibilityLiveRegion="polite"
-        style={{ color: colors.danger, fontSize: fontSize.caption }}
-      >
+      <Text accessibilityRole="alert" accessibilityLiveRegion="polite" size="caption" tone="danger">
         {getAuthenticationFailureText(failure, t)}
       </Text>
 

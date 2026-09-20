@@ -11,7 +11,7 @@ export type InputProps = TextInputProps & Readonly<{ hasError?: boolean; ref?: R
  * erro — rótulo, validação e mensagem continuam sendo do chamador.
  */
 export function Input({ hasError = false, style, ...props }: InputProps) {
-  const { colors, minimumTouchTarget, fontSize } = useThemeTokens()
+  const { colors, minimumTouchTarget, fontSize, fontFamily, radius } = useThemeTokens()
 
   return (
     <TextInput
@@ -23,10 +23,11 @@ export function Input({ hasError = false, style, ...props }: InputProps) {
           borderWidth: 1,
           // A borda é reforço visual da mensagem de erro, nunca o único sinal dela.
           borderColor: hasError ? colors.danger : colors.border,
-          borderRadius: SPACING.sm,
+          borderRadius: radius.field,
           paddingHorizontal: SPACING.md,
           paddingVertical: SPACING.sm,
           fontSize: fontSize.body,
+          fontFamily: fontFamily.regular,
           color: colors.text,
           backgroundColor: colors.surface,
         },

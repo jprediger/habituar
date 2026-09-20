@@ -1,26 +1,33 @@
 import { useColorScheme } from 'react-native'
-import type { TextStyle } from 'react-native'
 import { INTERACTION } from '@habituar/design-tokens/interaction'
+import { RADIUS } from '@habituar/design-tokens/radius'
 import { SEMANTIC_COLOR_DARK, SEMANTIC_COLOR_LIGHT } from '@habituar/design-tokens/semantic-color'
 import type { ColorRole } from '@habituar/design-tokens/semantic-color'
-import { FONT_SIZE, FONT_WEIGHT, LINE_HEIGHT } from '@habituar/design-tokens/typography'
+import { FONT_SIZE, LINE_HEIGHT } from '@habituar/design-tokens/typography'
+
+/**
+ * Cortes da Outfit que o app carrega. Em React Native, `fontWeight` não escolhe o corte
+ * de uma família customizada: cada peso é uma família própria, e pedir `bold` numa
+ * família que só tem o corte regular produz negrito sintético, borrado. Por isso o token
+ * de peso deste app é uma família, não um número — e é por aqui que o peso se pede.
+ */
+export const APP_FONT_FAMILY = {
+  regular: 'Outfit_400Regular',
+  medium: 'Outfit_500Medium',
+  bold: 'Outfit_600SemiBold',
+} as const
+
+export type FontWeightRole = keyof typeof APP_FONT_FAMILY
 
 export type ThemeTokens = Readonly<{
   colors: Readonly<Record<ColorRole, string>>
   minimumTouchTarget: number
   compactTouchTarget: number
+  radius: typeof RADIUS
   fontSize: typeof FONT_SIZE
-  fontWeight: Readonly<Record<keyof typeof FONT_WEIGHT, TextStyle['fontWeight']>>
+  fontFamily: typeof APP_FONT_FAMILY
   lineHeight: Readonly<Record<keyof typeof FONT_SIZE, Readonly<Record<keyof typeof LINE_HEIGHT, number>>>>
 }>
-
-// O `TextStyle` do RN aceita o peso numérico tal como o token o define; reescrevê-lo em
-// string criaria uma segunda forma do mesmo valor sem ganho nenhum.
-const FONT_WEIGHT_STYLE = {
-  regular: FONT_WEIGHT.regular,
-  medium: FONT_WEIGHT.medium,
-  bold: FONT_WEIGHT.bold,
-} as const
 
 // `LINE_HEIGHT` é razão, e o RN só aceita altura de linha em pixels: a multiplicação pelo
 // tamanho da fonte acontece aqui para nenhuma tela inventar a sua.
@@ -44,8 +51,9 @@ export function useThemeTokens(): ThemeTokens {
     colors,
     minimumTouchTarget: INTERACTION.minimumTouchTarget,
     compactTouchTarget: INTERACTION.compactTouchTarget,
+    radius: RADIUS,
     fontSize: FONT_SIZE,
-    fontWeight: FONT_WEIGHT_STYLE,
+    fontFamily: APP_FONT_FAMILY,
     lineHeight: LINE_HEIGHT_PIXELS,
   }
 }

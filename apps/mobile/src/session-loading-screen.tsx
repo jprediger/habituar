@@ -1,6 +1,7 @@
 import { SPACING } from '@habituar/design-tokens/spacing'
 import { useTranslation } from 'react-i18next'
-import { StyleSheet, Text, View } from 'react-native'
+import { StyleSheet, View } from 'react-native'
+import { Text } from './components/ui/text'
 import { useThemeTokens } from './theme/tokens'
 
 /**
@@ -13,7 +14,7 @@ export function SessionLoadingScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.surface }]}>
-      <Text accessibilityLiveRegion="polite" accessibilityRole="text" style={{ color: colors.text }}>
+      <Text accessibilityLiveRegion="polite" accessibilityRole="text">
         {t('authentication.loading')}
       </Text>
     </View>

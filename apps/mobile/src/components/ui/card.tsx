@@ -5,7 +5,7 @@ import { useThemeTokens } from '../../theme/tokens'
 
 /** Superfície de agrupamento visual do kit nativo; não decide o conteúdo. */
 export function Card({ children }: PropsWithChildren) {
-  const { colors } = useThemeTokens()
+  const { colors, radius } = useThemeTokens()
 
   return (
     <View
@@ -13,7 +13,7 @@ export function Card({ children }: PropsWithChildren) {
         gap: SPACING.md,
         borderWidth: 1,
         borderColor: colors.border,
-        borderRadius: SPACING.md,
+        borderRadius: radius.surface,
         backgroundColor: colors.surface,
         padding: SPACING.lg,
       }}

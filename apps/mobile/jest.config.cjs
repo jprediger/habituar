@@ -34,6 +34,7 @@ module.exports = {
     '^@habituar/core/health/schema$': '<rootDir>/../../packages/core/src/health/health.schema.ts',
     '^@habituar/core/home-destination$': '<rootDir>/../../packages/core/src/home-destination.ts',
     '^@habituar/design-tokens/interaction$': '<rootDir>/../../packages/design-tokens/src/interaction.ts',
+    '^@habituar/design-tokens/radius$': '<rootDir>/../../packages/design-tokens/src/radius.ts',
     '^@habituar/design-tokens/semantic-color$': '<rootDir>/../../packages/design-tokens/src/semantic-color.ts',
     '^@habituar/design-tokens/typography$': '<rootDir>/../../packages/design-tokens/src/typography.ts',
     '^@habituar/design-tokens/spacing$': '<rootDir>/../../packages/design-tokens/src/spacing.ts',

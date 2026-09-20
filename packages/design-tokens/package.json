@@ -16,6 +16,10 @@
       "types": "./dist/spacing.d.ts",
       "import": "./dist/spacing.js"
     },
+    "./radius": {
+      "types": "./dist/radius.d.ts",
+      "import": "./dist/radius.js"
+    },
     "./interaction": {
       "types": "./dist/interaction.d.ts",
       "import": "./dist/interaction.js"

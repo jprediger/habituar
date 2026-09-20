@@ -1,9 +1,9 @@
 import { SPACING } from '@habituar/design-tokens/spacing'
 import type { PropsWithChildren, ReactNode } from 'react'
-import { StyleSheet, Text, View } from 'react-native'
+import { StyleSheet, View } from 'react-native'
 import { BrandMark } from './brand-mark'
 import { Screen } from './components/ui/screen'
-import { useThemeTokens } from './theme/tokens'
+import { Text } from './components/ui/text'
 
 /**
  * Moldura comum das telas de autenticação; dona do enquadramento, da marca e do título
@@ -15,33 +15,16 @@ export function AuthenticationCard({
   footer,
   children,
 }: PropsWithChildren<Readonly<{ heading: string; description: string; footer?: ReactNode }>>) {
-  const { colors, fontSize, fontWeight, lineHeight } = useThemeTokens()
 
   return (
     <Screen>
       <BrandMark />
 
       <View style={styles.intro}>
-        <Text
-          accessibilityRole="header"
-          style={{
-            color: colors.text,
-            fontSize: fontSize.display,
-            fontWeight: fontWeight.bold,
-            lineHeight: lineHeight.display.tight,
-            textAlign: 'center',
-          }}
-        >
+        <Text accessibilityRole="header" size="display" weight="bold" isCentered>
           {heading}
         </Text>
-        <Text
-          style={{
-            color: colors.textMuted,
-            fontSize: fontSize.body,
-            lineHeight: lineHeight.body.normal,
-            textAlign: 'center',
-          }}
-        >
+        <Text tone="muted" isCentered>
           {description}
         </Text>
       </View>

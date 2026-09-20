@@ -6,15 +6,15 @@ import { useRouter } from 'expo-router'
 import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { TextInput } from 'react-native'
-import { StyleSheet, Text, View } from 'react-native'
+import { StyleSheet, View } from 'react-native'
 import { AuthenticationCard } from '../authentication-card'
 import { Button } from '../components/ui/button'
 import { FormField } from '../components/ui/form-field'
 import { Input } from '../components/ui/input'
+import { Text } from '../components/ui/text'
 import { PasswordInput } from '../components/ui/password-input'
 import { getFieldErrorText } from '../form-messages'
 import { habituar } from '../habituar-client'
-import { useThemeTokens } from '../theme/tokens'
 
 const MINIMUM_PASSWORD_LENGTH = 8
 
@@ -57,7 +57,6 @@ function getRegisterFailureText(
 export default function RegisterRoute() {
   const { t } = useTranslation()
   const router = useRouter()
-  const { colors, fontSize } = useThemeTokens()
   const { actions } = habituar.useAuthentication()
   const [registerState, setRegisterState] = useState<RegisterUiState>({ status: 'idle' })
   const form = useValidatedForm(registerInputSchema, { name: '', email: '', password: '' })
@@ -93,7 +92,7 @@ export default function RegisterRoute() {
       description={t('authentication.register.description')}
       footer={
         <View style={styles.footer}>
-          <Text style={{ color: colors.textMuted, fontSize: fontSize.caption }}>
+          <Text size="caption" tone="muted">
             {t('authentication.register.haveAccount')}
           </Text>
           <Button
@@ -109,12 +108,7 @@ export default function RegisterRoute() {
     >
       {registerState.status === 'succeeded' ? (
         <View style={styles.success}>
-          <Text
-            accessibilityLiveRegion="polite"
-            style={{ color: colors.text, fontSize: fontSize.body }}
-          >
-            {t('authentication.register.success')}
-          </Text>
+          <Text accessibilityLiveRegion="polite">{t('authentication.register.success')}</Text>
           <Button
             icon="log-in-outline"
             label={t('authentication.login.title')}
@@ -185,11 +179,7 @@ export default function RegisterRoute() {
           </FormField>
 
           {registerState.status === 'failed' && (
-            <Text
-              accessibilityRole="alert"
-              accessibilityLiveRegion="polite"
-              style={{ color: colors.danger, fontSize: fontSize.caption }}
-            >
+            <Text accessibilityRole="alert" accessibilityLiveRegion="polite" size="caption" tone="danger">
               {getRegisterFailureText(registerState.failure, t)}
             </Text>
           )}

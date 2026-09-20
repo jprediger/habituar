@@ -3,8 +3,10 @@ import { assertNever } from '@habituar/core/assert-never'
 import { SPACING } from '@habituar/design-tokens/spacing'
 import type { ComponentProps } from 'react'
 import type { ViewStyle } from 'react-native'
-import { Pressable, Text } from 'react-native'
+import { Pressable } from 'react-native'
 import { useThemeTokens } from '../../theme/tokens'
+import type { TextTone } from './text'
+import { Text } from './text'
 
 export type ButtonVariant = 'primary' | 'outline' | 'link'
 export type ButtonSize = 'default' | 'inline'
@@ -39,7 +41,7 @@ export function Button({
   isBusy = false,
   style,
 }: ButtonProps) {
-  const { colors, minimumTouchTarget, compactTouchTarget, fontSize, fontWeight } = useThemeTokens()
+  const { colors, minimumTouchTarget, compactTouchTarget, radius } = useThemeTokens()
   const contentColor = getContentColor(variant, colors)
 
   return (
@@ -59,7 +61,7 @@ export function Button({
           gap: SPACING.xs,
           minHeight: size === 'default' ? minimumTouchTarget : compactTouchTarget,
           paddingHorizontal: size === 'default' ? SPACING.lg : 0,
-          borderRadius: SPACING.sm,
+          borderRadius: radius.pill,
           opacity: isDisabled ? 0.5 : pressed ? 0.7 : 1,
           ...getSurfaceStyle(variant, colors),
         },
@@ -77,17 +79,28 @@ export function Button({
           color={contentColor}
         />
       )}
-      <Text
-        style={{
-          color: contentColor,
-          fontSize: size === 'default' ? fontSize.body : fontSize.caption,
-          fontWeight: fontWeight.medium,
-        }}
-      >
+      <Text size={size === 'default' ? 'body' : 'caption'} weight="medium" tone={getContentTone(variant)}>
         {label}
       </Text>
     </Pressable>
   )
+}
+
+/**
+ * Tom do conteúdo do botão — ícone e rótulo saem daqui juntos. Separar os dois deixaria
+ * o ícone de uma variante com a cor de outra na primeira mudança de paleta.
+ */
+function getContentTone(variant: ButtonVariant): TextTone {
+  switch (variant) {
+    case 'primary':
+      return 'onPrimary'
+    case 'outline':
+      return 'default'
+    case 'link':
+      return 'primary'
+    default:
+      return assertNever(variant)
+  }
 }
 
 function getContentColor(

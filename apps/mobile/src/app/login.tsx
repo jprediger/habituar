@@ -5,22 +5,21 @@ import { useRouter } from 'expo-router'
 import { useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { TextInput } from 'react-native'
-import { StyleSheet, Text, View } from 'react-native'
+import { StyleSheet, View } from 'react-native'
 import { AuthenticationCard } from '../authentication-card'
 import { AuthenticationFailureAlert } from '../authentication-failure-alert'
 import { Button } from '../components/ui/button'
 import { FormField } from '../components/ui/form-field'
 import { Input } from '../components/ui/input'
+import { Text } from '../components/ui/text'
 import { PasswordInput } from '../components/ui/password-input'
 import { getFieldErrorText } from '../form-messages'
 import { habituar } from '../habituar-client'
-import { useThemeTokens } from '../theme/tokens'
 
 /** Tela de entrada: só autentica quem já tem conta. Criar conta é a rota `/register`. */
 export default function LoginRoute() {
   const { t } = useTranslation()
   const router = useRouter()
-  const { colors, fontSize } = useThemeTokens()
   const { state, actions } = habituar.useAuthentication()
   const form = useValidatedForm(loginInputSchema, { email: '', password: '' })
   const passwordRef = useRef<TextInput>(null)
@@ -46,7 +45,7 @@ export default function LoginRoute() {
       description={t('authentication.login.description')}
       footer={
         <View style={styles.footer}>
-          <Text style={{ color: colors.textMuted, fontSize: fontSize.caption }}>
+          <Text size="caption" tone="muted">
             {t('authentication.login.noAccount')}
           </Text>
           <Button

@@ -1,8 +1,9 @@
 import { SPACING } from '@habituar/design-tokens/spacing'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import { StyleSheet, Text, View } from 'react-native'
+import { StyleSheet, View } from 'react-native'
 import { useThemeTokens } from '../../theme/tokens'
+import { Text } from './text'
 
 export type FormFieldControl = Readonly<{
   accessibilityLabel: string
@@ -31,19 +32,12 @@ export type FormFieldProps = Readonly<{
  */
 export function FormField({ label, isRequired, hint, error, action, children }: FormFieldProps) {
   const { t } = useTranslation()
-  const { colors, compactTouchTarget, fontSize, fontWeight, lineHeight } = useThemeTokens()
+  const { compactTouchTarget } = useThemeTokens()
 
   return (
     <View style={styles.container}>
       <View style={[styles.labelRow, { minHeight: compactTouchTarget }]}>
-        <Text
-          style={{
-            color: colors.text,
-            fontSize: fontSize.body,
-            fontWeight: fontWeight.medium,
-            lineHeight: lineHeight.body.normal,
-          }}
-        >
+        <Text weight="medium">
           {label}
           {isRequired && (
             // A obrigatoriedade já vai no rótulo acessível do controle; o `*` existe só
@@ -51,7 +45,7 @@ export function FormField({ label, isRequired, hint, error, action, children }: 
             <Text
               accessibilityElementsHidden
               importantForAccessibility="no-hide-descendants"
-              style={{ color: colors.danger }}
+              tone="danger"
             >
               {' *'}
             </Text>
@@ -69,14 +63,12 @@ export function FormField({ label, isRequired, hint, error, action, children }: 
       })}
 
       {hint !== undefined && (
-        <Text style={{ color: colors.textMuted, fontSize: fontSize.caption }}>{hint}</Text>
+        <Text size="caption" tone="muted">
+          {hint}
+        </Text>
       )}
       {error !== undefined && (
-        <Text
-          accessibilityRole="alert"
-          accessibilityLiveRegion="polite"
-          style={{ color: colors.danger, fontSize: fontSize.caption }}
-        >
+        <Text accessibilityRole="alert" accessibilityLiveRegion="polite" size="caption" tone="danger">
           {error}
         </Text>
       )}

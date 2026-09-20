@@ -65,7 +65,7 @@ A interface deve encaminhar aluno, profissional, monitor e administrador geral a
 
 | Prioridade | Complexidade | Situação | Versão |
 | --- | --- | --- | --- |
-| Alta | Média | Em desenvolvimento | Próxima |
+| Alta | Média | Implementado | Atual |
 
 ### RF0007 – Gerenciar papéis e permissões
 
@@ -282,7 +282,7 @@ A API valida entradas e saídas a partir de contratos compartilhados, nega acess
 | --- | --- | --- | --- |
 | Autenticação e sessões | Alta | Implementado | Cadastro, login web/mobile, contexto e logout |
 | Papéis, permissões e vínculos | Alta | Implementado no servidor | Catálogo fechado e isolamento institucional |
-| Interfaces de autenticação | Alta | Em desenvolvimento | Login, cadastro e direcionamento por perfil |
+| Interfaces de autenticação | Alta | Implementado | Entrada, cadastro e ambientes por perfil na web e no mobile |
 | Fichas e observações | Alta | Previsto | Dados sensíveis, histórico e auditoria |
 | Rotina, tarefas e foco | Alta | Previsto | Organização semanal e funcionamento offline |
 | Agenda e atendimentos | Alta | Previsto | Consultas, anotações e notificações |

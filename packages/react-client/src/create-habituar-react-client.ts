@@ -1,4 +1,5 @@
 import { getHomeDestination } from '@habituar/core/home-destination'
+import type { InstitutionHomeDestination } from '@habituar/core/home-destination'
 import { apiContract } from '@habituar/core/contract'
 import { healthStatusSchema } from '@habituar/core/health/schema'
 import { createORPCClient } from '@orpc/client'
@@ -21,11 +22,18 @@ export type MembershipContext = AuthenticationContextResult['memberships'][numbe
 
 export type AuthenticationFailure = 'invalid-credentials' | 'network' | 'no-memberships' | 'forbidden'
 
-export type ActiveSession = Readonly<{
-  user: AuthenticatedUserResult
-  membership: MembershipContext
-  destination: ReturnType<typeof getHomeDestination>
-}>
+/**
+ * Sessão já resolvida, discriminada pela natureza do acesso: o administrador geral opera
+ * fora dos vínculos, então `membership` não existe nesse ramo em vez de vir vazio.
+ */
+export type ActiveSession =
+  | Readonly<{
+      kind: 'institution'
+      user: AuthenticatedUserResult
+      membership: MembershipContext
+      destination: InstitutionHomeDestination
+    }>
+  | Readonly<{ kind: 'platform-administration'; user: AuthenticatedUserResult; destination: 'admin-home' }>
 
 export type AuthenticationState =
   | Readonly<{ status: 'restoring' }>
@@ -174,6 +182,16 @@ export function createHabituarReactClient(
       const context = await apiClient.auth.context()
       const firstMembership = context.memberships[0]
 
+      // Precedência do administrador geral: ele é global e não deriva destino de vínculo,
+      // então decidir por `memberships` primeiro o deixaria sem lugar nenhum.
+      if (context.isPlatformAdministrator) {
+        setState({
+          status: 'authenticated',
+          session: { kind: 'platform-administration', user: context.user, destination: 'admin-home' },
+        })
+        return
+      }
+
       if (context.memberships.length === 0) {
         setState({ status: 'failed', failure: 'no-memberships' })
         return
@@ -183,6 +201,7 @@ export function createHabituarReactClient(
         setState({
           status: 'authenticated',
           session: {
+            kind: 'institution',
             user: context.user,
             membership: firstMembership,
             destination: getHomeDestination(firstMembership.role.environment),
@@ -313,6 +332,7 @@ export function createHabituarReactClient(
         return {
           status: 'authenticated',
           session: {
+            kind: 'institution',
             user: current.user,
             membership,
             destination: getHomeDestination(membership.role.environment),

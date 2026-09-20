@@ -1,11 +1,18 @@
 import type { RoleEnvironment } from './roles.js'
 import { assertNever } from './type/assert-never.js'
 
-/** Destino conceitual inicial, sem acoplar a regra de domínio às URLs de uma plataforma. */
-export type HomeDestination = 'student-home' | 'professional-home' | 'monitor-home'
+/**
+ * Destino conceitual inicial, sem acoplar a regra de domínio às URLs de uma plataforma.
+ * `admin-home` não vem de um ambiente institucional: o administrador geral é global e
+ * vive fora de `memberships`, por isso `getHomeDestination` nunca o devolve.
+ */
+export type HomeDestination = InstitutionHomeDestination | 'admin-home'
+
+/** Recorte dos destinos que nascem de um vínculo institucional. */
+export type InstitutionHomeDestination = 'student-home' | 'professional-home' | 'monitor-home'
 
 /** Resolve o único destino inicial permitido para cada ambiente institucional. */
-export function getHomeDestination(environment: RoleEnvironment): HomeDestination {
+export function getHomeDestination(environment: RoleEnvironment): InstitutionHomeDestination {
   switch (environment) {
     case 'student':
       return 'student-home'

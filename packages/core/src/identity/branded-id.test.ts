@@ -4,7 +4,7 @@ import { defineIdSchema } from './branded-id'
 
 const SOME_UUID = '2c56b90b-8b1a-4b6d-9a2a-3f1a5c9b9a11'
 
-// Brands de exemplo só para o teste: nenhum id concreto entra no M0 (ver `plans/m0-shared-packages.md`).
+// Brands de exemplo mantêm este teste independente dos identificadores concretos do domínio.
 const userIdSchema = defineIdSchema('UserId')
 
 type UserId = z.infer<typeof userIdSchema>

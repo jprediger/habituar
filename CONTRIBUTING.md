@@ -6,8 +6,8 @@
 
 1. Leia `CLAUDE.md`. Ele é vinculante, não sugestivo — inclusive a tabela final, que diz
    quais regras o CI impõe e quais dependem de você.
-2. Confirme em qual marco do `implementation-plan.md` seu trabalho se encaixa. Marco
-   fora de ordem custa retrabalho, não tempo.
+2. Leia `DOCUMENTACAO.md` quando o trabalho afetar comportamento, requisitos, dados ou
+   arquitetura e identifique quais seções precisam permanecer sincronizadas com o DOCX.
 
 ## Branches
 

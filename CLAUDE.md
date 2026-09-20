@@ -1,9 +1,8 @@
 # Habituar — Regras de desenvolvimento
 
 > Regras vinculantes para qualquer código neste repositório.
-> Produto: `project-description.md` · Arquitetura: `ARCHITECTURE.md` ·
-> Execução: `implementation-plan.md` · Acessibilidade: `ACCESSIBILITY.md` ·
-> Contribuição: `CONTRIBUTING.md`
+> Sistema: `DOCUMENTACAO.md` · Arquitetura: `ARCHITECTURE.md` ·
+> Acessibilidade: `ACCESSIBILITY.md` · Contribuição: `CONTRIBUTING.md`
 >
 > Regra que não é imposta por lint, tipo ou CI é sugestão. A última seção diz o que
 > impõe o quê. O que estiver marcado como *review* é o que depende de disciplina.
@@ -32,6 +31,9 @@
 - **`documentacao_habituar.docx` é o documento consolidado oficial do sistema.** Mudança
   relevante de produto, requisito, caso de uso, banco de dados, tecnologia, arquitetura
   ou entrega precisa avaliar e, quando aplicável, atualizar o DOCX na mesma mudança.
+- **`DOCUMENTACAO.md` é o espelho textual para busca, revisão e contexto de agentes.**
+  Toda mudança de conteúdo no DOCX atualiza o Markdown na mesma alteração; divergência
+  entre os dois significa documentação incompleta.
 - **O DOCX existente é sempre editado no lugar.** Não recriar, converter ou substituir o
   arquivo por outro documento. Preservar capa, cabeçalho, rodapé, margens, orientação,
   ordem das seções, formatação de parágrafos, tabelas, numeração e padrão visual.

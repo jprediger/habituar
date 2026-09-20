@@ -1,7 +1,7 @@
 # Habituar — Arquitetura
 
 > Especificação de arquitetura. Rever antes de escrever qualquer código.
-> Produto: `project-description.md` · Execução: `implementation-plan.md`
+> Sistema e requisitos: `DOCUMENTACAO.md`
 
 ## Princípio orientador
 
@@ -496,4 +496,5 @@ camada de cache paralela.
   nem Solito, nem Tamagui como camada de UI comum).
 - **Sem Nx** — Turborepo como task runner.
 - **Sem tRPC como opção "ou React Query"** — a escolha é explícita e depende de D4/D5.
-- **Sem posicionamento como prontuário eletrônico** — ver `project-description.md`, §7.
+- **Sem posicionamento como prontuário eletrônico** — o produto permanece no domínio
+  educacional descrito em `DOCUMENTACAO.md`.

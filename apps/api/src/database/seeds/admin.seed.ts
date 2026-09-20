@@ -11,15 +11,14 @@ import { institutions, users } from '../schema.js'
 import { seedPermissionCatalog } from './permission-catalog.seed.js'
 import { seedRoleTemplates } from './role-templates.js'
 
+const ADMIN_EMAIL = 'admin@habituar.dev'
+
 /**
  * Idempotente, roda em qualquer ordem. Cria a instituição e o admin padrão só se o
- * e-mail informado ainda não existir — não é responsabilidade de migration porque
- * depende de segredo de ambiente (ADMIN_PASSWORD), não de schema.
+ * e-mail do admin ainda não existir — não é responsabilidade de migration porque
+ * depende de segredo de ambiente, não de schema.
  */
 async function main(): Promise<void> {
-  const email = process.env.ADMIN_EMAIL
-  if (email === undefined) throw new Error('Defina ADMIN_EMAIL no .env')
-
   const environment = environmentSchema.parse(process.env)
   const database = new Database(new ConfigService(environment), new RequestContext())
 
@@ -33,22 +32,31 @@ async function main(): Promise<void> {
       // admin já existe e o resto do seed não tem nada a fazer.
       await seedPermissionCatalog(transaction)
 
-      const existingUser = await transaction.query.users.findFirst({ where: eq(users.email, email) })
+      const existingUser = await transaction.query.users.findFirst({
+        where: eq(users.email, ADMIN_EMAIL),
+      })
       if (existingUser !== undefined) {
         console.log('Admin já existe, nada a fazer.')
         return
       }
 
-      const password = process.env.ADMIN_PASSWORD ?? randomBytes(12).toString('base64url')
+      // Fora de produção o admin compartilha a senha do seed de desenvolvimento: um
+      // único segredo para todos os usuários locais evita o vaivém de descobrir qual
+      // senha pertence a qual conta. Em produção continua sendo ADMIN_PASSWORD ou um
+      // valor aleatório que precisa ser trocado no primeiro login.
+      const developmentPassword =
+        environment.NODE_ENV === 'production' ? undefined : process.env.DEV_SEED_PASSWORD
+      const configuredPassword = process.env.ADMIN_PASSWORD ?? nonEmpty(developmentPassword)
+      const password = configuredPassword ?? randomBytes(12).toString('base64url')
       const passwordHash = await hashPassword(password)
 
       const [user] = await transaction
         .insert(users)
         .values({
-          email,
+          email: ADMIN_EMAIL,
           passwordHash,
           name: 'Administrador',
-          mustChangePassword: true,
+          mustChangePassword: configuredPassword === undefined,
           isPlatformAdministrator: true,
         })
         .returning()
@@ -67,13 +75,18 @@ async function main(): Promise<void> {
       await seedRoleTemplates(transaction, institution.id)
 
       console.log('Admin criado com sucesso.')
-      if (process.env.ADMIN_PASSWORD === undefined) {
+      if (configuredPassword === undefined) {
         console.log(`Senha temporária (guarde agora, não será mostrada de novo): ${password}`)
       }
     })
   } finally {
     await database.onApplicationShutdown()
   }
+}
+
+/** Vazia conta como ausente: `DEV_SEED_PASSWORD=` no .env viraria hash de senha vazia. */
+function nonEmpty(value: string | undefined): string | undefined {
+  return value === undefined || value === '' ? undefined : value
 }
 
 main().catch((error: unknown) => {

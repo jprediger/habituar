@@ -1,7 +1,7 @@
 # Habituar — Acessibilidade
 
 > Requisito, não meta. Este documento é normativo: o que está aqui bloqueia merge.
-> Arquitetura: `ARCHITECTURE.md` (D12) · Produto: `project-description.md` (§6)
+> Arquitetura: `ARCHITECTURE.md` (D12) · Sistema: `DOCUMENTACAO.md`
 
 ## Por que é obrigatório
 
@@ -80,6 +80,26 @@ Não existe equivalente automatizado do axe. A verificação é parcialmente man
 - **Passe manual nas tecnologias assistivas disponíveis** a cada marco, registrado
   (data, versão, plataforma, telas percorridas, achados). Plataforma indisponível é
   registrada como não verificada e vira bloqueante antes da primeira distribuição nela.
+
+### Campo de formulário no nativo
+
+O React Native não tem `<label for>` nem `aria-describedby` confiável no iOS, e
+`accessibilityState` não tem `required`. As regras da seção web valem igual; o que muda
+é por onde a amarração passa. O contrato do `FormField` nativo é este, e nenhuma tela
+monta amarração por conta própria:
+
+| Web | Mobile |
+|---|---|
+| `<label htmlFor>` | `accessibilityLabel` no controle, com o mesmo texto do rótulo visível |
+| `required` do controle | sufixo no rótulo acessível (`form.requiredFieldLabel`) |
+| `aria-describedby` → dica e erro | `accessibilityHint` recebe a dica; havendo erro, recebe o erro |
+| `role="alert"` | `accessibilityRole="alert"` + `accessibilityLiveRegion="polite"` (Android) |
+| `aria-hidden` no `*` | `accessibilityElementsHidden` + `importantForAccessibility="no-hide-descendants"` |
+| borda `aria-invalid` | mesma borda `danger`, sempre acompanhada do texto |
+| `aria-pressed` na alternância de senha | `accessibilityState={{ selected }}` |
+
+`accessibilityHint` é um texto só: havendo erro, ele substitui a dica em vez de somar-se
+a ela — orientação antiga ao lado de uma falha atual confunde mais do que ajuda.
 
 ---
 

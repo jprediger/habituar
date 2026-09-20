@@ -34,6 +34,7 @@ module.exports = {
     '^@habituar/core/home-destination$': '<rootDir>/../../packages/core/src/home-destination.ts',
     '^@habituar/design-tokens/interaction$': '<rootDir>/../../packages/design-tokens/src/interaction.ts',
     '^@habituar/design-tokens/semantic-color$': '<rootDir>/../../packages/design-tokens/src/semantic-color.ts',
+    '^@habituar/design-tokens/typography$': '<rootDir>/../../packages/design-tokens/src/typography.ts',
     '^@habituar/design-tokens/spacing$': '<rootDir>/../../packages/design-tokens/src/spacing.ts',
     '^@habituar/react-client/form$': '<rootDir>/../../packages/react-client/src/form.ts',
     '^@habituar/react-client/react-client$': '<rootDir>/../../packages/react-client/src/react-client.ts',

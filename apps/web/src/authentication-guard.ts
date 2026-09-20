@@ -2,7 +2,18 @@ import { assertNever } from '@habituar/core/assert-never'
 import type { HomeDestination } from '@habituar/core/home-destination'
 import type { AuthenticationState } from '@habituar/react-client/react-client'
 
-export type WebAuthenticationRoute = '/login' | '/select-institution' | '/student' | '/professional' | '/monitor'
+export type WebAuthenticationRoute =
+  | '/login'
+  | '/register'
+  | '/forgot-password'
+  | '/select-institution'
+  | '/student'
+  | '/professional'
+  | '/monitor'
+
+// Rotas que existem justamente para quem ainda não tem sessão: negar acesso a elas
+// deixaria o visitante sem caminho de entrada.
+const PUBLIC_ROUTES: ReadonlySet<WebAuthenticationRoute> = new Set(['/login', '/register', '/forgot-password'])
 
 export type WebAuthenticationGuard =
   | Readonly<{ action: 'render' }>
@@ -19,7 +30,7 @@ export function getWebAuthenticationGuard(
     case 'authenticating':
       return { action: 'block' }
     case 'unauthenticated':
-      return route === '/login' ? { action: 'render' } : { action: 'redirect', route: '/login' }
+      return PUBLIC_ROUTES.has(route) ? { action: 'render' } : { action: 'redirect', route: '/login' }
     case 'selecting-membership':
       return route === '/select-institution'
         ? { action: 'render' }

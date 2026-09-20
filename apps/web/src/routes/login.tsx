@@ -1,192 +1,149 @@
-import { createFileRoute } from '@tanstack/react-router'
-import type { FormEvent, ReactElement } from 'react'
-import { useState } from 'react'
+import { loginInputSchema } from '@habituar/core/auth/schema'
+import { Link, createFileRoute } from '@tanstack/react-router'
+import type { ReactElement } from 'react'
 import { useTranslation } from 'react-i18next'
+import { AuthenticationCard } from '../authentication-card.js'
+import { getAuthenticationFailureText, getHomeDestinationText } from '../authentication-messages.js'
 import { Button } from '../components/ui/button.js'
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card.js'
+import { FormField } from '../components/ui/form-field.js'
+import { Input } from '../components/ui/input.js'
+import { PasswordInput } from '../components/ui/password-input.js'
+import { getFieldErrorText } from '../form-validation.js'
 import { habituar } from '../habituar-client.js'
-import { assertNever } from '@habituar/core/assert-never'
-import type { HomeDestination } from '@habituar/core/home-destination'
+import { useValidatedForm } from '../use-validated-form.js'
 
 export const Route = createFileRoute('/login')({
   component: LoginRoute,
 })
 
-type Mode = 'login' | 'register'
-type RegisterUiState = { status: 'idle' } | { status: 'succeeded' } | { status: 'failed'; code: string }
+const FAILURE_ID = 'login-failure'
 
-type TFunction = ReturnType<typeof useTranslation>['t']
-
-function failureText(code: string, t: TFunction): string {
-  switch (code) {
-    case 'invalid-credentials': return t('authentication.failure.invalid-credentials')
-    case 'network': return t('authentication.failure.network')
-    case 'conflict': return t('authentication.failure.conflict')
-    case 'no-memberships': return t('authentication.failure.no-memberships')
-    case 'forbidden': return t('authentication.failure.forbidden')
-    default: return t('authentication.failure.network')
-  }
-}
-
-function modeTitle(mode: Mode, t: TFunction): string {
-  return mode === 'login' ? t('authentication.login.title') : t('authentication.register.title')
-}
-
-function modeDescription(mode: Mode, t: TFunction): string {
-  return mode === 'login' ? t('authentication.login.description') : t('authentication.register.description')
-}
-
-function modeEmailLabel(mode: Mode, t: TFunction): string {
-  return mode === 'login' ? t('authentication.login.emailLabel') : t('authentication.register.emailLabel')
-}
-
-function modePasswordLabel(mode: Mode, t: TFunction): string {
-  return mode === 'login' ? t('authentication.login.passwordLabel') : t('authentication.register.passwordLabel')
-}
-
-function modeSubmit(mode: Mode, t: TFunction): string {
-  return mode === 'login' ? t('authentication.login.submit') : t('authentication.register.submit')
-}
-
+/** Tela de entrada: só autentica quem já tem conta. Criar conta é a rota `/register`. */
 export function LoginRoute(): ReactElement {
   const { t } = useTranslation()
   const { state, actions } = habituar.useAuthentication()
+  const form = useValidatedForm(loginInputSchema, { email: '', password: '' })
 
-  const [mode, setMode] = useState<Mode>('login')
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [name, setName] = useState('')
-  const [registerState, setRegisterState] = useState<RegisterUiState>({ status: 'idle' })
+  const email = form.getField('email')
+  const password = form.getField('password')
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>): void {
-    event.preventDefault()
+  const submit = form.handleSubmit(() => {
+    void actions.login({ email: email.value, password: password.value })
+  })
 
-    if (mode === 'login') {
-      void actions.login({ email, password })
-      return
-    }
-
-    setRegisterState({ status: 'idle' })
-    actions
-      .register({ email, password, name })
-      .then(() => {
-        setRegisterState({ status: 'succeeded' })
-      })
-      .catch((error: unknown) => {
-        const code =
-          error !== null && typeof error === 'object' && 'code' in error && typeof error.code === 'string'
-            ? error.code
-            : 'network'
-        setRegisterState({ status: 'failed', code })
-      })
-  }
-
-  const isSubmitting = mode === 'login' && state.status === 'authenticating'
-  const isLoginTerminal =
-    mode === 'login' && (state.status === 'authenticated' || state.status === 'selecting-membership')
+  const isSubmitting = state.status === 'authenticating'
+  const isTerminal = state.status === 'authenticated' || state.status === 'selecting-membership'
 
   return (
-    <main className="flex min-h-dvh items-center justify-center bg-surface p-lg">
-      <div className="flex w-full max-w-[24rem] flex-col gap-md">
-        <Card>
-          <CardHeader>
-            <CardTitle>{modeTitle(mode, t)}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {mode === 'login' && state.status === 'authenticated' && (
-              <p role="status" aria-live="polite" className="text-body">
-                {t('authentication.loginSuccess', {
-                  destination: destinationText(state.session.destination, t),
-                })}
-              </p>
+    <AuthenticationCard title={t('authentication.login.title')}>
+      {state.status === 'authenticated' && (
+        <p role="status" aria-live="polite" className="text-body">
+          {t('authentication.loginSuccess', {
+            destination: getHomeDestinationText(state.session.destination, t),
+          })}
+        </p>
+      )}
+      {state.status === 'selecting-membership' && (
+        <p role="status" aria-live="polite" className="text-body">
+          {t('authentication.selection.title')}
+        </p>
+      )}
+
+      {!isTerminal && (
+        <form onSubmit={submit} noValidate className="flex flex-col gap-md">
+          <p className="text-caption text-text-muted">{t('authentication.login.description')}</p>
+
+          <FormField
+            id="login-email"
+            label={t('authentication.login.emailLabel')}
+            isRequired
+            requiredMarkLabel={t('form.requiredMark')}
+            error={email.error === undefined ? undefined : getFieldErrorText(email.error, t)}
+          >
+            {(control) => (
+              <Input
+                {...control}
+                name="email"
+                type="email"
+                autoComplete="email"
+                value={email.value}
+                onBlur={email.markVisited}
+                onChange={(event) => {
+                  email.setValue(event.target.value)
+                }}
+              />
             )}
-            {mode === 'login' && state.status === 'selecting-membership' && (
-              <p role="status" aria-live="polite" className="text-body">
-                {t('authentication.selection.title')}
-              </p>
+          </FormField>
+
+          <FormField
+            id="login-password"
+            label={t('authentication.login.passwordLabel')}
+            isRequired
+            requiredMarkLabel={t('form.requiredMark')}
+            error={password.error === undefined ? undefined : getFieldErrorText(password.error, t)}
+            action={
+              <Button asChild variant="link" size="inline">
+                <Link to="/forgot-password">{t('authentication.login.forgotPassword')}</Link>
+              </Button>
+            }
+          >
+            {(control) => (
+              <PasswordInput
+                {...control}
+                name="password"
+                autoComplete="current-password"
+                value={password.value}
+                onBlur={password.markVisited}
+                onChange={(event) => {
+                  password.setValue(event.target.value)
+                }}
+              />
             )}
+          </FormField>
 
-            {!isLoginTerminal && (
-              <form onSubmit={handleSubmit} className="flex flex-col gap-sm">
-                <p className="text-caption text-text-muted">{modeDescription(mode, t)}</p>
+          {state.status === 'failed' && (
+            <p id={FAILURE_ID} role="alert" className="text-caption text-danger">
+              {getAuthenticationFailureText(state.failure, t)}
+            </p>
+          )}
 
-                {mode === 'register' && (
-                  <label className="flex flex-col gap-xs text-body">
-                    {t('authentication.register.nameLabel')}
-                    <input
-                      type="text"
-                      value={name}
-                      onChange={(event) => { setName(event.target.value); }}
-                      required
-                      className="rounded-md border border-border bg-surface p-xs text-text"
-                    />
-                  </label>
-                )}
-                <label className="flex flex-col gap-xs text-body">
-                  {modeEmailLabel(mode, t)}
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(event) => { setEmail(event.target.value); }}
-                    required
-                    className="rounded-md border border-border bg-surface p-xs text-text"
-                  />
-                </label>
-                <label className="flex flex-col gap-xs text-body">
-                  {modePasswordLabel(mode, t)}
-                  <input
-                    type="password"
-                    value={password}
-                    onChange={(event) => { setPassword(event.target.value); }}
-                    required
-                    minLength={mode === 'register' ? 8 : undefined}
-                    className="rounded-md border border-border bg-surface p-xs text-text"
-                  />
-                </label>
+          {/* Respiro maior antes da ação: o botão encerra o formulário, não é mais um campo. */}
+          <Button type="submit" disabled={isSubmitting} className="mt-sm">
+            <SignInIcon />
+            {isSubmitting ? t('authentication.login.submitting') : t('authentication.login.submit')}
+          </Button>
+        </form>
+      )}
 
-                {mode === 'login' && state.status === 'failed' && (
-                  <p role="alert" className="text-caption text-danger">
-                    {failureText(state.failure, t)}
-                  </p>
-                )}
-                {mode === 'register' && registerState.status === 'failed' && (
-                  <p role="alert" className="text-caption text-danger">
-                    {failureText(registerState.code, t)}
-                  </p>
-                )}
-                {mode === 'register' && registerState.status === 'succeeded' && (
-                  <p role="status" aria-live="polite" className="text-caption text-text-muted">
-                    {t('authentication.register.success')}
-                  </p>
-                )}
-
-                <Button type="submit" disabled={isSubmitting}>
-                  {isSubmitting ? t('authentication.login.submitting') : modeSubmit(mode, t)}
-                </Button>
-              </form>
-            )}
-
-            <Button
-              type="button"
-              variant="link"
-              onClick={() => {
-                setMode(mode === 'login' ? 'register' : 'login')
-              }}
-            >
-              {mode === 'login' ? t('authentication.register.title') : t('authentication.login.title')}
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    </main>
+      {!isTerminal && (
+        <p className="mt-xs text-center text-caption text-text-muted">
+          {t('authentication.login.noAccount')}{' '}
+          <Button asChild variant="link" size="inline">
+            <Link to="/register">{t('authentication.register.title')}</Link>
+          </Button>
+        </p>
+      )}
+    </AuthenticationCard>
   )
-
-  function destinationText(destination: HomeDestination, t: TFunction): string {
-  switch (destination) {
-    case 'student-home': return t('home.student-home.title')
-    case 'professional-home': return t('home.professional-home.title')
-    case 'monitor-home': return t('home.monitor-home.title')
-    default: return assertNever(destination)
-  }
 }
+
+function SignInIcon(): ReactElement {
+  return (
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+      <path d="m10 17 5-5-5-5" />
+      <path d="M15 12H3" />
+    </svg>
+  )
 }

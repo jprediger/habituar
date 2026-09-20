@@ -56,6 +56,17 @@ describe('web authentication routes', () => {
     expect(getWebAuthenticationGuard({ status: 'restoring' }, '/student')).toEqual({ action: 'block' })
   })
 
+  it('lets a visitor without a session open the account creation screen', () => {
+    expect(getWebAuthenticationGuard({ status: 'unauthenticated' }, '/register')).toEqual({ action: 'render' })
+  })
+
+  it('keeps an authenticated person out of the account creation screen', () => {
+    expect(getWebAuthenticationGuard(createAuthenticatedState('student'), '/register')).toEqual({
+      action: 'redirect',
+      route: '/student',
+    })
+  })
+
   it('returns to login after logout invalidates the session', () => {
     expect(getWebAuthenticationGuard({ status: 'unauthenticated' }, '/monitor')).toEqual({ action: 'redirect', route: '/login' })
   })

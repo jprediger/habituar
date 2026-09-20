@@ -10,7 +10,9 @@
       "emailLabel": "E-mail",
       "passwordLabel": "Senha",
       "submit": "Entrar",
-      "submitting": "Entrando..."
+      "submitting": "Entrando...",
+      "noAccount": "Ainda não tem conta?",
+      "forgotPassword": "Esqueci minha senha"
     },
     "register": {
       "title": "Criar conta",
@@ -20,7 +22,9 @@
       "passwordLabel": "Senha",
       "submit": "Criar conta",
       "submitting": "Criando conta...",
-      "success": "Cadastro realizado. Você já pode entrar."
+      "success": "Cadastro realizado. Você já pode entrar.",
+      "passwordHint": "Mínimo de {{minimum}} caracteres.",
+      "haveAccount": "Já tem uma conta?"
     },
     "panel": {
       "label": "Apresentação do Habituar",
@@ -40,6 +44,22 @@
       "no-membershipsTitle": "Seu acesso ainda não está pronto",
       "no-memberships": "Seu cadastro não possui vínculo institucional. Procure a pessoa responsável pelo cadastro.",
       "forbidden": "Você não tem permissão para acessar este ambiente."
+    },
+    "forgotPassword": {
+      "title": "Recuperar senha",
+      "unavailable": "A recuperação de senha ainda não está disponível. Procure a pessoa responsável pelo seu cadastro na instituição."
+    }
+  },
+  "form": {
+    "requiredMark": "Campo obrigatório",
+    "password": {
+      "show": "Mostrar senha",
+      "hide": "Ocultar senha"
+    },
+    "error": {
+      "required": "Preencha este campo.",
+      "invalid-email": "Informe um e-mail válido.",
+      "too-short": "Use pelo menos {{minimum}} caracteres."
     }
   },
   "home": {

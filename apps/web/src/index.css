@@ -36,6 +36,14 @@
   min-width: var(--interaction-minimum-touch-target);
 }
 
+@utility min-h-compact-tap-target {
+  min-height: var(--interaction-compact-touch-target);
+}
+
+@utility min-w-compact-tap-target {
+  min-width: var(--interaction-compact-touch-target);
+}
+
 body {
   @apply bg-surface text-text;
   margin: 0;

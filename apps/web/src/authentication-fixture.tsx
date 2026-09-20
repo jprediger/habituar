@@ -6,8 +6,10 @@ import type { FormEvent, ReactElement } from 'react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { getWebAuthenticationGuard } from './authentication-guard.js'
+import { getAuthenticationFailureText, getHomeDestinationText } from './authentication-messages.js'
 import { habituar } from './habituar-client.js'
 import { Button } from './components/ui/button.js'
+import { Input } from './components/ui/input.js'
 
 /** Renderiza a experiência visual de autenticação sem assumir dados ou transporte da sessão. */
 export function AuthenticationFixture(props: Readonly<{ route: '/login' | '/select-institution' | '/student' | '/professional' | '/monitor' }>): ReactElement | null {
@@ -65,11 +67,11 @@ function LoginScreen(props: Readonly<{ failure?: Exclude<AuthenticationFailure, 
             <h1 id="login-title">{t('authentication.login.title')}</h1>
             <p>{t('authentication.login.description')}</p>
           </div>
-          {hasFailure ? <p id={failureId} className="form-alert" role="alert">{getFailureText(props.failure, t)}</p> : null}
+          {hasFailure ? <p id={failureId} className="form-alert" role="alert">{getAuthenticationFailureText(props.failure, t)}</p> : null}
           <form className="auth-fields" onSubmit={submit}>
             <div className="form-field">
               <label htmlFor="email">{t('authentication.login.emailLabel')}</label>
-              <input
+              <Input
                 id="email"
                 name="email"
                 type="email"
@@ -84,7 +86,7 @@ function LoginScreen(props: Readonly<{ failure?: Exclude<AuthenticationFailure, 
             </div>
             <div className="form-field">
               <label htmlFor="password">{t('authentication.login.passwordLabel')}</label>
-              <input
+              <Input
                 id="password"
                 name="password"
                 type="password"
@@ -155,7 +157,7 @@ function HomeScreen(props: Readonly<{ destination: HomeDestination }>): ReactEle
   return (
     <section className="home-card" aria-labelledby="home-title">
       <p className="brand-name">{t('authentication.brandName')}</p>
-      <h1 id="home-title">{getHomeTitle(props.destination, t)}</h1>
+      <h1 id="home-title">{getHomeDestinationText(props.destination, t)}</h1>
       <p className="screen-description">{getHomeText(props.destination, t)}</p>
       <Button variant="outline" onClick={() => {void actions.logout()}} disabled={isLoggingOut}>
         {isLoggingOut ? t('authentication.logoutSubmitting') : t('authentication.logout')}
@@ -171,18 +173,9 @@ function FailureScreen(props: Readonly<{ failure: 'no-memberships' }>): ReactEle
     <section className="home-card" aria-labelledby="failure-title">
       <p className="brand-name">{t('authentication.brandName')}</p>
       <h1 id="failure-title">{t('authentication.failure.no-membershipsTitle')}</h1>
-      <p className="screen-description" role="alert">{getFailureText(props.failure, t)}</p>
+      <p className="screen-description" role="alert">{getAuthenticationFailureText(props.failure, t)}</p>
     </section>
   )
-}
-
-function getHomeTitle(destination: HomeDestination, t: ReturnType<typeof useTranslation>['t']): string {
-  switch (destination) {
-    case 'student-home': return t('home.student-home.title')
-    case 'professional-home': return t('home.professional-home.title')
-    case 'monitor-home': return t('home.monitor-home.title')
-    default: return assertNever(destination)
-  }
 }
 
 function getHomeText(destination: HomeDestination, t: ReturnType<typeof useTranslation>['t']): string {
@@ -194,12 +187,3 @@ function getHomeText(destination: HomeDestination, t: ReturnType<typeof useTrans
   }
 }
 
-function getFailureText(failure: AuthenticationFailure, t: ReturnType<typeof useTranslation>['t']): string {
-  switch (failure) {
-    case 'invalid-credentials': return t('authentication.failure.invalid-credentials')
-    case 'network': return t('authentication.failure.network')
-    case 'no-memberships': return t('authentication.failure.no-memberships')
-    case 'forbidden': return t('authentication.failure.forbidden')
-    default: return assertNever(failure)
-  }
-}

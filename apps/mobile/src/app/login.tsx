@@ -114,6 +114,7 @@ export default function LoginRoute() {
       {state.status === 'failed' && <AuthenticationFailureAlert failure={state.failure} />}
 
       <Button
+        icon="log-in-outline"
         label={isSubmitting ? t('authentication.login.submitting') : t('authentication.login.submit')}
         onPress={handleSubmit}
         isDisabled={isSubmitting}

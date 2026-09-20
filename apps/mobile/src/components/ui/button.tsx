@@ -1,5 +1,7 @@
-import { SPACING } from '@habituar/design-tokens/spacing'
+import Ionicons from '@expo/vector-icons/Ionicons'
 import { assertNever } from '@habituar/core/assert-never'
+import { SPACING } from '@habituar/design-tokens/spacing'
+import type { ComponentProps } from 'react'
 import type { ViewStyle } from 'react-native'
 import { Pressable, Text } from 'react-native'
 import { useThemeTokens } from '../../theme/tokens'
@@ -7,9 +9,15 @@ import { useThemeTokens } from '../../theme/tokens'
 export type ButtonVariant = 'primary' | 'outline' | 'link'
 export type ButtonSize = 'default' | 'inline'
 
+/** Nome de ícone do conjunto já embarcado pelo Expo; não se inventa glifo fora dele. */
+export type ButtonIcon = ComponentProps<typeof Ionicons>['name']
+
+const ICON_SIZE = { default: 20, inline: 16 } as const
+
 export type ButtonProps = Readonly<{
   label: string
   onPress: () => void
+  icon?: ButtonIcon
   variant?: ButtonVariant
   size?: ButtonSize
   isDisabled?: boolean
@@ -24,6 +32,7 @@ export type ButtonProps = Readonly<{
 export function Button({
   label,
   onPress,
+  icon,
   variant = 'primary',
   size = 'default',
   isDisabled = false,
@@ -31,6 +40,7 @@ export function Button({
   style,
 }: ButtonProps) {
   const { colors, minimumTouchTarget, compactTouchTarget, fontSize, fontWeight } = useThemeTokens()
+  const contentColor = getContentColor(variant, colors)
 
   return (
     <Pressable
@@ -56,9 +66,20 @@ export function Button({
         style,
       ]}
     >
+      {icon !== undefined && (
+        // Decoração: o rótulo do botão já é o nome acessível, e repetir o ícone nele
+        // faria a ação ser anunciada duas vezes.
+        <Ionicons
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+          name={icon}
+          size={ICON_SIZE[size]}
+          color={contentColor}
+        />
+      )}
       <Text
         style={{
-          color: variant === 'primary' ? colors.onPrimary : variant === 'link' ? colors.primary : colors.text,
+          color: contentColor,
           fontSize: size === 'default' ? fontSize.body : fontSize.caption,
           fontWeight: fontWeight.medium,
         }}
@@ -67,6 +88,22 @@ export function Button({
       </Text>
     </Pressable>
   )
+}
+
+function getContentColor(
+  variant: ButtonVariant,
+  colors: ReturnType<typeof useThemeTokens>['colors'],
+): string {
+  switch (variant) {
+    case 'primary':
+      return colors.onPrimary
+    case 'outline':
+      return colors.text
+    case 'link':
+      return colors.primary
+    default:
+      return assertNever(variant)
+  }
 }
 
 function getSurfaceStyle(

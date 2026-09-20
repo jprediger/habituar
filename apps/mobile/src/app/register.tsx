@@ -116,6 +116,7 @@ export default function RegisterRoute() {
             {t('authentication.register.success')}
           </Text>
           <Button
+            icon="log-in-outline"
             label={t('authentication.login.title')}
             onPress={() => {
               router.replace('/login')
@@ -194,6 +195,7 @@ export default function RegisterRoute() {
           )}
 
           <Button
+            icon="person-add-outline"
             label={isSubmitting ? t('authentication.register.submitting') : t('authentication.register.submit')}
             onPress={handleSubmit}
             isDisabled={isSubmitting}

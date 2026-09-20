@@ -27,6 +27,23 @@
   refatoração; "abre uma transação e chama `set_config`" envelhece na primeira mudança.
 - Sem `@param`, sem `@returns`, sem repetir a assinatura. Nada em membro privado.
 
+## Documentação consolidada
+
+- **`documentacao_habituar.docx` é o documento consolidado oficial do sistema.** Mudança
+  relevante de produto, requisito, caso de uso, banco de dados, tecnologia, arquitetura
+  ou entrega precisa avaliar e, quando aplicável, atualizar o DOCX na mesma mudança.
+- **O DOCX existente é sempre editado no lugar.** Não recriar, converter ou substituir o
+  arquivo por outro documento. Preservar capa, cabeçalho, rodapé, margens, orientação,
+  ordem das seções, formatação de parágrafos, tabelas, numeração e padrão visual.
+- Novo conteúdo deve copiar os padrões já presentes no documento. Alteração inevitável de
+  paginação causada pelo crescimento do conteúdo não é mudança de layout; trocar estilos,
+  dimensões, elementos gráficos ou estrutura do template é.
+- A documentação consolidada descreve o produto e o estado do sistema. Nomes de marcos,
+  fases e demais terminologias dos planos internos de implementação não entram no DOCX.
+- Estado funcional precisa ser verificável: código e testes sustentam “implementado”;
+  trabalho local ainda não integrado aparece como “em desenvolvimento”; o restante é
+  “previsto”. Não inventar equipe, datas, responsáveis, estimativas ou registros.
+
 ## Estrutura
 
 - **Fatia vertical, não camada horizontal.** Um módulo Nest por conceito de domínio,

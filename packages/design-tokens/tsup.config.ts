@@ -9,6 +9,7 @@ export default defineConfig({
     color: 'src/color.ts',
     'semantic-color': 'src/semantic-color.ts',
     spacing: 'src/spacing.ts',
+    radius: 'src/radius.ts',
     interaction: 'src/interaction.ts',
     typography: 'src/typography.ts',
     contrast: 'src/contrast.ts',

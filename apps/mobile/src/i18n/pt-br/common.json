@@ -1,18 +1,86 @@
 {
   "authentication": {
-    "login": "Entrar",
-    "selectInstitution": "Selecione uma instituição",
+    "loading": "Verificando sua sessão...",
+    "brandName": "Habituar",
+    "login": {
+      "title": "Entrar",
+      "heading": "Que bom ter você de volta",
+      "description": "Entre para acessar o seu ambiente.",
+      "emailLabel": "E-mail",
+      "emailPlaceholder": "voce@exemplo.com",
+      "passwordLabel": "Senha",
+      "submit": "Entrar",
+      "submitting": "Entrando...",
+      "noAccount": "Ainda não tem conta?",
+      "forgotPassword": "Esqueci minha senha"
+    },
+    "register": {
+      "title": "Criar conta",
+      "heading": "Vamos criar sua conta",
+      "description": "Crie sua conta para acessar o Habituar.",
+      "nameLabel": "Nome",
+      "emailLabel": "E-mail",
+      "passwordLabel": "Senha",
+      "submit": "Criar conta",
+      "submitting": "Criando conta...",
+      "success": "Cadastro realizado. Você já pode entrar.",
+      "passwordHint": "Mínimo de {{minimum}} caracteres.",
+      "haveAccount": "Já tem uma conta?"
+    },
+    "selection": {
+      "title": "Escolha uma instituição",
+      "description": "Selecione onde você quer acessar agora."
+    },
+    "forgotPassword": {
+      "title": "Recuperar senha",
+      "unavailable": "A recuperação de senha ainda não está disponível. Procure a pessoa responsável pelo seu cadastro na instituição."
+    },
     "logout": "Sair",
+    "logoutSubmitting": "Saindo...",
     "failure": {
       "invalid-credentials": "E-mail ou senha inválidos.",
       "network": "Não foi possível concluir a autenticação agora.",
+      "conflict": "Este e-mail já está em uso.",
       "no-memberships": "Seu cadastro não possui vínculo institucional. Procure a pessoa responsável pelo cadastro.",
-      "forbidden": "Você não tem permissão para acessar este ambiente."
+      "forbidden": "Você não tem permissão para acessar este ambiente.",
+      "retry": "Tentar novamente",
+      "signOut": "Sair"
+    }
+  },
+  "form": {
+    "requiredFieldLabel": "{{label}}, campo obrigatório",
+    "password": {
+      "show": "Mostrar senha",
+      "hide": "Ocultar senha"
+    },
+    "error": {
+      "required": "Preencha este campo.",
+      "invalid-email": "Informe um e-mail válido.",
+      "too-short": "Use pelo menos {{minimum}} caracteres."
     }
   },
   "home": {
-    "student-home": "Organize sua rotina, acompanhe tarefas e consulte sua agenda.",
-    "professional-home": "Acompanhe alunos, consultas, métricas e registros.",
-    "monitor-home": "Consulte e acompanhe os alunos atribuídos a você."
+    "signedInAs": "Conectado como {{name}}",
+    "institutionLabel": "Instituição",
+    "roleLabel": "Papel",
+    "accountLabel": "Conta",
+    "scopeLabel": "Alcance",
+    "student-home": {
+      "title": "Seu ambiente de aluno",
+      "description": "Organize sua rotina, acompanhe tarefas e consulte sua agenda."
+    },
+    "professional-home": {
+      "title": "Seu ambiente profissional",
+      "description": "Acompanhe alunos, consultas, métricas e registros."
+    },
+    "monitor-home": {
+      "title": "Seu ambiente de monitor",
+      "description": "Consulte e acompanhe os alunos atribuídos a você."
+    },
+    "admin-home": {
+      "title": "Administração geral",
+      "description": "A administração geral do Habituar é feita na web.",
+      "scope": "Provisionamento de instituições. Sem acesso a fichas, observações ou dados de alunos."
+    }
   }
 }

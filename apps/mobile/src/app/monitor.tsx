@@ -1,6 +1,7 @@
-import { AuthenticationFixture } from './authentication-fixture'
+import { InstitutionSessionScreen } from '../session-screen'
+import { StaffHomeScreen } from '../staff-home-screen'
 
-/** Declara a rota protegida do ambiente de monitor. */
-export default function MonitorScreen() {
-  return <AuthenticationFixture destination="monitor-home" />
+/** Ambiente do monitor; a sessão só chega aqui depois de aprovada pelo guard. */
+export default function MonitorRoute() {
+  return <InstitutionSessionScreen>{(session) => <StaffHomeScreen session={session} />}</InstitutionSessionScreen>
 }

@@ -11,6 +11,7 @@ export type {
   AuthenticationActions,
   AuthenticationFailure,
   AuthenticationState,
+  MembershipContext,
 } from './create-habituar-react-client.js'
 export { createMemoryCredentialStorage } from './credential-storage.js'
 export type { CredentialStorage } from './credential-storage.js'

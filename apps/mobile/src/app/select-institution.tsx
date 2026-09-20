@@ -1,8 +1,13 @@
-import { Text } from 'react-native'
-import { useTranslation } from 'react-i18next'
+import { habituar } from '../habituar-client'
+import { InstitutionSelectionScreen } from '../institution-selection-screen'
 
-/** Declara a rota conceitual de escolha institucional sem antecipar o seletor visual. */
-export default function SelectInstitutionScreen() {
-  const { t } = useTranslation()
-  return <Text>{t('authentication.selectInstitution')}</Text>
+/** Passo entre autenticar e chegar a um ambiente, quando a conta tem mais de um vínculo. */
+export default function SelectInstitutionRoute() {
+  const { state } = habituar.useAuthentication()
+
+  // O guard do layout já garante que só `selecting-membership` chega aqui; a checagem
+  // existe para estreitar o tipo, não para decidir acesso.
+  if (state.status !== 'selecting-membership') return null
+
+  return <InstitutionSelectionScreen memberships={state.memberships} />
 }

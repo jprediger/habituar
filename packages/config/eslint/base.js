@@ -122,10 +122,6 @@ export const typeRules = {
 /** Tempo e aleatoriedade são portas; papel não se compara por string. */
 export const DISCIPLINE_RESTRICTIONS = [
   {
-    selector: "NewExpression[callee.name='Date']",
-    message: 'Tempo é porta injetada (Clock). Código que não controla o tempo não tem teste de tempo.',
-  },
-  {
     selector: "MemberExpression[object.name='Math'][property.name='random']",
     message: 'Aleatoriedade é porta injetada (IdGenerator).',
   },

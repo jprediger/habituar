@@ -9,6 +9,9 @@ export default defineConfig({
   test: {
     include: ['src/**/*.test.ts'],
     globalSetup: ['src/database/testcontainers.setup.ts'],
+    env: {
+      TESTCONTAINERS_RYUK_DISABLED: 'true',
+    },
     // Nest e pg não gostam de threads compartilhando handles.
     pool: 'forks',
     hookTimeout: 120_000,

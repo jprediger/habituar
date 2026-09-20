@@ -8,6 +8,7 @@ import { environmentSchema } from '../../environment/environment.schema.js'
 import { RequestContext } from '../../platform/request-context.js'
 import { Database } from '../database.js'
 import { institutions, users } from '../schema.js'
+import { seedPermissionCatalog } from './permission-catalog.seed.js'
 import { seedRoleTemplates } from './role-templates.js'
 
 /**
@@ -27,6 +28,11 @@ async function main(): Promise<void> {
     // transação: SYSTEM_TENANT_CONTEXT não tem RLS sobre `users`, e a instituição que
     // acabamos de criar é a mesma que passamos para as tabelas com RLS abaixo.
     await database.withTenantOutsideRequest(SYSTEM_TENANT_CONTEXT, async (transaction) => {
+      // Fora do caminho condicional abaixo de propósito: o catálogo é espelho do código,
+      // e `role_permissions.permission_key` o referencia. Precisa convergir mesmo quando o
+      // admin já existe e o resto do seed não tem nada a fazer.
+      await seedPermissionCatalog(transaction)
+
       const existingUser = await transaction.query.users.findFirst({ where: eq(users.email, email) })
       if (existingUser !== undefined) {
         console.log('Admin já existe, nada a fazer.')

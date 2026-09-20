@@ -1,4 +1,4 @@
-import type { PermissionKey } from '@habituar/core/permissions'
+import { PermissionKey } from '@habituar/core/permissions'
 import { Injectable } from '@nestjs/common'
 import { and, eq } from 'drizzle-orm'
 import { Database } from '../database/database.js'
@@ -34,15 +34,11 @@ export class RbacService {
         if (grant === undefined) return false
         if (grant.scope === 'institution' || grant.scope === 'own') return true
 
-        if (grant.scope === 'assigned') {
-          if (context.studentId === undefined) return false
-          const assignment = await transaction.query.assignments.findFirst({
-            where: and(eq(assignments.staffUserId, actor.userId), eq(assignments.studentId, context.studentId)),
-          })
-          return assignment !== undefined
-        }
-
-        return false
+        if (context.studentId === undefined) return false
+        const assignment = await transaction.query.assignments.findFirst({
+          where: and(eq(assignments.staffUserId, actor.userId), eq(assignments.studentId, context.studentId)),
+        })
+        return assignment !== undefined
       },
     )
   }

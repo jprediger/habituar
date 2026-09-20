@@ -1,9 +1,15 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { AuthenticationFixture } from '../authentication-fixture.js'
+import type { ReactElement } from 'react'
+import { InstitutionSessionRoute } from '../session-route.js'
+import { StaffHomeScreen } from '../staff-home-screen.js'
 
 export const Route = createFileRoute('/monitor')({ component: MonitorRoute })
 
-/** Protege a fixture inicial do ambiente de monitor. */
-export function MonitorRoute() {
-  return <AuthenticationFixture route="/monitor" />
+/** Ambiente de monitor; compartilha a tela de atendimento com o profissional. */
+export function MonitorRoute(): ReactElement {
+  return (
+    <InstitutionSessionRoute route="/monitor">
+      {(session) => <StaffHomeScreen session={session} />}
+    </InstitutionSessionRoute>
+  )
 }

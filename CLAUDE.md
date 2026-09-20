@@ -1,9 +1,8 @@
 # Habituar — Regras de desenvolvimento
 
 > Regras vinculantes para qualquer código neste repositório.
-> Produto: `project-description.md` · Arquitetura: `ARCHITECTURE.md` ·
-> Execução: `implementation-plan.md` · Acessibilidade: `ACCESSIBILITY.md` ·
-> Contribuição: `CONTRIBUTING.md`
+> Sistema: `DOCUMENTACAO.md` · Arquitetura: `ARCHITECTURE.md` ·
+> Acessibilidade: `ACCESSIBILITY.md` · Contribuição: `CONTRIBUTING.md`
 >
 > Regra que não é imposta por lint, tipo ou CI é sugestão. A última seção diz o que
 > impõe o quê. O que estiver marcado como *review* é o que depende de disciplina.
@@ -26,6 +25,26 @@
 - **Descreve responsabilidade, não comportamento.** "Único caminho até o banco" sobrevive a
   refatoração; "abre uma transação e chama `set_config`" envelhece na primeira mudança.
 - Sem `@param`, sem `@returns`, sem repetir a assinatura. Nada em membro privado.
+
+## Documentação consolidada
+
+- **`documentacao_habituar.docx` é o documento consolidado oficial do sistema.** Mudança
+  relevante de produto, requisito, caso de uso, banco de dados, tecnologia, arquitetura
+  ou entrega precisa avaliar e, quando aplicável, atualizar o DOCX na mesma mudança.
+- **`DOCUMENTACAO.md` é o espelho textual para busca, revisão e contexto de agentes.**
+  Toda mudança de conteúdo no DOCX atualiza o Markdown na mesma alteração; divergência
+  entre os dois significa documentação incompleta.
+- **O DOCX existente é sempre editado no lugar.** Não recriar, converter ou substituir o
+  arquivo por outro documento. Preservar capa, cabeçalho, rodapé, margens, orientação,
+  ordem das seções, formatação de parágrafos, tabelas, numeração e padrão visual.
+- Novo conteúdo deve copiar os padrões já presentes no documento. Alteração inevitável de
+  paginação causada pelo crescimento do conteúdo não é mudança de layout; trocar estilos,
+  dimensões, elementos gráficos ou estrutura do template é.
+- A documentação consolidada descreve o produto e o estado do sistema. Nomes de marcos,
+  fases e demais terminologias dos planos internos de implementação não entram no DOCX.
+- Estado funcional precisa ser verificável: código e testes sustentam “implementado”;
+  trabalho local ainda não integrado aparece como “em desenvolvimento”; o restante é
+  “previsto”. Não inventar equipe, datas, responsáveis, estimativas ou registros.
 
 ## Estrutura
 

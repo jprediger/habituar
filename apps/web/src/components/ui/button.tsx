@@ -5,8 +5,8 @@ import type { ButtonHTMLAttributes, ReactElement } from 'react'
 import { cn } from '../../lib/utils.js'
 
 const buttonVariants = cva(
-  'inline-flex min-h-tap-target min-w-tap-target items-center justify-center gap-xs whitespace-nowrap ' +
-    'rounded-md text-body font-medium transition-colors outline-none ' +
+  'inline-flex cursor-pointer items-center justify-center gap-xs ' +
+    'whitespace-nowrap rounded-pill text-body font-medium transition-colors outline-none ' +
     'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring ' +
     'disabled:pointer-events-none disabled:opacity-50',
   {
@@ -20,10 +20,14 @@ const buttonVariants = cva(
         link: 'text-primary underline-offset-4 hover:underline',
       },
       size: {
-        default: 'px-md py-xs',
-        sm: 'px-sm text-caption',
-        lg: 'px-lg text-title',
-        icon: 'p-none',
+        default: 'min-h-tap-target min-w-tap-target px-md py-xs',
+        sm: 'min-h-tap-target min-w-tap-target px-sm text-caption',
+        lg: 'min-h-tap-target min-w-tap-target px-lg text-title',
+        icon: 'min-h-tap-target min-w-tap-target p-none',
+        // Ação textual embutida numa linha de rótulo: o alvo padrão de 44px esticaria a
+        // linha inteira e descolaria o rótulo do seu campo, então cai para o piso da
+        // WCAG 2.5.8.
+        inline: 'min-h-compact-tap-target min-w-compact-tap-target p-none text-caption',
       },
     },
     defaultVariants: {

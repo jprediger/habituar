@@ -1,6 +1,7 @@
-import { AuthenticationFixture } from './authentication-fixture'
+import { InstitutionSessionScreen } from '../session-screen'
+import { StudentHomeScreen } from '../student-home-screen'
 
-/** Declara a rota protegida do ambiente de aluno. */
-export default function StudentScreen() {
-  return <AuthenticationFixture destination="student-home" />
+/** Ambiente do aluno; a sessão só chega aqui depois de aprovada pelo guard. */
+export default function StudentRoute() {
+  return <InstitutionSessionScreen>{(session) => <StudentHomeScreen session={session} />}</InstitutionSessionScreen>
 }

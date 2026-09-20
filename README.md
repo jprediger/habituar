@@ -1,9 +1,8 @@
 # Habituar
 
 Plataforma web e mobile para apoiar a rotina de estudantes e o trabalho dos profissionais
-que os acompanham. O projeto está no marco M0: um esqueleto executável ponta a ponta, sem
-regra de negócio. Os três apps sobem e mostram o mesmo `HealthStatus`, inferido do mesmo
-contrato zod.
+que os acompanham. O sistema reúne uma API multi-instituição, clientes web e mobile,
+autenticação, autorização tipada e contratos compartilhados entre as plataformas.
 
 ## Estrutura atual
 
@@ -53,9 +52,8 @@ Comandos disponíveis na raiz:
 
 ## Rodando a API localmente
 
-O único serviço em container é o PostgreSQL. A API roda como processo Node — Dockerfile e
-deploy estão fora do M0, com o motivo registrado na seção *Fora do M0* de
-[`plans/m0-api.md`](plans/m0-api.md).
+O único serviço em container é o PostgreSQL. A API roda como processo Node; Dockerfile e
+deploy ainda não fazem parte da configuração atual.
 
 ```bash
 cp apps/api/.env.example apps/api/.env     # o .env não é versionado
@@ -163,9 +161,10 @@ valida o padrão Conventional Commits.
 
 ## Documentação
 
-- [Descrição do produto](project-description.md)
+- [Documentação consolidada](DOCUMENTACAO.md)
+- [Documento oficial](documentacao_habituar.docx)
 - [Arquitetura](ARCHITECTURE.md)
-- [Plano de implementação](implementation-plan.md)
 - [Regras de desenvolvimento](CLAUDE.md)
 - [Guia de contribuição](CONTRIBUTING.md)
 - [Acessibilidade](ACCESSIBILITY.md)
+- [Histórico de mudanças](CHANGELOG.md)

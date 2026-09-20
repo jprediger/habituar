@@ -15,7 +15,10 @@ export async function createAuthenticationContextFixtures(
     const southId = await createInstitution(pool, 'South')
     const elsewhereId = await createInstitution(pool, 'Elsewhere')
 
-    await pool.query("insert into permissions (key) values ('student.read.own'), ('student.read.assigned')")
+    // `on conflict` porque o seed do catálogo roda no mesmo container de Postgres.
+    await pool.query(
+      "insert into permissions (key) values ('student.read.own'), ('student.read.assigned') on conflict do nothing",
+    )
     await createRole(pool, northId, actorAId, 'Renamed student role', 'student', 'student.read.own', 'own')
     await createRole(pool, southId, actorAId, 'Professional role', 'professional', 'student.read.assigned', 'assigned')
     await createRole(pool, elsewhereId, actorBId, 'Other role', 'monitor', 'student.read.own', 'own')

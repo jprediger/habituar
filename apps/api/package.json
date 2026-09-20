@@ -12,7 +12,10 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:up": "docker compose up -d --wait",
-    "db:seed:admin": "tsx src/database/seeds/admin.seed.ts"
+    "db:reset": "docker compose down -v && pnpm db:up && pnpm db:migrate && pnpm db:seed",
+    "db:seed:admin": "tsx src/database/seeds/admin.seed.ts",
+    "db:seed:dev": "tsx src/database/seeds/development.seed.ts",
+    "db:seed": "pnpm db:seed:admin && pnpm db:seed:dev"
   },
   "dependencies": {
     "@habituar/core": "workspace:*",
@@ -28,6 +31,7 @@
     "cookie-parser": "1.4.7",
     "dotenv": "17.4.2",
     "drizzle-orm": "0.45.2",
+    "express": "5.2.1",
     "pg": "8.23.0",
     "pino": "10.3.1",
     "pino-http": "11.0.0",
@@ -47,10 +51,10 @@
     "@types/pg": "8.23.1",
     "drizzle-kit": "0.31.10",
     "eslint": "10.9.1",
+    "testcontainers": "12.1.0",
     "tsx": "4.23.13",
     "typescript": "6.0.3",
     "typescript-eslint": "8.68.0",
-    "testcontainers": "12.1.0",
     "unplugin-swc": "1.5.11",
     "vitest": "4.1.11"
   }

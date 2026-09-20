@@ -1,4 +1,4 @@
-import type { TenantContext } from '../database/database.js'
+import { TenantContext } from '../database/database.js'
 
 /**
  * Contexto inerte usado só para acessar `users`/`sessions`, que são globais e não têm

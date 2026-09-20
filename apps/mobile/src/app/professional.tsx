@@ -1,6 +1,8 @@
-import { AuthenticationFixture } from './authentication-fixture'
+import { useTranslation } from 'react-i18next'
+import { Text } from 'react-native'
 
-/** Declara a rota protegida do ambiente profissional. */
 export default function ProfessionalRoute() {
-  return <AuthenticationFixture />
+  const { t } = useTranslation()
+
+  return <Text>{t('home.professional-home.title')}</Text>
 }

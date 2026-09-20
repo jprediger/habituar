@@ -21,7 +21,7 @@ function createAuthenticatedState(environment: RoleEnvironment): AuthenticationS
   return { status: 'authenticated', session: { kind: 'institution', user: context.user, membership, destination: getHomeDestination(environment) } }
 }
 
-describe('conceptual authentication routes', () => {
+describe('native deep link guard', () => {
   it('redirects an unauthenticated protected deep link to login', () => {
     expect(getMobileAuthenticationGuard({ status: 'unauthenticated' }, '/student')).toEqual({ action: 'redirect', route: '/login' })
   })
@@ -59,5 +59,26 @@ describe('conceptual authentication routes', () => {
 
   it('returns to login after logout invalidates the session', () => {
     expect(getMobileAuthenticationGuard({ status: 'unauthenticated' }, '/professional')).toEqual({ action: 'redirect', route: '/login' })
+  })
+
+  it('keeps the sign-in screen mounted while the credentials are in flight', () => {
+    expect(getMobileAuthenticationGuard({ status: 'authenticating' }, '/login')).toEqual({ action: 'render' })
+  })
+
+  it('keeps protected content away from a session still being authenticated', () => {
+    expect(getMobileAuthenticationGuard({ status: 'authenticating' }, '/student')).toEqual({ action: 'redirect', route: '/login' })
+  })
+
+  it('leaves a rejected sign-in on the screen that can explain it', () => {
+    expect(getMobileAuthenticationGuard({ status: 'failed', failure: 'invalid-credentials' }, '/login')).toEqual({ action: 'render' })
+  })
+
+  it('sends a failed session back to the sign-in screen instead of a protected deep link', () => {
+    expect(getMobileAuthenticationGuard({ status: 'failed', failure: 'no-memberships' }, '/student')).toEqual({ action: 'redirect', route: '/login' })
+  })
+
+  it('opens the ways in that exist for whoever has no session yet', () => {
+    expect(getMobileAuthenticationGuard({ status: 'unauthenticated' }, '/register')).toEqual({ action: 'render' })
+    expect(getMobileAuthenticationGuard({ status: 'unauthenticated' }, '/forgot-password')).toEqual({ action: 'render' })
   })
 })

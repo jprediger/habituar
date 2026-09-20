@@ -1,8 +1,10 @@
 import { SPACING } from '@habituar/design-tokens/spacing'
+import type { AuthenticationFailure } from '@habituar/react-client/react-client'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Pressable, StyleSheet, Text, TextInput } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import { getAuthenticationFailureRecovery, getAuthenticationFailureText } from '../authentication-messages'
 import { habituar } from '../habituar-client'
 import { useThemeTokens } from '../theme/tokens'
 
@@ -34,7 +36,7 @@ export default function AuthScreen() {
     }
   }
 
-  function failureText(code: string): string {
+  function registerFailureText(code: string): string {
     switch (normalizeFailureCode(code)) {
       case 'invalid-credentials':
         return t('authentication.failure.invalid-credentials')
@@ -73,8 +75,9 @@ export default function AuthScreen() {
   }
 
   const isSubmitting = mode === 'login' && state.status === 'authenticating'
-  const titleKey = mode === 'login' ? 'authentication.login' : 'authentication.register'
-  const descriptionKey = mode === 'login' ? 'authentication.loginDescription' : 'authentication.registerDescription'
+  const titleKey = mode === 'login' ? 'authentication.login.title' : 'authentication.register.title'
+  const descriptionKey =
+    mode === 'login' ? 'authentication.login.description' : 'authentication.register.description'
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.surface }]}>
@@ -82,21 +85,15 @@ export default function AuthScreen() {
         {t(titleKey)}
       </Text>
 
-      {mode === 'login' && state.status === 'authenticated' ? (
-        <Text accessibilityLiveRegion="polite" style={[styles.message, { color: colors.text }]}>
-          {t('authentication.loginSuccess', {
-            destination: t(`home.${state.session.destination}`),
-          })}
-        </Text>
-      ) : (
-        <>
+      <>
           <Text style={[styles.description, { color: colors.textMuted }]}>{t(descriptionKey)}</Text>
 
           {mode === 'register' && (
             <TextInput
               value={name}
               onChangeText={setName}
-              placeholder={t('authentication.nameLabel')}
+              accessibilityLabel={t('authentication.register.nameLabel')}
+            placeholder={t('authentication.register.nameLabel')}
               placeholderTextColor={colors.textMuted}
               style={[styles.input, { borderColor: colors.textMuted, color: colors.text }]}
             />
@@ -104,7 +101,8 @@ export default function AuthScreen() {
           <TextInput
             value={email}
             onChangeText={setEmail}
-            placeholder={t('authentication.emailLabel')}
+            accessibilityLabel={t('authentication.login.emailLabel')}
+            placeholder={t('authentication.login.emailLabel')}
             placeholderTextColor={colors.textMuted}
             autoCapitalize="none"
             keyboardType="email-address"
@@ -113,25 +111,29 @@ export default function AuthScreen() {
           <TextInput
             value={password}
             onChangeText={setPassword}
-            placeholder={t('authentication.passwordLabel')}
+            accessibilityLabel={t('authentication.login.passwordLabel')}
+            placeholder={t('authentication.login.passwordLabel')}
             placeholderTextColor={colors.textMuted}
             secureTextEntry
             style={[styles.input, { borderColor: colors.textMuted, color: colors.text }]}
           />
 
           {mode === 'login' && state.status === 'failed' && (
-            <Text accessibilityRole="alert" style={[styles.message, { color: colors.text }]}>
-              {failureText(state.failure)}
-            </Text>
+            <>
+              <Text accessibilityRole="alert" style={[styles.message, { color: colors.danger }]}>
+                {getAuthenticationFailureText(state.failure, t)}
+              </Text>
+              <FailureRecovery failure={state.failure} />
+            </>
           )}
           {mode === 'register' && registerState.status === 'failed' && (
             <Text accessibilityRole="alert" style={[styles.message, { color: colors.text }]}>
-              {failureText(registerState.code)}
+              {registerFailureText(registerState.code)}
             </Text>
           )}
           {mode === 'register' && registerState.status === 'succeeded' && (
             <Text accessibilityLiveRegion="polite" style={[styles.message, { color: colors.text }]}>
-              {t('authentication.registerSuccess')}
+              {t('authentication.register.success')}
             </Text>
           )}
 
@@ -151,25 +153,57 @@ export default function AuthScreen() {
             ]}
           >
             <Text style={{ color: colors.onPrimary }}>
-              {isSubmitting ? t('authentication.submitting') : t(titleKey)}
+              {isSubmitting ? t('authentication.login.submitting') : t(titleKey)}
             </Text>
           </Pressable>
-        </>
-      )}
+      </>
 
       <Pressable
         onPress={() => {
           setMode(mode === 'login' ? 'register' : 'login')
         }}
         accessibilityRole="button"
-        accessibilityLabel={mode === 'login' ? t('authentication.register') : t('authentication.login')}
+        accessibilityLabel={mode === 'login' ? t('authentication.register.title') : t('authentication.login.title')}
         style={styles.switchButton}
       >
         <Text style={{ color: colors.primary }}>
-          {mode === 'login' ? t('authentication.register') : t('authentication.login')}
+          {mode === 'login' ? t('authentication.register.title') : t('authentication.login.title')}
         </Text>
       </Pressable>
     </SafeAreaView>
+  )
+}
+
+/**
+ * Saída oferecida junto do alerta de falha. Sem ela, `no-memberships` e `forbidden` —
+ * que acontecem com token já gravado — prendem a pessoa no mesmo estado a cada abertura.
+ */
+function FailureRecovery({ failure }: Readonly<{ failure: AuthenticationFailure }>) {
+  const { t } = useTranslation()
+  const { colors, minimumTouchTarget } = useThemeTokens()
+  const { actions } = habituar.useAuthentication()
+  const recovery = getAuthenticationFailureRecovery(failure)
+
+  if (recovery === 'none') return null
+
+  const label = recovery === 'retry' ? t('authentication.failure.retry') : t('authentication.failure.signOut')
+
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      onPress={() => {
+        if (recovery === 'retry') {
+          void actions.retry()
+          return
+        }
+
+        void actions.logout()
+      }}
+      style={[styles.recoveryButton, { minHeight: minimumTouchTarget }]}
+    >
+      <Text style={{ color: colors.primary }}>{label}</Text>
+    </Pressable>
   )
 }
 
@@ -180,5 +214,6 @@ const styles = StyleSheet.create({
   message: { fontSize: 16, textAlign: 'center' },
   input: { borderWidth: 1, borderRadius: SPACING.sm, paddingHorizontal: SPACING.md, paddingVertical: SPACING.sm, fontSize: 16 },
   submitButton: { alignItems: 'center', justifyContent: 'center', borderRadius: SPACING.sm, paddingHorizontal: SPACING.lg, paddingVertical: SPACING.sm },
+  recoveryButton: { alignItems: 'center', justifyContent: 'center', paddingVertical: SPACING.sm },
   switchButton: { alignItems: 'center', paddingVertical: SPACING.sm },
 })

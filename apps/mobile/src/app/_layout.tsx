@@ -1,9 +1,9 @@
 import { Redirect, Slot, usePathname } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
+import { getMobileAuthenticationGuard } from '../authentication-guard'
 import { habituar } from '../habituar-client'
-import { AuthenticationFixture } from './authentication-fixture'
-import { getMobileAuthenticationGuard } from './authentication-guard'
+import { SessionLoadingScreen } from '../session-loading-screen'
 import '../i18n/i18n'
 
 /**
@@ -28,8 +28,9 @@ function AuthenticationRouter() {
   const { state } = habituar.useAuthentication()
   const guard = getMobileAuthenticationGuard(state, pathname)
 
-  if (guard.action === 'block') return null
+  if (guard.action === 'block') return <SessionLoadingScreen />
   if (guard.action === 'redirect') return <Redirect href={guard.route} />
 
-  return state.status === 'failed' ? <AuthenticationFixture /> : <Slot />
+  // Falha não troca a tela: quem sabe explicá-la é a rota que iniciou a autenticação.
+  return <Slot />
 }

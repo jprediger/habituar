@@ -4,11 +4,17 @@ import type { AuthenticationState } from '@habituar/react-client/react-client'
 
 export type MobileAuthenticationRoute =
   | '/login'
+  | '/register'
+  | '/forgot-password'
   | '/select-institution'
   | '/student'
   | '/professional'
   | '/monitor'
   | '/admin'
+
+// Rotas que existem justamente para quem ainda não tem sessão: negar acesso a elas
+// deixaria o visitante sem caminho de entrada.
+const PUBLIC_ROUTES: ReadonlySet<string> = new Set(['/login', '/register', '/forgot-password'])
 
 export type MobileAuthenticationGuard =
   | Readonly<{ action: 'render' }>
@@ -22,10 +28,13 @@ export function getMobileAuthenticationGuard(
 ): MobileAuthenticationGuard {
   switch (state.status) {
     case 'restoring':
-    case 'authenticating':
       return { action: 'block' }
+    // Autenticar e falhar são estados da tela que iniciou o envio, não do app inteiro:
+    // bloquear aqui desmontaria o formulário — e com ele o teclado e o que foi digitado.
+    case 'authenticating':
     case 'unauthenticated':
-      return route === '/login' ? { action: 'render' } : { action: 'redirect', route: '/login' }
+    case 'failed':
+      return PUBLIC_ROUTES.has(route) ? { action: 'render' } : { action: 'redirect', route: '/login' }
     case 'selecting-membership':
       return route === '/select-institution'
         ? { action: 'render' }
@@ -34,8 +43,6 @@ export function getMobileAuthenticationGuard(
       const destinationRoute = getDestinationPath(state.session.destination)
       return route === destinationRoute ? { action: 'render' } : { action: 'redirect', route: destinationRoute }
     }
-    case 'failed':
-      return { action: 'render' }
     default:
       return assertNever(state)
   }

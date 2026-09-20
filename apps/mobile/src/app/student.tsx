@@ -1,4 +1,8 @@
-import { AuthenticationFixture } from './authentication-fixture'
+import { useTranslation } from 'react-i18next'
+import { Text } from 'react-native'
+
 export default function StudentRoute() {
-  return <AuthenticationFixture />
+  const { t } = useTranslation()
+
+  return <Text>{t('home.student-home.title')}</Text>
 }

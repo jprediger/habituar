@@ -11,7 +11,7 @@ export default function SelectInstitutionRoute() {
 
   return (
     <SafeAreaView>
-      <Text accessibilityRole="header">{t('authentication.selectInstitution')}</Text>
+      <Text accessibilityRole="header">{t('authentication.selection.title')}</Text>
       {state.memberships.map((membership) => (
         <Pressable
           key={membership.institution.id}

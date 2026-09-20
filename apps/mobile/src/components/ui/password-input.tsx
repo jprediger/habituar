@@ -1,10 +1,13 @@
+import Ionicons from '@expo/vector-icons/Ionicons'
 import { SPACING } from '@habituar/design-tokens/spacing'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Pressable, StyleSheet, Text, View } from 'react-native'
+import { Pressable, StyleSheet, View } from 'react-native'
 import { useThemeTokens } from '../../theme/tokens'
 import type { InputProps } from './input'
 import { Input } from './input'
+
+const ICON_SIZE = 20
 
 export type PasswordInputProps = Omit<InputProps, 'secureTextEntry'>
 
@@ -14,7 +17,7 @@ export type PasswordInputProps = Omit<InputProps, 'secureTextEntry'>
  */
 export function PasswordInput({ style, ...props }: PasswordInputProps) {
   const { t } = useTranslation()
-  const { colors, minimumTouchTarget, fontSize } = useThemeTokens()
+  const { colors, minimumTouchTarget } = useThemeTokens()
   const [isVisible, setIsVisible] = useState(false)
 
   const label = isVisible ? t('form.password.hide') : t('form.password.show')
@@ -46,13 +49,14 @@ export function PasswordInput({ style, ...props }: PasswordInputProps) {
           justifyContent: 'center',
         }}
       >
-        <Text
+        {/* O ícone é decoração: o rótulo do botão já diz o que o toque faz. */}
+        <Ionicons
           accessibilityElementsHidden
           importantForAccessibility="no-hide-descendants"
-          style={{ color: colors.textMuted, fontSize: fontSize.body }}
-        >
-          {isVisible ? '🙈' : '👁'}
-        </Text>
+          name={isVisible ? 'eye-off-outline' : 'eye-outline'}
+          size={ICON_SIZE}
+          color={colors.textMuted}
+        />
       </Pressable>
     </View>
   )

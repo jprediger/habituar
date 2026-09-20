@@ -15,6 +15,7 @@ import { Text } from '../components/ui/text'
 import { PasswordInput } from '../components/ui/password-input'
 import { getFieldErrorText } from '../form-messages'
 import { habituar } from '../habituar-client'
+import authenticationHero from '../../assets/images/authentication-hero.jpg'
 
 const MINIMUM_PASSWORD_LENGTH = 8
 
@@ -90,14 +91,15 @@ export default function RegisterRoute() {
     <AuthenticationCard
       heading={t('authentication.register.heading')}
       description={t('authentication.register.description')}
+      hero={authenticationHero}
       footer={
         <View style={styles.footer}>
-          <Text size="caption" tone="muted">
+          <Text tone="muted">
             {t('authentication.register.haveAccount')}
           </Text>
           <Button
             variant="link"
-            size="inline"
+            size="inlineBody"
             label={t('authentication.login.title')}
             onPress={() => {
               router.replace('/login')
@@ -119,22 +121,24 @@ export default function RegisterRoute() {
         </View>
       ) : (
         <>
-          <FormField id="register-name" label={t('authentication.register.nameLabel')} isRequired
-            error={name.error === undefined ? undefined : getFieldErrorText(name.error, t)}
-          >
-            {(control) => (
-              <Input
-                {...control}
-                value={name.value}
-                onChangeText={name.setValue}
-                onBlur={name.markVisited}
-                autoComplete="name"
-                textContentType="name"
-                returnKeyType="next"
-                onSubmitEditing={() => emailRef.current?.focus()}
-              />
-            )}
-          </FormField>
+          <View style={styles.firstField}>
+            <FormField id="register-name" label={t('authentication.register.nameLabel')} isRequired
+              error={name.error === undefined ? undefined : getFieldErrorText(name.error, t)}
+            >
+              {(control) => (
+                <Input
+                  {...control}
+                  value={name.value}
+                  onChangeText={name.setValue}
+                  onBlur={name.markVisited}
+                  autoComplete="name"
+                  textContentType="name"
+                  returnKeyType="next"
+                  onSubmitEditing={() => emailRef.current?.focus()}
+                />
+              )}
+            </FormField>
+          </View>
 
           <FormField id="register-email" label={t('authentication.register.emailLabel')} isRequired
             error={email.error === undefined ? undefined : getFieldErrorText(email.error, t)}
@@ -199,7 +203,8 @@ export default function RegisterRoute() {
 }
 
 const styles = StyleSheet.create({
-  submit: { marginTop: SPACING.sm },
+  firstField: { marginTop: SPACING.md },
+  submit: { marginTop: SPACING.lg },
   success: { gap: SPACING.md },
   footer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: SPACING.xs },
 })

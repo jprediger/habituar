@@ -9,12 +9,12 @@ import type { TextTone } from './text'
 import { Text } from './text'
 
 export type ButtonVariant = 'primary' | 'outline' | 'link'
-export type ButtonSize = 'default' | 'inline'
+export type ButtonSize = 'default' | 'inline' | 'inlineBody'
 
 /** Nome de ícone do conjunto já embarcado pelo Expo; não se inventa glifo fora dele. */
 export type ButtonIcon = ComponentProps<typeof Ionicons>['name']
 
-const ICON_SIZE = { default: 20, inline: 16 } as const
+const ICON_SIZE = { default: 20, inline: 16, inlineBody: 16 } as const
 
 export type ButtonProps = Readonly<{
   label: string
@@ -79,7 +79,7 @@ export function Button({
           color={contentColor}
         />
       )}
-      <Text size={size === 'default' ? 'body' : 'caption'} weight="medium" tone={getContentTone(variant)}>
+      <Text size={size === 'inline' ? 'caption' : 'body'} weight="medium" tone={getContentTone(variant)}>
         {label}
       </Text>
     </Pressable>

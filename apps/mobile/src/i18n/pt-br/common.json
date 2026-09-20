@@ -2,9 +2,10 @@
   "authentication": {
     "loading": "Verificando sua sessão...",
     "brandName": "Habituar",
+    "heroAlt": "Folhagem verde iluminada pelo sol",
     "login": {
       "title": "Entrar",
-      "heading": "Que bom ter você de volta",
+      "heading": "Que bom ter você de volta!",
       "description": "Entre para acessar o seu ambiente.",
       "emailLabel": "E-mail",
       "emailPlaceholder": "voce@exemplo.com",
@@ -16,7 +17,7 @@
     },
     "register": {
       "title": "Criar conta",
-      "heading": "Vamos criar sua conta",
+      "heading": "Vamos criar sua conta!",
       "description": "Crie sua conta para acessar o Habituar.",
       "nameLabel": "Nome",
       "emailLabel": "E-mail",

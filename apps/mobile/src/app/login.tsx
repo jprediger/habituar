@@ -15,6 +15,7 @@ import { Text } from '../components/ui/text'
 import { PasswordInput } from '../components/ui/password-input'
 import { getFieldErrorText } from '../form-messages'
 import { habituar } from '../habituar-client'
+import authenticationHero from '../../assets/images/authentication-hero.jpg'
 
 /** Tela de entrada: só autentica quem já tem conta. Criar conta é a rota `/register`. */
 export default function LoginRoute() {
@@ -43,14 +44,15 @@ export default function LoginRoute() {
     <AuthenticationCard
       heading={t('authentication.login.heading')}
       description={t('authentication.login.description')}
+      hero={authenticationHero}
       footer={
         <View style={styles.footer}>
-          <Text size="caption" tone="muted">
+          <Text tone="muted">
             {t('authentication.login.noAccount')}
           </Text>
           <Button
             variant="link"
-            size="inline"
+            size="inlineBody"
             label={t('authentication.register.title')}
             onPress={() => {
               router.push('/register')
@@ -59,25 +61,27 @@ export default function LoginRoute() {
         </View>
       }
     >
-      <FormField id="login-email" label={t('authentication.login.emailLabel')} isRequired
-        error={email.error === undefined ? undefined : getFieldErrorText(email.error, t)}
-      >
-        {(control) => (
-          <Input
-            {...control}
-            value={email.value}
-            onChangeText={email.setValue}
-            onBlur={email.markVisited}
-            placeholder={t('authentication.login.emailPlaceholder')}
-            autoCapitalize="none"
-            autoComplete="email"
-            textContentType="emailAddress"
-            keyboardType="email-address"
-            returnKeyType="next"
-            onSubmitEditing={() => passwordRef.current?.focus()}
-          />
-        )}
-      </FormField>
+      <View style={styles.emailField}>
+        <FormField id="login-email" label={t('authentication.login.emailLabel')} isRequired
+          error={email.error === undefined ? undefined : getFieldErrorText(email.error, t)}
+        >
+          {(control) => (
+            <Input
+              {...control}
+              value={email.value}
+              onChangeText={email.setValue}
+              onBlur={email.markVisited}
+              placeholder={t('authentication.login.emailPlaceholder')}
+              autoCapitalize="none"
+              autoComplete="email"
+              textContentType="emailAddress"
+              keyboardType="email-address"
+              returnKeyType="next"
+              onSubmitEditing={() => passwordRef.current?.focus()}
+            />
+          )}
+        </FormField>
+      </View>
 
       <FormField
         id="login-password"
@@ -87,7 +91,7 @@ export default function LoginRoute() {
         action={
           <Button
             variant="link"
-            size="inline"
+            size="inlineBody"
             label={t('authentication.login.forgotPassword')}
             onPress={() => {
               router.push('/forgot-password')
@@ -126,6 +130,7 @@ export default function LoginRoute() {
 
 const styles = StyleSheet.create({
   // Respiro maior antes da ação: o botão encerra o formulário, não é mais um campo.
-  submit: { marginTop: SPACING.sm },
+  emailField: { marginTop: SPACING.md },
+  submit: { marginTop: SPACING.lg },
   footer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: SPACING.xs },
 })

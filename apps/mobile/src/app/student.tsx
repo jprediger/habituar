@@ -1,8 +1,7 @@
-import { useTranslation } from 'react-i18next'
-import { Text } from 'react-native'
+import { InstitutionSessionScreen } from '../session-screen'
+import { StudentHomeScreen } from '../student-home-screen'
 
+/** Ambiente do aluno; a sessão só chega aqui depois de aprovada pelo guard. */
 export default function StudentRoute() {
-  const { t } = useTranslation()
-
-  return <Text>{t('home.student-home.title')}</Text>
+  return <InstitutionSessionScreen>{(session) => <StudentHomeScreen session={session} />}</InstitutionSessionScreen>
 }

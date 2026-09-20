@@ -1,8 +1,7 @@
-import { useTranslation } from 'react-i18next'
-import { Text } from 'react-native'
+import { AdminHomeScreen } from '../admin-home-screen'
+import { SessionScreen } from '../session-screen'
 
+/** Ambiente da administração geral, a única sessão que existe fora de um vínculo. */
 export default function AdminRoute() {
-  const { t } = useTranslation()
-
-  return <Text>{t('home.admin-home.title')}</Text>
+  return <SessionScreen>{(session) => <AdminHomeScreen user={session.user} />}</SessionScreen>
 }

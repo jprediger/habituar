@@ -1,8 +1,7 @@
-import { useTranslation } from 'react-i18next'
-import { Text } from 'react-native'
+import { InstitutionSessionScreen } from '../session-screen'
+import { StaffHomeScreen } from '../staff-home-screen'
 
+/** Ambiente do profissional; a sessão só chega aqui depois de aprovada pelo guard. */
 export default function ProfessionalRoute() {
-  const { t } = useTranslation()
-
-  return <Text>{t('home.professional-home.title')}</Text>
+  return <InstitutionSessionScreen>{(session) => <StaffHomeScreen session={session} />}</InstitutionSessionScreen>
 }

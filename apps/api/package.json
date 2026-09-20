@@ -12,7 +12,9 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:up": "docker compose up -d --wait",
-    "db:seed:admin": "tsx src/database/seeds/admin.seed.ts"
+    "db:seed:admin": "tsx src/database/seeds/admin.seed.ts",
+    "db:seed:dev": "tsx src/database/seeds/development.seed.ts",
+    "db:seed": "pnpm db:seed:admin && pnpm db:seed:dev"
   },
   "dependencies": {
     "@habituar/core": "workspace:*",

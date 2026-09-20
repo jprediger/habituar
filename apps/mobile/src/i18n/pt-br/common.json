@@ -49,7 +49,6 @@
   },
   "form": {
     "requiredFieldLabel": "{{label}}, campo obrigatório",
-    "requiredMark": "Campo obrigatório",
     "password": {
       "show": "Mostrar senha",
       "hide": "Ocultar senha"

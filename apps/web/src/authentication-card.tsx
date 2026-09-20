@@ -14,7 +14,9 @@ export function AuthenticationCard({
     <main className="flex min-h-dvh items-center justify-center bg-surface p-lg">
       <div className="flex w-full max-w-[24rem] flex-col gap-md">
         <Card>
-          <CardHeader className="items-center gap-sm">
+          {/* Alinhado à esquerda, como o resto do card: centralizar o cabeçalho joga o
+              título para longe do primeiro rótulo do formulário, que começa na margem. */}
+          <CardHeader className="gap-sm">
             <BrandLogo />
             <h1 className="text-title font-bold">{title}</h1>
           </CardHeader>

@@ -1,26 +1,13 @@
-import { useTranslation } from 'react-i18next'
-import { Pressable, Text } from 'react-native'
-import { SafeAreaView } from 'react-native-safe-area-context'
 import { habituar } from '../habituar-client'
+import { InstitutionSelectionScreen } from '../institution-selection-screen'
 
+/** Passo entre autenticar e chegar a um ambiente, quando a conta tem mais de um vínculo. */
 export default function SelectInstitutionRoute() {
-  const { t } = useTranslation()
-  const { state, actions } = habituar.useAuthentication()
+  const { state } = habituar.useAuthentication()
 
+  // O guard do layout já garante que só `selecting-membership` chega aqui; a checagem
+  // existe para estreitar o tipo, não para decidir acesso.
   if (state.status !== 'selecting-membership') return null
 
-  return (
-    <SafeAreaView>
-      <Text accessibilityRole="header">{t('authentication.selection.title')}</Text>
-      {state.memberships.map((membership) => (
-        <Pressable
-          key={membership.institution.id}
-          accessibilityRole="button"
-          onPress={() => void actions.selectMembership(membership.institution.id)}
-        >
-          <Text>{membership.institution.name}</Text>
-        </Pressable>
-      ))}
-    </SafeAreaView>
-  )
+  return <InstitutionSelectionScreen memberships={state.memberships} />
 }

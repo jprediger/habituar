@@ -1,9 +1,10 @@
 import { SPACING } from '@habituar/design-tokens/spacing'
+import type { Ref } from 'react'
 import type { TextInputProps } from 'react-native'
 import { TextInput } from 'react-native'
 import { useThemeTokens } from '../../theme/tokens'
 
-export type InputProps = TextInputProps & Readonly<{ hasError?: boolean }>
+export type InputProps = TextInputProps & Readonly<{ hasError?: boolean; ref?: Ref<TextInput> }>
 
 /**
  * Único campo de texto do kit nativo; dono da aparência, do alvo de toque e da borda de

@@ -29,6 +29,7 @@ module.exports = {
     '^(\\.{1,2}/.+)\\.js$': '$1',
     '^@habituar/core/assert-never$': '<rootDir>/../../packages/core/src/type/assert-never.ts',
     '^@habituar/core/auth/context$': '<rootDir>/../../packages/core/src/auth/auth-context.ts',
+    '^@habituar/core/auth/schema$': '<rootDir>/../../packages/core/src/auth/auth.schema.ts',
     '^@habituar/core/contract$': '<rootDir>/../../packages/core/src/contract/api-contract.ts',
     '^@habituar/core/health/schema$': '<rootDir>/../../packages/core/src/health/health.schema.ts',
     '^@habituar/core/home-destination$': '<rootDir>/../../packages/core/src/home-destination.ts',

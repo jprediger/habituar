@@ -1,10 +1,11 @@
 import { defineConfig } from 'tsup'
 
-// Uma única entrada: `react-client.ts` é o único arquivo público do pacote, e a lista de
-// exports do package.json É a declaração de entrypoint — não existe barrel.
+// Uma entrada por entrypoint público: a lista de exports do package.json É a declaração
+// de entrypoint — não existe barrel, e nenhum arquivo fora desta lista é importável.
 export default defineConfig({
   entry: {
     'react-client': 'src/react-client.ts',
+    form: 'src/form.ts',
   },
   // Formato único: o monorepo inteiro é ESM, então não existe condição `require` a servir.
   format: ['esm'],

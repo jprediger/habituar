@@ -9,9 +9,9 @@ import { Button } from '../components/ui/button.js'
 import { FormField } from '../components/ui/form-field.js'
 import { Input } from '../components/ui/input.js'
 import { PasswordInput } from '../components/ui/password-input.js'
-import { getFieldErrorText } from '../form-validation.js'
+import { getFieldErrorText } from '../form-messages.js'
 import { habituar } from '../habituar-client.js'
-import { useValidatedForm } from '../use-validated-form.js'
+import { useValidatedForm } from '@habituar/react-client/form'
 
 export const Route = createFileRoute('/login')({
   component: LoginRoute,

@@ -1,6 +1,6 @@
 import { loginInputSchema, registerInputSchema } from '@habituar/core/auth/schema'
 import { describe, expect, it } from 'vitest'
-import { getFieldErrors } from './form-validation.js'
+import { getFieldErrors } from './form.js'
 
 describe('form validation driven by the API schema', () => {
   it('reports an empty required field as something to fill in', () => {

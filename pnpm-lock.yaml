@@ -288,9 +288,6 @@ importers:
       tailwind-merge:
         specifier: 3.6.0
         version: 3.6.0
-      zod:
-        specifier: 4.4.3
-        version: 4.4.3
     devDependencies:
       '@habituar/config':
         specifier: workspace:*
@@ -461,6 +458,9 @@ importers:
       '@tanstack/react-query':
         specifier: 5.102.8
         version: 5.102.8(react@19.1.0)
+      zod:
+        specifier: 4.4.3
+        version: 4.4.3
     devDependencies:
       '@habituar/config':
         specifier: workspace:*

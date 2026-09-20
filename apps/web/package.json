@@ -23,8 +23,7 @@
     "react": "catalog:",
     "react-dom": "catalog:",
     "react-i18next": "17.0.12",
-    "tailwind-merge": "3.6.0",
-    "zod": "4.4.3"
+    "tailwind-merge": "3.6.0"
   },
   "devDependencies": {
     "@habituar/config": "workspace:*",

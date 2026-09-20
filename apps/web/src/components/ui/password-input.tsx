@@ -31,7 +31,7 @@ export function PasswordInput({ className, ...props }: PasswordInputProps): Reac
         aria-label={isVisible ? t('form.password.hide') : t('form.password.show')}
         className={
           'absolute right-0 flex min-h-tap-target min-w-tap-target cursor-pointer items-center ' +
-          'justify-center rounded-md text-text-muted transition-colors hover:text-text outline-none ' +
+          'justify-center rounded-pill text-text-muted transition-colors hover:text-text outline-none ' +
           'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring'
         }
       >

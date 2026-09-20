@@ -10,7 +10,7 @@ export function Input({ className, ...props }: InputHTMLAttributes<HTMLInputElem
   return (
     <input
       className={cn(
-        'min-h-tap-target w-full rounded-md border border-border bg-surface px-sm py-xs text-body text-text',
+        'min-h-tap-target w-full rounded-field border border-border bg-surface px-sm py-xs text-body text-text',
         'outline-none transition-colors placeholder:text-text-muted',
         'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring',
         'disabled:pointer-events-none disabled:opacity-50',

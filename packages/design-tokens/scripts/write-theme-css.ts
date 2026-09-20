@@ -11,8 +11,9 @@ import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { INTERACTION } from '../src/interaction.ts'
 import { SEMANTIC_COLOR_DARK, SEMANTIC_COLOR_LIGHT } from '../src/semantic-color.ts'
+import { RADIUS } from '../src/radius.ts'
 import { SPACING } from '../src/spacing.ts'
-import { FONT_SIZE, FONT_WEIGHT, LINE_HEIGHT } from '../src/typography.ts'
+import { FONT_FAMILY, FONT_SIZE, FONT_WEIGHT, LINE_HEIGHT } from '../src/typography.ts'
 
 const PACKAGE_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const OUTPUT_FILE = resolve(PACKAGE_ROOT, 'dist/theme.css')
@@ -37,6 +38,10 @@ const THEME_BLOCK = [
   '@theme {',
   ...colorDeclarationsFor(SEMANTIC_COLOR_LIGHT),
   ...declarationsFor('spacing', SPACING, 'px'),
+  // `--radius-*` e `--font-*` são namespaces que o Tailwind v4 já reconhece: emitir aqui
+  // dá `rounded-field`, `rounded-surface`, `rounded-pill` e `font-sans` sem utility extra.
+  ...declarationsFor('radius', RADIUS, 'px'),
+  ...declarationsFor('font', FONT_FAMILY, ''),
   ...declarationsFor('font-size', FONT_SIZE, 'px'),
   ...declarationsFor('font-weight', FONT_WEIGHT, ''),
   ...declarationsFor('line-height', LINE_HEIGHT, ''),

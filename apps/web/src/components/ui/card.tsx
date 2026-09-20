@@ -5,7 +5,7 @@ import { cn } from '../../lib/utils.js'
 export function Card({ className, ...props }: HTMLAttributes<HTMLDivElement>): ReactElement {
   return (
     <div
-      className={cn('flex flex-col gap-md rounded-lg border border-border bg-surface p-lg text-text', className)}
+      className={cn('flex flex-col gap-md rounded-surface border border-border bg-surface p-lg text-text', className)}
       {...props}
     />
   )

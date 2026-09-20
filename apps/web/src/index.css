@@ -1,12 +1,20 @@
 @import 'tailwindcss';
+/*
+ * Fonte auto-hospedada, não `<link>` para o Google: um CDN de fontes recebe o IP de cada
+ * pessoa que abre a tela de entrada, e o produto trata dado de estudante (RNF0002). O
+ * corte variável é um arquivo só para toda a escala de peso.
+ */
+@import '@fontsource-variable/outfit';
 @import '@habituar/design-tokens/theme.css';
 
 /*
  * `design-tokens` gera os namespaces que o Tailwind v4 reconhece nativamente
- * (--color-*, --spacing-*, --font-weight-*). Tamanho de fonte, altura de linha e alvo de
- * toque usam namespaces próprios do token (--font-size-*, --line-height-*,
- * --interaction-*), que o Tailwind não mapeia sozinho — as utilities abaixo só apontam
- * para essas variáveis, nunca introduzem um valor literal novo.
+ * (--color-*, --spacing-*, --radius-*, --font-*, --font-weight-*), de onde saem
+ * `rounded-field`, `rounded-surface`, `rounded-pill` e `font-sans` sem utility nenhuma
+ * aqui. Tamanho de fonte, altura de linha e alvo de toque usam namespaces próprios do
+ * token (--font-size-*, --line-height-*, --interaction-*), que o Tailwind não mapeia
+ * sozinho — as utilities abaixo só apontam para essas variáveis, nunca introduzem um
+ * valor literal novo.
  */
 @utility text-display {
   font-size: var(--font-size-display);
@@ -45,7 +53,7 @@
 }
 
 body {
-  @apply bg-surface text-text;
+  @apply bg-surface font-sans text-text;
   margin: 0;
   min-height: 100dvh;
 }

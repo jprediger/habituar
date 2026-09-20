@@ -21,14 +21,27 @@ void SplashScreen.preventAutoHideAsync()
  * interno ao pacote, não decisão do app (`m0-clients.md`).
  */
 export default function RootLayout() {
-  const [areFontsLoaded] = useFonts({ Outfit_400Regular, Outfit_500Medium, Outfit_600SemiBold })
+  const [areFontsLoaded, fontError] = useFonts({
+    Outfit_400Regular,
+    Outfit_500Medium,
+    Outfit_600SemiBold,
+  })
+
+  // Fonte é aparência, e aparência não impede entrar na conta: se o arquivo não chega, o
+  // app abre no corte do sistema. Ignorar este erro deixaria a splash de pé para sempre,
+  // sem nada na tela explicando o quê.
+  const hasFontSettled = areFontsLoaded || fontError !== null
 
   useEffect(() => {
-    if (areFontsLoaded) void SplashScreen.hideAsync()
-  }, [areFontsLoaded])
+    if (!hasFontSettled) return
+    if (fontError !== null) console.error('Failed to load the app font; falling back to the system face.', fontError)
 
-  // Não é tela vazia: a splash ainda está por cima e só sai na linha acima.
-  if (!areFontsLoaded) return null
+    void SplashScreen.hideAsync()
+  }, [hasFontSettled, fontError])
+
+  // Não é tela vazia: a splash ainda está por cima e sai assim que a fonte se resolver,
+  // tendo chegado ou falhado.
+  if (!hasFontSettled) return null
 
   return (
     <SafeAreaProvider>

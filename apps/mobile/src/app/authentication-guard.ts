@@ -2,7 +2,13 @@ import { assertNever } from '@habituar/core/assert-never'
 import type { HomeDestination } from '@habituar/core/home-destination'
 import type { AuthenticationState } from '@habituar/react-client/react-client'
 
-export type MobileAuthenticationRoute = '/login' | '/select-institution' | '/student' | '/professional' | '/monitor'
+export type MobileAuthenticationRoute =
+  | '/login'
+  | '/select-institution'
+  | '/student'
+  | '/professional'
+  | '/monitor'
+  | '/admin'
 
 export type MobileAuthenticationGuard =
   | Readonly<{ action: 'render' }>
@@ -43,6 +49,10 @@ function getDestinationPath(destination: HomeDestination): MobileAuthenticationR
       return '/professional'
     case 'monitor-home':
       return '/monitor'
+    // O administrador geral existe no domínio inteiro, então o app precisa de um lugar
+    // para ele — mesmo que esse lugar só informe que a administração acontece na web.
+    case 'admin-home':
+      return '/admin'
     default:
       return assertNever(destination)
   }

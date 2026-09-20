@@ -23,6 +23,7 @@
   "home": {
     "student-home": "Organize sua rotina, acompanhe tarefas e consulte sua agenda.",
     "professional-home": "Acompanhe alunos, consultas, métricas e registros.",
-    "monitor-home": "Consulte e acompanhe os alunos atribuídos a você."
+    "monitor-home": "Consulte e acompanhe os alunos atribuídos a você.",
+    "admin-home": "A administração geral do Habituar é feita na web."
   }
 }

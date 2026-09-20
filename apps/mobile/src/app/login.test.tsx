@@ -18,7 +18,7 @@ function createAuthenticatedState(environment: RoleEnvironment): AuthenticationS
 
   if (membership === undefined) throw new Error('Authentication fixture requires one membership.')
 
-  return { status: 'authenticated', session: { user: context.user, membership, destination: getHomeDestination(environment) } }
+  return { status: 'authenticated', session: { kind: 'institution', user: context.user, membership, destination: getHomeDestination(environment) } }
 }
 
 describe('conceptual authentication routes', () => {

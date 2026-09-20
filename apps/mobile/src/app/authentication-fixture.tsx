@@ -37,6 +37,7 @@ function getHomeText(destination: HomeDestination, t: ReturnType<typeof useTrans
     case 'student-home': return t('home.student-home')
     case 'professional-home': return t('home.professional-home')
     case 'monitor-home': return t('home.monitor-home')
+    case 'admin-home': return t('home.admin-home')
     default: return assertNever(destination)
   }
 }

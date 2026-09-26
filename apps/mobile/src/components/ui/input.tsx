@@ -15,7 +15,7 @@ export function Input({ hasError = false, style, ...props }: InputProps) {
 
   return (
     <TextInput
-      placeholderTextColor={colors.textMuted}
+      placeholderTextColor={colors.textPlaceholder}
       {...props}
       style={[
         {

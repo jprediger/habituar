@@ -11,7 +11,7 @@ export function Input({ className, ...props }: InputHTMLAttributes<HTMLInputElem
     <input
       className={cn(
         'min-h-tap-target w-full rounded-field border border-border bg-surface px-sm py-xs text-body text-text',
-        'outline-hidden transition-colors placeholder:text-text-muted',
+        'outline-hidden transition-colors placeholder:text-text-placeholder',
         'focus-visible:outline-2 focus-visible:outline-solid focus-visible:outline-offset-2 focus-visible:outline-focus-ring',
         'disabled:pointer-events-none disabled:opacity-50',
         // O papel `danger` já tem par de contraste declarado em CONTRAST_PAIRS; a borda

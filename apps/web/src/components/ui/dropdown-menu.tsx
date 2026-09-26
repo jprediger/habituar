@@ -1,6 +1,7 @@
 import * as DropdownMenuPrimitive from '@radix-ui/react-dropdown-menu'
 import type { ComponentProps, ReactElement } from 'react'
 import { cn } from '../../lib/utils.js'
+import { LIST_ITEM_INTERACTION } from './list-item.js'
 
 /** Raiz de um menu suspenso; foco, teclado e ARIA de menu ficam com o Radix. */
 export const DropdownMenu = DropdownMenuPrimitive.Root
@@ -22,7 +23,7 @@ export function DropdownMenuContent({
       <DropdownMenuPrimitive.Content
         sideOffset={sideOffset}
         className={cn(
-          'z-50 min-w-[14rem] overflow-hidden rounded-field border border-hairline bg-surface p-xs text-text',
+          'z-50 min-w-[14rem] overflow-hidden rounded-field border border-hairline bg-surface px-sm py-xs text-text',
           'shadow-[0_8px_24px_-12px_color-mix(in_oklab,var(--color-text)_24%,transparent)]',
           'motion-safe:animate-in motion-safe:fade-in-0 motion-safe:zoom-in-95 motion-safe:duration-150 motion-safe:ease-out',
           'data-[state=closed]:motion-safe:animate-out data-[state=closed]:motion-safe:fade-out-0 data-[state=closed]:motion-safe:zoom-out-95',
@@ -45,10 +46,11 @@ export function DropdownMenuItem({
   return (
     <DropdownMenuPrimitive.Item
       className={cn(
-        'flex min-h-tap-target cursor-pointer select-none items-center gap-sm rounded-field px-sm text-body outline-hidden',
-        'motion-safe:transition-colors motion-safe:duration-150',
+        LIST_ITEM_INTERACTION,
+        'flex min-h-tap-target cursor-pointer select-none items-center gap-sm px-sm text-body outline-hidden',
         'focus-visible:outline-2 focus-visible:outline-solid focus-visible:-outline-offset-2 focus-visible:outline-focus-ring',
-        'data-[highlighted]:bg-sidebar-accent [&_svg]:size-[1.125rem] [&_svg]:shrink-0 [&_svg]:text-text-muted',
+        'data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
+        '[&_svg]:size-[1.125rem] [&_svg]:shrink-0 [&_svg]:text-text-muted',
         className,
       )}
       {...props}

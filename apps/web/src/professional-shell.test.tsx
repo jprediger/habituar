@@ -155,6 +155,27 @@ describe('professional shell', () => {
     expect(within(navigation).getByRole('link', { name: 'Início' })).not.toHaveAttribute('aria-current')
   })
 
+  it('shows the environment root as the only breadcrumb on the home screen', async () => {
+    renderAt('/professional')
+    const breadcrumbs = await screen.findByRole('navigation', { name: 'Trilha de navegação' })
+
+    expect(within(breadcrumbs).getAllByRole('listitem')).toHaveLength(1)
+    expect(within(breadcrumbs).getByText('Início')).toHaveAttribute('aria-current', 'page')
+    expect(within(breadcrumbs).queryByRole('link')).not.toBeInTheDocument()
+  })
+
+  it('traces the breadcrumb trail to a nested screen and leads back to its ancestor', async () => {
+    const user = userEvent.setup()
+    renderAt('/professional/profile')
+    const breadcrumbs = await screen.findByRole('navigation', { name: 'Trilha de navegação' })
+
+    expect(within(breadcrumbs).getByText('Perfil')).toHaveAttribute('aria-current', 'page')
+
+    await user.click(within(breadcrumbs).getByRole('link', { name: 'Início' }))
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Olá, Alex' })).toBeInTheDocument()
+  })
+
   it('keeps the shell free of serious accessibility violations', async () => {
     renderAt('/professional')
     await screen.findByRole('heading', { level: 1 })
@@ -239,15 +260,15 @@ describe('professional shell', () => {
     expect(client.logout).toHaveBeenCalledTimes(1)
   })
 
-  it('switches the theme from the account menu', async () => {
+  it('switches the theme from the page header without opening a menu', async () => {
     const user = userEvent.setup()
     renderAt('/professional')
 
-    await user.click(await screen.findByRole('button', { name: 'Menu da conta de Alex Moreira' }))
-    await user.click(await screen.findByRole('menuitem', { name: 'Ativar tema escuro' }))
+    await user.click(await screen.findByRole('button', { name: 'Ativar tema escuro' }))
 
     expect(document.documentElement.dataset['theme']).toBe('dark')
-    expect(screen.getByRole('menuitem', { name: 'Ativar tema claro' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Ativar tema claro' })).toBeInTheDocument()
+    expect(screen.queryByRole('menu')).not.toBeInTheDocument()
   })
 
   it('opens the profile from the account menu', async () => {

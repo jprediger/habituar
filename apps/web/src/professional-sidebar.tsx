@@ -9,6 +9,7 @@ import type { LucideIcon } from 'lucide-react'
 import { House, UserRound } from 'lucide-react'
 import type { ReactElement } from 'react'
 import { useTranslation } from 'react-i18next'
+import { BrandMark } from './brand-mark.js'
 import {
   Sidebar,
   SidebarMenu,
@@ -29,8 +30,13 @@ export function ProfessionalSidebar(): ReactElement {
   const activeIndex = activeItem === undefined ? undefined : items.indexOf(activeItem)
 
   return (
-    <Sidebar>
-      <nav aria-label={t('shell.sidebar.navigationLabel')} className="flex flex-col gap-md px-sm py-xl">
+    <Sidebar header={<BrandMark />}>
+      <nav
+        aria-label={t('shell.sidebar.navigationLabel')}
+        // No trilho a margem volta a `sm`: a largura recolhida só comporta o alvo de toque
+        // mais `sm` de cada lado.
+        className="flex flex-col gap-md px-md py-lg group-data-[state=collapsed]/sidebar:px-sm"
+      >
         <p
           aria-hidden="true"
           className={

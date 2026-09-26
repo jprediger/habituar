@@ -4,7 +4,7 @@ import { Button } from './components/ui/button.js'
 import { useThemePreference } from './use-theme-preference.js'
 
 /** Controle de tema claro/escuro das telas internas; não sabe qual tela o contém. */
-export function ThemeToggle(): ReactElement {
+export function ThemeToggle({ className }: Readonly<{ className?: string }>): ReactElement {
   const { t } = useTranslation()
   const { theme, toggle } = useThemePreference()
   const isDark = theme === 'dark'
@@ -18,6 +18,7 @@ export function ThemeToggle(): ReactElement {
       // atual — quem usa leitor de tela ouve o que vai acontecer ao acionar.
       aria-label={isDark ? t('theme.activateLight') : t('theme.activateDark')}
       onClick={toggle}
+      className={className}
     >
       {isDark ? <SunIcon /> : <MoonIcon />}
     </Button>

@@ -1,9 +1,10 @@
 import { Slot } from '@radix-ui/react-slot'
 import { PanelLeft, X } from 'lucide-react'
-import type { ComponentProps, PropsWithChildren, ReactElement, RefObject } from 'react'
+import type { ComponentProps, PropsWithChildren, ReactElement, ReactNode, RefObject } from 'react'
 import { createContext, useCallback, useContext, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import { useTranslation } from 'react-i18next'
 import { cn } from '../../lib/utils.js'
+import { LIST_ITEM_INTERACTION } from './list-item.js'
 import { Sheet, SheetClose, SheetContent, SheetTitle } from './sheet.js'
 import { Tooltip, TooltipContent, TooltipTrigger } from './tooltip.js'
 
@@ -26,7 +27,7 @@ const SIDEBAR_ID = 'app-sidebar'
 const MOBILE_QUERY = '(max-width: 47.999rem)'
 const SIDEBAR_ICON_BUTTON = cn(
   'inline-flex size-(--interaction-minimum-touch-target) shrink-0 cursor-pointer items-center justify-center',
-  'rounded-field text-text-muted outline-hidden hover:bg-surface-muted hover:text-text',
+  'rounded-control text-text-muted outline-hidden hover:bg-item-hover hover:text-text',
   'motion-safe:transition-colors motion-safe:duration-150',
   'focus-visible:outline-2 focus-visible:outline-solid focus-visible:outline-offset-2 focus-visible:outline-focus-ring',
 )
@@ -71,11 +72,12 @@ export function useSidebar(): SidebarContextValue {
 }
 
 /**
- * Painel de navegação: coluna fixa com transição de largura no desktop, drawer modal
- * abaixo de `md`. Renderiza só uma das formas, para o leitor de tela nunca encontrar duas
- * navegações iguais na mesma página.
+ * Painel de navegação: coluna de altura inteira com transição de largura no desktop,
+ * drawer modal abaixo de `md`. Renderiza só uma das formas, para o leitor de tela nunca
+ * encontrar duas navegações iguais na mesma página. O `header` (a marca) divide o topo com
+ * o controle de recolher e some no trilho, onde não cabe.
  */
-export function Sidebar({ children }: PropsWithChildren): ReactElement {
+export function Sidebar({ header, children }: PropsWithChildren<Readonly<{ header: ReactNode }>>): ReactElement {
   const { t } = useTranslation()
   const { state, isMobile, isMobileOpen, triggerRef, setMobileOpen } = useSidebar()
 
@@ -95,7 +97,8 @@ export function Sidebar({ children }: PropsWithChildren): ReactElement {
           <SheetTitle className="sr-only">{t('shell.sidebar.title')}</SheetTitle>
           {/* Esc e toque fora não bastam: o véu é invisível para o leitor de tela, e quem
               navega por toque com ele precisa de um controle nomeado para sair. */}
-          <div className="flex justify-end px-sm pt-sm">
+          <div className="flex h-(--shell-header-height) shrink-0 items-center justify-between gap-sm pl-md pr-sm">
+            {header}
             <SheetClose asChild>
               <button type="button" aria-label={t('shell.sidebar.close')} className={SIDEBAR_ICON_BUTTON}>
                 <X aria-hidden="true" focusable="false" className="size-5" strokeWidth={1.75} />
@@ -115,12 +118,21 @@ export function Sidebar({ children }: PropsWithChildren): ReactElement {
       id={SIDEBAR_ID}
       data-state={state}
       className={cn(
-        'group/sidebar sticky top-(--shell-header-height) flex h-[calc(100dvh-var(--shell-header-height))] shrink-0',
+        'group/sidebar sticky top-0 flex h-dvh shrink-0',
         'flex-col overflow-hidden border-r border-sidebar-border bg-sidebar text-sidebar-foreground',
         'w-(--sidebar-width) data-[state=collapsed]:w-(--sidebar-width-icon)',
         'motion-safe:transition-[width] motion-safe:duration-200 motion-safe:ease-out',
       )}
     >
+      <div
+        className={cn(
+          'flex h-(--shell-header-height) shrink-0 items-center justify-between gap-sm pl-md pr-sm',
+          'group-data-[state=collapsed]/sidebar:pl-sm',
+        )}
+      >
+        <div className="min-w-0 overflow-hidden group-data-[state=collapsed]/sidebar:hidden">{header}</div>
+        <SidebarTrigger />
+      </div>
       {children}
     </aside>
   )
@@ -156,6 +168,16 @@ export function SidebarTrigger({ className }: Readonly<{ className?: string }>):
 }
 
 /**
+ * Gatilho do drawer para o cabeçalho da página. Só existe abaixo de `md`: no desktop o
+ * controle mora dentro da própria coluna, e dois gatilhos disputariam o mesmo `triggerRef`.
+ */
+export function SidebarMobileTrigger(): ReactElement | null {
+  const { isMobile } = useSidebar()
+
+  return isMobile ? <SidebarTrigger /> : null
+}
+
+/**
  * Lista de destinos com o indicador de item ativo que desliza entre eles. O indicador é
  * posicionado pelo índice — os itens têm altura fixa de alvo de toque —, então não mede
  * DOM nem depende de efeito para se mover.
@@ -170,15 +192,13 @@ export function SidebarMenu({
         <span
           aria-hidden="true"
           className={cn(
-            'pointer-events-none absolute inset-x-0 top-0 h-tap-target rounded-field bg-sidebar-accent',
+            'pointer-events-none absolute inset-x-0 top-0 h-tap-target rounded-control bg-sidebar-accent',
             'motion-safe:transition-transform motion-safe:duration-250 motion-safe:ease-out',
           )}
           style={{
             transform: `translateY(calc(${String(activeIndex)} * (var(--interaction-minimum-touch-target) + var(--spacing-xs))))`,
           }}
-        >
-          <span className="absolute inset-y-md left-0 w-[3px] rounded-pill bg-sidebar-primary" />
-        </span>
+        />
       )}
       <ul className="relative flex flex-col gap-xs">{children}</ul>
     </div>
@@ -219,11 +239,16 @@ export function SidebarMenuButton({
             if (isMobile) setMobileOpen(false)
           }}
           className={cn(
-            'flex h-tap-target w-full items-center gap-md overflow-hidden rounded-field px-md text-body',
+            LIST_ITEM_INTERACTION,
+            'flex h-tap-target w-full items-center gap-md overflow-hidden px-md text-body',
             'text-sidebar-muted-foreground outline-hidden hover:text-sidebar-foreground',
+            // Sem hover no item ativo: por cima do indicador, apagaria o matiz que diz onde a
+            // pessoa está.
+            'data-[active=true]:before:hidden',
             'motion-safe:transition-colors motion-safe:duration-150',
             'focus-visible:outline-2 focus-visible:outline-solid focus-visible:-outline-offset-2 focus-visible:outline-sidebar-ring',
             'data-[active=true]:font-medium data-[active=true]:text-sidebar-foreground',
+            'data-[active=true]:[&_svg]:text-sidebar-primary',
             '[&_svg]:size-5 [&_svg]:shrink-0',
             className,
           )}

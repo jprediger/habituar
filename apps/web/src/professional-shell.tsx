@@ -1,18 +1,33 @@
+import {
+  listProfessionalBreadcrumbs,
+  useProfessionalNavigation,
+} from '@habituar/react-client/professional-navigation'
+import { Link, useLocation } from '@tanstack/react-router'
 import { Bell, Search } from 'lucide-react'
 import type { PropsWithChildren, ReactElement } from 'react'
 import { useTranslation } from 'react-i18next'
 import { AccountMenu } from './account-menu.js'
-import { BrandMark } from './brand-mark.js'
-import { SidebarProvider, SidebarTrigger } from './components/ui/sidebar.js'
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from './components/ui/breadcrumb.js'
+import { SidebarMobileTrigger, SidebarProvider } from './components/ui/sidebar.js'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './components/ui/tooltip.js'
 import { ProfessionalSidebar } from './professional-sidebar.js'
 import type { InstitutionSession } from './session-route.js'
+import { ThemeToggle } from './theme-toggle.js'
 
 const MAIN_CONTENT_ID = 'main-content'
+// Ações do cabeçalho: caixa de controle com a mesma borda e altura da busca, para a fileira
+// ler como um conjunto; fundo neutro no hover.
+const HEADER_ACTION = 'rounded-control border border-hairline text-text-muted hover:bg-surface-muted hover:text-text'
 
 /**
- * Casca do ambiente profissional: barra superior, navegação lateral e a região principal
- * onde cada tela filha entra. Não conhece o conteúdo das telas — só o lugar fixo de cada
+ * Casca do ambiente profissional: navegação lateral em coluna inteira, cabeçalho com a
+ * trilha da página e as ações globais, e a região principal onde cada tela filha entra. Não conhece o conteúdo das telas — só o lugar fixo de cada
  * coisa, que não muda entre elas.
  */
 export function ProfessionalShell({
@@ -35,36 +50,70 @@ export function ProfessionalShell({
             {t('shell.skipToContent')}
           </a>
 
-          <header
-            className={
-              'sticky top-0 z-30 flex h-(--shell-header-height) items-center gap-sm border-b border-hairline ' +
-              'bg-canvas px-sm md:px-md'
-            }
-          >
-            <div className="flex min-w-0 items-center gap-xs">
-              <SidebarTrigger />
-              <BrandMark />
-            </div>
-
-            <div className="hidden flex-1 justify-center px-lg md:flex">
-              <SearchPlaceholder />
-            </div>
-
-            <div className="ml-auto flex items-center gap-xs md:ml-none">
-              <NotificationsPlaceholder />
-              <AccountMenu session={session} />
-            </div>
-          </header>
-
           <div className="flex">
             <ProfessionalSidebar />
-            <main id={MAIN_CONTENT_ID} tabIndex={-1} className="min-w-0 flex-1 outline-hidden">
-              <div className="mx-auto w-full max-w-[60rem] px-lg py-xl md:px-xxl md:py-xxl">{children}</div>
-            </main>
+            <div className="flex min-w-0 flex-1 flex-col">
+              <header
+                className={
+                  'sticky top-0 z-30 flex h-(--shell-header-height) items-center gap-sm border-b border-hairline ' +
+                  'bg-canvas px-sm md:px-lg'
+                }
+              >
+                <div className="flex min-w-0 flex-1 items-center gap-xs">
+                  <SidebarMobileTrigger />
+                  <ProfessionalBreadcrumbs />
+                </div>
+
+                <div className="flex shrink-0 items-center gap-md">
+                  <div className="hidden w-[16rem] md:block lg:w-[20rem]">
+                    <SearchPlaceholder />
+                  </div>
+                  <ThemeToggle className={HEADER_ACTION} />
+                  <NotificationsPlaceholder />
+                  <AccountMenu session={session} />
+                </div>
+              </header>
+
+              <main id={MAIN_CONTENT_ID} tabIndex={-1} className="min-w-0 flex-1 outline-hidden">
+                <div className="mx-auto w-full max-w-[60rem] px-lg py-xl md:px-xxl md:py-xxl">{children}</div>
+              </main>
+            </div>
           </div>
         </div>
       </SidebarProvider>
     </TooltipProvider>
+  )
+}
+
+// A trilha vem do hook compartilhado; aqui só se decide que ancestral é link e o passo
+// atual é texto.
+function ProfessionalBreadcrumbs(): ReactElement {
+  const { t } = useTranslation()
+  const items = useProfessionalNavigation()
+  const pathname = useLocation({ select: (location) => location.pathname })
+  const trail = listProfessionalBreadcrumbs(items, pathname)
+
+  return (
+    <Breadcrumb label={t('shell.breadcrumbs.label')}>
+      {trail.map((item, index) => {
+        const isCurrent = index === trail.length - 1
+
+        return (
+          <BreadcrumbItem key={item.id} isCurrent={isCurrent}>
+            {index > 0 && <BreadcrumbSeparator />}
+            {isCurrent ? (
+              <BreadcrumbPage>{t(item.labelKey)}</BreadcrumbPage>
+            ) : (
+              <BreadcrumbLink>
+                <Link to={item.path} activeOptions={{ exact: true }}>
+                  {t(item.labelKey)}
+                </Link>
+              </BreadcrumbLink>
+            )}
+          </BreadcrumbItem>
+        )
+      })}
+    </Breadcrumb>
   )
 }
 
@@ -74,7 +123,7 @@ function SearchPlaceholder(): ReactElement {
   const { t } = useTranslation()
 
   return (
-    <div className="relative w-full max-w-[28rem]">
+    <div className="relative w-full">
       <Search
         aria-hidden="true"
         focusable="false"
@@ -89,7 +138,7 @@ function SearchPlaceholder(): ReactElement {
         aria-label={t('shell.search.label')}
         placeholder={t('shell.search.placeholder')}
         className={
-          'h-tap-target w-full cursor-not-allowed rounded-pill border border-hairline bg-surface pl-xxl pr-md ' +
+          'h-tap-target w-full cursor-not-allowed rounded-control border border-hairline bg-surface pl-xxl pr-md ' +
           'text-body text-text-muted outline-hidden placeholder:text-text-muted'
         }
       />
@@ -112,7 +161,7 @@ function NotificationsPlaceholder(): ReactElement {
           aria-label={t('shell.notifications.label')}
           className={
             'inline-flex size-(--interaction-minimum-touch-target) cursor-not-allowed items-center justify-center ' +
-            'rounded-field text-text-muted opacity-60 outline-hidden'
+            'rounded-control border border-hairline text-text-muted opacity-60 outline-hidden'
           }
         >
           <Bell aria-hidden="true" focusable="false" strokeWidth={1.75} className="size-5" />

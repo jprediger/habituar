@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router'
-import { LogOut, Moon, Sun, UserRound } from 'lucide-react'
+import { LogOut, UserRound } from 'lucide-react'
 import type { ReactElement } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
@@ -12,19 +12,16 @@ import {
 } from './components/ui/dropdown-menu.js'
 import { habituar } from './habituar-client.js'
 import type { InstitutionSession } from './session-route.js'
-import { useThemePreference } from './use-theme-preference.js'
 
 /**
  * Menu da conta no topo do ambiente profissional: identifica quem está conectado e onde,
- * e concentra as ações de conta — Perfil, tema e Sair. Não decide destino de sessão; sair
+ * e concentra as ações de conta — Perfil e Sair. Não decide destino de sessão; sair
  * só dispara o logout, e o guard leva a pessoa para a entrada.
  */
 export function AccountMenu({ session }: Readonly<{ session: InstitutionSession }>): ReactElement {
   const { t } = useTranslation()
   const { state, actions } = habituar.useAuthentication()
-  const { theme, toggle } = useThemePreference()
   const isSigningOut = state.status === 'authenticating'
-  const isDark = theme === 'dark'
 
   return (
     <DropdownMenu>
@@ -34,13 +31,13 @@ export function AccountMenu({ session }: Readonly<{ session: InstitutionSession 
           aria-label={t('shell.account.open', { name: session.user.name })}
           className={
             'inline-flex size-(--interaction-minimum-touch-target) shrink-0 cursor-pointer items-center justify-center ' +
-            'rounded-pill outline-hidden focus-visible:outline-2 focus-visible:outline-solid focus-visible:outline-offset-2 focus-visible:outline-focus-ring'
+            'rounded-control outline-hidden focus-visible:outline-2 focus-visible:outline-solid focus-visible:outline-offset-2 focus-visible:outline-focus-ring'
           }
         >
           <span
             aria-hidden="true"
             className={
-              'inline-flex size-9 items-center justify-center rounded-pill border border-hairline bg-sidebar-accent ' +
+              'inline-flex size-full items-center justify-center rounded-control border border-hairline bg-sidebar-accent ' +
               'text-caption font-bold tracking-wide text-primary motion-safe:transition-colors hover:border-primary'
             }
           >
@@ -60,21 +57,6 @@ export function AccountMenu({ session }: Readonly<{ session: InstitutionSession 
             <UserRound aria-hidden="true" focusable="false" strokeWidth={1.75} />
             {t('navigation.profile')}
           </Link>
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          // O menu fica aberto: quem troca o tema quer ver o resultado e talvez desfazer
-          // na hora, sem reabrir o menu para isso.
-          onSelect={(event) => {
-            event.preventDefault()
-            toggle()
-          }}
-        >
-          {isDark ? (
-            <Sun aria-hidden="true" focusable="false" strokeWidth={1.75} />
-          ) : (
-            <Moon aria-hidden="true" focusable="false" strokeWidth={1.75} />
-          )}
-          {isDark ? t('theme.activateLight') : t('theme.activateDark')}
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem

@@ -102,6 +102,9 @@
       "expand": "Expandir menu lateral",
       "close": "Fechar menu de navegação"
     },
+    "breadcrumbs": {
+      "label": "Trilha de navegação"
+    },
     "search": {
       "label": "Busca, disponível em breve",
       "placeholder": "Busca em breve"

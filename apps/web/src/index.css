@@ -73,16 +73,22 @@
  *   (3:1) e fica pesado quando repetido em toda moldura; aqui ele só separa superfícies,
  *   e controles interativos continuam usando `border`.
  * - `--sidebar-*`: nomes do componente de sidebar do shadcn, apontando para os mesmos
- *   papéis, para o código adaptado não carregar uma paleta paralela.
+ *   papéis, para o código adaptado não carregar uma paleta paralela. A coluna usa
+ *   `surface-muted` puro, e não o `canvas`: a navegação se separa do conteúdo pela cor
+ *   (mais escura no claro, mais clara no escuro), não só pela borda.
+ * - `--item-hover` é neutro e translúcido, para servir sobre qualquer fundo (sidebar,
+ *   menu suspenso); `--sidebar-accent` tem o matiz primário: passar o ponteiro não pode
+ *   parecer "já estou aqui".
  */
 :root {
   --canvas: color-mix(in oklab, var(--color-surface-muted) 55%, var(--color-surface));
   --hairline: color-mix(in oklab, var(--color-border) 32%, transparent);
-  --sidebar: var(--canvas);
+  --sidebar: var(--color-surface-muted);
   --sidebar-foreground: var(--color-text);
   --sidebar-muted-foreground: var(--color-text-muted);
   --sidebar-primary: var(--color-primary);
-  --sidebar-accent: color-mix(in oklab, var(--color-primary) 14%, var(--color-surface));
+  --item-hover: color-mix(in oklab, var(--color-text) 8%, transparent);
+  --sidebar-accent: color-mix(in oklab, var(--color-primary) 18%, var(--sidebar));
   --sidebar-border: var(--hairline);
   --sidebar-ring: var(--color-focus-ring);
   --sidebar-width: 15rem;
@@ -98,6 +104,7 @@
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-muted-foreground: var(--sidebar-muted-foreground);
   --color-sidebar-primary: var(--sidebar-primary);
+  --color-item-hover: var(--item-hover);
   --color-sidebar-accent: var(--sidebar-accent);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);

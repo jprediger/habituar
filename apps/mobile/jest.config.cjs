@@ -37,5 +37,7 @@ module.exports = {
     '^@habituar/design-tokens/spacing$': '<rootDir>/../../packages/design-tokens/src/spacing.ts',
     '^@habituar/react-client/form$': '<rootDir>/../../packages/react-client/src/form.ts',
     '^@habituar/react-client/react-client$': '<rootDir>/../../packages/react-client/src/react-client.ts',
+    '^@habituar/react-client/professional-navigation$':
+      '<rootDir>/../../packages/react-client/src/professional-navigation.ts',
   },
 }

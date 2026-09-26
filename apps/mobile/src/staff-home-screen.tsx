@@ -6,9 +6,9 @@ import type { InstitutionSession } from './session-screen'
 import { SignOutButton } from './sign-out-button'
 
 /**
- * Tela inicial de quem atende: serve profissional e monitor, que veem o mesmo
- * enquadramento institucional e se distinguem pelo texto do destino e pelas permissões
- * do vínculo — não por uma segunda tela.
+ * Tela inicial do monitor, com a própria saída de sessão. O profissional já tem ambiente
+ * com navegação; o monitor passa a usá-lo quando o hook de navegação filtrar destinos por
+ * permissão, e só então esta tela deixa de existir.
  */
 export function StaffHomeScreen({ session }: Readonly<{ session: InstitutionSession }>) {
   const { t } = useTranslation()

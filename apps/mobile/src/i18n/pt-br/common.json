@@ -83,5 +83,25 @@
       "description": "A administração geral do Habituar é feita na web.",
       "scope": "Provisionamento de instituições. Sem acesso a fichas, observações ou dados de alunos."
     }
+  },
+  "navigation": {
+    "home": "Início",
+    "profile": "Perfil"
+  },
+  "professional": {
+    "eyebrow": "Ambiente profissional",
+    "home": {
+      "greeting": "Olá, {{name}}",
+      "membershipSection": "Vínculo ativo",
+      "followUpSection": "Acompanhamento",
+      "emptyTitle": "Nada para acompanhar por enquanto",
+      "emptyDescription": "Quando o acompanhamento de estudantes estiver disponível, seus estudantes e os próximos atendimentos vão aparecer aqui."
+    },
+    "profile": {
+      "accountSection": "Conta",
+      "institutionSection": "Instituição ativa",
+      "nameLabel": "Nome",
+      "emailLabel": "E-mail"
+    }
   }
 }

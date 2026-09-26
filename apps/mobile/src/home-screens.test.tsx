@@ -52,16 +52,19 @@ describe('environment home screens', () => {
     expect(screen.getByText('Fonoaudióloga')).toBeOnTheScreen()
   })
 
-  it('serves the professional and the monitor with the same screen', () => {
-    const { unmount } = render(<StaffHomeScreen session={createSession('professional')} />)
-
-    expect(screen.getByRole('header', { name: 'Seu ambiente profissional' })).toBeOnTheScreen()
-    unmount()
-
+  it('shows the monitor their institution in the staff home', () => {
     render(<StaffHomeScreen session={createSession('monitor')} />)
 
     expect(screen.getByRole('header', { name: 'Seu ambiente de monitor' })).toBeOnTheScreen()
     expect(screen.getByText('Escola Aurora')).toBeOnTheScreen()
+  })
+
+  it('keeps a way out of the session for the monitor, who has no profile tab yet', () => {
+    render(<StaffHomeScreen session={createSession('monitor')} />)
+
+    fireEvent.press(screen.getByRole('button', { name: 'Sair' }))
+
+    expect(mockAuthentication.actions.logout).toHaveBeenCalledTimes(1)
   })
 
   it('never offers an institution to the platform administrator', () => {

@@ -12,20 +12,27 @@ export type TextProps = Omit<NativeTextProps, 'style'> &
     weight?: FontWeightRole
     tone?: TextTone
     isCentered?: boolean
+    isEyebrow?: boolean
   }>
+
+// Caixa-alta aberta por espaçamento: sem ele, letras maiúsculas em corpo pequeno se
+// grudam e o rótulo perde a leitura que justifica existir.
+const EYEBROW_LETTER_SPACING = 1.2
 
 /**
  * Único texto do app. Existe porque a família da fonte não pode ser decidida por tela:
  * um `Text` do React Native que esqueça `fontFamily` cai na fonte do sistema e continua
  * passando em todo teste, então a única defesa é não haver onde esquecer.
  *
- * Tamanho, peso e tom vêm por papel, nunca por valor — quem chama não escolhe pixel.
+ * Tamanho, peso e tom vêm por papel, nunca por valor — quem chama não escolhe pixel. O
+ * rótulo de seção (`isEyebrow`) é papel também: caixa-alta espaçada, decidida aqui.
  */
 export function Text({
   size = 'body',
   weight = 'regular',
   tone = 'default',
   isCentered = false,
+  isEyebrow = false,
   ...props
 }: TextProps) {
   const { colors, fontSize, fontFamily, lineHeight } = useThemeTokens()
@@ -41,6 +48,10 @@ export function Text({
         // grande abre um buraco no meio da tela.
         lineHeight: size === 'display' || size === 'title' ? lineHeight[size].tight : lineHeight[size].normal,
         textAlign: isCentered ? 'center' : undefined,
+        // Caixa-alta por estilo, nunca no texto do catálogo: o leitor de tela soletra
+        // palavra escrita toda em maiúsculas, e o rótulo precisa ser lido como palavra.
+        textTransform: isEyebrow ? 'uppercase' : undefined,
+        letterSpacing: isEyebrow ? EYEBROW_LETTER_SPACING : undefined,
       }}
     />
   )

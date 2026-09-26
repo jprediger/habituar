@@ -11,12 +11,17 @@ onlyBuiltDependencies:
   - esbuild
 
 catalog:
-  react: 19.1.0
-  react-dom: 19.1.0
-  react-native: 0.81.5
-  "@types/react": 19.1.17
+  react: 19.2.3
+  react-dom: 19.2.3
+  react-native: 0.86.3
+  "@types/react": 19.2.18
 
 overrides:
-  react: 19.1.0
-  react-dom: 19.1.0
-  react-native: 0.81.5
+  react: 19.2.3
+  react-dom: 19.2.3
+  react-native: 0.86.3
+  # `@expo/ui` (via expo-router) aceita worklets acima do que o `expo-modules-core` do SDK
+  # 57 suporta, e `@react-native/community-cli-plugin` exige o metro-config da própria
+  # versão do React Native. Sem estes pinos, o install resolve 0.12.x e 0.87.x.
+  react-native-worklets: 0.10.1
+  "@react-native/metro-config": 0.86.3

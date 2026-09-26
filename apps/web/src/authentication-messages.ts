@@ -15,6 +15,8 @@ export function getAuthenticationFailureText(failure: AuthenticationFailure, t: 
       return t('authentication.failure.invalid-credentials')
     case 'network':
       return t('authentication.failure.network')
+    case 'server':
+      return t('authentication.failure.server')
     case 'no-memberships':
       return t('authentication.failure.no-memberships')
     case 'forbidden':

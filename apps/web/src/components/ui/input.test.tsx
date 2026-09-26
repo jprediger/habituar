@@ -49,6 +49,15 @@ describe('text field of the web visual kit', () => {
     expect(screen.getByLabelText(LABEL).className).toContain('focus-visible:outline-focus-ring')
   })
 
+  it('declares the outline style of its focus ring instead of inheriting none', () => {
+    // No Tailwind v4, `outline-none`/`outline-hidden` zeram `--tw-outline-style`, e o
+    // `outline-2` do foco herda esse `none`: o anel existia na classe e nunca aparecia na
+    // tela. O jsdom não calcula CSS, então a garantia possível é o estilo declarado no foco.
+    renderLabelledInput(<Input id="email" type="email" />)
+
+    expect(screen.getByLabelText(LABEL).className).toContain('focus-visible:outline-solid')
+  })
+
   it('keeps the minimum touch target when the caller adds its own classes', () => {
     renderLabelledInput(<Input id="email" type="email" className="w-full" />)
 

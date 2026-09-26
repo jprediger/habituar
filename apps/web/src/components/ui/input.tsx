@@ -11,8 +11,8 @@ export function Input({ className, ...props }: InputHTMLAttributes<HTMLInputElem
     <input
       className={cn(
         'min-h-tap-target w-full rounded-field border border-border bg-surface px-sm py-xs text-body text-text',
-        'outline-none transition-colors placeholder:text-text-muted',
-        'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring',
+        'outline-hidden transition-colors placeholder:text-text-muted',
+        'focus-visible:outline-2 focus-visible:outline-solid focus-visible:outline-offset-2 focus-visible:outline-focus-ring',
         'disabled:pointer-events-none disabled:opacity-50',
         // O papel `danger` já tem par de contraste declarado em CONTRAST_PAIRS; a borda
         // é reforço visual do `role="alert"`, nunca o único sinal de erro.

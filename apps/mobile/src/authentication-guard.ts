@@ -21,7 +21,11 @@ export type MobileAuthenticationGuard =
   | Readonly<{ action: 'block' }>
   | Readonly<{ action: 'redirect'; route: MobileAuthenticationRoute }>
 
-/** Decide o acesso ao deep link nativo antes de o Expo Router montar a rota solicitada. */
+/**
+ * Decide o acesso ao deep link nativo antes de o Expo Router montar a rota solicitada.
+ * Sessão autenticada entra no próprio ambiente e em qualquer rota abaixo dele; recusa
+ * rota de outro ambiente, inclusive a que só compartilha o prefixo do nome.
+ */
 export function getMobileAuthenticationGuard(
   state: AuthenticationState,
   route: string,
@@ -41,11 +45,19 @@ export function getMobileAuthenticationGuard(
         : { action: 'redirect', route: '/select-institution' }
     case 'authenticated': {
       const destinationRoute = getDestinationPath(state.session.destination)
-      return route === destinationRoute ? { action: 'render' } : { action: 'redirect', route: destinationRoute }
+      return isWithinEnvironment(route, destinationRoute)
+        ? { action: 'render' }
+        : { action: 'redirect', route: destinationRoute }
     }
     default:
       return assertNever(state)
   }
+}
+
+// O limite é o segmento, não a string: `startsWith('/professional')` deixaria
+// `/professionalx` entrar no ambiente profissional sem ser dele.
+function isWithinEnvironment(route: string, environmentRoute: MobileAuthenticationRoute): boolean {
+  return route === environmentRoute || route.startsWith(`${environmentRoute}/`)
 }
 
 function getDestinationPath(destination: HomeDestination): MobileAuthenticationRoute {

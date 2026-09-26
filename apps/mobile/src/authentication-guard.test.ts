@@ -81,4 +81,51 @@ describe('native deep link guard', () => {
     expect(getMobileAuthenticationGuard({ status: 'unauthenticated' }, '/register')).toEqual({ action: 'render' })
     expect(getMobileAuthenticationGuard({ status: 'unauthenticated' }, '/forgot-password')).toEqual({ action: 'render' })
   })
+
+  it('opens every route inside the professional environment to a professional session', () => {
+    const professional = createAuthenticatedState('professional')
+
+    expect(getMobileAuthenticationGuard(professional, '/professional')).toEqual({ action: 'render' })
+    expect(getMobileAuthenticationGuard(professional, '/professional/profile')).toEqual({ action: 'render' })
+  })
+
+  it('sends a student who opens the professional profile back to their own environment', () => {
+    expect(getMobileAuthenticationGuard(createAuthenticatedState('student'), '/professional/profile')).toEqual({
+      action: 'redirect',
+      route: '/student',
+    })
+  })
+
+  it('sends a monitor who opens the professional profile back to their own environment', () => {
+    expect(getMobileAuthenticationGuard(createAuthenticatedState('monitor'), '/professional/profile')).toEqual({
+      action: 'redirect',
+      route: '/monitor',
+    })
+  })
+
+  it('refuses a route that only shares the name prefix of the environment', () => {
+    const professional = createAuthenticatedState('professional')
+
+    // Comparar por prefixo de string deixaria estas rotas passarem como se fossem do
+    // ambiente; o limite do ambiente é o segmento.
+    expect(getMobileAuthenticationGuard(professional, '/professionalx')).toEqual({ action: 'redirect', route: '/professional' })
+    expect(getMobileAuthenticationGuard(professional, '/professional-admin/profile')).toEqual({
+      action: 'redirect',
+      route: '/professional',
+    })
+  })
+
+  it('keeps a professional session out of the sub-routes of another environment', () => {
+    expect(getMobileAuthenticationGuard(createAuthenticatedState('professional'), '/monitor/profile')).toEqual({
+      action: 'redirect',
+      route: '/professional',
+    })
+  })
+
+  it('keeps an unauthenticated deep link to the professional profile at login', () => {
+    expect(getMobileAuthenticationGuard({ status: 'unauthenticated' }, '/professional/profile')).toEqual({
+      action: 'redirect',
+      route: '/login',
+    })
+  })
 })

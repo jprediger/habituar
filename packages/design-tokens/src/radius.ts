@@ -4,6 +4,12 @@
  * ninguém precisa lembrar qual degrau da escala um campo usava.
  */
 export const RADIUS = {
+  /**
+   * Controle compacto e item de lista navegável — ação de barra, avatar, destino da
+   * sidebar, item de menu. Um pouco mais reto que o campo: repetido lado a lado ou em
+   * pilha, o canto arredondado vira ruído.
+   */
+  control: 12,
   /** Campo de formulário e qualquer controle que emoldure texto digitado. */
   field: 14,
   /** Card e demais superfícies de agrupamento. */

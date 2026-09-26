@@ -18,6 +18,8 @@ import { Route as ProfessionalRouteImport } from './routes/professional'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as SelectInstitutionRouteImport } from './routes/select-institution'
 import { Route as StudentRouteImport } from './routes/student'
+import { Route as ProfessionalIndexRouteImport } from './routes/professional/index'
+import { Route as ProfessionalProfileRouteImport } from './routes/professional/profile'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -64,6 +66,16 @@ const StudentRoute = StudentRouteImport.update({
   path: '/student',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProfessionalIndexRoute = ProfessionalIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => ProfessionalRoute,
+} as any)
+const ProfessionalProfileRoute = ProfessionalProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => ProfessionalRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -71,10 +83,12 @@ export interface FileRoutesByFullPath {
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/monitor': typeof MonitorRoute
-  '/professional': typeof ProfessionalRoute
+  '/professional': typeof ProfessionalRouteWithChildren
   '/register': typeof RegisterRoute
   '/select-institution': typeof SelectInstitutionRoute
   '/student': typeof StudentRoute
+  '/professional/profile': typeof ProfessionalProfileRoute
+  '/professional/': typeof ProfessionalIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -82,10 +96,11 @@ export interface FileRoutesByTo {
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/monitor': typeof MonitorRoute
-  '/professional': typeof ProfessionalRoute
   '/register': typeof RegisterRoute
   '/select-institution': typeof SelectInstitutionRoute
   '/student': typeof StudentRoute
+  '/professional/profile': typeof ProfessionalProfileRoute
+  '/professional': typeof ProfessionalIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -94,10 +109,12 @@ export interface FileRoutesById {
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/monitor': typeof MonitorRoute
-  '/professional': typeof ProfessionalRoute
+  '/professional': typeof ProfessionalRouteWithChildren
   '/register': typeof RegisterRoute
   '/select-institution': typeof SelectInstitutionRoute
   '/student': typeof StudentRoute
+  '/professional/profile': typeof ProfessionalProfileRoute
+  '/professional/': typeof ProfessionalIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -111,6 +128,8 @@ export interface FileRouteTypes {
     | '/register'
     | '/select-institution'
     | '/student'
+    | '/professional/profile'
+    | '/professional/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -118,10 +137,11 @@ export interface FileRouteTypes {
     | '/forgot-password'
     | '/login'
     | '/monitor'
-    | '/professional'
     | '/register'
     | '/select-institution'
     | '/student'
+    | '/professional/profile'
+    | '/professional'
   id:
     | '__root__'
     | '/'
@@ -133,6 +153,8 @@ export interface FileRouteTypes {
     | '/register'
     | '/select-institution'
     | '/student'
+    | '/professional/profile'
+    | '/professional/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -141,7 +163,7 @@ export interface RootRouteChildren {
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   LoginRoute: typeof LoginRoute
   MonitorRoute: typeof MonitorRoute
-  ProfessionalRoute: typeof ProfessionalRoute
+  ProfessionalRoute: typeof ProfessionalRouteWithChildren
   RegisterRoute: typeof RegisterRoute
   SelectInstitutionRoute: typeof SelectInstitutionRoute
   StudentRoute: typeof StudentRoute
@@ -212,8 +234,36 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StudentRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/professional/': {
+      id: '/professional/'
+      path: '/'
+      fullPath: '/professional/'
+      preLoaderRoute: typeof ProfessionalIndexRouteImport
+      parentRoute: typeof ProfessionalRoute
+    }
+    '/professional/profile': {
+      id: '/professional/profile'
+      path: '/profile'
+      fullPath: '/professional/profile'
+      preLoaderRoute: typeof ProfessionalProfileRouteImport
+      parentRoute: typeof ProfessionalRoute
+    }
   }
 }
+
+interface ProfessionalRouteChildren {
+  ProfessionalProfileRoute: typeof ProfessionalProfileRoute
+  ProfessionalIndexRoute: typeof ProfessionalIndexRoute
+}
+
+const ProfessionalRouteChildren: ProfessionalRouteChildren = {
+  ProfessionalProfileRoute: ProfessionalProfileRoute,
+  ProfessionalIndexRoute: ProfessionalIndexRoute,
+}
+
+const ProfessionalRouteWithChildren = ProfessionalRoute._addFileChildren(
+  ProfessionalRouteChildren,
+)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
@@ -221,7 +271,7 @@ const rootRouteChildren: RootRouteChildren = {
   ForgotPasswordRoute: ForgotPasswordRoute,
   LoginRoute: LoginRoute,
   MonitorRoute: MonitorRoute,
-  ProfessionalRoute: ProfessionalRoute,
+  ProfessionalRoute: ProfessionalRouteWithChildren,
   RegisterRoute: RegisterRoute,
   SelectInstitutionRoute: SelectInstitutionRoute,
   StudentRoute: StudentRoute,

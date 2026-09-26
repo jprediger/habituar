@@ -89,6 +89,49 @@ describe('web authentication routes', () => {
     })
   })
 
+  it('lets a professional reach every screen inside the professional environment', () => {
+    const state = createAuthenticatedState('professional')
+
+    expect(getWebAuthenticationGuard(state, '/professional')).toEqual({ action: 'render' })
+    expect(getWebAuthenticationGuard(state, '/professional/')).toEqual({ action: 'render' })
+    expect(getWebAuthenticationGuard(state, '/professional/profile')).toEqual({ action: 'render' })
+  })
+
+  it('sends a student and a monitor who open a professional screen back to their own environment', () => {
+    expect(getWebAuthenticationGuard(createAuthenticatedState('student'), '/professional/profile')).toEqual({
+      action: 'redirect',
+      route: '/student',
+    })
+    expect(getWebAuthenticationGuard(createAuthenticatedState('monitor'), '/professional/profile')).toEqual({
+      action: 'redirect',
+      route: '/monitor',
+    })
+  })
+
+  it('does not treat a route that only starts with the environment name as part of it', () => {
+    // Prefixo solto é o vazamento clássico de guard por ambiente: `/professionalx` não é
+    // filho de `/professional`, e aceitá-lo abriria qualquer rota futura com esse nome.
+    expect(getWebAuthenticationGuard(createAuthenticatedState('professional'), '/professionalx')).toEqual({
+      action: 'redirect',
+      route: '/professional',
+    })
+    expect(getWebAuthenticationGuard(createAuthenticatedState('student'), '/studentx/profile')).toEqual({
+      action: 'redirect',
+      route: '/student',
+    })
+  })
+
+  it('keeps a visitor without a session out of nested environment screens', () => {
+    expect(getWebAuthenticationGuard({ status: 'unauthenticated' }, '/professional/profile')).toEqual({
+      action: 'redirect',
+      route: '/login',
+    })
+    expect(getWebAuthenticationGuard({ status: 'unauthenticated' }, '/loginx')).toEqual({
+      action: 'redirect',
+      route: '/login',
+    })
+  })
+
   it('returns to login after logout invalidates the session', () => {
     expect(getWebAuthenticationGuard({ status: 'unauthenticated' }, '/monitor')).toEqual({ action: 'redirect', route: '/login' })
   })

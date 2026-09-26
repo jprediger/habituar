@@ -3,7 +3,6 @@ import { Navigate } from '@tanstack/react-router'
 import type { ReactElement } from 'react'
 import { useTranslation } from 'react-i18next'
 import { AuthenticationCard } from './authentication-card.js'
-import type { WebAuthenticationRoute } from './authentication-guard.js'
 import { getWebAuthenticationGuard } from './authentication-guard.js'
 import { getAuthenticationFailureText } from './authentication-messages.js'
 import { habituar } from './habituar-client.js'
@@ -16,15 +15,15 @@ export type InstitutionSession = Extract<ActiveSession, { kind: 'institution' }>
  * guard aprovar a rota, e a tela recebe a sessão já resolvida em vez de consultar estado.
  */
 export function SessionRoute({
-  route,
+  pathname,
   children,
 }: Readonly<{
-  route: WebAuthenticationRoute
+  pathname: string
   children: (session: ActiveSession) => ReactElement
 }>): ReactElement {
   const { t } = useTranslation()
   const { state } = habituar.useAuthentication()
-  const guard = getWebAuthenticationGuard(state, route)
+  const guard = getWebAuthenticationGuard(state, pathname)
 
   if (guard.action === 'redirect') return <Navigate to={guard.route} replace />
   if (state.status === 'authenticated') return children(state.session)
@@ -54,14 +53,14 @@ export function SessionRoute({
  * uma tela de instituição sem instituição.
  */
 export function InstitutionSessionRoute({
-  route,
+  pathname,
   children,
 }: Readonly<{
-  route: WebAuthenticationRoute
+  pathname: string
   children: (session: InstitutionSession) => ReactElement
 }>): ReactElement {
   return (
-    <SessionRoute route={route}>
+    <SessionRoute pathname={pathname}>
       {(session) =>
         session.kind === 'institution' ? children(session) : <Navigate to="/admin" replace />
       }

@@ -60,16 +60,7 @@ describe('home screens', () => {
     expect(screen.getByText('Fonoaudióloga')).toBeInTheDocument()
   })
 
-  it('serves the professional and the monitor with the same screen', () => {
-    const { unmount } = render(
-      <I18nProvider>
-        <StaffHomeScreen session={createSession('professional')} />
-      </I18nProvider>,
-    )
-
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Seu ambiente profissional')
-    unmount()
-
+  it('keeps serving the monitor, who stays out of the professional shell for now', () => {
     render(
       <I18nProvider>
         <StaffHomeScreen session={createSession('monitor')} />
@@ -109,7 +100,7 @@ describe('home screens', () => {
   it('keeps every environment screen free of serious accessibility violations', async () => {
     const { container } = render(
       <I18nProvider>
-        <StaffHomeScreen session={createSession('professional')} />
+        <StaffHomeScreen session={createSession('monitor')} />
       </I18nProvider>,
     )
 

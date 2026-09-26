@@ -6,9 +6,8 @@ import type { InstitutionSession } from './session-route.js'
 import { SignOutButton } from './sign-out-button.js'
 
 /**
- * Tela inicial de quem atende: serve profissional e monitor, que veem o mesmo
- * enquadramento institucional e se distinguem pelo texto do destino e pelas permissões
- * do vínculo — não por uma segunda tela.
+ * Tela inicial de quem atende fora do ambiente profissional — hoje, só o monitor. Quando
+ * o monitor passar para a casca do profissional, com limites por permissão, esta tela sai.
  */
 export function StaffHomeScreen({ session }: Readonly<{ session: InstitutionSession }>): ReactElement {
   const { t } = useTranslation()

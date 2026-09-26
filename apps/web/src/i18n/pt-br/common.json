@@ -86,5 +86,55 @@
       "description": "Operação global do Habituar, fora dos vínculos institucionais.",
       "scope": "Provisionamento de instituições. Sem acesso a fichas, observações ou dados de alunos."
     }
+  },
+  "navigation": {
+    "home": "Início",
+    "profile": "Perfil"
+  },
+  "shell": {
+    "skipToContent": "Pular para o conteúdo",
+    "sidebar": {
+      "title": "Menu de navegação",
+      "navigationLabel": "Navegação do ambiente",
+      "eyebrow": "Ambiente profissional",
+      "open": "Abrir menu de navegação",
+      "collapse": "Recolher menu lateral",
+      "expand": "Expandir menu lateral",
+      "close": "Fechar menu de navegação"
+    },
+    "search": {
+      "label": "Busca, disponível em breve",
+      "placeholder": "Busca em breve"
+    },
+    "notifications": {
+      "label": "Notificações, disponíveis em breve",
+      "soon": "Notificações em breve"
+    },
+    "account": {
+      "open": "Menu da conta de {{name}}"
+    }
+  },
+  "professional": {
+    "home": {
+      "greeting": "Olá, {{name}}",
+      "description": "Este é o seu ponto de partida no Habituar. Aqui você vai encontrar quem acompanha e o que vem pela frente.",
+      "membershipTitle": "Seu vínculo",
+      "studentsTitle": "Estudantes acompanhados",
+      "studentsEmptyTitle": "Nenhum estudante para mostrar ainda",
+      "studentsEmptyDescription": "Quando o acompanhamento de estudantes chegar ao Habituar, as pessoas que você acompanha aparecem nesta lista.",
+      "appointmentsTitle": "Próximos atendimentos",
+      "appointmentsEmptyTitle": "Nenhum atendimento para mostrar ainda",
+      "appointmentsEmptyDescription": "Quando a agenda chegar ao Habituar, seus próximos atendimentos aparecem aqui, em ordem de horário."
+    },
+    "profile": {
+      "eyebrow": "Sua conta",
+      "description": "Seus dados de acesso e o vínculo que você está usando agora.",
+      "accountTitle": "Conta",
+      "nameLabel": "Nome",
+      "emailLabel": "E-mail",
+      "membershipTitle": "Vínculo ativo",
+      "sessionTitle": "Sessão",
+      "sessionDescription": "Sair encerra o seu acesso neste navegador. Para voltar, entre de novo com seu e-mail e senha."
+    }
   }
 }

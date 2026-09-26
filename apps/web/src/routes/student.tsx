@@ -8,7 +8,7 @@ export const Route = createFileRoute('/student')({ component: StudentRoute })
 /** Ambiente do aluno; a sessão só chega aqui depois de aprovada pelo guard. */
 export function StudentRoute(): ReactElement {
   return (
-    <InstitutionSessionRoute route="/student">
+    <InstitutionSessionRoute pathname="/student">
       {(session) => <StudentHomeScreen session={session} />}
     </InstitutionSessionRoute>
   )

@@ -1,15 +1,27 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { Outlet, createFileRoute, useLocation } from '@tanstack/react-router'
 import type { ReactElement } from 'react'
+import { ProfessionalSessionProvider } from '../professional-session.js'
+import { ProfessionalShell } from '../professional-shell.js'
 import { InstitutionSessionRoute } from '../session-route.js'
-import { StaffHomeScreen } from '../staff-home-screen.js'
 
-export const Route = createFileRoute('/professional')({ component: ProfessionalRoute })
+export const Route = createFileRoute('/professional')({ component: ProfessionalLayoutRoute })
 
-/** Ambiente profissional; compartilha a tela de atendimento com o monitor. */
-export function ProfessionalRoute(): ReactElement {
+/**
+ * Layout do ambiente profissional e sua única fronteira de sessão: o guard recebe o
+ * caminho real, então toda tela filha é protegida pela regra do ambiente sem repeti-la.
+ */
+export function ProfessionalLayoutRoute(): ReactElement {
+  const pathname = useLocation({ select: (location) => location.pathname })
+
   return (
-    <InstitutionSessionRoute route="/professional">
-      {(session) => <StaffHomeScreen session={session} />}
+    <InstitutionSessionRoute pathname={pathname}>
+      {(session) => (
+        <ProfessionalSessionProvider session={session}>
+          <ProfessionalShell session={session}>
+            <Outlet />
+          </ProfessionalShell>
+        </ProfessionalSessionProvider>
+      )}
     </InstitutionSessionRoute>
   )
 }

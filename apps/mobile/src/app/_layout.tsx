@@ -8,15 +8,20 @@ import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { getMobileAuthenticationGuard } from '../authentication-guard'
 import { habituar } from '../habituar-client'
 import { SessionLoadingScreen } from '../session-loading-screen'
+import { appThemePreference, useThemePreference } from '../theme/app-theme-preference'
 import '../i18n/i18n'
 
 // A splash cobre a tela até a fonte chegar. Sem isto o app aparece com a fonte do sistema
 // e troca para a Outfit no meio do primeiro quadro, o que salta à vista.
 void SplashScreen.preventAutoHideAsync()
+// Mesma razão da fonte: o tema escolhido precisa estar aplicado antes do primeiro quadro,
+// senão o app abre no esquema do sistema e troca em seguida. `load` nunca rejeita — falhar
+// na leitura cai no esquema do sistema.
+void appThemePreference.load()
 
 /**
  * Raiz do Expo Router: monta a SafeArea e o Provider da instância única do react-client
- * deste app. Também é dona da fonte do app — carregá-la por tela faria cada uma decidir
+ * deste app. Também é dona da fonte e da espera pelo tema escolhido — carregá-la por tela faria cada uma decidir
  * o que só pode ser decidido uma vez. TanStack Query não é configurado aqui — isso é
  * interno ao pacote, não decisão do app (`m0-clients.md`).
  */
@@ -31,17 +36,19 @@ export default function RootLayout() {
   // app abre no corte do sistema. Ignorar este erro deixaria a splash de pé para sempre,
   // sem nada na tela explicando o quê.
   const hasFontSettled = areFontsLoaded || fontError !== null
+  const hasThemeSettled = useThemePreference().state.status === 'ready'
+  const hasAppearanceSettled = hasFontSettled && hasThemeSettled
 
   useEffect(() => {
-    if (!hasFontSettled) return
+    if (!hasAppearanceSettled) return
     if (fontError !== null) console.error('Failed to load the app font; falling back to the system face.', fontError)
 
     void SplashScreen.hideAsync()
-  }, [hasFontSettled, fontError])
+  }, [hasAppearanceSettled, fontError])
 
-  // Não é tela vazia: a splash ainda está por cima e sai assim que a fonte se resolver,
-  // tendo chegado ou falhado.
-  if (!hasFontSettled) return null
+  // Não é tela vazia: a splash ainda está por cima e sai assim que fonte e tema se
+  // resolverem, tendo chegado ou falhado.
+  if (!hasAppearanceSettled) return null
 
   return (
     <SafeAreaProvider>

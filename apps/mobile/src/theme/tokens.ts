@@ -39,9 +39,9 @@ const LINE_HEIGHT_PIXELS = {
 } as const
 
 /**
- * Único ponto que decide claro/escuro no app: segue `useColorScheme()` do sistema e nunca
- * expõe seletor manual, conforme decisão compartilhada do M0 entre web e mobile. Também é
- * a única tradução dos tokens compartilhados para as unidades que o React Native aceita.
+ * Único ponto que traduz claro/escuro em cor no app: lê `useColorScheme()`, que já reflete
+ * a escolha feita no Perfil (`app-theme-preference.ts` força o esquema pelo `Appearance`).
+ * Também é a única tradução dos tokens compartilhados para as unidades do React Native.
  */
 export function useThemeTokens(): ThemeTokens {
   const scheme = useColorScheme()

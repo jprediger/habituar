@@ -97,4 +97,15 @@ describe('professional profile', () => {
 
     expect(mockAuthentication.actions.logout).toHaveBeenCalledTimes(1)
   })
+
+  it('lets the professional pick the theme, following the system until they choose', () => {
+    render(<ProfessionalProfileScreen session={createProfessionalSession()} />)
+
+    expect(screen.getByRole('radio', { name: 'Sistema', checked: true })).toBeOnTheScreen()
+
+    fireEvent.press(screen.getByRole('radio', { name: 'Escuro' }))
+
+    expect(screen.getByRole('radio', { name: 'Escuro', checked: true })).toBeOnTheScreen()
+    expect(screen.getByRole('radio', { name: 'Sistema', checked: false })).toBeOnTheScreen()
+  })
 })

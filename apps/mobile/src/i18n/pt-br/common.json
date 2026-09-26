@@ -101,7 +101,14 @@
       "accountSection": "Conta",
       "institutionSection": "Instituição ativa",
       "nameLabel": "Nome",
-      "emailLabel": "E-mail"
+      "emailLabel": "E-mail",
+      "appearanceSection": "Aparência",
+      "themeLabel": "Tema",
+      "theme": {
+        "system": "Sistema",
+        "light": "Claro",
+        "dark": "Escuro"
+      }
     }
   }
 }

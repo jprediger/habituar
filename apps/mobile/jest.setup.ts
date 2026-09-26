@@ -18,4 +18,10 @@ jest.mock('@expo/vector-icons/Ionicons', () => {
   return { __esModule: true, default: reactNative.Text }
 })
 
+// O AsyncStorage real fala com um módulo nativo que não existe no Jest; o dublê oficial
+// do pacote guarda em memória e mantém a mesma API.
+jest.mock('@react-native-async-storage/async-storage', () =>
+  jest.requireActual<Record<string, unknown>>('@react-native-async-storage/async-storage/jest/async-storage-mock'),
+)
+
 export {}

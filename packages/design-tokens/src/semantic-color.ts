@@ -12,6 +12,10 @@ export const SEMANTIC_COLOR_LIGHT = {
   surfaceMuted: COLOR.gray100,
   text: COLOR.gray900,
   textMuted: COLOR.gray600,
+  // Papel próprio, e não `textMuted`: no tema escuro o texto secundário fica claro o
+  // bastante para um placeholder passar por valor já digitado. O campo vazio precisa de
+  // uma cor visivelmente mais apagada que o texto real em *cada* tema.
+  textPlaceholder: COLOR.gray600,
   primary: COLOR.green700,
   onPrimary: COLOR.white,
   border: COLOR.gray500,
@@ -32,6 +36,7 @@ export const SEMANTIC_COLOR_DARK = {
   surfaceMuted: COLOR.gray800,
   text: COLOR.gray50,
   textMuted: COLOR.gray300,
+  textPlaceholder: COLOR.gray400,
   primary: COLOR.green400,
   onPrimary: COLOR.green900,
   border: COLOR.gray500,

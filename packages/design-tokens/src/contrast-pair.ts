@@ -34,6 +34,13 @@ export const CONTRAST_PAIRS = [
     usage: 'body-text',
   },
   {
+    // Placeholder é texto: o piso é 4.5:1 como qualquer outro, e não os 3:1 de componente.
+    name: 'placeholder sobre superfície',
+    foreground: 'textPlaceholder',
+    background: 'surface',
+    usage: 'body-text',
+  },
+  {
     name: 'texto sobre superfície suave',
     foreground: 'text',
     background: 'surfaceMuted',

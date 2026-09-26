@@ -64,6 +64,25 @@ describe('useAuthentication', () => {
     expect(hook.result.current.state).toEqual({ status: 'failed', failure: 'invalid-credentials' })
   })
 
+  it('separates a login the server refused to complete from one that never reached it', async () => {
+    const adapter = createAuthenticationFetch(createContext(), 500, 401)
+    const client = createHabituarReactClient({ origin: ORIGIN, fetch: adapter.fetch })
+    const hook = renderHook(() => client.useAuthentication(), { wrapper: client.Provider })
+
+    await waitFor(() => { expect(hook.result.current.state.status).toBe('unauthenticated') })
+    await act(async () => { await hook.result.current.actions.login({ email: 'person@example.com', password: 'secret' }) })
+    expect(hook.result.current.state).toEqual({ status: 'failed', failure: 'server' })
+  })
+
+  it('reports a login that never left the device as a network failure', async () => {
+    const offlineFetch: typeof globalThis.fetch = () => Promise.reject(new TypeError('Failed to fetch'))
+    const client = createHabituarReactClient({ origin: ORIGIN, fetch: offlineFetch })
+    const hook = renderHook(() => client.useAuthentication(), { wrapper: client.Provider })
+
+    await act(async () => { await hook.result.current.actions.login({ email: 'person@example.com', password: 'secret' }) })
+    expect(hook.result.current.state).toEqual({ status: 'failed', failure: 'network' })
+  })
+
   it('stores a mobile credential after valid login without exposing it in public state', async () => {
     const storage = createMemoryCredentialStorage()
     const adapter = createAuthenticationFetch()

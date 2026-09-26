@@ -20,7 +20,18 @@ type AuthenticationContextResult = Awaited<ReturnType<ApiClient['auth']['context
 type AuthenticatedUserResult = AuthenticationContextResult['user']
 export type MembershipContext = AuthenticationContextResult['memberships'][number]
 
-export type AuthenticationFailure = 'invalid-credentials' | 'network' | 'no-memberships' | 'forbidden'
+/**
+ * Falhas que a interface sabe explicar. `network` e `server` são separadas porque a saída
+ * que cada uma admite é diferente: uma pede que a pessoa verifique a conexão, a outra
+ * pede que ela espere — dizer "verifique sua conexão" diante de um 500 manda consertar o
+ * que não está quebrado.
+ */
+export type AuthenticationFailure =
+  | 'invalid-credentials'
+  | 'network'
+  | 'server'
+  | 'no-memberships'
+  | 'forbidden'
 
 /**
  * Sessão já resolvida, discriminada pela natureza do acesso: o administrador geral opera
@@ -99,11 +110,24 @@ function extractErrorCode(error: unknown): string {
 }
 
 function mapLoginErrorToFailure(error: unknown): AuthenticationFailure {
-  return isUnauthorizedError(error) ? 'invalid-credentials' : 'network'
+  if (isUnauthorizedError(error)) return 'invalid-credentials'
+  return mapTransportErrorToFailure(error)
 }
 
 function mapContextErrorToFailure(error: unknown): AuthenticationFailure {
-  return extractErrorCode(error) === 'forbidden' ? 'forbidden' : 'network'
+  if (extractErrorCode(error) === 'forbidden') return 'forbidden'
+  return mapTransportErrorToFailure(error)
+}
+
+/**
+ * Distingue "não chegamos ao servidor" de "o servidor respondeu com falha": `fetch` só
+ * rejeita sem status quando a requisição não completou, então a presença de um status é o
+ * que sobra para separar os dois sem ler texto de erro.
+ */
+function mapTransportErrorToFailure(error: unknown): AuthenticationFailure {
+  if (typeof error !== 'object' || error === null) return 'network'
+  if ('status' in error && typeof error.status === 'number') return 'server'
+  return 'network'
 }
 
 function isUnauthorizedError(error: unknown): boolean {
@@ -293,7 +317,7 @@ export function createHabituarReactClient(
         }
 
         hasPendingLogoutRetry.current = true
-        setState({ status: 'failed', failure: 'network' })
+        setState({ status: 'failed', failure: mapTransportErrorToFailure(error) })
       }
     }
 

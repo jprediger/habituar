@@ -2,7 +2,7 @@ import { loginInputSchema } from '@habituar/core/auth/schema'
 import { SPACING } from '@habituar/design-tokens/spacing'
 import { useValidatedForm } from '@habituar/react-client/form'
 import { useRouter } from 'expo-router'
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { TextInput } from 'react-native'
 import { StyleSheet, View } from 'react-native'
@@ -17,6 +17,15 @@ import { getFieldErrorText } from '../form-messages'
 import { habituar } from '../habituar-client'
 import authenticationHero from '../../assets/images/authentication-hero.jpg'
 
+// Credenciais do último envio, para a tela saber se a falha ainda fala do que está nos
+// campos. Não é estado de sessão: morre com a tela, como a digitação.
+type Attempt = Readonly<{ email: string; password: string }>
+
+function hasChangedSince(attempt: Attempt | undefined, email: string, password: string): boolean {
+  if (attempt === undefined) return false
+  return attempt.email !== email || attempt.password !== password
+}
+
 /** Tela de entrada: só autentica quem já tem conta. Criar conta é a rota `/register`. */
 export default function LoginRoute() {
   const { t } = useTranslation()
@@ -27,8 +36,10 @@ export default function LoginRoute() {
 
   const email = form.getField('email')
   const password = form.getField('password')
+  const [attempt, setAttempt] = useState<Attempt | undefined>(undefined)
 
   const submit = form.handleSubmit(() => {
+    setAttempt({ email: email.value, password: password.value })
     void actions.login({ email: email.value, password: password.value })
   })
 
@@ -39,6 +50,15 @@ export default function LoginRoute() {
   }
 
   const isSubmitting = state.status === 'authenticating'
+
+  // A falha descreve a tentativa enviada, não o formulário: mantê-la depois que a pessoa
+  // corrige o campo acusa um erro que já não existe, e o estado da sessão só muda no
+  // próximo envio. Sem tentativa registrada, a falha veio da restauração da sessão — essa
+  // não pertence ao formulário e continua na tela.
+  const failure =
+    state.status === 'failed' && !hasChangedSince(attempt, email.value, password.value)
+      ? state.failure
+      : undefined
 
   return (
     <AuthenticationCard
@@ -71,7 +91,6 @@ export default function LoginRoute() {
               value={email.value}
               onChangeText={email.setValue}
               onBlur={email.markVisited}
-              placeholder={t('authentication.login.emailPlaceholder')}
               autoCapitalize="none"
               autoComplete="email"
               textContentType="emailAddress"
@@ -114,7 +133,7 @@ export default function LoginRoute() {
         )}
       </FormField>
 
-      {state.status === 'failed' && <AuthenticationFailureAlert failure={state.failure} />}
+      {failure !== undefined && <AuthenticationFailureAlert failure={failure} />}
 
       <Button
         icon="log-in-outline"

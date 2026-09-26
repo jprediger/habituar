@@ -8,7 +8,6 @@
       "heading": "Que bom ter você de volta!",
       "description": "Entre para acessar o seu ambiente.",
       "emailLabel": "E-mail",
-      "emailPlaceholder": "voce@exemplo.com",
       "passwordLabel": "Senha",
       "submit": "Entrar",
       "submitting": "Entrando...",
@@ -39,12 +38,12 @@
     "logout": "Sair",
     "logoutSubmitting": "Saindo...",
     "failure": {
-      "invalid-credentials": "E-mail ou senha inválidos.",
-      "network": "Não foi possível concluir a autenticação agora.",
+      "invalid-credentials": "E-mail ou senha incorretos. Confira os dados e tente novamente.",
+      "network": "Não foi possível falar com o servidor. Verifique sua conexão e tente novamente.",
+      "server": "Algo deu errado do nosso lado. Tente novamente em alguns instantes.",
       "conflict": "Este e-mail já está em uso.",
-      "no-memberships": "Seu cadastro não possui vínculo institucional. Procure a pessoa responsável pelo cadastro.",
+      "no-memberships": "Seu cadastro ainda não tem vínculo com uma instituição. Procure a pessoa responsável pelo seu cadastro.",
       "forbidden": "Você não tem permissão para acessar este ambiente.",
-      "retry": "Tentar novamente",
       "signOut": "Sair"
     }
   },

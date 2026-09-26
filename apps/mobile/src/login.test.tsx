@@ -7,7 +7,7 @@ import './i18n/i18n'
 // dentro da fábrica de `jest.mock`, que o Babel iça acima dos imports.
 const mockAuthentication: { state: AuthenticationState; actions: Record<string, jest.Mock> } = {
   state: { status: 'unauthenticated' },
-  actions: { login: jest.fn(), logout: jest.fn(), retry: jest.fn() },
+  actions: { login: jest.fn(), logout: jest.fn() },
 }
 
 jest.mock('./habituar-client', () => ({
@@ -80,7 +80,7 @@ describe('sign-in screen', () => {
 
     render(<LoginScreen />)
 
-    expect(screen.getByText('E-mail ou senha inválidos.')).toBeTruthy()
+    expect(screen.getByText(/E-mail ou senha incorretos/)).toBeTruthy()
     expect(screen.getByLabelText(/E-mail/)).toBeTruthy()
     expect(screen.getByLabelText(/Senha/)).toBeTruthy()
   })
@@ -94,21 +94,48 @@ describe('sign-in screen', () => {
     expect(mockAuthentication.actions.logout).toHaveBeenCalledTimes(1)
   })
 
-  it('offers another attempt when the network was what failed', () => {
+  it('tells a connection failure apart from a failure on the server', () => {
+    failedWith('server')
+
+    render(<LoginScreen />)
+
+    expect(screen.getByText('Algo deu errado do nosso lado. Tente novamente em alguns instantes.')).toBeTruthy()
+    expect(screen.queryByText(/Verifique sua conexão/)).toBeNull()
+  })
+
+  it('asks for nothing more than resending when the attempt itself failed', () => {
     failedWith('network')
 
     render(<LoginScreen />)
-    fireEvent.press(screen.getByRole('button', { name: 'Tentar novamente' }))
 
-    expect(mockAuthentication.actions.retry).toHaveBeenCalledTimes(1)
+    expect(screen.getByText(/Verifique sua conexão/)).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Tentar novamente' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Sair' })).toBeNull()
   })
 
-  it('asks for nothing more than resending after a refused password', () => {
-    failedWith('invalid-credentials')
-
+  it('stops blaming the credentials once the person corrects them', () => {
     render(<LoginScreen />)
 
-    expect(screen.queryByRole('button', { name: 'Sair' })).toBeNull()
-    expect(screen.queryByRole('button', { name: 'Tentar novamente' })).toBeNull()
+    fireEvent.changeText(screen.getByLabelText(EMAIL_LABEL), 'person@example.com')
+    fireEvent.changeText(screen.getByLabelText(PASSWORD_LABEL), 'wrong-secret')
+    fireEvent.press(screen.getByRole('button', { name: 'Entrar' }))
+
+    failedWith('invalid-credentials')
+    fireEvent.changeText(screen.getByLabelText(PASSWORD_LABEL), 'wrong-secre')
+
+    expect(screen.queryByText(/E-mail ou senha incorretos/)).toBeNull()
+  })
+
+  it('keeps the refusal on screen while the credentials are the ones that were sent', () => {
+    render(<LoginScreen />)
+
+    fireEvent.changeText(screen.getByLabelText(EMAIL_LABEL), 'person@example.com')
+    fireEvent.changeText(screen.getByLabelText(PASSWORD_LABEL), 'wrong-secret')
+    fireEvent.press(screen.getByRole('button', { name: 'Entrar' }))
+
+    failedWith('invalid-credentials')
+    fireEvent(screen.getByLabelText(PASSWORD_LABEL), 'blur')
+
+    expect(screen.getByText(/E-mail ou senha incorretos/)).toBeTruthy()
   })
 })

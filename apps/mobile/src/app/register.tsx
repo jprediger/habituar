@@ -19,9 +19,9 @@ import authenticationHero from '../../assets/images/authentication-hero.jpg'
 
 const MINIMUM_PASSWORD_LENGTH = 8
 
-// Falhas que o cadastro sabe explicar. Qualquer outra vira `network`: mensagem de erro do
-// servidor não chega ao usuário, e o union fechado evita texto genérico por omissão.
-type RegisterFailure = 'conflict' | 'network'
+// Falhas que o cadastro sabe explicar. Mensagem de erro do servidor não chega ao usuário,
+// e o union fechado evita texto genérico por omissão.
+type RegisterFailure = 'conflict' | 'network' | 'server'
 
 type RegisterUiState =
   | Readonly<{ status: 'idle' }>
@@ -30,9 +30,11 @@ type RegisterUiState =
   | Readonly<{ status: 'failed'; failure: RegisterFailure }>
 
 function toRegisterFailure(error: unknown): RegisterFailure {
-  if (error !== null && typeof error === 'object' && 'code' in error && error.code === 'conflict') {
-    return 'conflict'
-  }
+  if (error === null || typeof error !== 'object') return 'network'
+  if ('code' in error && error.code === 'conflict') return 'conflict'
+  // Status só existe quando a resposta chegou: sem ele a requisição não completou, e
+  // pedir para conferir a conexão é a única orientação que serve.
+  if ('status' in error && typeof error.status === 'number') return 'server'
 
   return 'network'
 }
@@ -46,6 +48,8 @@ function getRegisterFailureText(
       return t('authentication.failure.conflict')
     case 'network':
       return t('authentication.failure.network')
+    case 'server':
+      return t('authentication.failure.server')
     default:
       return assertNever(failure)
   }

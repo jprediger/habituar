@@ -51,3 +51,22 @@ export function findActiveProfessionalNavigationItem(
       undefined,
     )
 }
+
+/**
+ * Trilha da raiz do ambiente até o destino ativo, para os breadcrumbs. A árvore sai dos
+ * próprios caminhos — um destino é ancestral de outro quando o contém como segmento —,
+ * então destino novo entra na trilha certa sem declarar pai à mão.
+ */
+export function listProfessionalBreadcrumbs(
+  items: readonly ProfessionalNavigationItem[],
+  pathname: string,
+): readonly ProfessionalNavigationItem[] {
+  const activeItem = findActiveProfessionalNavigationItem(items, pathname)
+
+  if (activeItem === undefined) return []
+
+  // `sort` ordena a cópia que o `filter` acabou de criar, nunca a lista recebida.
+  return items
+    .filter((item) => item.path === activeItem.path || activeItem.path.startsWith(`${item.path}/`))
+    .sort((first, second) => first.path.length - second.path.length)
+}

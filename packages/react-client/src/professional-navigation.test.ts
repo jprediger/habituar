@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { findActiveProfessionalNavigationItem, useProfessionalNavigation } from './professional-navigation.js'
+import {
+  findActiveProfessionalNavigationItem,
+  listProfessionalBreadcrumbs,
+  useProfessionalNavigation,
+} from './professional-navigation.js'
 
 describe('professional navigation', () => {
   const items = useProfessionalNavigation()
@@ -21,5 +25,17 @@ describe('professional navigation', () => {
   it('refuses a path that merely starts with the environment name', () => {
     expect(findActiveProfessionalNavigationItem(items, '/professionalx')).toBeUndefined()
     expect(findActiveProfessionalNavigationItem(items, '/monitor')).toBeUndefined()
+  })
+
+  it('traces the breadcrumb trail from the environment root to the active destination', () => {
+    expect(listProfessionalBreadcrumbs(items, '/professional').map((item) => item.id)).toEqual(['home'])
+    expect(listProfessionalBreadcrumbs(items, '/professional/profile/').map((item) => item.id)).toEqual([
+      'home',
+      'profile',
+    ])
+  })
+
+  it('offers no trail outside the environment', () => {
+    expect(listProfessionalBreadcrumbs(items, '/monitor')).toEqual([])
   })
 })

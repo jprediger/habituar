@@ -22,3 +22,26 @@ if (typeof globalThis.matchMedia !== 'function') {
     dispatchEvent: () => false,
   }))
 }
+
+// O roteador restaura a rolagem a cada navegação; o jsdom declara `scrollTo` só para
+// avisar que não o implementa, e o aviso por navegação afogaria a saída dos testes.
+vi.stubGlobal('scrollTo', () => undefined)
+
+// Mesma situação para `ResizeObserver`: os primitivos Radix de tooltip e menu medem o
+// próprio conteúdo para posicioná-lo, e o jsdom não tem layout para observar.
+if (typeof globalThis.ResizeObserver !== 'function') {
+  vi.stubGlobal(
+    'ResizeObserver',
+    class {
+      observe(): void {
+        // Sem layout no jsdom, não há mudança de tamanho a notificar.
+      }
+      unobserve(): void {
+        // Idem: nada foi registrado para deixar de observar.
+      }
+      disconnect(): void {
+        // Idem: nenhuma observação ativa para encerrar.
+      }
+    },
+  )
+}

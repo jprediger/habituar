@@ -6,6 +6,12 @@
  */
 @import '@fontsource-variable/outfit';
 @import '@habituar/design-tokens/theme.css';
+/*
+ * Utilities de entrada/saída (`animate-in`, `fade-in-0`, `slide-in-from-left`) que os
+ * primitivos Radix usam com `data-[state]`. Toda aplicação delas passa por `motion-safe:`
+ * no componente — com movimento reduzido, a troca de estado é instantânea.
+ */
+@import 'tw-animate-css';
 
 /*
  * `design-tokens` gera os namespaces que o Tailwind v4 reconhece nativamente
@@ -40,6 +46,11 @@
   min-height: var(--interaction-minimum-touch-target);
 }
 
+/* Altura exata, não mínima: o indicador da sidebar desliza por múltiplos dela. */
+@utility h-tap-target {
+  height: var(--interaction-minimum-touch-target);
+}
+
 @utility min-w-tap-target {
   min-width: var(--interaction-minimum-touch-target);
 }
@@ -50,6 +61,46 @@
 
 @utility min-w-compact-tap-target {
   min-width: var(--interaction-compact-touch-target);
+}
+
+/*
+ * Superfícies do ambiente de trabalho, todas derivadas dos papéis de `design-tokens` —
+ * nenhuma cor nova. Como `var()` é resolvida no próprio `:root`, onde o `data-theme` e a
+ * media query dos tokens também atuam, o tema escuro chega aqui sem bloco próprio.
+ *
+ * - `canvas`: fundo levemente off-white, para o card em `surface` se destacar sem sombra.
+ * - `hairline`: borda fina de agrupamento. O papel `border` tem contraste de controle
+ *   (3:1) e fica pesado quando repetido em toda moldura; aqui ele só separa superfícies,
+ *   e controles interativos continuam usando `border`.
+ * - `--sidebar-*`: nomes do componente de sidebar do shadcn, apontando para os mesmos
+ *   papéis, para o código adaptado não carregar uma paleta paralela.
+ */
+:root {
+  --canvas: color-mix(in oklab, var(--color-surface-muted) 55%, var(--color-surface));
+  --hairline: color-mix(in oklab, var(--color-border) 32%, transparent);
+  --sidebar: var(--canvas);
+  --sidebar-foreground: var(--color-text);
+  --sidebar-muted-foreground: var(--color-text-muted);
+  --sidebar-primary: var(--color-primary);
+  --sidebar-accent: color-mix(in oklab, var(--color-primary) 14%, var(--color-surface));
+  --sidebar-border: var(--hairline);
+  --sidebar-ring: var(--color-focus-ring);
+  --sidebar-width: 15rem;
+  /* Trilho recolhido: um alvo de toque mínimo mais o respiro lateral dos itens. */
+  --sidebar-width-icon: calc(var(--interaction-minimum-touch-target) + 2 * var(--spacing-sm));
+  --shell-header-height: calc(var(--interaction-minimum-touch-target) + 2 * var(--spacing-sm));
+}
+
+@theme inline {
+  --color-canvas: var(--canvas);
+  --color-hairline: var(--hairline);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-muted-foreground: var(--sidebar-muted-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
 }
 
 body {

@@ -6,6 +6,7 @@ export default defineConfig({
   entry: {
     'react-client': 'src/react-client.ts',
     form: 'src/form.ts',
+    'professional-navigation': 'src/professional-navigation.ts',
   },
   // Formato único: o monorepo inteiro é ESM, então não existe condição `require` a servir.
   format: ['esm'],

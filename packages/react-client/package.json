@@ -11,6 +11,10 @@
     "./form": {
       "types": "./dist/form.d.ts",
       "import": "./dist/form.js"
+    },
+    "./professional-navigation": {
+      "types": "./dist/professional-navigation.d.ts",
+      "import": "./dist/professional-navigation.js"
     }
   },
   "scripts": {

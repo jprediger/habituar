@@ -1,7 +1,6 @@
 import { render, screen } from '@testing-library/react-native'
-import type { ReactNode } from 'react'
-import type * as ReactNative from 'react-native'
-import './i18n/i18n'
+import { Text } from 'react-native'
+import { AppearanceGate } from './appearance-gate'
 
 const APP_CONTENT = 'conteúdo do app'
 
@@ -12,7 +11,7 @@ jest.mock('expo-font', () => ({
   useFonts: () => [mockFontState.loaded, mockFontState.error],
 }))
 
-// Referência preguiçosa: o `import` de `_layout` sobe acima do `const` abaixo, então a
+// Referência preguiçosa: o `import` do portão sobe acima do `const` abaixo, então a
 // fábrica roda com `mockHideSplash` ainda na zona morta se ela for lida agora.
 jest.mock('expo-splash-screen', () => ({
   preventAutoHideAsync: () => Promise.resolve(),
@@ -21,43 +20,19 @@ jest.mock('expo-splash-screen', () => ({
   },
 }))
 
-jest.mock('expo-router', () => {
-  const { Text: NativeText } = jest.requireActual<typeof ReactNative>('react-native')
-
-  return {
-    Slot: () => <NativeText>{'conteúdo do app'}</NativeText>,
-    Redirect: () => null,
-    usePathname: () => '/login',
-  }
-})
-
-jest.mock('expo-status-bar', () => ({ StatusBar: () => null }))
-
-// O `SafeAreaProvider` real não renderiza filho nenhum até medir as bordas da tela, o que
-// não acontece fora de um aparelho.
-jest.mock('react-native-safe-area-context', () => ({
-  SafeAreaProvider: ({ children }: Readonly<{ children: ReactNode }>) => children,
-  SafeAreaView: ({ children }: Readonly<{ children: ReactNode }>) => children,
-}))
-
-jest.mock('./session/habituar-client', () => ({
-  habituar: {
-    Provider: ({ children }: Readonly<{ children: ReactNode }>) => children,
-    useAuthentication: () => ({ state: { status: 'unauthenticated' }, actions: {} }),
-  },
-}))
-
-import RootLayout from './app/_layout'
-
 beforeEach(() => {
   mockFontState.loaded = true
   mockFontState.error = null
   jest.clearAllMocks()
 })
 
-describe('app startup', () => {
+describe('appearance gate', () => {
   it('shows the app once the font is ready', () => {
-    render(<RootLayout />)
+    render(
+      <AppearanceGate>
+        <Text>{APP_CONTENT}</Text>
+      </AppearanceGate>,
+    )
 
     expect(screen.getByText(APP_CONTENT)).toBeOnTheScreen()
   })
@@ -68,7 +43,11 @@ describe('app startup', () => {
     mockFontState.loaded = false
     mockFontState.error = new Error('font asset unavailable')
 
-    render(<RootLayout />)
+    render(
+      <AppearanceGate>
+        <Text>{APP_CONTENT}</Text>
+      </AppearanceGate>,
+    )
 
     expect(screen.getByText(APP_CONTENT)).toBeOnTheScreen()
   })
@@ -77,8 +56,25 @@ describe('app startup', () => {
     mockFontState.loaded = false
     mockFontState.error = new Error('font asset unavailable')
 
-    render(<RootLayout />)
+    render(
+      <AppearanceGate>
+        <Text>{APP_CONTENT}</Text>
+      </AppearanceGate>,
+    )
 
     expect(mockHideSplash).toHaveBeenCalled()
+  })
+
+  it('holds the splash while the font has neither arrived nor failed', () => {
+    mockFontState.loaded = false
+
+    render(
+      <AppearanceGate>
+        <Text>{APP_CONTENT}</Text>
+      </AppearanceGate>,
+    )
+
+    expect(screen.queryByText(APP_CONTENT)).toBeNull()
+    expect(mockHideSplash).not.toHaveBeenCalled()
   })
 })

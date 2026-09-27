@@ -1,74 +1,25 @@
-import { Outfit_400Regular, Outfit_500Medium, Outfit_600SemiBold } from '@expo-google-fonts/outfit'
-import { useFonts } from 'expo-font'
-import { Redirect, Slot, usePathname } from 'expo-router'
-import * as SplashScreen from 'expo-splash-screen'
 import { StatusBar } from 'expo-status-bar'
-import { useEffect } from 'react'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
-import { getMobileAuthenticationGuard } from '../session/authentication-guard'
+import { AuthenticationRouter } from '../session/authentication-router'
 import { habituar } from '../session/habituar-client'
-import { SessionLoadingScreen } from '../session/session-loading-screen'
-import { appThemePreference, useThemePreference } from '../theme/app-theme-preference'
+import { AppearanceGate } from '../theme/appearance-gate'
 import '../i18n/i18n'
-
-// A splash cobre a tela até a fonte chegar. Sem isto o app aparece com a fonte do sistema
-// e troca para a Outfit no meio do primeiro quadro, o que salta à vista.
-void SplashScreen.preventAutoHideAsync()
-// Mesma razão da fonte: o tema escolhido precisa estar aplicado antes do primeiro quadro,
-// senão o app abre no esquema do sistema e troca em seguida. `load` nunca rejeita — falhar
-// na leitura cai no esquema do sistema.
-void appThemePreference.load()
 
 /**
  * Raiz do Expo Router: monta a SafeArea e o Provider da instância única do react-client
- * deste app. Também é dona da fonte e da espera pelo tema escolhido — carregá-la por tela faria cada uma decidir
- * o que só pode ser decidido uma vez. TanStack Query não é configurado aqui — isso é
+ * deste app. Só compõe — *quando* a primeira tela aparece é do `AppearanceGate`, e *qual*
+ * rota monta é do `AuthenticationRouter`. TanStack Query não é configurado aqui: isso é
  * interno ao pacote, não decisão do app (`m0-clients.md`).
  */
 export default function RootLayout() {
-  const [areFontsLoaded, fontError] = useFonts({
-    Outfit_400Regular,
-    Outfit_500Medium,
-    Outfit_600SemiBold,
-  })
-
-  // Fonte é aparência, e aparência não impede entrar na conta: se o arquivo não chega, o
-  // app abre no corte do sistema. Ignorar este erro deixaria a splash de pé para sempre,
-  // sem nada na tela explicando o quê.
-  const hasFontSettled = areFontsLoaded || fontError !== null
-  const hasThemeSettled = useThemePreference().state.status === 'ready'
-  const hasAppearanceSettled = hasFontSettled && hasThemeSettled
-
-  useEffect(() => {
-    if (!hasAppearanceSettled) return
-    if (fontError !== null) console.error('Failed to load the app font; falling back to the system face.', fontError)
-
-    void SplashScreen.hideAsync()
-  }, [hasAppearanceSettled, fontError])
-
-  // Não é tela vazia: a splash ainda está por cima e sai assim que fonte e tema se
-  // resolverem, tendo chegado ou falhado.
-  if (!hasAppearanceSettled) return null
-
   return (
-    <SafeAreaProvider>
-      <habituar.Provider>
-        <StatusBar style="auto" />
-        <AuthenticationRouter />
-      </habituar.Provider>
-    </SafeAreaProvider>
+    <AppearanceGate>
+      <SafeAreaProvider>
+        <habituar.Provider>
+          <StatusBar style="auto" />
+          <AuthenticationRouter />
+        </habituar.Provider>
+      </SafeAreaProvider>
+    </AppearanceGate>
   )
-}
-
-/** Aplica o guard antes do Slot para que deep links não montem conteúdo de outro ambiente. */
-function AuthenticationRouter() {
-  const pathname = usePathname()
-  const { state } = habituar.useAuthentication()
-  const guard = getMobileAuthenticationGuard(state, pathname)
-
-  if (guard.action === 'block') return <SessionLoadingScreen />
-  if (guard.action === 'redirect') return <Redirect href={guard.route} />
-
-  // Falha não troca a tela: quem sabe explicá-la é a rota que iniciou a autenticação.
-  return <Slot />
 }

@@ -2,9 +2,9 @@ import { SPACING } from '@habituar/design-tokens/spacing'
 import type { PropsWithChildren, ReactNode } from 'react'
 import type { ImageSourcePropType } from 'react-native'
 import { Image, StyleSheet, View } from 'react-native'
-import { Screen } from './components/ui/screen'
-import { Text } from './components/ui/text'
-import { useThemeTokens } from './theme/tokens'
+import { Screen } from '../components/ui/screen'
+import { Text } from '../components/ui/text'
+import { useThemeTokens } from '../theme/tokens'
 
 /**
  * Moldura comum das telas de autenticação; dona do enquadramento, da marca e do título

@@ -3,11 +3,11 @@ import { SPACING } from '@habituar/design-tokens/spacing'
 import type { AuthenticationFailure } from '@habituar/react-client/react-client'
 import { useTranslation } from 'react-i18next'
 import { StyleSheet, View } from 'react-native'
-import { getAuthenticationFailureRecovery, getAuthenticationFailureText } from './authentication-messages'
-import { Button } from './components/ui/button'
-import { Text } from './components/ui/text'
-import { habituar } from './habituar-client'
-import { useThemeTokens } from './theme/tokens'
+import { getAuthenticationFailureRecovery, getAuthenticationFailureText } from './authentication-failure-messages'
+import { Button } from '../components/ui/button'
+import { Text } from '../components/ui/text'
+import { habituar } from '../session/habituar-client'
+import { useThemeTokens } from '../theme/tokens'
 
 const ICON_SIZE = 20
 

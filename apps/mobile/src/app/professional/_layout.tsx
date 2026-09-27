@@ -1,6 +1,6 @@
 import { Tabs } from 'expo-router'
-import { ProfessionalTabBar } from '../../professional-tab-bar'
-import { InstitutionSessionScreen } from '../../session-screen'
+import { ProfessionalTabBar } from '../../professional/professional-tab-bar'
+import { InstitutionSessionScreen } from '../../session/session-screen'
 
 /**
  * Casca do ambiente profissional: a fronteira de sessão envolve o navegador inteiro, para

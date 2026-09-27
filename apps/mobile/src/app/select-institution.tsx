@@ -1,5 +1,5 @@
-import { habituar } from '../habituar-client'
-import { InstitutionSelectionScreen } from '../institution-selection-screen'
+import { habituar } from '../session/habituar-client'
+import { InstitutionSelectionScreen } from '../authentication/institution-selection-screen'
 
 /** Passo entre autenticar e chegar a um ambiente, quando a conta tem mais de um vínculo. */
 export default function SelectInstitutionRoute() {

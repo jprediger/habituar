@@ -1,8 +1,8 @@
 import { SPACING } from '@habituar/design-tokens/spacing'
 import { useTranslation } from 'react-i18next'
 import { StyleSheet, View } from 'react-native'
-import { Text } from './components/ui/text'
-import { useThemeTokens } from './theme/tokens'
+import { Text } from '../components/ui/text'
+import { useThemeTokens } from '../theme/tokens'
 
 /**
  * O que o app mostra enquanto a sessão gravada é restaurada. Existe para que nenhum

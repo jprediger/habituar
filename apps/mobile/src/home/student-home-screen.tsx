@@ -1,9 +1,9 @@
 import { useTranslation } from 'react-i18next'
-import { getHomeDescriptionText, getHomeDestinationText } from './authentication-messages'
-import { Text } from './components/ui/text'
+import { getHomeDescriptionText, getHomeDestinationText } from './home-messages'
+import { Text } from '../components/ui/text'
 import { HomeCard, HomeDetailList } from './home-card'
-import type { InstitutionSession } from './session-screen'
-import { SignOutButton } from './sign-out-button'
+import type { InstitutionSession } from '../session/session-screen'
+import { SignOutButton } from '../session/sign-out-button'
 
 /** Tela inicial de quem estuda: a única superfície escrita na primeira pessoa do aluno. */
 export function StudentHomeScreen({ session }: Readonly<{ session: InstitutionSession }>) {

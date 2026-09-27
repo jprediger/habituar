@@ -1,7 +1,7 @@
 import type { AuthenticationFailure, AuthenticationState } from '@habituar/react-client/react-client'
 import { fireEvent, render, screen } from '@testing-library/react-native'
-import LoginScreen from './app/login'
-import './i18n/i18n'
+import { LoginScreen } from './login-screen'
+import '../i18n/i18n'
 
 // `mock` no nome é exigência do Jest: só variável com esse prefixo pode ser alcançada de
 // dentro da fábrica de `jest.mock`, que o Babel iça acima dos imports.
@@ -10,7 +10,7 @@ const mockAuthentication: { state: AuthenticationState; actions: Record<string, 
   actions: { login: jest.fn(), logout: jest.fn() },
 }
 
-jest.mock('./habituar-client', () => ({
+jest.mock('../session/habituar-client', () => ({
   habituar: { useAuthentication: () => mockAuthentication },
 }))
 

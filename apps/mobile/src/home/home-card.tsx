@@ -2,9 +2,9 @@ import { SPACING } from '@habituar/design-tokens/spacing'
 import type { PropsWithChildren, ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { StyleSheet, View } from 'react-native'
-import { Card } from './components/ui/card'
-import { Text } from './components/ui/text'
-import { Screen } from './components/ui/screen'
+import { Card } from '../components/ui/card'
+import { Text } from '../components/ui/text'
+import { Screen } from '../components/ui/screen'
 
 /**
  * Moldura comum das telas de ambiente: marca, título da rota, descrição e rodapé. Não

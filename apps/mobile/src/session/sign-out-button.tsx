@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next'
-import { Button } from './components/ui/button'
+import { Button } from '../components/ui/button'
 import { habituar } from './habituar-client'
 
 /** Única saída de sessão das telas internas; dona da ação, não do lugar onde aparece. */

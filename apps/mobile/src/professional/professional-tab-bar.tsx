@@ -8,9 +8,9 @@ import { usePathname, useRouter } from 'expo-router'
 import { useTranslation } from 'react-i18next'
 import { Pressable, StyleSheet, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { Text } from './components/ui/text'
+import { Text } from '../components/ui/text'
 import { NavigationIcon } from './navigation-icon'
-import { useThemeTokens } from './theme/tokens'
+import { useThemeTokens } from '../theme/tokens'
 
 const ICON_SIZE = 26
 
@@ -35,7 +35,7 @@ export function ProfessionalTabBar() {
         styles.bar,
         {
           backgroundColor: colors.surface,
-          borderTopColor: colors.border,
+          borderTopColor: colors.divider,
           // Sem indicador de gesto, a barra ainda precisa de respiro embaixo; com ele, o
           // inset já é o respiro e somar os dois empurraria os rótulos para cima à toa.
           paddingBottom: Math.max(insets.bottom, SPACING.sm),

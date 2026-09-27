@@ -1,10 +1,10 @@
 import { useTranslation } from 'react-i18next'
-import { EmptyState } from './components/ui/empty-state'
-import { Page } from './components/ui/page'
-import { PageHeader } from './components/ui/page-header'
-import { Section } from './components/ui/section'
-import { SummaryCard } from './components/ui/summary-card'
-import type { InstitutionSession } from './session-screen'
+import { EmptyState } from '../components/ui/empty-state'
+import { Page } from '../components/ui/page'
+import { PageHeader } from '../components/ui/page-header'
+import { Section } from '../components/ui/section'
+import { SummaryCard } from '../components/ui/summary-card'
+import type { InstitutionSession } from '../session/session-screen'
 
 /**
  * Início do ambiente profissional. Mostra só o que a sessão já sabe — quem é, onde e

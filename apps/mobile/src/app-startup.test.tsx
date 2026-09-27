@@ -40,7 +40,7 @@ jest.mock('react-native-safe-area-context', () => ({
   SafeAreaView: ({ children }: Readonly<{ children: ReactNode }>) => children,
 }))
 
-jest.mock('./habituar-client', () => ({
+jest.mock('./session/habituar-client', () => ({
   habituar: {
     Provider: ({ children }: Readonly<{ children: ReactNode }>) => children,
     useAuthentication: () => ({ state: { status: 'unauthenticated' }, actions: {} }),

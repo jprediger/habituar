@@ -1,6 +1,6 @@
 import { INTERACTION } from '@habituar/design-tokens/interaction'
 import { fireEvent, render, screen } from '@testing-library/react-native'
-import './i18n/i18n'
+import '../i18n/i18n'
 import { ProfessionalTabBar } from './professional-tab-bar'
 
 const HOME = 'Início'

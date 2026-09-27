@@ -3,9 +3,9 @@ import type { MembershipContext } from '@habituar/react-client/react-client'
 import { useTranslation } from 'react-i18next'
 import { StyleSheet, View } from 'react-native'
 import { AuthenticationCard } from './authentication-card'
-import { Button } from './components/ui/button'
-import { Text } from './components/ui/text'
-import { habituar } from './habituar-client'
+import { Button } from '../components/ui/button'
+import { Text } from '../components/ui/text'
+import { habituar } from '../session/habituar-client'
 
 /** Escolha do vínculo ativo quando a conta tem mais de um; não decide destino algum. */
 export function InstitutionSelectionScreen({

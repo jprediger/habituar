@@ -1,13 +1,13 @@
 import { useTranslation } from 'react-i18next'
-import { Page } from './components/ui/page'
-import { PageHeader } from './components/ui/page-header'
-import { SegmentedControl } from './components/ui/segmented-control'
-import { Section } from './components/ui/section'
-import { SummaryCard } from './components/ui/summary-card'
-import type { InstitutionSession } from './session-screen'
-import { SignOutButton } from './sign-out-button'
-import { useThemePreference } from './theme/app-theme-preference'
-import { THEME_PREFERENCES } from './theme/theme-preference'
+import { Page } from '../components/ui/page'
+import { PageHeader } from '../components/ui/page-header'
+import { SegmentedControl } from '../components/ui/segmented-control'
+import { Section } from '../components/ui/section'
+import { SummaryCard } from '../components/ui/summary-card'
+import type { InstitutionSession } from '../session/session-screen'
+import { SignOutButton } from '../session/sign-out-button'
+import { useThemePreference } from '../theme/app-theme-preference'
+import { THEME_PREFERENCES } from '../theme/theme-preference'
 
 /**
  * Perfil do profissional: a conta, o vínculo ativo, a aparência e a saída da sessão. Não oferece

@@ -1,7 +1,7 @@
 import { INTERACTION } from '@habituar/design-tokens/interaction'
 import { fireEvent, render, screen } from '@testing-library/react-native'
 import '../i18n/i18n'
-import { ProfessionalTabBar } from './professional-tab-bar'
+import { EnvironmentTabBar } from './environment-tab-bar'
 
 const HOME = 'Início'
 const PROFILE = 'Perfil'
@@ -22,9 +22,9 @@ beforeEach(() => {
   jest.clearAllMocks()
 })
 
-describe('professional tab bar', () => {
+describe('environment tab bar', () => {
   it('offers each destination of the environment as a tab with a visible label', () => {
-    render(<ProfessionalTabBar />)
+    render(<EnvironmentTabBar environment="professional" />)
 
     expect(screen.getByRole('tab', { name: HOME })).toBeOnTheScreen()
     expect(screen.getByRole('tab', { name: PROFILE })).toBeOnTheScreen()
@@ -33,7 +33,7 @@ describe('professional tab bar', () => {
   })
 
   it('tells assistive technology which tab is selected on the home route', () => {
-    render(<ProfessionalTabBar />)
+    render(<EnvironmentTabBar environment="professional" />)
 
     expect(screen.getByRole('tab', { name: HOME, selected: true })).toBeOnTheScreen()
     expect(screen.getByRole('tab', { name: PROFILE, selected: false })).toBeOnTheScreen()
@@ -42,14 +42,14 @@ describe('professional tab bar', () => {
   it('moves the selection to the profile when a deep link opens it', () => {
     mockRouter.pathname = '/professional/profile'
 
-    render(<ProfessionalTabBar />)
+    render(<EnvironmentTabBar environment="professional" />)
 
     expect(screen.getByRole('tab', { name: PROFILE, selected: true })).toBeOnTheScreen()
     expect(screen.getByRole('tab', { name: HOME, selected: false })).toBeOnTheScreen()
   })
 
   it('opens the destination of the tab that was pressed', () => {
-    render(<ProfessionalTabBar />)
+    render(<EnvironmentTabBar environment="professional" />)
 
     fireEvent.press(screen.getByRole('tab', { name: PROFILE }))
 
@@ -57,7 +57,7 @@ describe('professional tab bar', () => {
   })
 
   it('gives every tab a target big enough to hit', () => {
-    render(<ProfessionalTabBar />)
+    render(<EnvironmentTabBar environment="professional" />)
 
     for (const name of [HOME, PROFILE]) {
       expect(screen.getByRole('tab', { name })).toHaveStyle({ minHeight: INTERACTION.minimumTouchTarget })
@@ -65,8 +65,17 @@ describe('professional tab bar', () => {
   })
 
   it('keeps the labels clear of the home indicator at the bottom of the screen', () => {
-    render(<ProfessionalTabBar />)
+    render(<EnvironmentTabBar environment="professional" />)
 
     expect(screen.root).toHaveStyle({ paddingBottom: 34 })
+  })
+
+  it('stays out of the way while an environment has a single destination', () => {
+    mockRouter.pathname = '/student'
+
+    render(<EnvironmentTabBar environment="student" />)
+
+    expect(screen.queryByRole('tablist')).toBeNull()
+    expect(screen.queryByRole('tab')).toBeNull()
   })
 })

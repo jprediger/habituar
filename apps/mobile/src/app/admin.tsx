@@ -1,4 +1,4 @@
-import { AdminHomeScreen } from '../home/admin-home-screen'
+import { AdminHomeScreen } from '../admin/admin-home-screen'
 import { SessionScreen } from '../session/session-screen'
 
 /** Ambiente da administração geral, a única sessão que existe fora de um vínculo. */

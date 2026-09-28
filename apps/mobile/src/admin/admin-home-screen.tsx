@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { Text } from '../components/ui/text'
-import { HomeCard, HomeDetailList } from './home-card'
+import { EnvironmentCard, EnvironmentDetailList } from '../shell/environment-card'
 import { SignOutButton } from '../session/sign-out-button'
 
 /**
@@ -12,19 +12,19 @@ export function AdminHomeScreen({
 }: Readonly<{ user: Readonly<{ name: string; email: string }> }>) {
   const { t } = useTranslation()
   return (
-    <HomeCard
+    <EnvironmentCard
       title={t('home.admin-home.title')}
       description={t('home.admin-home.description')}
       footer={<SignOutButton />}
     >
       <Text>{t('home.signedInAs', { name: user.name })}</Text>
       <Text accessibilityLiveRegion="polite">{t('platform.mobileNotice')}</Text>
-      <HomeDetailList
+      <EnvironmentDetailList
         items={[
           { label: t('home.accountLabel'), value: user.email },
           { label: t('home.scopeLabel'), value: t('home.admin-home.scope') },
         ]}
       />
-    </HomeCard>
+    </EnvironmentCard>
   )
 }

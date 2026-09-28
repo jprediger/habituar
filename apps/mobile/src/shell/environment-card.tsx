@@ -11,7 +11,7 @@ import { Screen } from '../components/ui/screen'
  * conhece sessão, papel nem qual ambiente está dentro dela. Sem seletor de tema — o app
  * segue `useColorScheme()`, decisão registrada em `theme/tokens.ts`.
  */
-export function HomeCard({
+export function EnvironmentCard({
   title,
   description,
   footer,
@@ -41,10 +41,10 @@ export function HomeCard({
   )
 }
 
-export type HomeDetail = Readonly<{ label: string; value: string }>
+export type EnvironmentDetail = Readonly<{ label: string; value: string }>
 
 /** Lista de pares rótulo/valor que identificam o contexto da sessão na tela. */
-export function HomeDetailList({ items }: Readonly<{ items: readonly HomeDetail[] }>) {
+export function EnvironmentDetailList({ items }: Readonly<{ items: readonly EnvironmentDetail[] }>) {
   return (
     <View style={styles.list}>
       {items.map((item) => (

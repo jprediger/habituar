@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router'
-import { ProfessionalTabBar } from '../../professional/professional-tab-bar'
+import { EnvironmentTabBar } from '../../shell/environment-tab-bar'
 import { InstitutionSessionScreen } from '../../session/session-screen'
 
 /**
@@ -13,7 +13,7 @@ export default function ProfessionalLayout() {
         <Tabs
           // A barra é nossa, não a do navegador: itens, ordem e item ativo vêm do hook
           // compartilhado, e a padrão decidiria rótulo e ícone pela configuração de rota.
-          tabBar={() => <ProfessionalTabBar />}
+          tabBar={() => <EnvironmentTabBar environment="professional" />}
           screenOptions={{ headerShown: false }}
         >
           <Tabs.Screen name="index" />

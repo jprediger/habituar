@@ -1,5 +1,5 @@
-import { InstitutionSessionScreen } from '../session/session-screen'
-import { StudentHomeScreen } from '../home/student-home-screen'
+import { InstitutionSessionScreen } from '../../session/session-screen'
+import { StudentHomeScreen } from '../../student/student-home-screen'
 
 /** Ambiente do aluno; a sessão só chega aqui depois de aprovada pelo guard. */
 export default function StudentRoute() {

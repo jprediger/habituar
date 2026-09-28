@@ -1,9 +1,12 @@
 import { SPACING } from '@habituar/design-tokens/spacing'
-import type { ProfessionalNavigationIcon } from '@habituar/react-client/professional-navigation'
+import type {
+  NavigationEnvironment,
+  NavigationIcon as NavigationIconName,
+} from '@habituar/react-client/environment-navigation'
 import {
-  findActiveProfessionalNavigationItem,
-  useProfessionalNavigation,
-} from '@habituar/react-client/professional-navigation'
+  findActiveNavigationItem,
+  useEnvironmentNavigation,
+} from '@habituar/react-client/environment-navigation'
 import { usePathname, useRouter } from 'expo-router'
 import { useTranslation } from 'react-i18next'
 import { Pressable, StyleSheet, View } from 'react-native'
@@ -14,19 +17,28 @@ import { useThemeTokens } from '../theme/tokens'
 
 const ICON_SIZE = 26
 
+// A administração geral não tem ambiente no app, só o aviso de que ela acontece na web.
+type MobileEnvironment = Exclude<NavigationEnvironment, 'admin'>
+
+// Uma aba sozinha não oferece escolha nenhuma: a barra só ocupa espaço e anuncia uma
+// lista de um item ao leitor de tela.
+const MINIMUM_TABS = 2
+
 /**
- * Barra inferior do ambiente profissional. Dona só do visual e da troca de aba: quais
+ * Barra inferior de todo ambiente do app. Dona só do visual e da troca de aba: quais
  * destinos existem, em que ordem e qual está ativo vêm do hook compartilhado, então esta
- * barra nunca decide sozinha o que o profissional pode abrir.
+ * barra nunca decide sozinha o que a pessoa pode abrir.
  */
-export function ProfessionalTabBar() {
+export function EnvironmentTabBar({ environment }: Readonly<{ environment: MobileEnvironment }>) {
   const { t } = useTranslation()
-  const items = useProfessionalNavigation()
+  const items = useEnvironmentNavigation(environment)
   const pathname = usePathname()
   const router = useRouter()
   const insets = useSafeAreaInsets()
   const { colors } = useThemeTokens()
-  const activeItem = findActiveProfessionalNavigationItem(items, pathname)
+  const activeItem = findActiveNavigationItem(items, pathname)
+
+  if (items.length < MINIMUM_TABS) return null
 
   return (
     <View
@@ -43,7 +55,7 @@ export function ProfessionalTabBar() {
       ]}
     >
       {items.map((item) => (
-        <ProfessionalTab
+        <EnvironmentTab
           key={item.id}
           label={t(item.labelKey)}
           icon={item.icon}
@@ -57,12 +69,12 @@ export function ProfessionalTabBar() {
   )
 }
 
-function ProfessionalTab({
+function EnvironmentTab({
   label,
   icon,
   isSelected,
   onPress,
-}: Readonly<{ label: string; icon: ProfessionalNavigationIcon; isSelected: boolean; onPress: () => void }>) {
+}: Readonly<{ label: string; icon: NavigationIconName; isSelected: boolean; onPress: () => void }>) {
   const { colors, minimumTouchTarget } = useThemeTokens()
 
   return (

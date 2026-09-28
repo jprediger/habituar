@@ -71,10 +71,6 @@
       "title": "Seu ambiente de aluno",
       "description": "Organize sua rotina, acompanhe tarefas e consulte sua agenda."
     },
-    "professional-home": {
-      "title": "Seu ambiente profissional",
-      "description": "Acompanhe alunos, consultas, métricas e registros."
-    },
     "monitor-home": {
       "title": "Seu ambiente de monitor",
       "description": "Consulte e acompanhe os alunos atribuídos a você."
@@ -87,7 +83,8 @@
   },
   "navigation": {
     "home": "Início",
-    "profile": "Perfil"
+    "profile": "Perfil",
+    "institutions": "Instituições"
   },
   "professional": {
     "eyebrow": "Ambiente profissional",

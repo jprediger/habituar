@@ -1,4 +1,4 @@
-import type { ProfessionalNavigationIcon } from '@habituar/react-client/professional-navigation'
+import type { NavigationIcon as NavigationIconName } from '@habituar/react-client/environment-navigation'
 import Svg, { Path } from 'react-native-svg'
 
 type NavigationIconWeight = 'regular' | 'fill'
@@ -8,7 +8,7 @@ type NavigationIconWeight = 'regular' | 'fill'
 // bundle (o Metro não faz tree-shaking), e o import por ícone expõe a fonte da biblioteca
 // ao nosso typecheck estrito. Ícone novo no catálogo quebra o build aqui até ganhar os
 // pesos `regular` e `fill`, copiados do site.
-const GLYPHS: Readonly<Record<ProfessionalNavigationIcon, Readonly<Record<NavigationIconWeight, string>>>> = {
+const GLYPHS: Readonly<Record<NavigationIconName, Readonly<Record<NavigationIconWeight, string>>>> = {
   home: {
     regular:
       'm219.31 108.68-80-80a16 16 0 0 0-22.62 0l-80 80A15.87 15.87 0 0 0 32 120v96a8 8 0 0 0 8 8h64a8 8 0 0 0 8-8v-56h32v56a8 8 0 0 0 8 8h64a8 8 0 0 0 8-8v-96a15.87 15.87 0 0 0-4.69-11.32M208 208h-48v-56a8 8 0 0 0-8-8h-48a8 8 0 0 0-8 8v56H48v-88l80-80 80 80Z',
@@ -18,6 +18,11 @@ const GLYPHS: Readonly<Record<ProfessionalNavigationIcon, Readonly<Record<Naviga
     regular:
       'M128 24a104 104 0 1 0 104 104A104.11 104.11 0 0 0 128 24M74.08 197.5a64 64 0 0 1 107.84 0 87.83 87.83 0 0 1-107.84 0M96 120a32 32 0 1 1 32 32 32 32 0 0 1-32-32m97.76 66.41a79.66 79.66 0 0 0-36.06-28.75 48 48 0 1 0-59.4 0 79.66 79.66 0 0 0-36.06 28.75 88 88 0 1 1 131.52 0',
     fill: 'M172 120a44 44 0 1 1-44-44 44.05 44.05 0 0 1 44 44m60 8A104 104 0 1 1 128 24a104.11 104.11 0 0 1 104 104m-16 0a88.09 88.09 0 0 0-91.47-87.93C77.43 41.89 39.87 81.12 40 128.25a87.65 87.65 0 0 0 22.24 58.16A79.7 79.7 0 0 1 84 165.1a4 4 0 0 1 4.83.32 59.83 59.83 0 0 0 78.28 0 4 4 0 0 1 4.83-.32 79.7 79.7 0 0 1 21.79 21.31A87.62 87.62 0 0 0 216 128',
+  },
+  building: {
+    regular:
+      'M232 224h-24V32h8a8 8 0 0 0 0-16H40a8 8 0 0 0 0 16h8v192H24a8 8 0 0 0 0 16h208a8 8 0 0 0 0-16M64 32h128v192h-32v-40a8 8 0 0 0-8-8h-48a8 8 0 0 0-8 8v40H64Zm80 192h-32v-32h32ZM88 64a8 8 0 0 1 8-8h16a8 8 0 0 1 0 16H96a8 8 0 0 1-8-8m48 0a8 8 0 0 1 8-8h16a8 8 0 0 1 0 16h-16a8 8 0 0 1-8-8m-48 40a8 8 0 0 1 8-8h16a8 8 0 0 1 0 16H96a8 8 0 0 1-8-8m48 0a8 8 0 0 1 8-8h16a8 8 0 0 1 0 16h-16a8 8 0 0 1-8-8m-48 40a8 8 0 0 1 8-8h16a8 8 0 0 1 0 16H96a8 8 0 0 1-8-8m48 0a8 8 0 0 1 8-8h16a8 8 0 0 1 0 16h-16a8 8 0 0 1-8-8',
+    fill: 'M232 224h-24V32h8a8 8 0 0 0 0-16H40a8 8 0 0 0 0 16h8v192H24a8 8 0 0 0 0 16h208a8 8 0 0 0 0-16M88 56h24a8 8 0 0 1 0 16H88a8 8 0 0 1 0-16m0 40h24a8 8 0 0 1 0 16H88a8 8 0 0 1 0-16m-8 48a8 8 0 0 1 8-8h24a8 8 0 0 1 0 16H88a8 8 0 0 1-8-8m72 80h-48v-40h48Zm16-72h-24a8 8 0 0 1 0-16h24a8 8 0 0 1 0 16m0-40h-24a8 8 0 0 1 0-16h24a8 8 0 0 1 0 16m0-40h-24a8 8 0 0 1 0-16h24a8 8 0 0 1 0 16',
   },
 }
 
@@ -30,7 +35,7 @@ export function NavigationIcon({
   weight,
   size,
   color,
-}: Readonly<{ icon: ProfessionalNavigationIcon; weight: NavigationIconWeight; size: number; color: string }>) {
+}: Readonly<{ icon: NavigationIconName; weight: NavigationIconWeight; size: number; color: string }>) {
   return (
     <Svg width={size} height={size} viewBox="0 0 256 256">
       <Path d={GLYPHS[icon][weight]} fill={color} />

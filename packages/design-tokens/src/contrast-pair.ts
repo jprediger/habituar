@@ -61,3 +61,10 @@ export const CONTRAST_PAIRS = [
     usage: 'ui-component',
   },
 ] as const satisfies readonly ContrastPair[]
+
+/**
+ * Papéis isentos de piso por serem decoração: a WCAG 1.4.11 só cobre o que é necessário
+ * para identificar componente ou estado. Isenção é declarada aqui, nunca por omissão —
+ * papel que carrega informação não entra nesta lista.
+ */
+export const DECORATIVE_ROLES = ['divider'] as const satisfies readonly ColorRole[]

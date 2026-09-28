@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { CONTRAST_PAIRS, MINIMUM_RATIO } from './contrast-pair'
+import { CONTRAST_PAIRS, DECORATIVE_ROLES, MINIMUM_RATIO } from './contrast-pair'
 import { contrastRatio } from './contrast'
 import { SEMANTIC_COLOR_DARK, SEMANTIC_COLOR_LIGHT } from './semantic-color'
 
@@ -39,10 +39,11 @@ describe('contraste dos pares declarados', () => {
 })
 
 describe('cobertura do gate de contraste', () => {
-  it('não deixa existir papel de cor sem par de contraste declarado', () => {
-    const declaredRoles: ReadonlySet<string> = new Set(
-      CONTRAST_PAIRS.flatMap((pair) => [pair.foreground, pair.background]),
-    )
+  it('não deixa existir papel de cor sem par de contraste ou isenção decorativa declarados', () => {
+    const declaredRoles: ReadonlySet<string> = new Set([
+      ...CONTRAST_PAIRS.flatMap((pair) => [pair.foreground, pair.background]),
+      ...DECORATIVE_ROLES,
+    ])
 
     for (const role of Object.keys(SEMANTIC_COLOR_LIGHT)) {
       expect(declaredRoles.has(role)).toBe(true)

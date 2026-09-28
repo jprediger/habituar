@@ -19,6 +19,9 @@ export const SEMANTIC_COLOR_LIGHT = {
   primary: COLOR.green700,
   onPrimary: COLOR.white,
   border: COLOR.gray500,
+  // Papel próprio, e não `border`: a borda de campo precisa de 3:1 para o campo ser
+  // achado; o divisor só separa regiões já distintas, e com o mesmo peso compete com elas.
+  divider: COLOR.gray300,
   danger: COLOR.red700,
   onDanger: COLOR.white,
   focusRing: COLOR.green700,
@@ -40,6 +43,7 @@ export const SEMANTIC_COLOR_DARK = {
   primary: COLOR.green400,
   onPrimary: COLOR.green900,
   border: COLOR.gray500,
+  divider: COLOR.gray700,
   danger: COLOR.red400,
   onDanger: COLOR.red900,
   focusRing: COLOR.green400,

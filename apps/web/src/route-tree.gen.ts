@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminRouteImport } from './routes/admin'
+import { Route as AwaitingInvitationRouteImport } from './routes/awaiting-invitation'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as MonitorRouteImport } from './routes/monitor'
@@ -18,8 +19,12 @@ import { Route as ProfessionalRouteImport } from './routes/professional'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as SelectInstitutionRouteImport } from './routes/select-institution'
 import { Route as StudentRouteImport } from './routes/student'
+import { Route as InviteTokenRouteImport } from './routes/invite/$token'
 import { Route as ProfessionalIndexRouteImport } from './routes/professional/index'
 import { Route as ProfessionalProfileRouteImport } from './routes/professional/profile'
+import { Route as AdminInstitutionsIndexRouteImport } from './routes/admin/institutions/index'
+import { Route as AdminInstitutionsInstitutionIdRouteImport } from './routes/admin/institutions/$institutionId'
+import { Route as AdminInstitutionsNewRouteImport } from './routes/admin/institutions/new'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -29,6 +34,11 @@ const IndexRoute = IndexRouteImport.update({
 const AdminRoute = AdminRouteImport.update({
   id: '/admin',
   path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AwaitingInvitationRoute = AwaitingInvitationRouteImport.update({
+  id: '/awaiting-invitation',
+  path: '/awaiting-invitation',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
@@ -66,6 +76,11 @@ const StudentRoute = StudentRouteImport.update({
   path: '/student',
   getParentRoute: () => rootRouteImport,
 } as any)
+const InviteTokenRoute = InviteTokenRouteImport.update({
+  id: '/invite/$token',
+  path: '/invite/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProfessionalIndexRoute = ProfessionalIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -76,10 +91,27 @@ const ProfessionalProfileRoute = ProfessionalProfileRouteImport.update({
   path: '/profile',
   getParentRoute: () => ProfessionalRoute,
 } as any)
+const AdminInstitutionsIndexRoute = AdminInstitutionsIndexRouteImport.update({
+  id: '/institutions/',
+  path: '/institutions/',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminInstitutionsInstitutionIdRoute =
+  AdminInstitutionsInstitutionIdRouteImport.update({
+    id: '/institutions/$institutionId',
+    path: '/institutions/$institutionId',
+    getParentRoute: () => AdminRoute,
+  } as any)
+const AdminInstitutionsNewRoute = AdminInstitutionsNewRouteImport.update({
+  id: '/institutions/new',
+  path: '/institutions/new',
+  getParentRoute: () => AdminRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/admin': typeof AdminRoute
+  '/admin': typeof AdminRouteWithChildren
+  '/awaiting-invitation': typeof AwaitingInvitationRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/monitor': typeof MonitorRoute
@@ -87,25 +119,35 @@ export interface FileRoutesByFullPath {
   '/register': typeof RegisterRoute
   '/select-institution': typeof SelectInstitutionRoute
   '/student': typeof StudentRoute
+  '/invite/$token': typeof InviteTokenRoute
   '/professional/profile': typeof ProfessionalProfileRoute
   '/professional/': typeof ProfessionalIndexRoute
+  '/admin/institutions/$institutionId': typeof AdminInstitutionsInstitutionIdRoute
+  '/admin/institutions/new': typeof AdminInstitutionsNewRoute
+  '/admin/institutions/': typeof AdminInstitutionsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/admin': typeof AdminRoute
+  '/admin': typeof AdminRouteWithChildren
+  '/awaiting-invitation': typeof AwaitingInvitationRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/monitor': typeof MonitorRoute
   '/register': typeof RegisterRoute
   '/select-institution': typeof SelectInstitutionRoute
   '/student': typeof StudentRoute
+  '/invite/$token': typeof InviteTokenRoute
   '/professional/profile': typeof ProfessionalProfileRoute
   '/professional': typeof ProfessionalIndexRoute
+  '/admin/institutions/$institutionId': typeof AdminInstitutionsInstitutionIdRoute
+  '/admin/institutions/new': typeof AdminInstitutionsNewRoute
+  '/admin/institutions': typeof AdminInstitutionsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/admin': typeof AdminRoute
+  '/admin': typeof AdminRouteWithChildren
+  '/awaiting-invitation': typeof AwaitingInvitationRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/monitor': typeof MonitorRoute
@@ -113,14 +155,19 @@ export interface FileRoutesById {
   '/register': typeof RegisterRoute
   '/select-institution': typeof SelectInstitutionRoute
   '/student': typeof StudentRoute
+  '/invite/$token': typeof InviteTokenRoute
   '/professional/profile': typeof ProfessionalProfileRoute
   '/professional/': typeof ProfessionalIndexRoute
+  '/admin/institutions/$institutionId': typeof AdminInstitutionsInstitutionIdRoute
+  '/admin/institutions/new': typeof AdminInstitutionsNewRoute
+  '/admin/institutions/': typeof AdminInstitutionsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
     | '/admin'
+    | '/awaiting-invitation'
     | '/forgot-password'
     | '/login'
     | '/monitor'
@@ -128,24 +175,34 @@ export interface FileRouteTypes {
     | '/register'
     | '/select-institution'
     | '/student'
+    | '/invite/$token'
     | '/professional/profile'
     | '/professional/'
+    | '/admin/institutions/$institutionId'
+    | '/admin/institutions/new'
+    | '/admin/institutions/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/admin'
+    | '/awaiting-invitation'
     | '/forgot-password'
     | '/login'
     | '/monitor'
     | '/register'
     | '/select-institution'
     | '/student'
+    | '/invite/$token'
     | '/professional/profile'
     | '/professional'
+    | '/admin/institutions/$institutionId'
+    | '/admin/institutions/new'
+    | '/admin/institutions'
   id:
     | '__root__'
     | '/'
     | '/admin'
+    | '/awaiting-invitation'
     | '/forgot-password'
     | '/login'
     | '/monitor'
@@ -153,13 +210,18 @@ export interface FileRouteTypes {
     | '/register'
     | '/select-institution'
     | '/student'
+    | '/invite/$token'
     | '/professional/profile'
     | '/professional/'
+    | '/admin/institutions/$institutionId'
+    | '/admin/institutions/new'
+    | '/admin/institutions/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AdminRoute: typeof AdminRoute
+  AdminRoute: typeof AdminRouteWithChildren
+  AwaitingInvitationRoute: typeof AwaitingInvitationRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   LoginRoute: typeof LoginRoute
   MonitorRoute: typeof MonitorRoute
@@ -167,6 +229,7 @@ export interface RootRouteChildren {
   RegisterRoute: typeof RegisterRoute
   SelectInstitutionRoute: typeof SelectInstitutionRoute
   StudentRoute: typeof StudentRoute
+  InviteTokenRoute: typeof InviteTokenRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -183,6 +246,13 @@ declare module '@tanstack/react-router' {
       path: '/admin'
       fullPath: '/admin'
       preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/awaiting-invitation': {
+      id: '/awaiting-invitation'
+      path: '/awaiting-invitation'
+      fullPath: '/awaiting-invitation'
+      preLoaderRoute: typeof AwaitingInvitationRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/forgot-password': {
@@ -234,6 +304,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StudentRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/invite/$token': {
+      id: '/invite/$token'
+      path: '/invite/$token'
+      fullPath: '/invite/$token'
+      preLoaderRoute: typeof InviteTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/professional/': {
       id: '/professional/'
       path: '/'
@@ -248,8 +325,43 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProfessionalProfileRouteImport
       parentRoute: typeof ProfessionalRoute
     }
+    '/admin/institutions/': {
+      id: '/admin/institutions/'
+      path: '/institutions'
+      fullPath: '/admin/institutions/'
+      preLoaderRoute: typeof AdminInstitutionsIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/institutions/$institutionId': {
+      id: '/admin/institutions/$institutionId'
+      path: '/institutions/$institutionId'
+      fullPath: '/admin/institutions/$institutionId'
+      preLoaderRoute: typeof AdminInstitutionsInstitutionIdRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/institutions/new': {
+      id: '/admin/institutions/new'
+      path: '/institutions/new'
+      fullPath: '/admin/institutions/new'
+      preLoaderRoute: typeof AdminInstitutionsNewRouteImport
+      parentRoute: typeof AdminRoute
+    }
   }
 }
+
+interface AdminRouteChildren {
+  AdminInstitutionsInstitutionIdRoute: typeof AdminInstitutionsInstitutionIdRoute
+  AdminInstitutionsNewRoute: typeof AdminInstitutionsNewRoute
+  AdminInstitutionsIndexRoute: typeof AdminInstitutionsIndexRoute
+}
+
+const AdminRouteChildren: AdminRouteChildren = {
+  AdminInstitutionsInstitutionIdRoute: AdminInstitutionsInstitutionIdRoute,
+  AdminInstitutionsNewRoute: AdminInstitutionsNewRoute,
+  AdminInstitutionsIndexRoute: AdminInstitutionsIndexRoute,
+}
+
+const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
 interface ProfessionalRouteChildren {
   ProfessionalProfileRoute: typeof ProfessionalProfileRoute
@@ -267,7 +379,8 @@ const ProfessionalRouteWithChildren = ProfessionalRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AdminRoute: AdminRoute,
+  AdminRoute: AdminRouteWithChildren,
+  AwaitingInvitationRoute: AwaitingInvitationRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
   LoginRoute: LoginRoute,
   MonitorRoute: MonitorRoute,
@@ -275,6 +388,7 @@ const rootRouteChildren: RootRouteChildren = {
   RegisterRoute: RegisterRoute,
   SelectInstitutionRoute: SelectInstitutionRoute,
   StudentRoute: StudentRoute,
+  InviteTokenRoute: InviteTokenRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -1,6 +1,6 @@
 import { authenticationContextSchema } from '@habituar/core/auth/context'
 import { getHomeDestination } from '@habituar/core/home-destination'
-import type { RoleEnvironment } from '@habituar/core/roles'
+import type { MembershipEnvironment } from '@habituar/core/roles'
 import type { AuthenticationState } from '@habituar/react-client/react-client'
 import { RouterProvider, createMemoryHistory, createRouter } from '@tanstack/react-router'
 import { render, screen, waitFor, within } from '@testing-library/react'
@@ -21,6 +21,7 @@ const client = vi.hoisted(
 
 vi.mock('../client/habituar-client.js', () => ({
   habituar: {
+    useInstitutionSwitcher: () => ({ current: undefined, others: [], switchTo: vi.fn() }),
     useAuthentication: () => ({
       state: client.state,
       actions: { logout: client.logout, login: vi.fn(), register: vi.fn(), selectMembership: vi.fn(), retry: vi.fn() },
@@ -30,13 +31,13 @@ vi.mock('../client/habituar-client.js', () => ({
 
 const { routeTree } = await import('../route-tree.gen.js')
 
-function createAuthenticatedState(environment: RoleEnvironment): AuthenticationState {
+function createAuthenticatedState(environment: MembershipEnvironment): AuthenticationState {
   const context = authenticationContextSchema.parse({
     user: { id: '20000000-0000-4000-8000-000000000001', email: 'alex@example.com', name: 'Alex Moreira' },
     memberships: [
       {
         institution: { id: '00000000-0000-4000-8000-000000000001', name: 'Escola Aurora' },
-        role: { id: '10000000-0000-4000-8000-000000000001', name: 'Fonoaudióloga', environment },
+        environment, roles: [{ id: '10000000-0000-4000-8000-000000000001', name: 'Fonoaudióloga', templateKey: null }],
         permissions: [],
       },
     ],

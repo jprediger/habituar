@@ -1,4 +1,16 @@
 {
+  "roles": { "team-management": "Gestão da equipe", "care-assigned": "Atendimento aos alunos vinculados", "care-institution": "Atendimento da instituição", "monitoring": "Monitoria", "student": "Aluno" },
+  "roleDescriptions": { "team-management": "Organiza a equipe e consulta o cadastro básico de todos os alunos.", "care-assigned": "Acompanha os alunos vinculados a esta pessoa.", "care-institution": "Acompanha os alunos da instituição.", "monitoring": "Consulta os alunos vinculados à monitoria.", "student": "Consulta o próprio cadastro." },
+  "institutionSwitcher": { "current": "Instituição atual: {{institution}}", "change": "Trocar instituição" },
+  "awaitingInvitation": { "title": "Aguardando convite", "description": "Sua conta está pronta. Peça um convite à pessoa responsável pela instituição para começar.", "guidance": "Abra o link do convite no navegador para aceitar.", "refresh": "Verificar meu acesso" },
+  "platform": {
+    "back": "Voltar às instituições", "save": "Salvar dados", "saving": "Salvando...", "error": "Não foi possível concluir. Confira a conexão e tente novamente.",
+    "institutions": { "title": "Instituições", "new": "Criar instituição", "empty": "Nenhuma instituição cadastrada.", "invalid": "Confira os campos. Digite CPF ou CNPJ apenas com números e com dígitos válidos.", "sections": "Seções da instituição", "data": "Dados", "people": "Pessoas", "name": "Nome", "documentType": "Tipo de documento", "documentNumber": "CPF ou CNPJ", "contactName": "Nome do contato", "contactEmail": "E-mail do contato", "contactPhone": "Telefone do contato", "cnpj": "CNPJ", "cpf": "CPF" },
+    "members": { "title": "Membros", "empty": "Ainda não há membros nesta instituição." },
+    "environments": { "professional": "Profissional", "monitor": "Monitor", "student": "Aluno" },
+    "invitations": { "title": "Convites", "new": "Convidar pessoa", "email": "E-mail da pessoa", "environment": "Tipo de vínculo", "roles": "Papéis", "chooseRole": "Escolha ao menos um papel para continuar.", "create": "Criar convite", "revoke": "Revogar convite", "revokeConfirmation": "Revogar este convite? O link deixará de funcionar.", "confirmRevoke": "Sim, revogar", "cancelRevoke": "Manter convite", "oneTimeWarning": "Copie este link agora. Ele aparece uma única vez. Criar outro convite para este e-mail invalida o link anterior.", "copy": "Copiar link", "status": { "pending": "Pendente", "accepted": "Aceito", "revoked": "Revogado", "expired": "Expirado" } }
+  },
+  "invitation": { "title": "Convite para a instituição", "from": "{{institution}} convidou {{email}}.", "unavailable": "Este link não foi encontrado. Peça um novo convite à instituição.", "signInFirst": "Entre com a conta deste e-mail para aceitar o convite.", "signInError": "Não foi possível entrar. Confira e-mail e senha.", "accept": "Aceitar convite", "createAndAccept": "Criar senha e aceitar", "invalidRegistration": "Digite seu nome e uma senha com pelo menos 8 caracteres.", "acceptError": "Não foi possível aceitar. Confira os dados ou peça um novo convite.", "status": { "pending": "Convite pronto para aceitar.", "accepted": "Este convite já foi aceito. Entre na sua conta.", "revoked": "Este convite foi revogado. Peça outro à instituição.", "expired": "Este convite expirou. Peça outro à instituição." } },
   "authentication": {
     "loading": "Verificando sua sessão...",
     "retry": "Tentar novamente",
@@ -39,8 +51,7 @@
       "network": "Não foi possível falar com o servidor. Verifique sua conexão e tente novamente.",
       "server": "Algo deu errado do nosso lado. Tente novamente em alguns instantes.",
       "conflict": "Este e-mail já está em uso.",
-      "no-membershipsTitle": "Seu acesso ainda não está pronto",
-      "no-memberships": "Seu cadastro ainda não tem vínculo com uma instituição. Procure a pessoa responsável pelo seu cadastro.",
+      "forbiddenTitle": "Seu acesso ainda não está pronto",
       "forbidden": "Você não tem permissão para acessar este ambiente."
     },
     "forgotPassword": {

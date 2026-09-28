@@ -8,6 +8,7 @@ import { StudentHomeScreen } from './student-home-screen.js'
 vi.mock('../client/habituar-client.js', () => ({
   habituar: {
     useAuthentication: () => ({ state: { status: 'unauthenticated' }, actions: { logout: vi.fn() } }),
+    useInstitutionSwitcher: () => ({ current: undefined, others: [], switchTo: vi.fn() }),
   },
 }))
 

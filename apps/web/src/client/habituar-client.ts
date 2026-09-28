@@ -1,5 +1,6 @@
 import type { HabituarReactClient } from '@habituar/react-client/react-client'
 import { createHabituarReactClient } from '@habituar/react-client/react-client'
+import { institutionPreferenceStorage } from './institution-preference-storage.js'
 
 /**
  * Única instância do cliente React da SPA. A origem vem do próprio navegador (D-clients):
@@ -13,4 +14,5 @@ import { createHabituarReactClient } from '@habituar/react-client/react-client'
 export const habituar: HabituarReactClient = createHabituarReactClient({
   origin: window.location.origin,
   credentials: 'include',
+  preferenceStorage: institutionPreferenceStorage,
 })

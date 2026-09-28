@@ -2,6 +2,7 @@ import type { ReactElement } from 'react'
 import { useTranslation } from 'react-i18next'
 import { HomeCard, HomeDetailList } from './home-card.js'
 import { SignOutButton } from '../session/sign-out-button.js'
+import { Link } from '@tanstack/react-router'
 
 /**
  * Tela inicial do administrador geral. Não mostra instituição nem papel porque essa
@@ -23,6 +24,7 @@ export function AdminHomeScreen({ user }: Readonly<{ user: Readonly<{ name: stri
           { label: t('home.scopeLabel'), value: t('home.admin-home.scope') },
         ]}
       />
+      <Link className="inline-flex min-h-tap-target items-center text-primary underline" to="/admin/institutions">{t('platform.institutions.title')}</Link>
     </HomeCard>
   )
 }

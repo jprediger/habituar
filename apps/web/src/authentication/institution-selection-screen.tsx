@@ -27,7 +27,7 @@ export function InstitutionSelectionScreen({
               }}
             >
               <span>{membership.institution.name}</span>
-              <span className="text-caption text-text-muted">{membership.role.name}</span>
+              <span className="text-caption text-text-muted">{membership.roles.map((role) => role.templateKey === null ? role.name : t(`roles.${role.templateKey}`)).join(", ")}</span>
             </Button>
           </li>
         ))}

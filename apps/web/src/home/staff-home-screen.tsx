@@ -4,6 +4,7 @@ import { getHomeDescriptionText, getHomeDestinationText } from './home-messages.
 import { HomeCard, HomeDetailList } from './home-card.js'
 import type { InstitutionSession } from '../session/session-route.js'
 import { SignOutButton } from '../session/sign-out-button.js'
+import { InstitutionSwitcher } from '../session/institution-switcher.js'
 
 /**
  * Tela inicial de quem atende fora do ambiente profissional — hoje, só o monitor. Quando
@@ -16,13 +17,13 @@ export function StaffHomeScreen({ session }: Readonly<{ session: InstitutionSess
     <HomeCard
       title={getHomeDestinationText(session.destination, t)}
       description={getHomeDescriptionText(session.destination, t)}
-      footer={<SignOutButton />}
+      footer={<><InstitutionSwitcher /><SignOutButton /></>}
     >
       <p className="text-body">{t('home.signedInAs', { name: session.user.name })}</p>
       <HomeDetailList
         items={[
           { label: t('home.institutionLabel'), value: session.membership.institution.name },
-          { label: t('home.roleLabel'), value: session.membership.role.name },
+          { label: t('home.roleLabel'), value: session.membership.roles.map((role) => role.templateKey === null ? role.name : t(`roles.${role.templateKey}`)).join(", ") },
         ]}
       />
     </HomeCard>

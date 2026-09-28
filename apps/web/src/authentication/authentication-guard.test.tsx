@@ -1,16 +1,16 @@
 import { authenticationContextSchema } from '@habituar/core/auth/context'
 import { getHomeDestination } from '@habituar/core/home-destination'
-import type { RoleEnvironment } from '@habituar/core/roles'
+import type { MembershipEnvironment } from '@habituar/core/roles'
 import type { AuthenticationState } from '@habituar/react-client/react-client'
 import { describe, expect, it } from 'vitest'
 import { getWebAuthenticationGuard } from './authentication-guard.js'
 
-function createAuthenticatedState(environment: RoleEnvironment): AuthenticationState {
+function createAuthenticatedState(environment: MembershipEnvironment): AuthenticationState {
   const context = authenticationContextSchema.parse({
     user: { id: '20000000-0000-4000-8000-000000000001', email: 'person@example.com', name: 'Person' },
     memberships: [{
       institution: { id: '00000000-0000-4000-8000-000000000001', name: 'Institution' },
-      role: { id: '10000000-0000-4000-8000-000000000001', name: 'Role', environment },
+      environment, roles: [{ id: '10000000-0000-4000-8000-000000000001', name: 'Role', templateKey: null }],
       permissions: [],
     }],
     isPlatformAdministrator: false,
@@ -33,12 +33,12 @@ describe('web authentication routes', () => {
       memberships: [
         {
           institution: { id: '00000000-0000-4000-8000-000000000001', name: 'First institution' },
-          role: { id: '10000000-0000-4000-8000-000000000001', name: 'First role', environment: 'student' },
+          environment: 'student', roles: [{ id: '10000000-0000-4000-8000-000000000001', name: 'First role', templateKey: null }],
           permissions: [],
         },
         {
           institution: { id: '00000000-0000-4000-8000-000000000002', name: 'Second institution' },
-          role: { id: '10000000-0000-4000-8000-000000000002', name: 'Second role', environment: 'monitor' },
+          environment: 'monitor', roles: [{ id: '10000000-0000-4000-8000-000000000002', name: 'Second role', templateKey: null }],
           permissions: [],
         },
       ],

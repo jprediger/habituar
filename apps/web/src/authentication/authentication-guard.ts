@@ -11,6 +11,7 @@ export type WebAuthenticationRoute =
   | '/professional'
   | '/monitor'
   | '/admin'
+  | '/awaiting-invitation'
 
 // Rotas que existem justamente para quem ainda não tem sessão: negar acesso a elas
 // deixaria o visitante sem caminho de entrada.
@@ -27,7 +28,10 @@ export type WebAuthenticationGuard =
  * rota exata: uma tela nova dentro de um ambiente herda a regra sem precisar ser listada.
  */
 export function getWebAuthenticationGuard(state: AuthenticationState, pathname: string): WebAuthenticationGuard {
+  if (pathname.startsWith('/invite/')) return { action: 'render' }
   switch (state.status) {
+    case 'awaiting-invitation':
+      return pathname === '/awaiting-invitation' ? { action: 'render' } : { action: 'redirect', route: '/awaiting-invitation' }
     case 'restoring':
     case 'authenticating':
       return { action: 'block' }
@@ -60,7 +64,8 @@ function isWithinRoute(pathname: string, route: WebAuthenticationRoute): boolean
   return normalizedPathname === route || normalizedPathname.startsWith(`${route}/`)
 }
 
-function getDestinationPath(destination: HomeDestination): WebAuthenticationRoute {
+/** Única tradução de destino de sessão em rota web; quem redireciona depois do login usa esta. */
+export function getDestinationPath(destination: HomeDestination): WebAuthenticationRoute {
   switch (destination) {
     case 'student-home':
       return '/student'

@@ -19,6 +19,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../com
 import { ProfessionalSidebar } from './professional-sidebar.js'
 import type { InstitutionSession } from '../session/session-route.js'
 import { ThemeToggle } from '../theme/theme-toggle.js'
+import { InstitutionSwitcher } from '../session/institution-switcher.js'
 
 const MAIN_CONTENT_ID = 'main-content'
 // Ações do cabeçalho: caixa de controle com a mesma borda e altura da busca, para a fileira
@@ -65,6 +66,7 @@ export function ProfessionalShell({
                 </div>
 
                 <div className="flex shrink-0 items-center gap-md">
+                  <InstitutionSwitcher />
                   <div className="hidden w-[16rem] md:block lg:w-[20rem]">
                     <SearchPlaceholder />
                   </div>

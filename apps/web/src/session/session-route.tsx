@@ -30,7 +30,7 @@ export function SessionRoute({
 
   if (state.status === 'failed') {
     return (
-      <CenteredPage title={t('authentication.failure.no-membershipsTitle')}>
+      <CenteredPage title={t('authentication.failure.forbiddenTitle')}>
         <p role="alert" className="text-body">
           {getAuthenticationFailureText(state.failure, t)}
         </p>

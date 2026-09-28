@@ -28,7 +28,7 @@ export function ProfessionalHomeScreen(): ReactElement {
         <SummaryCards
           items={[
             { label: t('home.institutionLabel'), value: session.membership.institution.name },
-            { label: t('home.roleLabel'), value: session.membership.role.name },
+            { label: t('home.roleLabel'), value: session.membership.roles.map((role) => role.templateKey === null ? role.name : t(`roles.${role.templateKey}`)).join(", ") },
           ]}
         />
       </Section>

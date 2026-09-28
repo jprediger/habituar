@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common'
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core'
-import { DatabaseModule } from '../database/database.module.js'
+import { AuthenticationModule } from '../authentication/authentication.module.js'
 import { PlatformModule } from '../platform/platform.module.js'
 import { AuthenticationGuard } from './authentication.guard.js'
 import { TenantContextInterceptor } from './tenant-context.interceptor.js'
@@ -11,7 +11,7 @@ import { TenantContextInterceptor } from './tenant-context.interceptor.js'
  * autenticar — ver `TenantContextInterceptor`.
  */
 @Module({
-  imports: [DatabaseModule, PlatformModule],
+  imports: [AuthenticationModule, PlatformModule],
   providers: [
     { provide: APP_GUARD, useClass: AuthenticationGuard },
     { provide: APP_INTERCEPTOR, useClass: TenantContextInterceptor },

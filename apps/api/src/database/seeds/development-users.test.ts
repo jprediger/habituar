@@ -5,6 +5,7 @@ import { afterAll, beforeAll, describe, expect, inject, it } from 'vitest'
 import { environmentSchema } from '../../environment/environment.schema.js'
 import { hashPassword } from '../../authentication/password.js'
 import { RequestContext } from '../../platform/request-context.js'
+import { RbacRepository } from '../../rbac/rbac.repository.js'
 import { RbacService } from '../../rbac/rbac.service.js'
 import { Database, TenantContext } from '../database.js'
 import { students, users } from '../schema.js'
@@ -30,7 +31,7 @@ describe('usuários de desenvolvimento', () => {
     DATABASE_URL: applicationUrl,
   })
   const database = new Database(new ConfigService(environment), new RequestContext())
-  const rbac = new RbacService(database)
+  const rbac = new RbacService(database, new RbacRepository())
 
   let seeded: SeededUsers
   let assignedStudentId: string

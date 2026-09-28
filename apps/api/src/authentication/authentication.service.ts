@@ -4,11 +4,10 @@ import { authenticationContextSchema } from '@habituar/core/auth/context'
 import { AuthenticationContext } from '@habituar/core/auth/context'
 import { Outcome } from '@habituar/core/failure'
 import { Injectable } from '@nestjs/common'
-import { eq } from 'drizzle-orm'
 import { Database, DatabaseTransaction } from '../database/database.js'
-import { institutions, memberships, membershipRoles, rolePermissions, roles, sessions, users } from '../database/schema.js'
 import { CryptoIdGenerator } from '../platform/id-generator.js'
 import { Clock } from '../platform/clock.js'
+import { AuthenticationRepository } from './authentication.repository.js'
 import { hashPassword, verifyPassword } from './password.js'
 import { hashSessionToken } from './session-token.js'
 import { SYSTEM_TENANT_CONTEXT } from './system-tenant-context.js'
@@ -36,24 +35,20 @@ function toAuthenticatedUser(user: { id: string; email: string; name: string }):
 export class AuthenticationService {
   constructor(
     private readonly database: Database,
+    private readonly authentication: AuthenticationRepository,
     private readonly idGenerator: CryptoIdGenerator,
     private readonly clock: Clock,
   ) {}
 
   async register(input: RegisterInput): Promise<Outcome<AuthenticatedUser>> {
     return this.database.withTenantOutsideRequest(SYSTEM_TENANT_CONTEXT, async (transaction) => {
-      const existing = await transaction.query.users.findFirst({ where: eq(users.email, input.email) })
+      const existing = await this.authentication.findUserByEmail(transaction, input.email)
       if (existing !== undefined) {
         return { status: 'failure', failure: { code: 'conflict', message: 'Email is already in use.' } }
       }
 
       const passwordHash = await hashPassword(input.password)
-      const [user] = await transaction
-        .insert(users)
-        .values({ email: input.email, passwordHash, name: input.name })
-        .returning()
-
-      if (user === undefined) throw new Error('Insert into users returned no row')
+      const user = await this.authentication.createUser(transaction, { email: input.email, passwordHash, name: input.name })
 
       return { status: 'success', value: toAuthenticatedUser(user) }
     })
@@ -61,7 +56,7 @@ export class AuthenticationService {
 
   async login(input: LoginInput): Promise<Outcome<SessionIssued>> {
     return this.database.withTenantOutsideRequest(SYSTEM_TENANT_CONTEXT, async (transaction) => {
-      const user = await transaction.query.users.findFirst({ where: eq(users.email, input.email) })
+      const user = await this.authentication.findUserByEmail(transaction, input.email)
       if (user === undefined) {
         return { status: 'failure', failure: { code: 'unauthenticated', message: 'Invalid credentials.' } }
       }
@@ -81,43 +76,42 @@ export class AuthenticationService {
   /** Emite a sessão na transação do fluxo chamador para tornar o aceite e a identidade atômicos. */
   async issueSession(transaction: DatabaseTransaction, user: { id: string; email: string; name: string }): Promise<SessionIssued> {
     const sessionToken = this.idGenerator.generate()
-    await transaction.insert(sessions).values({ id: hashSessionToken(sessionToken), userId: user.id, expiresAt: this.clock.after(SESSION_TTL_MS) })
+    await this.authentication.createSession(transaction, { id: hashSessionToken(sessionToken), userId: user.id, expiresAt: this.clock.after(SESSION_TTL_MS) })
     return { user: toAuthenticatedUser(user), sessionToken }
   }
 
   async logout(sessionId: string): Promise<Outcome<{ readonly ok: true }>> {
     return this.database.withTenantOutsideRequest(SYSTEM_TENANT_CONTEXT, async (transaction) => {
-      await transaction.delete(sessions).where(eq(sessions.id, sessionId))
+      await this.authentication.deleteSession(transaction, sessionId)
       return { status: 'success', value: { ok: true } }
+    })
+  }
+
+  /** Troca o token apresentado pelo ator da sessão; sessão expirada ou órfã é ausência de ator, não erro. */
+  async resolveActor(token: string): Promise<AuthenticatedActor | undefined> {
+    const sessionId = hashSessionToken(token)
+    return this.database.withTenantOutsideRequest(SYSTEM_TENANT_CONTEXT, async (transaction) => {
+      const session = await this.authentication.findSession(transaction, sessionId)
+      if (session === undefined || session.expiresAt.getTime() < this.clock.now().getTime()) return undefined
+
+      const user = await this.authentication.findUserById(transaction, session.userId)
+      if (user === undefined) return undefined
+
+      // Expiração deslizante: cada requisição autenticada estende os 30 dias.
+      await this.authentication.extendSession(transaction, sessionId, this.clock.after(SESSION_TTL_MS))
+      return { userId: user.id, sessionId: session.id }
     })
   }
 
   /** Resolve somente a identidade e os vínculos do ator já autenticado. */
   async getContext(actor: AuthenticatedActor): Promise<Outcome<AuthenticationContext>> {
     return this.database.withIdentity({ actorId: actor.userId, sessionId: actor.sessionId }, async (transaction) => {
-      const user = await transaction.query.users.findFirst({ where: eq(users.id, actor.userId) })
+      const user = await this.authentication.findUserById(transaction, actor.userId)
       if (user === undefined) {
         return { status: 'failure', failure: { code: 'unauthenticated', message: 'Session user no longer exists.' } }
       }
 
-      const rows = await transaction
-        .select({
-          membershipId: memberships.id,
-          institutionId: institutions.id,
-          institutionName: institutions.name,
-          roleId: roles.id,
-          roleName: roles.name,
-          environment: memberships.environment,
-          templateKey: roles.templateKey,
-          permissionKey: rolePermissions.permissionKey,
-          permissionScope: rolePermissions.scope,
-        })
-        .from(memberships)
-        .innerJoin(institutions, eq(institutions.id, memberships.institutionId))
-        .leftJoin(membershipRoles, eq(membershipRoles.membershipId, memberships.id))
-        .leftJoin(roles, eq(roles.id, membershipRoles.roleId))
-        .leftJoin(rolePermissions, eq(rolePermissions.roleId, roles.id))
-        .where(eq(memberships.userId, actor.userId))
+      const rows = await this.authentication.listMembershipGrants(transaction, actor.userId)
 
       const membershipsById = new Map<string, {
         institution: { id: string; name: string }

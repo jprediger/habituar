@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common'
 import { APP_GUARD } from '@nestjs/core'
 import { DatabaseModule } from '../database/database.module.js'
 import { PermissionGuard } from './permission.guard.js'
+import { RbacRepository } from './rbac.repository.js'
 import { RbacService } from './rbac.service.js'
 
 /**
@@ -11,7 +12,7 @@ import { RbacService } from './rbac.service.js'
  */
 @Module({
   imports: [DatabaseModule],
-  providers: [RbacService, PermissionGuard, { provide: APP_GUARD, useClass: PermissionGuard }],
+  providers: [RbacService, RbacRepository, PermissionGuard, { provide: APP_GUARD, useClass: PermissionGuard }],
   exports: [RbacService],
 })
 export class RbacModule {}

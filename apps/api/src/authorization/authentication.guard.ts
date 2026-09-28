@@ -1,14 +1,9 @@
 import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common'
 import { Reflector } from '@nestjs/core'
-import { eq } from 'drizzle-orm'
 import { IncomingMessage } from 'node:http'
-import { hashSessionToken } from '../authentication/session-token.js'
-import { SYSTEM_TENANT_CONTEXT } from '../authentication/system-tenant-context.js'
-import { Database } from '../database/database.js'
-import { sessions, users } from '../database/schema.js'
+import { AuthenticationService } from '../authentication/authentication.service.js'
 import { IS_PUBLIC_ROUTE } from './public-route.decorator.js'
 
-const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000
 const SESSION_COOKIE_NAME = 'session'
 
 export type Actor = Readonly<{ userId: string; sessionId: string }>
@@ -20,8 +15,8 @@ export type AuthenticatedRequest = IncomingMessage & {
 }
 
 /**
- * Nega toda rota por padrão; libera só `@PublicRoute()`. Para o restante, valida o
- * token de sessão contra `sessions`/`users` — tabelas globais, fora de RLS — e publica
+ * Nega toda rota por padrão; libera só `@PublicRoute()`. Para o restante, delega a validação do
+ * token de sessão ao `AuthenticationService`, dono de `sessions`/`users`, e publica
  * o ator autenticado em `request.actor`. Não instala o tenant no `RequestContext`: essa
  * é responsabilidade do `TenantContextInterceptor`, que roda depois e sabe a
  * instituição da rota (guard não tem acesso ao resultado de outros guards).
@@ -33,7 +28,7 @@ export type AuthenticatedRequest = IncomingMessage & {
 export class AuthenticationGuard implements CanActivate {
   constructor(
     private readonly reflector: Reflector,
-    private readonly database: Database,
+    private readonly authentication: AuthenticationService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -47,31 +42,11 @@ export class AuthenticationGuard implements CanActivate {
     const token = extractSessionToken(request)
     if (token === undefined) throw new UnauthorizedException()
 
-    const actor = await this.resolveActor(token)
+    const actor = await this.authentication.resolveActor(token)
     if (actor === undefined) throw new UnauthorizedException()
 
     request.actor = actor
     return true
-  }
-
-  private async resolveActor(token: string): Promise<Actor | undefined> {
-    const sessionId = hashSessionToken(token)
-
-    return this.database.withTenantOutsideRequest(SYSTEM_TENANT_CONTEXT, async (transaction) => {
-      const session = await transaction.query.sessions.findFirst({ where: eq(sessions.id, sessionId) })
-      if (session === undefined || session.expiresAt.getTime() < Date.now()) return undefined
-
-      const user = await transaction.query.users.findFirst({ where: eq(users.id, session.userId) })
-      if (user === undefined) return undefined
-
-      // Expiração deslizante: cada requisição autenticada estende os 30 dias.
-      await transaction
-        .update(sessions)
-        .set({ expiresAt: new Date(Date.now() + SESSION_TTL_MS) })
-        .where(eq(sessions.id, sessionId))
-
-      return { userId: user.id, sessionId: session.id }
-    })
   }
 }
 

@@ -4,14 +4,18 @@ import { ConfigService } from '@nestjs/config'
 import { sql } from 'drizzle-orm'
 import { Pool } from 'pg'
 import { afterAll, beforeAll, describe, expect, inject, it } from 'vitest'
+import { AuthenticationRepository } from '../authentication/authentication.repository.js'
 import { AuthenticationService } from '../authentication/authentication.service.js'
-import { Database } from './database.js'
+import { Database } from '../database/database.js'
 import { Environment, environmentSchema } from '../environment/environment.schema.js'
 import { Clock } from '../platform/clock.js'
 import { createDisabledEmailSender } from '../platform/email-sender.js'
 import { CryptoIdGenerator } from '../platform/id-generator.js'
 import { RequestContext } from '../platform/request-context.js'
-import { InvitationsService } from '../invitations/invitations.service.js'
+import { InstitutionsRepository } from '../institutions/institutions.repository.js'
+import { InstitutionsService } from '../institutions/institutions.service.js'
+import { InvitationsRepository } from './invitations.repository.js'
+import { InvitationsService } from './invitations.service.js'
 
 const actorId = 'a1000000-0000-4000-8000-000000000001'
 const recipientId = 'a1000000-0000-4000-8000-000000000002'
@@ -38,8 +42,8 @@ describe('convites vinculados à instituição', () => {
   const database = new Database(config, context)
   const ids = new CryptoIdGenerator()
   const clock = new Clock()
-  const authentication = new AuthenticationService(database, ids, clock)
-  const service = new InvitationsService(database, authentication, ids, clock, createDisabledEmailSender(), config)
+  const authentication = new AuthenticationService(database, new AuthenticationRepository(), ids, clock)
+  const service = new InvitationsService(database, new InvitationsRepository(), new InstitutionsService(database, new InstitutionsRepository(), ids, clock), authentication, ids, clock, createDisabledEmailSender(), config)
 
   beforeAll(async () => {
     await ownerPool.query('insert into institutions (id, name) values ($1, $2), ($3, $4)', [institutionA, 'Invite A', institutionB, 'Invite B'])

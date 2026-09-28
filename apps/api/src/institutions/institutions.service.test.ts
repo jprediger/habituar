@@ -6,6 +6,7 @@ import { environmentSchema } from '../environment/environment.schema.js'
 import { Clock } from '../platform/clock.js'
 import { CryptoIdGenerator } from '../platform/id-generator.js'
 import { RequestContext } from '../platform/request-context.js'
+import { InstitutionsRepository } from './institutions.repository.js'
 import { InstitutionsService } from './institutions.service.js'
 
 const DOCUMENT_NUMBER = '52998224725'
@@ -23,7 +24,7 @@ describe('provisionamento institucional', () => {
   const { applicationUrl } = inject('databaseUrls')
   const environment = environmentSchema.parse({ NODE_ENV: 'test', APP_VERSION: '0.0.0-test', DATABASE_URL: applicationUrl })
   const database = new Database(new ConfigService(environment), new RequestContext())
-  const service = new InstitutionsService(database, new CryptoIdGenerator(), new Clock())
+  const service = new InstitutionsService(database, new InstitutionsRepository(), new CryptoIdGenerator(), new Clock())
 
   afterAll(async () => {
     await database.onApplicationShutdown()

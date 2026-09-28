@@ -2,9 +2,10 @@ import { ConfigService } from '@nestjs/config'
 import { describe, expect, inject, it, afterAll, beforeAll } from 'vitest'
 import { environmentSchema } from '../environment/environment.schema.js'
 import { RequestContext } from '../platform/request-context.js'
-import { RbacService } from '../rbac/rbac.service.js'
-import { Database } from './database.js'
-import { institutions, membershipRoles, memberships, permissions, rolePermissions, roles, students, users } from './schema.js'
+import { RbacRepository } from './rbac.repository.js'
+import { RbacService } from './rbac.service.js'
+import { Database } from '../database/database.js'
+import { institutions, membershipRoles, memberships, permissions, rolePermissions, roles, students, users } from '../database/schema.js'
 
 const institutionId = 'b1000000-0000-4000-8000-000000000001'
 const actorId = 'b2000000-0000-4000-8000-000000000001'
@@ -19,7 +20,7 @@ describe('alcance da permissão do aluno', () => {
   const { applicationUrl } = inject('databaseUrls')
   const environment = environmentSchema.parse({ NODE_ENV: 'test', APP_VERSION: '0.0.0-test', DATABASE_URL: applicationUrl })
   const database = new Database(new ConfigService(environment), new RequestContext())
-  const rbac = new RbacService(database)
+  const rbac = new RbacService(database, new RbacRepository())
 
   beforeAll(async () => {
     await database.withTenantOutsideRequest({ institutionId, actorId, sessionId: actor.sessionId }, async transaction => {

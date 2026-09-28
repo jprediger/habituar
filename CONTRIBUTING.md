@@ -19,8 +19,6 @@ fix/rls-leak-on-report-query
 chore/upgrade-expo-sdk
 ```
 
-Branch sai de `main` e volta por PR. Ninguém commita direto em `main`.
-
 ## Commits — Conventional Commits
 
 Formato obrigatório:

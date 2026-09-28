@@ -3,7 +3,6 @@ import { Redirect } from 'expo-router'
 import type { ReactElement } from 'react'
 import type { MobileAuthenticationRoute } from '../authentication/authentication-guard'
 import { habituar } from '../client/habituar-client'
-import { SessionLoadingScreen } from './session-loading-screen'
 
 /** Sessão nascida de um vínculo institucional, a única que tem instituição e papel. */
 export type InstitutionSession = Extract<ActiveSession, { kind: 'institution' }>
@@ -19,9 +18,9 @@ export function SessionScreen({
 
   if (state.status === 'authenticated') return children(state.session)
 
-  // Estado que não seja `authenticated` só chega aqui no intervalo entre o guard decidir
-  // e o Redirect acontecer; mostrar a espera é mais honesto do que uma tela vazia.
-  return <SessionLoadingScreen />
+  // Estado que não seja `authenticated` só chega aqui no intervalo de um quadro entre o
+  // guard decidir e o Redirect acontecer; anunciar uma espera nesse quadro só pisca.
+  return null
 }
 
 /**

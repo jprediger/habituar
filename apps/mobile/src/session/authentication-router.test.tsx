@@ -7,6 +7,7 @@ import { AuthenticationRouter } from './authentication-router'
 const ROUTE_CONTENT = 'conteúdo da rota'
 
 const mockRoute: { pathname: string } = { pathname: '/login' }
+const mockHideSplash = jest.fn()
 const mockAuthentication: { state: AuthenticationState } = { state: { status: 'unauthenticated' } }
 
 jest.mock('expo-router', () => {
@@ -21,6 +22,14 @@ jest.mock('expo-router', () => {
   }
 })
 
+// Referência preguiçosa: a fábrica é içada acima do `const`, que ainda estaria na zona
+// morta se fosse lido na criação do mock.
+jest.mock('expo-splash-screen', () => ({
+  hideAsync: () => {
+    mockHideSplash()
+  },
+}))
+
 jest.mock('../client/habituar-client', () => ({
   habituar: { useAuthentication: () => mockAuthentication },
 }))
@@ -28,6 +37,7 @@ jest.mock('../client/habituar-client', () => ({
 beforeEach(() => {
   mockRoute.pathname = '/login'
   mockAuthentication.state = { status: 'unauthenticated' }
+  jest.clearAllMocks()
 })
 
 describe('authentication router', () => {
@@ -53,6 +63,12 @@ describe('authentication router', () => {
     render(<AuthenticationRouter />)
 
     expect(screen.queryByText(ROUTE_CONTENT)).toBeNull()
-    expect(screen.getByText('Verificando sua sessão...')).toBeOnTheScreen()
+    expect(mockHideSplash).not.toHaveBeenCalled()
+  })
+
+  it('lifts the splash once the session has been restored', () => {
+    render(<AuthenticationRouter />)
+
+    expect(mockHideSplash).toHaveBeenCalled()
   })
 })

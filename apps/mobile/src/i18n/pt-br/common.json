@@ -4,7 +4,6 @@
   "awaitingInvitation": { "title": "Aguardando convite", "description": "Sua conta está pronta. Peça um convite à pessoa responsável pela instituição para começar.", "guidance": "Abra o link do convite no navegador para aceitar.", "refresh": "Verificar meu acesso" },
   "platform": { "mobileNotice": "A administração das instituições está disponível na versão web. Acesse o Habituar pelo navegador." },
   "authentication": {
-    "loading": "Verificando sua sessão...",
     "brandName": "Habituar",
     "heroAlt": "Folhagem verde iluminada pelo sol",
     "login": {

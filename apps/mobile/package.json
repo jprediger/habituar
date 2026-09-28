@@ -8,6 +8,7 @@
     "start": "expo start",
     "dev": "expo start",
     "android": "expo start --android",
+    "android:build": "ANDROID_HOME=${ANDROID_HOME:-$HOME/Android/Sdk} expo run:android",
     "ios": "expo start --ios",
     "web": "expo start --web",
     "lint": "eslint .",

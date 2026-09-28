@@ -120,5 +120,9 @@ Lint, typecheck, testes e a checagem de acessibilidade precisam estar verdes. CI
 vermelho não se contorna com `--no-verify`: se a regra está errada, muda-se a regra em um
 PR próprio, com justificativa.
 
+O lint é type-aware e lê os tipos dos pacotes do workspace pelo `dist` publicado em
+`exports`, por isso a tarefa `lint` do Turbo depende do `build` das dependências. Sem isso,
+um entrypoint novo em `packages/*` aparece como tipo irresolvível em quem o consome.
+
 O formato dos commits é validado automaticamente. Commit fora do padrão é rejeitado no
 `commit-msg`, não no review.

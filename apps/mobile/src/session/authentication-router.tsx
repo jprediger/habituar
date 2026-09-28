@@ -1,5 +1,5 @@
 import { Redirect, Slot, usePathname } from 'expo-router'
-import { getMobileAuthenticationGuard } from './authentication-guard'
+import { getMobileAuthenticationGuard } from '../authentication/authentication-guard'
 import { habituar } from '../client/habituar-client'
 import { SessionLoadingScreen } from './session-loading-screen'
 

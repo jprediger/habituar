@@ -1,7 +1,7 @@
 import type { PropsWithChildren, ReactElement } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Card, CardContent, CardFooter, CardHeader } from './components/ui/card.js'
-import { ThemeToggle } from './theme-toggle.js'
+import { Card, CardContent, CardFooter, CardHeader } from '../components/ui/card.js'
+import { ThemeToggle } from '../theme/theme-toggle.js'
 
 /**
  * Moldura comum das telas de ambiente: card central, marca, título da rota e controle de

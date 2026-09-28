@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import type { ReactElement } from 'react'
-import { InstitutionSessionRoute } from '../session-route.js'
-import { StudentHomeScreen } from '../student-home-screen.js'
+import { InstitutionSessionRoute } from '../session/session-route.js'
+import { StudentHomeScreen } from '../home/student-home-screen.js'
 
 export const Route = createFileRoute('/student')({ component: StudentRoute })
 

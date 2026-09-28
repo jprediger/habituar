@@ -7,8 +7,8 @@ import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { Mock } from 'vitest'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { I18nProvider } from './providers/i18n-provider.js'
-import { expectNoSeriousA11yViolations } from './test/expect-no-a11y-violations.js'
+import { I18nProvider } from '../i18n/i18n-provider.js'
+import { expectNoSeriousA11yViolations } from '../test/expect-no-a11y-violations.js'
 
 // O cliente é a borda: o que está sob teste é a casca montada pelo roteador de verdade,
 // com rotas, guard e navegação reais, a partir de uma sessão já resolvida.
@@ -19,7 +19,7 @@ const client = vi.hoisted(
   }),
 )
 
-vi.mock('./habituar-client.js', () => ({
+vi.mock('../client/habituar-client.js', () => ({
   habituar: {
     useAuthentication: () => ({
       state: client.state,
@@ -28,7 +28,7 @@ vi.mock('./habituar-client.js', () => ({
   },
 }))
 
-const { routeTree } = await import('./route-tree.gen.js')
+const { routeTree } = await import('../route-tree.gen.js')
 
 function createAuthenticatedState(environment: RoleEnvironment): AuthenticationState {
   const context = authenticationContextSchema.parse({

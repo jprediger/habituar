@@ -1,8 +1,8 @@
 import { Navigate, createFileRoute } from '@tanstack/react-router'
 import type { ReactElement } from 'react'
-import { getWebAuthenticationGuard } from '../authentication-guard.js'
-import { habituar } from '../habituar-client.js'
-import { InstitutionSelectionScreen } from '../institution-selection-screen.js'
+import { getWebAuthenticationGuard } from '../authentication/authentication-guard.js'
+import { habituar } from '../client/habituar-client.js'
+import { InstitutionSelectionScreen } from '../authentication/institution-selection-screen.js'
 
 export const Route = createFileRoute('/select-institution')({ component: SelectInstitutionRoute })
 

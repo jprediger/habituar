@@ -1,9 +1,9 @@
 import { createRouter, RouterProvider } from '@tanstack/react-router'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import { habituar } from './habituar-client.js'
+import { habituar } from './client/habituar-client.js'
 import './index.css'
-import { I18nProvider } from './providers/i18n-provider.js'
+import { I18nProvider } from './i18n/i18n-provider.js'
 import { routeTree } from './route-tree.gen.js'
 
 const router = createRouter({ routeTree })

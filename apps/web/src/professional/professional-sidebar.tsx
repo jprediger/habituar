@@ -16,7 +16,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarMenuLabel,
-} from './components/ui/sidebar.js'
+} from '../components/ui/sidebar.js'
 
 /**
  * Navegação do ambiente profissional na web. Quais destinos existem e qual está ativo vêm

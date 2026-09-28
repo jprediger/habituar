@@ -9,9 +9,9 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from './components/ui/dropdown-menu.js'
-import { habituar } from './habituar-client.js'
-import type { InstitutionSession } from './session-route.js'
+} from '../components/ui/dropdown-menu.js'
+import { habituar } from '../client/habituar-client.js'
+import type { InstitutionSession } from '../session/session-route.js'
 
 /**
  * Menu da conta no topo do ambiente profissional: identifica quem está conectado e onde,

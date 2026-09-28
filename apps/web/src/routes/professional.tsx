@@ -1,8 +1,8 @@
 import { Outlet, createFileRoute, useLocation } from '@tanstack/react-router'
 import type { ReactElement } from 'react'
-import { ProfessionalSessionProvider } from '../professional-session.js'
-import { ProfessionalShell } from '../professional-shell.js'
-import { InstitutionSessionRoute } from '../session-route.js'
+import { ProfessionalSessionProvider } from '../professional/professional-session.js'
+import { ProfessionalShell } from '../professional/professional-shell.js'
+import { InstitutionSessionRoute } from '../session/session-route.js'
 
 export const Route = createFileRoute('/professional')({ component: ProfessionalLayoutRoute })
 

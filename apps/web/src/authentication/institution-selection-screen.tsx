@@ -1,9 +1,9 @@
 import type { MembershipContext } from '@habituar/react-client/react-client'
 import type { ReactElement } from 'react'
 import { useTranslation } from 'react-i18next'
-import { CenteredPage } from './components/ui/centered-page.js'
-import { Button } from './components/ui/button.js'
-import { habituar } from './habituar-client.js'
+import { CenteredPage } from '../components/ui/centered-page.js'
+import { Button } from '../components/ui/button.js'
+import { habituar } from '../client/habituar-client.js'
 
 /** Escolha do vínculo ativo quando a conta tem mais de um; não decide destino algum. */
 export function InstitutionSelectionScreen({

@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import type { ReactElement } from 'react'
-import { InstitutionSessionRoute } from '../session-route.js'
-import { StaffHomeScreen } from '../staff-home-screen.js'
+import { InstitutionSessionRoute } from '../session/session-route.js'
+import { StaffHomeScreen } from '../home/staff-home-screen.js'
 
 export const Route = createFileRoute('/monitor')({ component: MonitorRoute })
 

@@ -1,10 +1,10 @@
 import type { ReactElement } from 'react'
 import { useTranslation } from 'react-i18next'
-import { PageHeader } from './components/ui/page-header.js'
-import { Section } from './components/ui/section.js'
-import { SummaryCards } from './components/ui/summary-cards.js'
+import { PageHeader } from '../components/ui/page-header.js'
+import { Section } from '../components/ui/section.js'
+import { SummaryCards } from '../components/ui/summary-cards.js'
 import { useProfessionalSession } from './professional-session.js'
-import { SignOutButton } from './sign-out-button.js'
+import { SignOutButton } from '../session/sign-out-button.js'
 
 /**
  * Perfil do profissional: dados da conta, vínculo em uso e o encerramento da sessão. Não

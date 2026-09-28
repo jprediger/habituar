@@ -2,10 +2,10 @@ import type { ActiveSession } from '@habituar/react-client/react-client'
 import { Navigate } from '@tanstack/react-router'
 import type { ReactElement } from 'react'
 import { useTranslation } from 'react-i18next'
-import { CenteredPage } from './components/ui/centered-page.js'
-import { getWebAuthenticationGuard } from './authentication-guard.js'
-import { getAuthenticationFailureText } from './authentication-messages.js'
-import { habituar } from './habituar-client.js'
+import { CenteredPage } from '../components/ui/centered-page.js'
+import { getWebAuthenticationGuard } from '../authentication/authentication-guard.js'
+import { getAuthenticationFailureText } from '../authentication/authentication-failure-messages.js'
+import { habituar } from '../client/habituar-client.js'
 
 /** Sessão nascida de um vínculo institucional, a única que tem instituição e papel. */
 export type InstitutionSession = Extract<ActiveSession, { kind: 'institution' }>

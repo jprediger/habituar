@@ -1,10 +1,10 @@
 import { CalendarDays, UsersRound } from 'lucide-react'
 import type { ReactElement } from 'react'
 import { useTranslation } from 'react-i18next'
-import { EmptyState } from './components/ui/empty-state.js'
-import { PageHeader } from './components/ui/page-header.js'
-import { Section } from './components/ui/section.js'
-import { SummaryCards } from './components/ui/summary-cards.js'
+import { EmptyState } from '../components/ui/empty-state.js'
+import { PageHeader } from '../components/ui/page-header.js'
+import { Section } from '../components/ui/section.js'
+import { SummaryCards } from '../components/ui/summary-cards.js'
 import { useProfessionalSession } from './professional-session.js'
 
 /**

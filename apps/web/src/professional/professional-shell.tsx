@@ -13,12 +13,12 @@ import {
   BreadcrumbLink,
   BreadcrumbPage,
   BreadcrumbSeparator,
-} from './components/ui/breadcrumb.js'
-import { SidebarMobileTrigger, SidebarProvider } from './components/ui/sidebar.js'
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './components/ui/tooltip.js'
+} from '../components/ui/breadcrumb.js'
+import { SidebarMobileTrigger, SidebarProvider } from '../components/ui/sidebar.js'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../components/ui/tooltip.js'
 import { ProfessionalSidebar } from './professional-sidebar.js'
-import type { InstitutionSession } from './session-route.js'
-import { ThemeToggle } from './theme-toggle.js'
+import type { InstitutionSession } from '../session/session-route.js'
+import { ThemeToggle } from '../theme/theme-toggle.js'
 
 const MAIN_CONTENT_ID = 'main-content'
 // Ações do cabeçalho: caixa de controle com a mesma borda e altura da busca, para a fileira

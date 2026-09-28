@@ -1,7 +1,7 @@
 import type { ReactElement } from 'react'
 import { useTranslation } from 'react-i18next'
 import { HomeCard, HomeDetailList } from './home-card.js'
-import { SignOutButton } from './sign-out-button.js'
+import { SignOutButton } from '../session/sign-out-button.js'
 
 /**
  * Tela inicial do administrador geral. Não mostra instituição nem papel porque essa

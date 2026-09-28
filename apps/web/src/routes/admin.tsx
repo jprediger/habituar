@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import type { ReactElement } from 'react'
-import { AdminHomeScreen } from '../admin-home-screen.js'
-import { SessionRoute } from '../session-route.js'
+import { AdminHomeScreen } from '../home/admin-home-screen.js'
+import { SessionRoute } from '../session/session-route.js'
 
 export const Route = createFileRoute('/admin')({ component: AdminRoute })
 

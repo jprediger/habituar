@@ -1,6 +1,6 @@
 import type { PropsWithChildren, ReactElement } from 'react'
 import { createContext, useContext } from 'react'
-import type { InstitutionSession } from './session-route.js'
+import type { InstitutionSession } from '../session/session-route.js'
 
 const ProfessionalSessionContext = createContext<InstitutionSession | undefined>(undefined)
 

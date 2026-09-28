@@ -1,6 +1,6 @@
 import type { ReactElement } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Button } from './components/ui/button.js'
+import { Button } from '../components/ui/button.js'
 import { useThemePreference } from './use-theme-preference.js'
 
 /** Controle de tema claro/escuro das telas internas; não sabe qual tela o contém. */

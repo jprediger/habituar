@@ -16,7 +16,7 @@ vi.mock('@tanstack/react-router', () => ({
 const state = vi.hoisted((): { current: AuthenticationState } => ({ current: { status: 'unauthenticated' } }))
 const login = vi.hoisted(() => vi.fn(() => Promise.resolve()))
 
-vi.mock('../habituar-client.js', () => ({
+vi.mock('../client/habituar-client.js', () => ({
   habituar: {
     useAuthentication: () => ({ state: state.current, actions: { login } }),
   },

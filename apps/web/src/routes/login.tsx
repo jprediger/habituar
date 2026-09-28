@@ -1,4 +1,3 @@
-import { loginInputSchema } from '@habituar/core/auth/schema'
 import { Link, Navigate, createFileRoute } from '@tanstack/react-router'
 import type { ReactElement } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -12,7 +11,7 @@ import { Input } from '../components/ui/input.js'
 import { PasswordInput } from '../components/ui/password-input.js'
 import { getFieldErrorText } from '../form-messages.js'
 import { habituar } from '../habituar-client.js'
-import { useValidatedForm } from '@habituar/react-client/form'
+import { useLoginForm } from '@habituar/react-client/login-form'
 
 export const Route = createFileRoute('/login')({
   component: LoginRoute,
@@ -23,30 +22,33 @@ const FAILURE_ID = 'login-failure'
 /** Tela de entrada: só autentica quem já tem conta. Criar conta é a rota `/register`. */
 export function LoginRoute(): ReactElement {
   const { t } = useTranslation()
-  const { state, actions } = habituar.useAuthentication()
-  const form = useValidatedForm(loginInputSchema, { email: '', password: '' })
+  const authentication = habituar.useAuthentication()
+  const form = useLoginForm(authentication)
 
   const email = form.getField('email')
   const password = form.getField('password')
 
-  const submit = form.handleSubmit(() => {
-    void actions.login({ email: email.value, password: password.value })
-  })
-
-  const guard = getWebAuthenticationGuard(state, '/login')
+  const guard = getWebAuthenticationGuard(authentication.state, '/login')
 
   // Sessão pronta não pertence mais a esta tela: o destino é decidido pelo guard, em vez
   // de o usuário ficar preso em `/login` lendo uma mensagem de sucesso.
   if (guard.action === 'redirect') return <Navigate to={guard.route} replace />
-
-  const isSubmitting = state.status === 'authenticating'
 
   return (
     <AuthenticationCard
       title={t('authentication.login.heading')}
       hero={{ src: authenticationHeroUrl, alt: t('authentication.heroAlt') }}
     >
-      <form onSubmit={submit} noValidate className="flex flex-col gap-md">
+      {/* O evento é do formulário HTML, não do hook: `submit()` do hook não recebe evento
+          porque no nativo o envio nasce de um toque. */}
+      <form
+        onSubmit={(event) => {
+          event.preventDefault()
+          form.submit()
+        }}
+        noValidate
+        className="flex flex-col gap-md"
+      >
         <p className="text-body text-text-muted">{t('authentication.login.description')}</p>
 
         <FormField
@@ -100,16 +102,16 @@ export function LoginRoute(): ReactElement {
           )}
         </FormField>
 
-        {state.status === 'failed' && (
+        {form.failure !== undefined && (
           <p id={FAILURE_ID} role="alert" className="text-caption text-danger">
-            {getAuthenticationFailureText(state.failure, t)}
+            {getAuthenticationFailureText(form.failure, t)}
           </p>
         )}
 
         {/* Respiro maior antes da ação: o botão encerra o formulário, não é mais um campo. */}
-        <Button type="submit" disabled={isSubmitting} className="mt-lg">
+        <Button type="submit" disabled={form.isSubmitting} className="mt-lg">
           <SignInIcon />
-          {isSubmitting ? t('authentication.login.submitting') : t('authentication.login.submit')}
+          {form.isSubmitting ? t('authentication.login.submitting') : t('authentication.login.submit')}
         </Button>
       </form>
 

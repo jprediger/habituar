@@ -73,6 +73,10 @@ versionamento segue [SemVer](https://semver.org/lang/pt-BR/).
   continuam fora.
 
 ### Alterado
+- `[web]` A mensagem de credencial recusada sai da tela assim que a pessoa corrige o e-mail
+  ou a senha, em vez de continuar acusando o erro durante a correção. O mobile já se
+  comportava assim; agora a decisão mora num hook compartilhado e as duas plataformas não
+  podem divergir de novo.
 - `[api]` A borda HTTP responde toda falha — declarada no contrato, rota negada pelo guard
   ou rota inexistente — com o mesmo envelope de erro do oRPC; só a exceção inesperada foge
   do catálogo, e continua oculta atrás de um `correlationId`. Antes, só a exceção não

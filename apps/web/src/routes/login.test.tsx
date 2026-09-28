@@ -1,7 +1,7 @@
 import { authenticationContextSchema } from '@habituar/core/auth/context'
 import { getHomeDestination } from '@habituar/core/home-destination'
 import type { AuthenticationState } from '@habituar/react-client/react-client'
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import type { ReactElement, ReactNode } from 'react'
 import { describe, expect, it, vi } from 'vitest'
 
@@ -14,10 +14,11 @@ vi.mock('@tanstack/react-router', () => ({
 }))
 
 const state = vi.hoisted((): { current: AuthenticationState } => ({ current: { status: 'unauthenticated' } }))
+const login = vi.hoisted(() => vi.fn(() => Promise.resolve()))
 
 vi.mock('../habituar-client.js', () => ({
   habituar: {
-    useAuthentication: () => ({ state: state.current, actions: { login: vi.fn() } }),
+    useAuthentication: () => ({ state: state.current, actions: { login } }),
   },
 }))
 
@@ -82,5 +83,35 @@ describe('login route', () => {
     render(<LoginRoute />)
 
     expect(screen.getByLabelText(/authentication.login.emailLabel/)).toBeInTheDocument()
+  })
+
+  it('keeps the form on screen when the credentials are refused', () => {
+    state.current = { status: 'failed', failure: 'invalid-credentials' }
+
+    render(<LoginRoute />)
+
+    expect(screen.getByRole('alert')).toHaveTextContent('authentication.failure.invalid-credentials')
+    expect(screen.getByLabelText(/authentication.login.emailLabel/)).toBeInTheDocument()
+  })
+
+  it('stops blaming the credentials once the person corrects them', () => {
+    state.current = { status: 'unauthenticated' }
+
+    render(<LoginRoute />)
+
+    fireEvent.change(screen.getByLabelText(/authentication.login.emailLabel/), {
+      target: { value: 'person@example.com' },
+    })
+    fireEvent.change(screen.getByLabelText(/authentication.login.passwordLabel/), {
+      target: { value: 'wrong-secret' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: /authentication.login.submit/ }))
+
+    state.current = { status: 'failed', failure: 'invalid-credentials' }
+    fireEvent.change(screen.getByLabelText(/authentication.login.passwordLabel/), {
+      target: { value: 'wrong-secre' },
+    })
+
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
   })
 })

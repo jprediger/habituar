@@ -24,4 +24,7 @@ overrides:
   # 57 suporta, e `@react-native/community-cli-plugin` exige o metro-config da própria
   # versão do React Native. Sem estes pinos, o install resolve 0.12.x e 0.87.x.
   react-native-worklets: 0.10.1
+  # Peer opcional `*` do expo-router: sem pino, o install puxa a última versão, que exige um
+  # worklets acima do fixado acima e quebra o build nativo. 4.5.1 é o par do SDK 57.
+  react-native-reanimated: 4.5.1
   "@react-native/metro-config": 0.86.3

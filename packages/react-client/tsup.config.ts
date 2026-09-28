@@ -7,7 +7,7 @@ export default defineConfig({
     'react-client': 'src/react-client.ts',
     form: 'src/form.ts',
     'login-form': 'src/login-form.ts',
-    'professional-navigation': 'src/professional-navigation.ts',
+    'environment-navigation': 'src/environment-navigation.ts',
     'platform-forms': 'src/platform-forms.ts',
     'invitation-acceptance': 'src/invitation-acceptance.ts',
   },

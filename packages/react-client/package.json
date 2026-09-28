@@ -16,9 +16,9 @@
       "types": "./dist/login-form.d.ts",
       "import": "./dist/login-form.js"
     },
-    "./professional-navigation": {
-      "types": "./dist/professional-navigation.d.ts",
-      "import": "./dist/professional-navigation.js"
+    "./environment-navigation": {
+      "types": "./dist/environment-navigation.d.ts",
+      "import": "./dist/environment-navigation.js"
     },
     "./platform-forms": {
       "types": "./dist/platform-forms.d.ts",

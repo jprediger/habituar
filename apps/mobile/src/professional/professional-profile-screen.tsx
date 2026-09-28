@@ -6,13 +6,13 @@ import { Section } from '../components/ui/section'
 import { SummaryCard } from '../components/ui/summary-card'
 import type { InstitutionSession } from '../session/session-screen'
 import { SignOutButton } from '../session/sign-out-button'
+import { InstitutionSwitcher } from '../session/institution-switcher'
 import { useThemePreference } from '../theme/app-theme-preference'
 import { THEME_PREFERENCES } from '../theme/theme-preference'
 
 /**
  * Perfil do profissional: a conta, o vínculo ativo, a aparência e a saída da sessão. Não oferece
- * troca de instituição — a sessão autenticada não guarda os outros vínculos, e a única
- * escolha que existe hoje acontece antes de entrar.
+ * alterações nos dados da conta; a troca de vínculo pertence ao hook de sessão.
  */
 export function ProfessionalProfileScreen({ session }: Readonly<{ session: InstitutionSession }>) {
   const { t } = useTranslation()
@@ -32,10 +32,11 @@ export function ProfessionalProfileScreen({ session }: Readonly<{ session: Insti
       </Section>
 
       <Section title={t('professional.profile.institutionSection')}>
+        <InstitutionSwitcher />
         <SummaryCard
           items={[
             { label: t('home.institutionLabel'), value: session.membership.institution.name },
-            { label: t('home.roleLabel'), value: session.membership.role.name },
+            { label: t('home.roleLabel'), value: session.membership.roles.map((role) => role.templateKey === null ? role.name : t(`roles.${role.templateKey}`)).join(", ") },
           ]}
         />
       </Section>

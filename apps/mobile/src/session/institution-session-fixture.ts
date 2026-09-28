@@ -1,6 +1,6 @@
 import { authenticationContextSchema } from '@habituar/core/auth/context'
 import { getHomeDestination } from '@habituar/core/home-destination'
-import type { RoleEnvironment } from '@habituar/core/roles'
+import type { MembershipEnvironment } from '@habituar/core/roles'
 import type { InstitutionSession } from './session-screen'
 
 /**
@@ -8,13 +8,13 @@ import type { InstitutionSession } from './session-screen'
  * vez de montar o objeto à mão: mudança no contexto de autenticação quebra a fixture no
  * mesmo commit, enquanto um literal continuaria compilando com a forma antiga.
  */
-export function createInstitutionSession(environment: RoleEnvironment): InstitutionSession {
+export function createInstitutionSession(environment: MembershipEnvironment): InstitutionSession {
   const context = authenticationContextSchema.parse({
     user: { id: '20000000-0000-4000-8000-000000000001', email: 'alex@example.com', name: 'Alex' },
     memberships: [
       {
         institution: { id: '00000000-0000-4000-8000-000000000001', name: 'Escola Aurora' },
-        role: { id: '10000000-0000-4000-8000-000000000001', name: 'Fonoaudióloga', environment },
+        environment, roles: [{ id: '10000000-0000-4000-8000-000000000001', name: 'Fonoaudióloga', templateKey: null }],
         permissions: [],
       },
     ],

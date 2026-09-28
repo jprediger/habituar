@@ -86,7 +86,7 @@ describe('sign-in screen', () => {
   })
 
   it('offers a way out of a session that has no institutional membership', () => {
-    failedWith('no-memberships')
+    failedWith('forbidden')
 
     render(<LoginScreen />)
     fireEvent.press(screen.getByRole('button', { name: 'Sair' }))

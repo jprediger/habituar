@@ -18,6 +18,7 @@ export function AdminHomeScreen({
       footer={<SignOutButton />}
     >
       <Text>{t('home.signedInAs', { name: user.name })}</Text>
+      <Text accessibilityLiveRegion="polite">{t('platform.mobileNotice')}</Text>
       <HomeDetailList
         items={[
           { label: t('home.accountLabel'), value: user.email },

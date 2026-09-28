@@ -29,7 +29,7 @@ export function InstitutionSelectionScreen({
             }}
           />
           <Text size="caption" tone="muted" isCentered>
-            {membership.role.name}
+            {membership.roles.map((role) => role.templateKey === null ? role.name : t(`roles.${role.templateKey}`)).join(", ")}
           </Text>
         </View>
       ))}

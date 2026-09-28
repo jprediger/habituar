@@ -13,7 +13,7 @@ const ICON_SIZE = 20
 
 /**
  * O que a tela mostra quando a autenticação falha: o texto da falha e a saída que ela
- * admite. A saída existe porque `no-memberships` e `forbidden` acontecem com token já
+ * admite. A saída existe porque `forbidden` e `forbidden` acontecem com token já
  * gravado — sem ela, a pessoa reabre o app no mesmo beco. As outras falhas não ganham
  * botão: a ação que as resolve é o próprio envio do formulário.
  */

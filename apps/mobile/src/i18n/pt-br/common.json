@@ -1,4 +1,8 @@
 {
+  "roles": { "team-management": "Gestão da equipe", "care-assigned": "Atendimento aos alunos vinculados", "care-institution": "Atendimento da instituição", "monitoring": "Monitoria", "student": "Aluno" },
+  "institutionSwitcher": { "current": "Instituição atual: {{institution}}", "change": "Trocar instituição" },
+  "awaitingInvitation": { "title": "Aguardando convite", "description": "Sua conta está pronta. Peça um convite à pessoa responsável pela instituição para começar.", "guidance": "Abra o link do convite no navegador para aceitar.", "refresh": "Verificar meu acesso" },
+  "platform": { "mobileNotice": "A administração das instituições está disponível na versão web. Acesse o Habituar pelo navegador." },
   "authentication": {
     "loading": "Verificando sua sessão...",
     "brandName": "Habituar",
@@ -42,7 +46,6 @@
       "network": "Não foi possível falar com o servidor. Verifique sua conexão e tente novamente.",
       "server": "Algo deu errado do nosso lado. Tente novamente em alguns instantes.",
       "conflict": "Este e-mail já está em uso.",
-      "no-memberships": "Seu cadastro ainda não tem vínculo com uma instituição. Procure a pessoa responsável pelo seu cadastro.",
       "forbidden": "Você não tem permissão para acessar este ambiente.",
       "signOut": "Sair"
     }

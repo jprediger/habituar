@@ -10,7 +10,7 @@ const mockAuthentication: { state: AuthenticationState; actions: Record<string, 
 }
 
 jest.mock('../client/habituar-client', () => ({
-  habituar: { useAuthentication: () => mockAuthentication },
+  habituar: { useAuthentication: () => mockAuthentication, useInstitutionSwitcher: () => ({ current: undefined, others: [], switchTo: jest.fn() }) },
 }))
 
 beforeEach(() => {

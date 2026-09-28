@@ -5,7 +5,7 @@ import type { useTranslation } from 'react-i18next'
 type TFunction = ReturnType<typeof useTranslation>['t']
 
 /**
- * Saída oferecida junto de cada falha. Existe porque `no-memberships` e `forbidden`
+ * Saída oferecida junto de cada falha. Existe porque a falta de permissão
  * ocorrem com token já gravado: sem uma ação, a pessoa reabre o app no mesmo beco. As
  * demais falhas não oferecem botão — reenviar o formulário já é a saída delas.
  */
@@ -23,8 +23,6 @@ export function getAuthenticationFailureText(failure: AuthenticationFailure, t: 
       return t('authentication.failure.network')
     case 'server':
       return t('authentication.failure.server')
-    case 'no-memberships':
-      return t('authentication.failure.no-memberships')
     case 'forbidden':
       return t('authentication.failure.forbidden')
     default:
@@ -46,7 +44,6 @@ export function getAuthenticationFailureRecovery(
     case 'network':
     case 'server':
       return 'none'
-    case 'no-memberships':
     case 'forbidden':
       return 'sign-out'
     default:

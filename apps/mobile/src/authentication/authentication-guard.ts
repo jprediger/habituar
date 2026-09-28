@@ -11,6 +11,7 @@ export type MobileAuthenticationRoute =
   | '/professional'
   | '/monitor'
   | '/admin'
+  | '/awaiting-invitation'
 
 // Rotas que existem justamente para quem ainda não tem sessão: negar acesso a elas
 // deixaria o visitante sem caminho de entrada.
@@ -31,6 +32,8 @@ export function getMobileAuthenticationGuard(
   route: string,
 ): MobileAuthenticationGuard {
   switch (state.status) {
+    case 'awaiting-invitation':
+      return route === '/awaiting-invitation' ? { action: 'render' } : { action: 'redirect', route: '/awaiting-invitation' }
     case 'restoring':
       return { action: 'block' }
     // Autenticar e falhar são estados da tela que iniciou o envio, não do app inteiro:

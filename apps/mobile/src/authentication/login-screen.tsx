@@ -1,8 +1,7 @@
-import { loginInputSchema } from '@habituar/core/auth/schema'
 import { SPACING } from '@habituar/design-tokens/spacing'
-import { useValidatedForm } from '@habituar/react-client/form'
+import { useLoginForm } from '@habituar/react-client/login-form'
 import { useRouter } from 'expo-router'
-import { useRef, useState } from 'react'
+import { useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { TextInput } from 'react-native'
 import { StyleSheet, View } from 'react-native'
@@ -17,48 +16,15 @@ import { getFieldErrorText } from './form-messages'
 import { habituar } from '../client/habituar-client'
 import authenticationHero from '../../assets/images/authentication-hero.jpg'
 
-// Credenciais do último envio, para a tela saber se a falha ainda fala do que está nos
-// campos. Não é estado de sessão: morre com a tela, como a digitação.
-type Attempt = Readonly<{ email: string; password: string }>
-
-function hasChangedSince(attempt: Attempt | undefined, email: string, password: string): boolean {
-  if (attempt === undefined) return false
-  return attempt.email !== email || attempt.password !== password
-}
-
 /** Tela de entrada: só autentica quem já tem conta. Criar conta é a rota `/register`. */
 export function LoginScreen() {
   const { t } = useTranslation()
   const router = useRouter()
-  const { state, actions } = habituar.useAuthentication()
-  const form = useValidatedForm(loginInputSchema, { email: '', password: '' })
+  const form = useLoginForm(habituar.useAuthentication())
   const passwordRef = useRef<TextInput>(null)
 
   const email = form.getField('email')
   const password = form.getField('password')
-  const [attempt, setAttempt] = useState<Attempt | undefined>(undefined)
-
-  const submit = form.handleSubmit(() => {
-    setAttempt({ email: email.value, password: password.value })
-    void actions.login({ email: email.value, password: password.value })
-  })
-
-  // O hook foi escrito para o web, onde o envio chega como evento de formulário; no
-  // nativo o botão é a origem, então a tela fornece o único método que o contrato usa.
-  function handleSubmit(): void {
-    submit({ preventDefault: () => undefined })
-  }
-
-  const isSubmitting = state.status === 'authenticating'
-
-  // A falha descreve a tentativa enviada, não o formulário: mantê-la depois que a pessoa
-  // corrige o campo acusa um erro que já não existe, e o estado da sessão só muda no
-  // próximo envio. Sem tentativa registrada, a falha veio da restauração da sessão — essa
-  // não pertence ao formulário e continua na tela.
-  const failure =
-    state.status === 'failed' && !hasChangedSince(attempt, email.value, password.value)
-      ? state.failure
-      : undefined
 
   return (
     <AuthenticationCard
@@ -128,19 +94,19 @@ export function LoginScreen() {
             autoComplete="current-password"
             textContentType="password"
             returnKeyType="go"
-            onSubmitEditing={handleSubmit}
+            onSubmitEditing={form.submit}
           />
         )}
       </FormField>
 
-      {failure !== undefined && <AuthenticationFailureAlert failure={failure} />}
+      {form.failure !== undefined && <AuthenticationFailureAlert failure={form.failure} />}
 
       <Button
         icon="log-in-outline"
-        label={isSubmitting ? t('authentication.login.submitting') : t('authentication.login.submit')}
-        onPress={handleSubmit}
-        isDisabled={isSubmitting}
-        isBusy={isSubmitting}
+        label={form.isSubmitting ? t('authentication.login.submitting') : t('authentication.login.submit')}
+        onPress={form.submit}
+        isDisabled={form.isSubmitting}
+        isBusy={form.isSubmitting}
         style={styles.submit}
       />
     </AuthenticationCard>

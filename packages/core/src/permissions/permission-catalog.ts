@@ -5,9 +5,7 @@
  */
 export const PERMISSION_CATALOG = [
   'student.create',
-  'student.read.own',
-  'student.read.assigned',
-  'student.read.institution',
+  'student.read',
   'student.update',
   'guardian.link',
   'guardian.unlink',
@@ -24,3 +22,7 @@ export type PermissionKey = (typeof PERMISSION_CATALOG)[number]
  */
 export const PERMISSION_SCOPES = ['own', 'assigned', 'institution'] as const
 export type PermissionScope = (typeof PERMISSION_SCOPES)[number]
+
+/** Operações globais de configuração, sem concessões sobre dados de tenant. */
+export const PLATFORM_PERMISSION_CATALOG = ['institution.provision', 'institution.configure'] as const
+export type PlatformPermissionKey = (typeof PLATFORM_PERMISSION_CATALOG)[number]

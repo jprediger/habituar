@@ -4,6 +4,14 @@
   "private": true,
   "type": "module",
   "exports": {
+    "./platform": {
+      "types": "./dist/platform.d.ts",
+      "import": "./dist/platform.js"
+    },
+    "./invitations": {
+      "types": "./dist/invitations.d.ts",
+      "import": "./dist/invitations.js"
+    },
     "./assert-never": {
       "types": "./dist/type/assert-never.d.ts",
       "import": "./dist/type/assert-never.js"

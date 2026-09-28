@@ -1,4 +1,4 @@
-import type { RoleEnvironment } from './roles.js'
+import type { MembershipEnvironment } from './roles.js'
 import { assertNever } from './type/assert-never.js'
 
 /**
@@ -12,7 +12,7 @@ export type HomeDestination = InstitutionHomeDestination | 'admin-home'
 export type InstitutionHomeDestination = 'student-home' | 'professional-home' | 'monitor-home'
 
 /** Resolve o único destino inicial permitido para cada ambiente institucional. */
-export function getHomeDestination(environment: RoleEnvironment): InstitutionHomeDestination {
+export function getHomeDestination(environment: MembershipEnvironment): InstitutionHomeDestination {
   switch (environment) {
     case 'student':
       return 'student-home'

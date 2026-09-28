@@ -28,3 +28,6 @@ export type GuardianId = z.infer<typeof guardianIdSchema>
 
 export const assignmentIdSchema = defineIdSchema('AssignmentId')
 export type AssignmentId = z.infer<typeof assignmentIdSchema>
+
+export const invitationIdSchema = defineIdSchema('InvitationId')
+export type InvitationId = z.infer<typeof invitationIdSchema>

@@ -8,6 +8,15 @@ export const FAILURE_CODES = [
   'forbidden',
   'not_found',
   'conflict',
+  'invitation-not-found',
+  'invitation-expired',
+  'invitation-revoked',
+  'invitation-already-accepted',
+  'invitation-email-mismatch',
+  'already-member',
+  'platform-administrator-cannot-join',
+  'document-already-registered',
+  'invalid-role-for-environment',
 ] as const
 
 export const failureSchema = z.object({
@@ -37,6 +46,15 @@ export const failureDataSchema = z.object({}).strict().optional()
  * escrita do catálogo, e sim a extensão dele com o que só a borda HTTP precisa saber.
  */
 export const FAILURE_ERROR_MAP = {
+  'invitation-not-found': { status: 404, message: 'invitation not found.', data: failureDataSchema },
+  'invitation-expired': { status: 410, message: 'invitation expired.', data: failureDataSchema },
+  'invitation-revoked': { status: 410, message: 'invitation revoked.', data: failureDataSchema },
+  'invitation-already-accepted': { status: 409, message: 'invitation already accepted.', data: failureDataSchema },
+  'invitation-email-mismatch': { status: 403, message: 'invitation email mismatch.', data: failureDataSchema },
+  'already-member': { status: 409, message: 'already member.', data: failureDataSchema },
+  'platform-administrator-cannot-join': { status: 403, message: 'platform administrator cannot join.', data: failureDataSchema },
+  'document-already-registered': { status: 409, message: 'document already registered.', data: failureDataSchema },
+  'invalid-role-for-environment': { status: 422, message: 'invalid role for environment.', data: failureDataSchema },
   invalid_input: {
     status: 422,
     message: 'The request payload is invalid.',

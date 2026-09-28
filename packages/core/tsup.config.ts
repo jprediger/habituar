@@ -4,6 +4,8 @@ import { defineConfig } from 'tsup'
 // de exports É a declaração de entrypoint público, e entrada nova entra nos dois lugares.
 export default defineConfig({
   entry: {
+    platform: 'src/platform.ts',
+    invitations: 'src/invitations.ts',
     'type/assert-never': 'src/type/assert-never.ts',
     'identity/branded-id': 'src/identity/branded-id.ts',
     'contract/api-contract': 'src/contract/api-contract.ts',

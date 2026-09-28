@@ -1,6 +1,15 @@
 import { z } from 'zod'
 
-/** Ambiente institucional que define a superfície inicial de um papel. */
-export const roleEnvironmentSchema = z.enum(['student', 'professional', 'monitor'])
+/** Identidade institucional do vínculo, independente dos papéis concedidos. */
+export const membershipEnvironmentSchema = z.enum(['student', 'professional', 'monitor'])
 
-export type RoleEnvironment = z.infer<typeof roleEnvironmentSchema>
+export type MembershipEnvironment = z.infer<typeof membershipEnvironmentSchema>
+
+export const roleTemplateKeySchema = z.enum([
+  'team-management',
+  'care-assigned',
+  'care-institution',
+  'monitoring',
+  'student',
+])
+export type RoleTemplateKey = z.infer<typeof roleTemplateKeySchema>

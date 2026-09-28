@@ -12,19 +12,20 @@ describe('authentication context schema', () => {
       memberships: [
         {
           institution: { id: '00000000-0000-4000-8000-000000000002', name: 'North' },
-          role: {
+          environment: 'student',
+          roles: [{
             id: '00000000-0000-4000-8000-000000000003',
             name: 'Renamed student role',
-            environment: 'student',
-          },
-          permissions: [{ key: 'student.read.own', scope: 'own' }],
+            templateKey: null,
+          }],
+          permissions: [{ key: 'student.read', scope: 'own' }],
         },
       ],
       isPlatformAdministrator: false,
     })
 
-    expect(context.memberships[0]?.role.environment).toBe('student')
-    expect(context.memberships[0]?.permissions).toEqual([{ key: 'student.read.own', scope: 'own' }])
+    expect(context.memberships[0]?.environment).toBe('student')
+    expect(context.memberships[0]?.permissions).toEqual([{ key: 'student.read', scope: 'own' }])
   })
 
   it('refuses credential fields in an authenticated context', () => {

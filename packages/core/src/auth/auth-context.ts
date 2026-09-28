@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import { institutionIdSchema, roleIdSchema } from '../identity/ids.js'
 import { PERMISSION_CATALOG, PERMISSION_SCOPES } from '../permissions/permission-catalog.js'
-import { roleEnvironmentSchema } from '../roles.js'
+import { membershipEnvironmentSchema, roleTemplateKeySchema } from '../roles.js'
 import { authenticatedUserSchema } from './auth.schema.js'
 
 /** Permissão resolvida para um vínculo, sem delegar autorização ao cliente. */
@@ -10,13 +10,18 @@ export const effectivePermissionSchema = z
   .strict()
 export type EffectivePermission = Readonly<z.infer<typeof effectivePermissionSchema>>
 
-/** Vínculo institucional já acompanhado do papel e das permissões efetivas. */
+export const membershipRoleSchema = z.object({
+  id: roleIdSchema,
+  name: z.string().min(1),
+  templateKey: roleTemplateKeySchema.nullable(),
+}).strict().readonly()
+
+/** Vínculo institucional acompanhado da união das concessões dos seus papéis. */
 export const membershipContextSchema = z
   .object({
     institution: z.object({ id: institutionIdSchema, name: z.string().min(1) }).strict(),
-    role: z
-      .object({ id: roleIdSchema, name: z.string().min(1), environment: roleEnvironmentSchema })
-      .strict(),
+    environment: membershipEnvironmentSchema,
+    roles: z.array(membershipRoleSchema).readonly(),
     permissions: z.array(effectivePermissionSchema).readonly(),
   })
   .strict()

@@ -30,9 +30,11 @@ describe('mapa de erro do contrato', () => {
     expect(FAILURE_ERROR_MAP[code].message.length).toBeGreaterThan(0)
   })
 
-  it('não declara dois códigos do catálogo com o mesmo status', () => {
-    const statuses = FAILURE_CODES.map((code) => FAILURE_ERROR_MAP[code].status)
-
-    expect(new Set(statuses).size).toBe(statuses.length)
+  it('mantém falhas de convite distinguíveis mesmo quando compartilham status HTTP', () => {
+    expect(FAILURE_ERROR_MAP['invitation-expired'].status).toBe(410)
+    expect(FAILURE_ERROR_MAP['invitation-revoked'].status).toBe(410)
+    expect(FAILURE_ERROR_MAP['invitation-expired'].message).not.toBe(
+      FAILURE_ERROR_MAP['invitation-revoked'].message,
+    )
   })
 })

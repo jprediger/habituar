@@ -6,7 +6,7 @@ import { StyleSheet, View } from 'react-native'
 import { getAuthenticationFailureRecovery, getAuthenticationFailureText } from './authentication-failure-messages'
 import { Button } from '../components/ui/button'
 import { Text } from '../components/ui/text'
-import { habituar } from '../session/habituar-client'
+import { habituar } from '../client/habituar-client'
 import { useThemeTokens } from '../theme/tokens'
 
 const ICON_SIZE = 20

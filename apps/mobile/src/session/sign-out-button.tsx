@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { Button } from '../components/ui/button'
-import { habituar } from './habituar-client'
+import { habituar } from '../client/habituar-client'
 
 /** Única saída de sessão das telas internas; dona da ação, não do lugar onde aparece. */
 export function SignOutButton() {

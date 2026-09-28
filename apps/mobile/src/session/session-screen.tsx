@@ -2,7 +2,7 @@ import type { ActiveSession } from '@habituar/react-client/react-client'
 import { Redirect } from 'expo-router'
 import type { ReactElement } from 'react'
 import type { MobileAuthenticationRoute } from './authentication-guard'
-import { habituar } from './habituar-client'
+import { habituar } from '../client/habituar-client'
 import { SessionLoadingScreen } from './session-loading-screen'
 
 /** Sessão nascida de um vínculo institucional, a única que tem instituição e papel. */

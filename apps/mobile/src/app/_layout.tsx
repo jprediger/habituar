@@ -2,7 +2,7 @@ import { NavigationBar } from 'expo-navigation-bar'
 import { StatusBar } from 'expo-status-bar'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { AuthenticationRouter } from '../session/authentication-router'
-import { habituar } from '../session/habituar-client'
+import { habituar } from '../client/habituar-client'
 import { AppearanceGate } from '../theme/appearance-gate'
 import '../i18n/i18n'
 

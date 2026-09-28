@@ -1,4 +1,4 @@
-import { habituar } from '../session/habituar-client'
+import { habituar } from '../client/habituar-client'
 import { InstitutionSelectionScreen } from '../authentication/institution-selection-screen'
 
 /** Passo entre autenticar e chegar a um ambiente, quando a conta tem mais de um vínculo. */

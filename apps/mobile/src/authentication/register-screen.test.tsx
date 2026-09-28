@@ -5,7 +5,7 @@ import { RegisterScreen } from './register-screen'
 const mockRegister = jest.fn<Promise<void>, [unknown]>()
 const mockReplace = jest.fn()
 
-jest.mock('../session/habituar-client', () => ({
+jest.mock('../client/habituar-client', () => ({
   habituar: { useAuthentication: () => ({ state: { status: 'unauthenticated' }, actions: { register: mockRegister } }) },
 }))
 

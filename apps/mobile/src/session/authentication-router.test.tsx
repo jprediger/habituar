@@ -21,7 +21,7 @@ jest.mock('expo-router', () => {
   }
 })
 
-jest.mock('./habituar-client', () => ({
+jest.mock('../client/habituar-client', () => ({
   habituar: { useAuthentication: () => mockAuthentication },
 }))
 

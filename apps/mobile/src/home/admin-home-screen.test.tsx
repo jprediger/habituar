@@ -8,7 +8,7 @@ const mockAuthentication: { state: AuthenticationState; actions: Record<string, 
   actions: { logout: jest.fn() },
 }
 
-jest.mock('../session/habituar-client', () => ({
+jest.mock('../client/habituar-client', () => ({
   habituar: { useAuthentication: () => mockAuthentication },
 }))
 

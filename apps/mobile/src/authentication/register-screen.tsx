@@ -14,7 +14,7 @@ import { Input } from '../components/ui/input'
 import { Text } from '../components/ui/text'
 import { PasswordInput } from '../components/ui/password-input'
 import { getFieldErrorText } from './form-messages'
-import { habituar } from '../session/habituar-client'
+import { habituar } from '../client/habituar-client'
 import authenticationHero from '../../assets/images/authentication-hero.jpg'
 
 const MINIMUM_PASSWORD_LENGTH = 8

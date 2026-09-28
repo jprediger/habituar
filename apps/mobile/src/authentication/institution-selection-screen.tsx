@@ -5,7 +5,7 @@ import { StyleSheet, View } from 'react-native'
 import { AuthenticationCard } from './authentication-card'
 import { Button } from '../components/ui/button'
 import { Text } from '../components/ui/text'
-import { habituar } from '../session/habituar-client'
+import { habituar } from '../client/habituar-client'
 
 /** Escolha do vínculo ativo quando a conta tem mais de um; não decide destino algum. */
 export function InstitutionSelectionScreen({

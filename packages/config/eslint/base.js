@@ -12,10 +12,71 @@ const configPackageRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 export const MONOREPO_ROOT = resolve(configPackageRoot, '../..')
 const workspaceResolver = resolve(configPackageRoot, 'eslint/workspace-resolver.cjs')
 
+/**
+ * Fatias verticais de `apps/*\/src`, e o que cada uma pode importar das outras. A direção
+ * aponta para dentro: a borda (o diretório de rotas, imposto pelo roteador) alcança todas,
+ * e kit, cliente e i18n não alcançam domínio. Fatia ausente desta lista é neutra — nenhuma
+ * política a menciona, então ela não restringe nem é restringida.
+ */
+const APP_SLICE_IMPORTS = {
+  // `app` é a pasta de rotas do Expo Router; `routes`, a do TanStack Router.
+  app: ['*'],
+  routes: ['*'],
+  authentication: ['client', 'theme', 'components', 'i18n'],
+  // Espera e falha de sessão usam a moldura de entrada; nenhuma fatia de ambiente entra aqui.
+  session: ['authentication', 'client', 'theme', 'components', 'i18n'],
+  home: ['session', 'client', 'theme', 'components', 'i18n'],
+  professional: ['session', 'client', 'theme', 'components', 'i18n'],
+  theme: ['components', 'i18n'],
+  client: [],
+  components: ['theme', 'i18n'],
+}
+
+const APP_SLICES = Object.keys(APP_SLICE_IMPORTS)
+
+// Micromatch: um alvo só dispensa a chave de alternativas, e `{a}` seria tratado literal.
+function matchAny(names) {
+  return names.length === 1 ? names[0] : `{${names.join(',')}}`
+}
+
+/** Complemento do que a fatia pode importar: é o proibido que a política precisa declarar. */
+function forbiddenSlicesFor(slice) {
+  const allowed = APP_SLICE_IMPORTS[slice]
+  if (allowed.includes('*')) return []
+  return APP_SLICES.filter((candidate) => candidate !== slice && !allowed.includes(candidate))
+}
+
+const APP_SLICE_POLICIES = APP_SLICES.flatMap((slice) => {
+  const forbidden = forbiddenSlicesFor(slice)
+  if (forbidden.length === 0) return []
+
+  return [
+    {
+      from: { element: { captured: { slice } } },
+      disallow: { to: { element: { captured: { slice: matchAny(forbidden) } } } },
+      message: `A fatia ${slice} não importa {{ to.element.captured.slice }}: dependência aponta para dentro.`,
+    },
+  ]
+})
+
 export function boundariesSettings(rootPath = MONOREPO_ROOT) {
   return {
     'boundaries/root-path': rootPath,
     'boundaries/elements': [
+      // Antes de `apps/(*)`, porque o primeiro padrão que casa é o que vale — e a fatia é
+      // o elemento mais específico. O tipo continua `app` para as políticas entre
+      // workspaces valerem igual dentro e fora das fatias. O segundo grupo é `(*)`, e não
+      // uma alternância dos nomes conhecidos: alternância não vira captura própria, e
+      // diretório que não esteja em `APP_SLICE_IMPORTS` fica neutro de qualquer forma.
+      // Sem parênteses nos dois segmentos: `micromatch.capture` devolve um valor para o
+      // grupo *e* outro para o curinga dentro dele, então `(*)` duplicaria a primeira
+      // captura e `slice` receberia o nome do workspace.
+      {
+        type: 'app',
+        pattern: 'apps/*/src/*',
+        capture: ['workspace', 'slice'],
+        partialMatch: false,
+      },
       {
         type: 'app',
         pattern: 'apps/(*)',
@@ -54,9 +115,16 @@ export const BOUNDARIES_DEPENDENCIES_RULE = [
         },
         message: 'Todo alvo local precisa pertencer a apps/* ou packages/*.',
       },
+      // As duas políticas abaixo valem só quando o import cruza workspace. A condição de
+      // workspace diferente é explícita porque fatia é elemento: import entre fatias do
+      // mesmo app também é `!internal`, e sem ela um `../session/x` relativo seria cobrado
+      // como se fosse entrypoint público de outro pacote.
       {
         dependency: { relationship: { to: '!internal' } },
         disallow: {
+          to: {
+            element: { captured: { workspace: '!{{ from.element.captured.workspace }}' } },
+          },
           dependency: {
             source: '!@habituar/{{ to.element.captured.workspace }}/*',
           },
@@ -67,7 +135,10 @@ export const BOUNDARIES_DEPENDENCIES_RULE = [
         dependency: { relationship: { to: '!internal' } },
         disallow: {
           to: {
-            element: { fileInternalPath: '!src/*.{ts,tsx}' },
+            element: {
+              captured: { workspace: '!{{ from.element.captured.workspace }}' },
+              fileInternalPath: '!src/*.{ts,tsx}',
+            },
           },
         },
         message: 'Entrypoints públicos ficam no primeiro nível de src.',
@@ -99,6 +170,7 @@ export const BOUNDARIES_DEPENDENCIES_RULE = [
         },
         message: 'Um app não pode depender de outro app.',
       },
+      ...APP_SLICE_POLICIES,
     ],
   },
 ]

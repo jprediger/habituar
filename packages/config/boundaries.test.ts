@@ -96,3 +96,34 @@ describe('política arquitetural do monorepo', () => {
     await expectUndeclaredDependencyFailure('apps/mobile/src/undeclared-dependency.ts')
   })
 })
+
+describe('direção entre fatias do cliente', () => {
+  it('proíbe fatia de ambiente importar de dentro da autenticação', async () => {
+    await expectBoundaryFailure(
+      'apps/mobile/src/home/home-to-authentication.ts',
+      'A fatia home não importa authentication',
+    )
+  })
+
+  it('proíbe fatia importar o diretório de rotas', async () => {
+    await expectBoundaryFailure(
+      'apps/mobile/src/authentication/authentication-to-routes.ts',
+      'A fatia authentication não importa routes',
+    )
+  })
+
+  it('proíbe o kit visual importar fatia de domínio', async () => {
+    await expectBoundaryFailure(
+      'apps/mobile/src/components/ui/kit-to-slice.ts',
+      'A fatia components não importa session',
+    )
+  })
+
+  it('permite fatia de ambiente importar cliente, tema e kit', async () => {
+    await expectAllowed('apps/mobile/src/home/home-to-allowed-slices.ts')
+  })
+
+  it('permite a rota alcançar qualquer fatia', async () => {
+    await expectAllowed('apps/mobile/src/routes/login.ts')
+  })
+})

@@ -2,7 +2,7 @@ import type { ActiveSession } from '@habituar/react-client/react-client'
 import { Navigate } from '@tanstack/react-router'
 import type { ReactElement } from 'react'
 import { useTranslation } from 'react-i18next'
-import { AuthenticationCard } from './authentication-card.js'
+import { CenteredPage } from './components/ui/centered-page.js'
 import { getWebAuthenticationGuard } from './authentication-guard.js'
 import { getAuthenticationFailureText } from './authentication-messages.js'
 import { habituar } from './habituar-client.js'
@@ -30,20 +30,20 @@ export function SessionRoute({
 
   if (state.status === 'failed') {
     return (
-      <AuthenticationCard title={t('authentication.failure.no-membershipsTitle')}>
+      <CenteredPage title={t('authentication.failure.no-membershipsTitle')}>
         <p role="alert" className="text-body">
           {getAuthenticationFailureText(state.failure, t)}
         </p>
-      </AuthenticationCard>
+      </CenteredPage>
     )
   }
 
   return (
-    <AuthenticationCard title={t('authentication.brandName')}>
+    <CenteredPage title={t('authentication.brandName')}>
       <p role="status" aria-live="polite" className="text-body">
         {t('authentication.loading')}
       </p>
-    </AuthenticationCard>
+    </CenteredPage>
   )
 }
 

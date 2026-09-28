@@ -2,7 +2,7 @@ import { Link, createFileRoute } from '@tanstack/react-router'
 import type { ReactElement } from 'react'
 import { useTranslation } from 'react-i18next'
 import authenticationHeroUrl from '../assets/authentication-hero.jpg'
-import { AuthenticationCard } from '../authentication-card.js'
+import { CenteredPage } from '../components/ui/centered-page.js'
 import { Button } from '../components/ui/button.js'
 
 export const Route = createFileRoute('/forgot-password')({
@@ -18,7 +18,7 @@ export function ForgotPasswordRoute(): ReactElement {
   const { t } = useTranslation()
 
   return (
-    <AuthenticationCard
+    <CenteredPage
       title={t('authentication.forgotPassword.title')}
       hero={{ src: authenticationHeroUrl, alt: t('authentication.heroAlt') }}
     >
@@ -28,6 +28,6 @@ export function ForgotPasswordRoute(): ReactElement {
           <Link to="/login">{t('authentication.login.title')}</Link>
         </Button>
       </div>
-    </AuthenticationCard>
+    </CenteredPage>
   )
 }

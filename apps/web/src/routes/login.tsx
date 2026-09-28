@@ -2,7 +2,7 @@ import { Link, Navigate, createFileRoute } from '@tanstack/react-router'
 import type { ReactElement } from 'react'
 import { useTranslation } from 'react-i18next'
 import authenticationHeroUrl from '../assets/authentication-hero.jpg'
-import { AuthenticationCard } from '../authentication-card.js'
+import { CenteredPage } from '../components/ui/centered-page.js'
 import { getWebAuthenticationGuard } from '../authentication-guard.js'
 import { getAuthenticationFailureText } from '../authentication-messages.js'
 import { Button } from '../components/ui/button.js'
@@ -35,7 +35,7 @@ export function LoginRoute(): ReactElement {
   if (guard.action === 'redirect') return <Navigate to={guard.route} replace />
 
   return (
-    <AuthenticationCard
+    <CenteredPage
       title={t('authentication.login.heading')}
       hero={{ src: authenticationHeroUrl, alt: t('authentication.heroAlt') }}
     >
@@ -123,7 +123,7 @@ export function LoginRoute(): ReactElement {
           </Link>
         </Button>
       </p>
-    </AuthenticationCard>
+    </CenteredPage>
   )
 }
 

@@ -1,7 +1,7 @@
 import type { MembershipContext } from '@habituar/react-client/react-client'
 import type { ReactElement } from 'react'
 import { useTranslation } from 'react-i18next'
-import { AuthenticationCard } from './authentication-card.js'
+import { CenteredPage } from './components/ui/centered-page.js'
 import { Button } from './components/ui/button.js'
 import { habituar } from './habituar-client.js'
 
@@ -13,7 +13,7 @@ export function InstitutionSelectionScreen({
   const { actions } = habituar.useAuthentication()
 
   return (
-    <AuthenticationCard title={t('authentication.selection.title')}>
+    <CenteredPage title={t('authentication.selection.title')}>
       <p className="text-caption text-text-muted">{t('authentication.selection.description')}</p>
       <ul className="flex flex-col gap-sm">
         {memberships.map((membership) => (
@@ -32,6 +32,6 @@ export function InstitutionSelectionScreen({
           </li>
         ))}
       </ul>
-    </AuthenticationCard>
+    </CenteredPage>
   )
 }

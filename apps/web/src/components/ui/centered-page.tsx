@@ -1,11 +1,13 @@
 import type { PropsWithChildren, ReactElement } from 'react'
-import { Card, CardContent, CardHeader } from './components/ui/card.js'
+import { Card, CardContent, CardHeader } from './card.js'
 
 /**
- * Moldura comum das telas de autenticação; dona do enquadramento e do `h1` da rota —
- * não conhece formulário, estado de sessão nem qual tela está dentro dela.
+ * Página centralizada com título e conteúdo, com ou sem imagem ao lado: a moldura de toda
+ * tela que não vive dentro de um ambiente. Dona do enquadramento e do `h1` da rota — não
+ * conhece formulário, sessão nem qual tela está dentro dela, e é por isso que serve tanto
+ * a entrada quanto a espera e a falha de sessão.
  */
-export function AuthenticationCard({
+export function CenteredPage({
   title,
   hero,
   children,

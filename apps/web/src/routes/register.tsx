@@ -5,7 +5,7 @@ import type { ReactElement } from 'react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import authenticationHeroUrl from '../assets/authentication-hero.jpg'
-import { AuthenticationCard } from '../authentication-card.js'
+import { CenteredPage } from '../components/ui/centered-page.js'
 import { getWebAuthenticationGuard } from '../authentication-guard.js'
 import { Button } from '../components/ui/button.js'
 import { FormField } from '../components/ui/form-field.js'
@@ -85,14 +85,14 @@ export function RegisterRoute(): ReactElement {
 
   if (guard.action === 'block') {
     return (
-      <AuthenticationCard
+      <CenteredPage
         title={t('authentication.register.heading')}
         hero={{ src: authenticationHeroUrl, alt: t('authentication.heroAlt') }}
       >
         <p role="status" aria-live="polite" className="text-body">
           {t('authentication.loading')}
         </p>
-      </AuthenticationCard>
+      </CenteredPage>
     )
   }
 
@@ -101,7 +101,7 @@ export function RegisterRoute(): ReactElement {
   const isSubmitting = registerState.status === 'submitting'
 
   return (
-    <AuthenticationCard
+    <CenteredPage
       title={t('authentication.register.heading')}
       hero={{ src: authenticationHeroUrl, alt: t('authentication.heroAlt') }}
     >
@@ -205,6 +205,6 @@ export function RegisterRoute(): ReactElement {
           </Link>
         </Button>
       </p>
-    </AuthenticationCard>
+    </CenteredPage>
   )
 }

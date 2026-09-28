@@ -35,7 +35,7 @@ describe('nome de arquivo TypeScript', () => {
     expectValid,
   )
 
-  it.each(['invalid/studentRecord.ts', 'invalid/StudentRecord.ts', 'invalid/student_record.ts'])(
+  it.each(['invalid/studentRecord.ts', 'invalid/EnrollmentRecord.ts', 'invalid/student_record.ts'])(
     'recusa segmento fora de kebab-case: %s',
     expectInvalid,
   )

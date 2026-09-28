@@ -51,6 +51,10 @@
 - **Fatia vertical, não camada horizontal.** Um módulo Nest por conceito de domínio,
   contendo tudo dele: schema, queries, regra, controller, testes. Não existem `services/`,
   `controllers/` ou `repositories/` no topo agrupando por tipo técnico.
+- **Backend em três papéis: controller → service → repository.** Controller é borda e só
+  fala com o service do módulo. Service decide a regra e abre a transação pelo `Database`.
+  Repository é o único lugar com query e tabela; recebe a transação e não conhece service.
+  Repository é privado do módulo: outro módulo consome o service exportado.
 - **Herança entre providers é proibida.** Sem `Base*`, sem `Abstract*`, sem classe de
   serviço herdada. Reuso é composição por injeção — o container existe para isso.
 - **Um provider tem uma responsabilidade e um dono.** Provider que aparece em quatro
@@ -204,6 +208,8 @@ verdade — e o container facilita justamente essas coisas, então a vigilância
 |---|---|
 | Direção entre workspaces e entrypoints públicos explícitos | `boundaries/dependencies` no CI |
 | Import do client do ORM fora do módulo de dados | `no-restricted-imports` |
+| ORM e `schema` só em `*.repository.ts`; controller sem banco; repository sem service; repository alheio | `no-restricted-imports` em `apps/api/eslint.config.js` |
+| `transaction.query/select/insert/...` fora do repository | `no-restricted-syntax` |
 | `class-validator` em qualquer lugar | `no-restricted-imports` |
 | `forwardRef`, herança de provider | `no-restricted-syntax` |
 | `new Date()` / `Math.random()` fora do adapter | `no-restricted-imports` |

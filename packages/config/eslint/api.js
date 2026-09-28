@@ -9,6 +9,20 @@ export const FRAMEWORK_BANS = [
   },
 ]
 
+// Exportado porque um override de `no-restricted-syntax` substitui a lista inteira: quem
+// acrescenta regra num recorte de arquivos precisa repetir esta base.
+export const API_SYNTAX_RESTRICTIONS = [
+  ...DISCIPLINE_RESTRICTIONS,
+  {
+    selector: "CallExpression[callee.name='forwardRef']",
+    message: 'Ciclo entre módulos é erro de desenho: ou são um só, ou falta um terceiro.',
+  },
+  {
+    selector: 'ClassDeclaration[superClass]:not([superClass.name=/(Error|Exception)$/])',
+    message: 'Herança entre providers é proibida. Reuso é composição por injeção.',
+  },
+]
+
 export default tseslint.config(...baseConfig, {
   files: ['**/*.ts', '**/*.tsx'],
   plugins: { '@typescript-eslint': tseslint.plugin },
@@ -23,17 +37,6 @@ export default tseslint.config(...baseConfig, {
     // módulo do Nest é declaração de grafo, não classe com comportamento.
     '@typescript-eslint/no-extraneous-class': ['error', { allowWithDecorator: true }],
 
-    'no-restricted-syntax': [
-      'error',
-      ...DISCIPLINE_RESTRICTIONS,
-      {
-        selector: "CallExpression[callee.name='forwardRef']",
-        message: 'Ciclo entre módulos é erro de desenho: ou são um só, ou falta um terceiro.',
-      },
-      {
-        selector: 'ClassDeclaration[superClass]:not([superClass.name=/(Error|Exception)$/])',
-        message: 'Herança entre providers é proibida. Reuso é composição por injeção.',
-      },
-    ],
+    'no-restricted-syntax': ['error', ...API_SYNTAX_RESTRICTIONS],
   },
 })

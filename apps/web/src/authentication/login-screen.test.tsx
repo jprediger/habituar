@@ -26,7 +26,7 @@ vi.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }))
 
-const { LoginRoute } = await import('./login.js')
+const { LoginScreen } = await import('./login-screen.js')
 
 function createAuthenticatedState(): AuthenticationState {
   const context = authenticationContextSchema.parse({
@@ -54,7 +54,7 @@ describe('login route', () => {
   it('sends an authenticated visitor to the environment home instead of keeping them on login', () => {
     state.current = createAuthenticatedState()
 
-    render(<LoginRoute />)
+    render(<LoginScreen />)
 
     expect(screen.getByText('redirect:/student')).toBeInTheDocument()
   })
@@ -72,7 +72,7 @@ describe('login route', () => {
       memberships: [context.session.membership],
     }
 
-    render(<LoginRoute />)
+    render(<LoginScreen />)
 
     expect(screen.getByText('redirect:/select-institution')).toBeInTheDocument()
   })
@@ -80,7 +80,7 @@ describe('login route', () => {
   it('keeps showing the form while nobody is authenticated', () => {
     state.current = { status: 'unauthenticated' }
 
-    render(<LoginRoute />)
+    render(<LoginScreen />)
 
     expect(screen.getByLabelText(/authentication.login.emailLabel/)).toBeInTheDocument()
   })
@@ -88,7 +88,7 @@ describe('login route', () => {
   it('keeps the form on screen when the credentials are refused', () => {
     state.current = { status: 'failed', failure: 'invalid-credentials' }
 
-    render(<LoginRoute />)
+    render(<LoginScreen />)
 
     expect(screen.getByRole('alert')).toHaveTextContent('authentication.failure.invalid-credentials')
     expect(screen.getByLabelText(/authentication.login.emailLabel/)).toBeInTheDocument()
@@ -97,7 +97,7 @@ describe('login route', () => {
   it('stops blaming the credentials once the person corrects them', () => {
     state.current = { status: 'unauthenticated' }
 
-    render(<LoginRoute />)
+    render(<LoginScreen />)
 
     fireEvent.change(screen.getByLabelText(/authentication.login.emailLabel/), {
       target: { value: 'person@example.com' },

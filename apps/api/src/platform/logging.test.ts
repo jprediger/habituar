@@ -1,10 +1,23 @@
 import 'reflect-metadata'
+import { Controller, Get, Res } from '@nestjs/common'
 import { Test } from '@nestjs/testing'
+import type { Response } from 'express'
 import { DestinationStream } from 'pino'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { z } from 'zod'
+import { PublicRoute } from '../authorization/public-route.decorator.js'
 
 const logLineSchema = z.record(z.string(), z.unknown())
+
+@Controller()
+class CookieProbeController {
+  @PublicRoute()
+  @Get('/logging-cookie-probe')
+  handle(@Res({ passthrough: true }) response: Response): { status: string } {
+    response.cookie('session', 'session-token-that-must-not-be-logged', { httpOnly: true })
+    return { status: 'ok' }
+  }
+}
 
 /** Implementa a mesma porta que a produção, sem herdar `LogDestination` — composição. */
 class InMemoryLogDestination implements DestinationStream {
@@ -31,7 +44,7 @@ async function bootWithDestination(destination: InMemoryLogDestination) {
   vi.resetModules()
   const { AppModule } = await import('../app.module.js')
   const { LogDestination } = await import('./log-destination.js')
-  const moduleRef = await Test.createTestingModule({ imports: [AppModule] })
+  const moduleRef = await Test.createTestingModule({ imports: [AppModule], controllers: [CookieProbeController] })
     .overrideProvider(LogDestination)
     .useValue(destination)
     .compile()
@@ -87,6 +100,40 @@ describe('formato único de log, com redação e nível configurados na origem',
       expect(response.status).toBe(200)
       // pino-http loga sucesso em 'info'; com o nível travado em 'error', nada é escrito.
       expect(destination.lines.join('')).toBe('')
+    } finally {
+      await app.close()
+    }
+  })
+
+  it('não registra o token de convite presente na URL da requisição', async () => {
+    vi.stubEnv('LOG_LEVEL', 'info')
+    const destination = new InMemoryLogDestination()
+    const app = await bootWithDestination(destination)
+
+    try {
+      const token = 'invitation-secret-that-must-not-be-logged'
+      await fetch(`${await app.getUrl()}/v1/invitations/${token}/unknown-route`)
+
+      const output = destination.lines.join('')
+      expect(output).not.toContain(token)
+      expect(output).toContain('[redacted]')
+    } finally {
+      await app.close()
+    }
+  })
+
+  it('não registra Set-Cookie nem o token de sessão da resposta', async () => {
+    vi.stubEnv('LOG_LEVEL', 'info')
+    const destination = new InMemoryLogDestination()
+    const app = await bootWithDestination(destination)
+
+    try {
+      const response = await fetch(`${await app.getUrl()}/logging-cookie-probe`)
+      expect(response.status).toBe(200)
+      expect(response.headers.get('set-cookie')).toContain('session-token-that-must-not-be-logged')
+      const output = destination.lines.join('')
+      expect(output).not.toContain('session-token-that-must-not-be-logged')
+      expect(output).not.toContain('set-cookie')
     } finally {
       await app.close()
     }

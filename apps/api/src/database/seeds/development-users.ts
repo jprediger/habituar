@@ -1,7 +1,7 @@
-import { RoleEnvironment } from '@habituar/core/roles'
+import { MembershipEnvironment } from '@habituar/core/roles'
 import { and, eq } from 'drizzle-orm'
 import { DatabaseTransaction } from '../database.js'
-import { assignments, memberships, roles, students, users } from '../schema.js'
+import { assignments, membershipRoles, memberships, roles, students, users } from '../schema.js'
 
 // Faixa arbitrária entre as três aceitas por `students.age_range`; nenhuma regra depende
 // dela neste marco.
@@ -12,9 +12,10 @@ export const DEVELOPMENT_USERS = {
   student: { email: 'student@habituar.dev', name: 'Estudante de Desenvolvimento' },
   professional: { email: 'professional@habituar.dev', name: 'Profissional de Desenvolvimento' },
   monitor: { email: 'monitor@habituar.dev', name: 'Monitor de Desenvolvimento' },
-} as const satisfies Readonly<Record<RoleEnvironment, Readonly<{ email: string; name: string }>>>
+  coordinator: { email: 'coordinator@habituar.dev', name: 'Coordenador de Desenvolvimento' },
+} as const
 
-export type SeededUsers = Readonly<Record<RoleEnvironment, string>>
+export type SeededUsers = Readonly<Record<keyof typeof DEVELOPMENT_USERS, string>>
 
 /**
  * Cria um usuário por ambiente com vínculo no template do ambiente, mais a ficha do
@@ -30,15 +31,17 @@ export async function seedDevelopmentUsers(
   const studentUserId = await ensureUser(transaction, DEVELOPMENT_USERS.student, passwordHash)
   const professionalUserId = await ensureUser(transaction, DEVELOPMENT_USERS.professional, passwordHash)
   const monitorUserId = await ensureUser(transaction, DEVELOPMENT_USERS.monitor, passwordHash)
+  const coordinatorUserId = await ensureUser(transaction, DEVELOPMENT_USERS.coordinator, passwordHash)
 
-  await ensureMembership(transaction, institutionId, studentUserId, 'student')
-  await ensureMembership(transaction, institutionId, professionalUserId, 'professional')
-  await ensureMembership(transaction, institutionId, monitorUserId, 'monitor')
+  await ensureMembership(transaction, institutionId, studentUserId, 'student', ['student'])
+  await ensureMembership(transaction, institutionId, professionalUserId, 'professional', ['care-assigned'])
+  await ensureMembership(transaction, institutionId, monitorUserId, 'monitor', ['monitoring'])
+  await ensureMembership(transaction, institutionId, coordinatorUserId, 'professional', ['team-management', 'care-institution'])
 
   const studentId = await ensureStudent(transaction, institutionId, studentUserId)
   await ensureAssignment(transaction, institutionId, professionalUserId, studentId)
 
-  return { student: studentUserId, professional: professionalUserId, monitor: monitorUserId }
+  return { student: studentUserId, professional: professionalUserId, monitor: monitorUserId, coordinator: coordinatorUserId }
 }
 
 async function ensureUser(
@@ -62,25 +65,21 @@ async function ensureMembership(
   transaction: DatabaseTransaction,
   institutionId: string,
   userId: string,
-  environment: RoleEnvironment,
+  environment: MembershipEnvironment,
+  templateKeys: readonly string[],
 ): Promise<void> {
-  const role = await transaction.query.roles.findFirst({
-    where: and(
-      eq(roles.institutionId, institutionId),
-      eq(roles.isSystem, true),
-      eq(roles.environment, environment),
-    ),
-  })
-  if (role === undefined) {
-    throw new Error(`Institution has no system role for environment "${environment}"; run the admin seed first`)
-  }
-
   const existing = await transaction.query.memberships.findFirst({
     where: and(eq(memberships.userId, userId), eq(memberships.institutionId, institutionId)),
   })
-  if (existing !== undefined) return
-
-  await transaction.insert(memberships).values({ userId, institutionId, roleId: role.id })
+  const membership = existing ?? (await transaction.insert(memberships).values({ userId, institutionId, environment }).returning())[0]
+  if (membership === undefined) throw new Error('Insert into memberships returned no row')
+  for (const templateKey of templateKeys) {
+    const role = await transaction.query.roles.findFirst({
+      where: and(eq(roles.institutionId, institutionId), eq(roles.templateKey, templateKey), eq(roles.environment, environment)),
+    })
+    if (role === undefined) throw new Error(`Institution has no system role for template "${templateKey}"`)
+    await transaction.insert(membershipRoles).values({ membershipId: membership.id, roleId: role.id, institutionId, environment }).onConflictDoNothing()
+  }
 }
 
 async function ensureStudent(

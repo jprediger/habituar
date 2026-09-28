@@ -1,8 +1,8 @@
-import { PermissionKey } from '@habituar/core/permissions'
+import { PermissionKey, PlatformPermissionKey, PLATFORM_PERMISSION_CATALOG } from '@habituar/core/permissions'
 import { Injectable } from '@nestjs/common'
 import { and, eq } from 'drizzle-orm'
 import { Database } from '../database/database.js'
-import { assignments, memberships, rolePermissions } from '../database/schema.js'
+import { assignments, membershipRoles, memberships, rolePermissions, students, users } from '../database/schema.js'
 
 /**
  * Único call site de checagem de permissão — comparar papel em outro lugar é erro
@@ -28,18 +28,34 @@ export class RbacService {
         })
         if (membership === undefined) return false
 
-        const grant = await transaction.query.rolePermissions.findFirst({
-          where: and(eq(rolePermissions.roleId, membership.roleId), eq(rolePermissions.permissionKey, permission)),
-        })
-        if (grant === undefined) return false
-        if (grant.scope === 'institution' || grant.scope === 'own') return true
-
+        const grants = await transaction
+          .select({ scope: rolePermissions.scope })
+          .from(membershipRoles)
+          .innerJoin(rolePermissions, eq(rolePermissions.roleId, membershipRoles.roleId))
+          .where(and(eq(membershipRoles.membershipId, membership.id), eq(rolePermissions.permissionKey, permission)))
+        if (grants.some((grant) => grant.scope === 'institution')) return true
         if (context.studentId === undefined) return false
+
+        if (grants.some((grant) => grant.scope === 'own')) {
+          const student = await transaction.query.students.findFirst({
+            where: and(eq(students.id, context.studentId), eq(students.userId, actor.userId)),
+          })
+          if (student !== undefined) return true
+        }
+        if (!grants.some((grant) => grant.scope === 'assigned')) return false
         const assignment = await transaction.query.assignments.findFirst({
           where: and(eq(assignments.staffUserId, actor.userId), eq(assignments.studentId, context.studentId)),
         })
         return assignment !== undefined
       },
     )
+  }
+
+  /** Autoriza apenas operações globais de configuração para contas de plataforma. */
+  async hasPlatformPermission(actor: { readonly userId: string; readonly sessionId: string }, permission: PlatformPermissionKey): Promise<boolean> {
+    return this.database.withIdentity({ actorId: actor.userId, sessionId: actor.sessionId }, async (transaction) => {
+      const user = await transaction.query.users.findFirst({ where: eq(users.id, actor.userId) })
+      return PLATFORM_PERMISSION_CATALOG.includes(permission) && user?.isPlatformAdministrator === true
+    })
   }
 }

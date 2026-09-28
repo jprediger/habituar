@@ -1,5 +1,6 @@
-import { RoleEnvironment } from '@habituar/core/roles'
-import { boolean, pgEnum, pgTable, text, timestamp, unique, uuid } from 'drizzle-orm/pg-core'
+import { MembershipEnvironment } from '@habituar/core/roles'
+import { sql } from 'drizzle-orm'
+import { boolean, check, foreignKey, pgEnum, pgTable, text, timestamp, unique, uniqueIndex, uuid } from 'drizzle-orm/pg-core'
 
 export const tenantProbe = pgTable('tenant_probe', {
   id: uuid().primaryKey().defaultRandom(),
@@ -11,6 +12,12 @@ export const tenantProbe = pgTable('tenant_probe', {
 export const institutions = pgTable('institutions', {
   id: uuid().primaryKey().defaultRandom(),
   name: text().notNull(),
+  documentType: text('document_type'),
+  documentNumber: text('document_number').unique(),
+  contactName: text('contact_name'),
+  contactEmail: text('contact_email'),
+  contactPhone: text('contact_phone'),
+  updatedAt: timestamp('updated_at', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 })
 
@@ -58,9 +65,11 @@ export const permissionScopeEnum = pgEnum('permission_scope', [
 // O tipo vem do core; os literais são repetidos porque drizzle-kit carrega este arquivo
 // sem executar entrypoints ESM do pacote compartilhado durante a geração de migrations.
 const ROLE_ENVIRONMENT_VALUES = ['student', 'professional', 'monitor'] as const satisfies readonly [
-  RoleEnvironment,
-  ...RoleEnvironment[],
+  MembershipEnvironment,
+  ...MembershipEnvironment[],
 ]
+// O tipo SQL mantém o nome antigo: renomear enum em uso exige recriar as colunas que o
+// referenciam, custo sem ganho para um nome que só aparece no banco.
 export const roleEnvironmentEnum = pgEnum('role_environment', ROLE_ENVIRONMENT_VALUES)
 
 export const roles = pgTable('roles', {
@@ -69,11 +78,12 @@ export const roles = pgTable('roles', {
     .notNull()
     .references(() => institutions.id, { onDelete: 'cascade' }),
     name: text().notNull(),
-    environment: roleEnvironmentEnum(),
+    environment: roleEnvironmentEnum().notNull(),
+    templateKey: text('template_key'),
     isSystem: boolean('is_system').notNull().default(false),
   clonedFrom: uuid('cloned_from'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-})
+}, (table) => [unique().on(table.id, table.environment), unique().on(table.id, table.institutionId), unique().on(table.institutionId, table.templateKey)])
 
 export const rolePermissions = pgTable(
   'role_permissions',
@@ -94,7 +104,7 @@ export const rolePermissions = pgTable(
       .references(() => permissions.key),
     scope: permissionScopeEnum().notNull(),
   },
-  (table) => [unique().on(table.roleId, table.permissionKey)],
+  (table) => [unique().on(table.roleId, table.permissionKey, table.scope)],
 )
 
 export const memberships = pgTable(
@@ -107,13 +117,57 @@ export const memberships = pgTable(
     institutionId: uuid('institution_id')
       .notNull()
       .references(() => institutions.id, { onDelete: 'cascade' }),
-    roleId: uuid('role_id')
-      .notNull()
-      .references(() => roles.id),
+    roleId: uuid('role_id').references(() => roles.id),
+    environment: roleEnvironmentEnum().notNull(),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
-  (table) => [unique().on(table.userId, table.institutionId)],
+  (table) => [unique().on(table.userId, table.institutionId), unique().on(table.id, table.environment), unique().on(table.id, table.institutionId)],
 )
+
+export const membershipRoles = pgTable('membership_roles', {
+  membershipId: uuid('membership_id').notNull(),
+  roleId: uuid('role_id').notNull(),
+  institutionId: uuid('institution_id').notNull(),
+  environment: roleEnvironmentEnum().notNull(),
+}, (table) => [
+  unique().on(table.membershipId, table.roleId),
+  foreignKey({ columns: [table.membershipId, table.environment], foreignColumns: [memberships.id, memberships.environment] }).onDelete('cascade'),
+  foreignKey({ columns: [table.membershipId, table.institutionId], foreignColumns: [memberships.id, memberships.institutionId] }).onDelete('cascade'),
+  foreignKey({ columns: [table.roleId, table.environment], foreignColumns: [roles.id, roles.environment] }).onDelete('cascade'),
+  foreignKey({ columns: [table.roleId, table.institutionId], foreignColumns: [roles.id, roles.institutionId] }).onDelete('cascade'),
+])
+
+export const invitations = pgTable('invitations', {
+  id: uuid().primaryKey().defaultRandom(),
+  institutionId: uuid('institution_id').notNull().references(() => institutions.id, { onDelete: 'cascade' }),
+  email: text().notNull(),
+  environment: roleEnvironmentEnum().notNull(),
+  tokenHash: text('token_hash').notNull().unique(),
+  expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+  invitedByUserId: uuid('invited_by_user_id').notNull().references(() => users.id),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  acceptedAt: timestamp('accepted_at', { withTimezone: true }),
+  acceptedByUserId: uuid('accepted_by_user_id').references(() => users.id),
+  revokedAt: timestamp('revoked_at', { withTimezone: true }),
+  revokedByUserId: uuid('revoked_by_user_id').references(() => users.id),
+}, (table) => [
+  unique().on(table.id, table.environment), unique().on(table.id, table.institutionId),
+  check('invitations_terminal_state', sql`${table.acceptedAt} is null or ${table.revokedAt} is null`),
+  uniqueIndex('invitations_pending_email').on(table.institutionId, sql`lower(${table.email})`).where(sql`${table.acceptedAt} is null and ${table.revokedAt} is null`),
+])
+
+export const invitationRoles = pgTable('invitation_roles', {
+  invitationId: uuid('invitation_id').notNull(),
+  roleId: uuid('role_id').notNull(),
+  institutionId: uuid('institution_id').notNull(),
+  environment: roleEnvironmentEnum().notNull(),
+}, (table) => [
+  unique().on(table.invitationId, table.roleId),
+  foreignKey({ columns: [table.invitationId, table.environment], foreignColumns: [invitations.id, invitations.environment] }).onDelete('cascade'),
+  foreignKey({ columns: [table.invitationId, table.institutionId], foreignColumns: [invitations.id, invitations.institutionId] }).onDelete('cascade'),
+  foreignKey({ columns: [table.roleId, table.environment], foreignColumns: [roles.id, roles.environment] }).onDelete('cascade'),
+  foreignKey({ columns: [table.roleId, table.institutionId], foreignColumns: [roles.id, roles.institutionId] }).onDelete('cascade'),
+])
 
 export const students = pgTable('students', {
   id: uuid().primaryKey().defaultRandom(),

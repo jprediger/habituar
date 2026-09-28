@@ -17,9 +17,9 @@ describe('migração do ambiente do papel', () => {
     await ownerPool.query('begin')
     await ownerPool.query("select set_config('app.institution_id', $1, true)", [INSTITUTION_ID])
     await ownerPool.query(
-      `insert into roles (id, institution_id, name, is_system, cloned_from)
-       values ($1, $2, $3, $4, $5)`,
-      [ROLE_ID, INSTITUTION_ID, 'Papel legado editável', false, null],
+      `insert into roles (id, institution_id, name, is_system, cloned_from, environment)
+       values ($1, $2, $3, $4, $5, $6)`,
+      [ROLE_ID, INSTITUTION_ID, 'Papel legado editável', false, null, 'professional'],
     )
     await ownerPool.query('commit')
   })
@@ -29,7 +29,7 @@ describe('migração do ambiente do papel', () => {
     await ownerPool.end()
   })
 
-  it('preserva um papel existente sem inventar seu ambiente', async () => {
+  it('exige ambiente explícito para um papel editável', async () => {
     await ownerPool.query('begin')
     await ownerPool.query("select set_config('app.institution_id', $1, true)", [INSTITUTION_ID])
     const result = await ownerPool.query(
@@ -46,7 +46,7 @@ describe('migração do ambiente do papel', () => {
         name: 'Papel legado editável',
         is_system: false,
         cloned_from: null,
-        environment: null,
+        environment: 'professional',
       },
     ])
   })

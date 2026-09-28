@@ -91,26 +91,26 @@ describe('usuários de desenvolvimento', () => {
     )
 
     expect(stored).toHaveLength(1)
-    expect(new Set(Object.values(seeded)).size).toBe(3)
+    expect(new Set(Object.values(seeded)).size).toBe(4)
   })
 
   it('deixa o estudante ler a própria ficha', async () => {
     const actor = { userId: seeded.student, sessionId: SESSION_ID }
 
-    await expect(rbac.hasPermission(actor, INSTITUTION_ID, 'student.read.own')).resolves.toBe(true)
+    await expect(rbac.hasPermission(actor, INSTITUTION_ID, 'student.read', { studentId: assignedStudentId })).resolves.toBe(true)
   })
 
   it('não deixa o estudante ler a instituição inteira', async () => {
     const actor = { userId: seeded.student, sessionId: SESSION_ID }
 
-    await expect(rbac.hasPermission(actor, INSTITUTION_ID, 'student.read.institution')).resolves.toBe(false)
+    await expect(rbac.hasPermission(actor, INSTITUTION_ID, 'student.read', { studentId: unassignedStudentId })).resolves.toBe(false)
   })
 
   it('deixa o profissional ler o estudante atribuído a ele', async () => {
     const actor = { userId: seeded.professional, sessionId: SESSION_ID }
 
     await expect(
-      rbac.hasPermission(actor, INSTITUTION_ID, 'student.read.assigned', { studentId: assignedStudentId }),
+      rbac.hasPermission(actor, INSTITUTION_ID, 'student.read', { studentId: assignedStudentId }),
     ).resolves.toBe(true)
   })
 
@@ -118,7 +118,7 @@ describe('usuários de desenvolvimento', () => {
     const actor = { userId: seeded.professional, sessionId: SESSION_ID }
 
     await expect(
-      rbac.hasPermission(actor, INSTITUTION_ID, 'student.read.assigned', { studentId: unassignedStudentId }),
+      rbac.hasPermission(actor, INSTITUTION_ID, 'student.read', { studentId: unassignedStudentId }),
     ).resolves.toBe(false)
   })
 
@@ -128,17 +128,17 @@ describe('usuários de desenvolvimento', () => {
     await expect(rbac.hasPermission(actor, INSTITUTION_ID, 'role.manage')).resolves.toBe(false)
   })
 
-  it('deixa o monitor ler qualquer estudante da instituição', async () => {
+  it('não deixa o monitor ler estudante sem atribuição', async () => {
     const actor = { userId: seeded.monitor, sessionId: SESSION_ID }
 
     await expect(
-      rbac.hasPermission(actor, INSTITUTION_ID, 'student.read.institution', { studentId: unassignedStudentId }),
-    ).resolves.toBe(true)
+      rbac.hasPermission(actor, INSTITUTION_ID, 'student.read', { studentId: unassignedStudentId }),
+    ).resolves.toBe(false)
   })
 
   it('nega qualquer permissão a usuário sem vínculo na instituição', async () => {
     const actor = { userId: OUTSIDER_USER_ID, sessionId: SESSION_ID }
 
-    await expect(rbac.hasPermission(actor, INSTITUTION_ID, 'student.read.own')).resolves.toBe(false)
+    await expect(rbac.hasPermission(actor, INSTITUTION_ID, 'student.read', { studentId: assignedStudentId })).resolves.toBe(false)
   })
 })

@@ -23,6 +23,16 @@ export class RequestContextMiddleware {
       logger: appLogger.pino,
       genReqId: () => this.requestContext.get().correlationId,
       customProps: (request) => ({ correlationId: request.id }),
+      serializers: {
+        req: (request: IncomingMessage) => ({
+          method: request.method,
+          url: redactInvitationToken(request.url),
+          headers: request.headers,
+        }),
+        // A resposta pode carregar Set-Cookie com o token de sessão; somente o
+        // status é necessário para o log automático de acesso.
+        res: (response: ServerResponse) => ({ statusCode: response.statusCode }),
+      },
     })
   }
 
@@ -34,4 +44,9 @@ export class RequestContextMiddleware {
       this.logRequest(request, response, next)
     })
   }
+}
+
+/** Evita que o token de uso único apareça no log automático de acesso. */
+export function redactInvitationToken(url: string | undefined): string | undefined {
+  return url?.replace(/(\/invitations\/)[^/?]+/g, '$1[redacted]')
 }

@@ -23,6 +23,24 @@ export function mapFailureToHttpResponse(errors: FailureErrors, failure: Failure
       throw errors.not_found()
     case 'conflict':
       throw errors.conflict()
+    case 'invitation-not-found':
+      throw errors['invitation-not-found']()
+    case 'invitation-expired':
+      throw errors['invitation-expired']()
+    case 'invitation-revoked':
+      throw errors['invitation-revoked']()
+    case 'invitation-already-accepted':
+      throw errors['invitation-already-accepted']()
+    case 'invitation-email-mismatch':
+      throw errors['invitation-email-mismatch']()
+    case 'already-member':
+      throw errors['already-member']()
+    case 'platform-administrator-cannot-join':
+      throw errors['platform-administrator-cannot-join']()
+    case 'document-already-registered':
+      throw errors['document-already-registered']()
+    case 'invalid-role-for-environment':
+      throw errors['invalid-role-for-environment']()
     default:
       return assertNever(failure.code)
   }

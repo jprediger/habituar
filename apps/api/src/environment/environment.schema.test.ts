@@ -52,4 +52,15 @@ describe('environment schema', () => {
       NestFactory.create(AppModule, { abortOnError: false, logger: false }),
     ).rejects.toThrow()
   })
+
+  it('recusa iniciar em produção com o transporte de e-mail que escreve o convite no log', async () => {
+    vi.stubEnv('NODE_ENV', 'production')
+    vi.stubEnv('EMAIL_TRANSPORT', 'log')
+    vi.resetModules()
+    const { AppModule } = await import('../app.module.js')
+
+    await expect(
+      NestFactory.create(AppModule, { abortOnError: false, logger: false }),
+    ).rejects.toThrow(/EMAIL_TRANSPORT/)
+  })
 })

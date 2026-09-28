@@ -7,6 +7,8 @@ export const environmentSchema = z.object({
   APP_VERSION: z.string().min(1),
   DATABASE_URL: z.url(),
   LOG_LEVEL: z.enum(['trace', 'debug', 'info', 'warn', 'error']).default('info'),
-})
+  EMAIL_TRANSPORT: z.enum(['log', 'disabled']).default('disabled'),
+  WEB_APP_URL: z.url().default('http://localhost:5173'),
+}).refine(environment => environment.NODE_ENV !== 'production' || environment.EMAIL_TRANSPORT !== 'log', { message: 'Log email transport is forbidden in production', path: ['EMAIL_TRANSPORT'] })
 
 export type Environment = z.infer<typeof environmentSchema>

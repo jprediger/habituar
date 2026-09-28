@@ -29,6 +29,20 @@
       "when": 1788985134090,
       "tag": "0003_identity_bootstrap",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1790559352077,
+      "tag": "0004_last_nehzno",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1790559450096,
+      "tag": "0005_omniscient_invaders",
+      "breakpoints": true
     }
   ]
 }

@@ -1,6 +1,6 @@
 import { Injectable, OnApplicationShutdown } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
-import { ExtractTablesWithRelations, sql } from 'drizzle-orm'
+import { eq, ExtractTablesWithRelations, sql } from 'drizzle-orm'
 import { drizzle, NodePgDatabase, NodePgTransaction } from 'drizzle-orm/node-postgres'
 import { Pool } from 'pg'
 import { Environment } from '../environment/environment.schema.js'
@@ -86,6 +86,31 @@ export class Database implements OnApplicationShutdown {
 
       return run(transaction)
     })
+  }
+
+  /** Lookup de convite sem tenant: o hash limita a única linha legível pela RLS. */
+  async withInvitationToken<T>(tokenHash: string, run: (transaction: DatabaseTransaction) => Promise<T>): Promise<T> {
+    return this.connection.transaction(async (transaction) => {
+      await transaction.execute(sql`select set_config('app.invitation_token_hash', ${tokenHash}, true)`)
+      return run(transaction)
+    })
+  }
+
+  /** Promove somente o tenant da linha encontrada pelo token; o corpo HTTP nunca define o destino do aceite. */
+  async withInvitationAcceptance<T>(tokenHash: string, run: (transaction: DatabaseTransaction) => Promise<T>): Promise<T> {
+    return this.withInvitationToken(tokenHash, async (transaction) => {
+      const invitation = await transaction.query.invitations.findFirst({ where: eq(schema.invitations.tokenHash, tokenHash) })
+      if (invitation !== undefined) {
+        await transaction.execute(sql`select set_config('app.institution_id', ${invitation.institutionId}, true)`)
+        await transaction.execute(sql`select id from invitations where token_hash = ${tokenHash} for update`)
+      }
+      return run(transaction)
+    })
+  }
+
+  /** Provisionamento global instala o tenant recém-criado na mesma transação antes de criar seus templates. */
+  async withProvisionedInstitution<T>(identity: IdentityContext, institutionId: string, run: (transaction: DatabaseTransaction) => Promise<T>): Promise<T> {
+    return this.runInTenantTransaction({ ...identity, institutionId }, run)
   }
 
   // O terceiro argumento de `set_config` limita o contexto à transação; a conexão

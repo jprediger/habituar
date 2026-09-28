@@ -1,11 +1,11 @@
-import { roleEnvironmentSchema } from '@habituar/core/roles'
+import { membershipEnvironmentSchema } from '@habituar/core/roles'
 import { describe, expect, it } from 'vitest'
 import { buildClonedRoleValues, buildRenamedRoleValues } from './role-copy.js'
 
 const template = {
   id: '94000000-0000-4000-8000-000000000009',
   institutionId: '95000000-0000-4000-8000-000000000009',
-  environment: roleEnvironmentSchema.parse('professional'),
+  environment: membershipEnvironmentSchema.parse('professional'),
 }
 
 describe('cópia de papel', () => {
@@ -16,6 +16,7 @@ describe('cópia de papel', () => {
       isSystem: false,
       clonedFrom: template.id,
       environment: 'professional',
+      templateKey: null,
     })
   })
 

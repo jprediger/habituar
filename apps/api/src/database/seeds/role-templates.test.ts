@@ -64,12 +64,14 @@ describe('templates de papel', () => {
         transaction.query.roles.findMany({ where: eq(roles.institutionId, INSTITUTION_ID) }),
     )
 
-    expect(templates).toHaveLength(3)
+    expect(templates).toHaveLength(5)
     expect(templates.map(({ name, environment }) => ({ name, environment }))).toEqual(
       expect.arrayContaining([
         { name: 'Estudante com nome editável', environment: 'student' },
-        { name: 'professional', environment: 'professional' },
-        { name: 'monitor', environment: 'monitor' },
+        { name: 'team-management', environment: 'professional' },
+        { name: 'care-assigned', environment: 'professional' },
+        { name: 'care-institution', environment: 'professional' },
+        { name: 'monitoring', environment: 'monitor' },
       ]),
     )
   })

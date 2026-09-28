@@ -1,9 +1,9 @@
-import { RoleEnvironment } from '@habituar/core/roles'
+import { MembershipEnvironment } from '@habituar/core/roles'
 
 type RoleWithEnvironment = Readonly<{
   id: string
   institutionId: string
-  environment: RoleEnvironment
+  environment: MembershipEnvironment
 }>
 
 type ClonedRoleValues = Readonly<{
@@ -11,12 +11,13 @@ type ClonedRoleValues = Readonly<{
   name: string
   isSystem: false
   clonedFrom: string
-  environment: RoleEnvironment
+  environment: MembershipEnvironment
+  templateKey: null
 }>
 
 type RenamedRoleValues = Readonly<{
   name: string
-  environment: RoleEnvironment
+  environment: MembershipEnvironment
 }>
 
 /** Monta os campos de uma cópia sem permitir que o nome redefina o ambiente estrutural. */
@@ -30,6 +31,7 @@ export function buildClonedRoleValues(
     isSystem: false,
     clonedFrom: template.id,
     environment: template.environment,
+    templateKey: null,
   }
 }
 

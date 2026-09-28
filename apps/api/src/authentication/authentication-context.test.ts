@@ -76,10 +76,10 @@ describe('authenticated context', () => {
     expect(contextResponse.status).toBe(200)
     expect(context.memberships).toHaveLength(2)
     expect(
-      context.memberships.map(({ institution, role, permissions }) => ({
+      context.memberships.map(({ institution, roles, environment, permissions }) => ({
         institutionName: institution.name,
-        roleName: role.name,
-        roleEnvironment: role.environment,
+        roleName: roles[0]?.name,
+        roleEnvironment: environment,
         permissions,
       })),
     ).toEqual(
@@ -88,13 +88,13 @@ describe('authenticated context', () => {
           institutionName: 'North',
           roleName: 'Renamed student role',
           roleEnvironment: 'student',
-          permissions: [{ key: 'student.read.own', scope: 'own' }],
+          permissions: [{ key: 'student.read', scope: 'own' }],
         },
         {
           institutionName: 'South',
           roleName: 'Professional role',
           roleEnvironment: 'professional',
-          permissions: [{ key: 'student.read.assigned', scope: 'assigned' }],
+          permissions: [{ key: 'student.read', scope: 'assigned' }],
         },
       ]),
     )

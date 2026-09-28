@@ -1,5 +1,5 @@
 import 'reflect-metadata'
-import { FAILURE_CODES, FAILURE_ERROR_MAP, FailureCode } from '@habituar/core/failure'
+import { FAILURE_ERROR_MAP } from '@habituar/core/failure'
 import { Controller, Get, Module } from '@nestjs/common'
 import { NestFactory } from '@nestjs/core'
 import { oc } from '@orpc/contract'
@@ -21,6 +21,8 @@ const declaredFailureTestContract = oc.errors(FAILURE_ERROR_MAP).router({
   not_found: oc.route({ method: 'GET', path: '/declared-failure-test/not_found' }),
   conflict: oc.route({ method: 'GET', path: '/declared-failure-test/conflict' }),
 })
+const DECLARED_FAILURE_CODES = ['invalid_input', 'unauthenticated', 'forbidden', 'not_found', 'conflict'] as const
+type DeclaredFailureCode = typeof DECLARED_FAILURE_CODES[number]
 
 @Controller()
 class DeclaredFailureTestController {
@@ -29,7 +31,7 @@ class DeclaredFailureTestController {
   handleDeclaredFailureRoutes() {
     const impl = implement(declaredFailureTestContract)
 
-    function fail(code: FailureCode) {
+    function fail(code: DeclaredFailureCode) {
       return impl[code].handler(({ errors }) => {
         mapFailureToHttpResponse(errors, { code, message: 'Developer context, never on the wire' })
       })
@@ -63,7 +65,7 @@ describe('envelope único de falha na borda http', () => {
 
   afterEach(() => vi.unstubAllEnvs())
 
-  it.each(FAILURE_CODES)('responde a falha declarada %s com o envelope do contrato', async (code) => {
+  it.each(DECLARED_FAILURE_CODES)('responde a falha declarada %s com o envelope do contrato', async (code) => {
     const { AppModule } = await import('../app.module.js')
 
     @Module({ imports: [AppModule], controllers: [DeclaredFailureTestController] })

@@ -1,6 +1,6 @@
 import { institutionIdSchema, roleIdSchema, UserId } from '@habituar/core/identity/ids'
 import { PermissionKey, PermissionScope } from '@habituar/core/permissions'
-import { RoleEnvironment } from '@habituar/core/roles'
+import { MembershipEnvironment } from '@habituar/core/roles'
 import { Pool } from 'pg'
 
 /** Monta vínculos de autenticação pela conexão da aplicação para preservar a RLS no teste HTTP. */
@@ -17,11 +17,11 @@ export async function createAuthenticationContextFixtures(
 
     // `on conflict` porque o seed do catálogo roda no mesmo container de Postgres.
     await pool.query(
-      "insert into permissions (key) values ('student.read.own'), ('student.read.assigned') on conflict do nothing",
+      "insert into permissions (key) values ('student.read') on conflict do nothing",
     )
-    await createRole(pool, northId, actorAId, 'Renamed student role', 'student', 'student.read.own', 'own')
-    await createRole(pool, southId, actorAId, 'Professional role', 'professional', 'student.read.assigned', 'assigned')
-    await createRole(pool, elsewhereId, actorBId, 'Other role', 'monitor', 'student.read.own', 'own')
+    await createRole(pool, northId, actorAId, 'Renamed student role', 'student', 'student.read', 'own')
+    await createRole(pool, southId, actorAId, 'Professional role', 'professional', 'student.read', 'assigned')
+    await createRole(pool, elsewhereId, actorBId, 'Other role', 'monitor', 'student.read', 'own')
   } finally {
     await pool.end()
   }
@@ -40,7 +40,7 @@ async function createRole(
   institutionId: string,
   userId: UserId,
   name: string,
-  environment: RoleEnvironment,
+  environment: MembershipEnvironment,
   permissionKey: PermissionKey,
   scope: PermissionScope,
 ): Promise<void> {
@@ -59,11 +59,14 @@ async function createRole(
       'insert into role_permissions (institution_id, role_id, permission_key, scope) values ($1, $2, $3, $4::permission_scope)',
       [institutionId, roleId, permissionKey, scope],
     )
-    await pool.query('insert into memberships (user_id, institution_id, role_id) values ($1, $2, $3)', [
+    const membershipResult = await pool.query<{ id: string }>('insert into memberships (user_id, institution_id, environment) values ($1, $2, $3::role_environment) returning id', [
       userId,
       institutionId,
-      roleId,
+      environment,
     ])
+    const membership = membershipResult.rows[0]
+    if (membership === undefined) throw new Error('Fixture membership was not created')
+    await pool.query('insert into membership_roles (membership_id, role_id, institution_id, environment) values ($1, $2, $3, $4::role_environment)', [membership.id, roleId, institutionId, environment])
     await pool.query('commit')
   } catch (error: unknown) {
     await pool.query('rollback')

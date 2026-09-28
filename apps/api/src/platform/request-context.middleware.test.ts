@@ -5,6 +5,7 @@ import { IncomingMessage } from 'node:http'
 import { setImmediate } from 'node:timers/promises'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { PublicRoute } from '../authorization/public-route.decorator.js'
+import { redactInvitationToken } from './request-context.middleware.js'
 import { RequestContext } from './request-context.js'
 
 @Controller('request-context-test')
@@ -54,5 +55,9 @@ describe('request context middleware', () => {
     } finally {
       await app.close()
     }
+  })
+
+  it('remove o token da URL antes de registrá-la', () => {
+    expect(redactInvitationToken('/v1/invitations/secret-token/accept?source=web')).toBe('/v1/invitations/[redacted]/accept?source=web')
   })
 })

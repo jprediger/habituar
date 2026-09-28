@@ -9,6 +9,8 @@ import { environmentSchema } from './environment/environment.schema.js'
 import { ErrorsModule } from './errors/errors.module.js'
 import { UnhandledExceptionFilter } from './errors/unhandled-exception.filter.js'
 import { HealthModule } from './health/health.module.js'
+import { InstitutionsModule } from './institutions/institutions.module.js'
+import { InvitationsModule } from './invitations/invitations.module.js'
 import { PlatformModule } from './platform/platform.module.js'
 import { RbacModule } from './rbac/rbac.module.js'
 
@@ -31,6 +33,8 @@ import { RbacModule } from './rbac/rbac.module.js'
     AuthorizationModule,
     AuthenticationModule,
     RbacModule,
+    InstitutionsModule,
+    InvitationsModule,
     HealthModule,
     // Último de propósito: o wildcard de 404 só deve capturar o que sobrou.
     ErrorsModule,

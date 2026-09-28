@@ -1,8 +1,9 @@
 import { CanActivate, ExecutionContext, ForbiddenException, Injectable, UnauthorizedException } from '@nestjs/common'
 import { Reflector } from '@nestjs/core'
-import { PermissionKey } from '@habituar/core/permissions'
+import { PermissionKey, PlatformPermissionKey } from '@habituar/core/permissions'
 import { AuthenticatedRequest } from '../authorization/authentication.guard.js'
 import { PERMISSION_KEY } from './require-permission.decorator.js'
+import { PLATFORM_PERMISSION_KEY } from './require-platform-permission.decorator.js'
 import { RbacService } from './rbac.service.js'
 
 type RequestWithRouteData = AuthenticatedRequest & {
@@ -26,10 +27,20 @@ export class PermissionGuard implements CanActivate {
       context.getHandler(),
       context.getClass(),
     ])
-    if (required === undefined) return true
+    const platformRequired = this.reflector.getAllAndOverride<PlatformPermissionKey | undefined>(PLATFORM_PERMISSION_KEY, [
+      context.getHandler(),
+      context.getClass(),
+    ])
+    if (required === undefined && platformRequired === undefined) return true
 
     const request = context.switchToHttp().getRequest<RequestWithRouteData>()
     if (request.actor === undefined) throw new UnauthorizedException()
+
+    if (platformRequired !== undefined) {
+      if (!await this.rbac.hasPlatformPermission(request.actor, platformRequired)) throw new ForbiddenException()
+      return true
+    }
+    if (required === undefined) throw new ForbiddenException()
 
     const institutionId = request.params?.institutionId
     if (institutionId === undefined) throw new ForbiddenException()

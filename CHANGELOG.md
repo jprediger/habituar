@@ -23,6 +23,12 @@ versionamento segue [SemVer](https://semver.org/lang/pt-BR/).
 ## [Não publicado]
 
 ### Adicionado
+- `[api] [web]` O administrador geral pode cadastrar instituições, consultar membros e
+  papéis e convidar pessoas por link de uso único; o aceite está disponível na web.
+- `[web] [mobile]` Contas sem vínculo passam a ver a espera por convite, e pessoas com
+  mais de uma instituição podem trocar de contexto preservando a última escolha.
+- `[api] [core]` Vínculos podem acumular vários papéis compatíveis com seu ambiente;
+  suas permissões efetivas são a união das concessões.
 - `[infra]` O CI pré-carrega o PostgreSQL 18 e executa as provas de isolamento sem o
   container auxiliar Ryuk, desnecessário no runner efêmero.
 - `[api]` A suíte prova em PostgreSQL real que uma instituição não lê nem escreve linhas
@@ -93,5 +99,8 @@ versionamento segue [SemVer](https://semver.org/lang/pt-BR/).
   timeout do Postgres.
 
 ### Segurança
+- `[api]` Convites persistem somente o hash do token, expiram em sete dias e exigem
+  e-mail correspondente no aceite; a RLS restringe a consulta pública ao token apresentado.
+- `[api]` `student.read@own` exige que o aluno consultado pertença ao próprio ator.
 - `[api]` `authorization` e `cookie` nunca chegam ao log: são removidos na origem, dentro
   do próprio processo, e não apenas mascarados no coletor.

@@ -29,11 +29,12 @@ A plataforma deve disponibilizar uma consulta de disponibilidade e versão para 
 
 ### RF0002 – Cadastrar usuário
 
-A pessoa deve poder criar uma conta com nome, e-mail e senha válidos.
+A pessoa deve poder criar uma conta com nome, e-mail e senha válidos. O acesso a uma
+instituição depende de convite; quem tem conta sem vínculo vê o estado de espera.
 
 | Prioridade | Complexidade | Situação | Versão |
 | --- | --- | --- | --- |
-| Alta | Média | Implementado | Atual |
+| Alta | Média | Em desenvolvimento | Atual |
 
 ### RF0003 – Autenticar usuário
 
@@ -45,11 +46,13 @@ O sistema deve autenticar web por cookie seguro e mobile por credencial Bearer a
 
 ### RF0004 – Resolver contexto de acesso
 
-Após autenticar, o sistema deve identificar usuário, instituições disponíveis, papel e ambiente de destino.
+Após autenticar, o sistema deve identificar usuário, instituições disponíveis, tipo de
+vínculo, papéis acumulados e permissões efetivas. Quando há mais de um vínculo, a pessoa
+pode trocar de instituição sem sair; o cliente lembra a última escolha.
 
 | Prioridade | Complexidade | Situação | Versão |
 | --- | --- | --- | --- |
-| Alta | Alta | Implementado | Atual |
+| Alta | Alta | Em desenvolvimento | Atual |
 
 ### RF0005 – Encerrar sessão
 
@@ -65,15 +68,19 @@ A interface deve encaminhar aluno, profissional, monitor e administrador geral a
 
 | Prioridade | Complexidade | Situação | Versão |
 | --- | --- | --- | --- |
-| Alta | Média | Implementado | Atual |
+| Alta | Média | Em desenvolvimento | Atual |
 
 ### RF0007 – Gerenciar papéis e permissões
 
-A instituição deve controlar papéis, permissões e alcances de acesso sem permitir escalonamento indevido.
+A instituição deve controlar papéis, permissões e alcances de acesso sem permitir
+escalonamento indevido. Cada vínculo tem um tipo (aluno, profissional ou monitor),
+pode receber vários papéis compatíveis e soma suas concessões. Os cinco papéis
+iniciais são Gestão da equipe, atendimento a vinculados, atendimento institucional,
+monitoramento e aluno. A interface de gestão de papéis e membros ainda está prevista.
 
 | Prioridade | Complexidade | Situação | Versão |
 | --- | --- | --- | --- |
-| Alta | Alta | Implementado no servidor | Atual |
+| Alta | Alta | Em desenvolvimento | Atual |
 
 ### RF0008 – Vincular acompanhamento
 
@@ -125,11 +132,14 @@ Profissionais devem gerar relatórios consolidados para apoiar o acompanhamento 
 
 ### RF0014 – Provisionar instituições
 
-O administrador geral deve criar e manter instituições sem acesso implícito aos dados sensíveis delas.
+O administrador geral deve criar e manter instituições sem acesso implícito aos dados
+sensíveis delas. Na web, informa CPF ou CNPJ válido e contato, vê membros e papéis,
+convida pessoas, revoga convites e entrega um link que aparece uma vez. A pessoa
+aceita na web com conta nova ou existente; o convite expira em sete dias.
 
 | Prioridade | Complexidade | Situação | Versão |
 | --- | --- | --- | --- |
-| Média | Alta | Parcial | Atual |
+| Média | Alta | Em desenvolvimento | Atual |
 
 ### RF0015 – Recuperar senha
 
@@ -237,7 +247,12 @@ _[Diagrama de casos de uso disponível no DOCX oficial.]_
 
 ## Modelo do Banco de Dados
 
-O modelo abaixo representa as entidades atualmente implementadas. Usuários e sessões são globais; vínculos, papéis, permissões, estudantes, responsáveis e atribuições preservam o contexto institucional. O banco aplica isolamento por linha para impedir acesso entre instituições.
+O modelo abaixo representa as entidades atualmente implementadas. Usuários e sessões
+são globais; vínculos, papéis, permissões, convites, estudantes, responsáveis e
+atribuições preservam o contexto institucional. Cada vínculo possui um tipo e recebe
+papéis por `membership_roles`; os papéis de sistema possuem `template_key`. Convites
+guardam somente o hash do token e seus papéis ficam em `invitation_roles`. O banco
+aplica isolamento por linha para impedir acesso entre instituições.
 
 _[Modelo atual do banco de dados disponível no DOCX oficial.]_
 
@@ -281,7 +296,8 @@ A API valida entradas e saídas a partir de contratos compartilhados, nega acess
 | Funcionalidade | Prioridade | Situação | Descrição |
 | --- | --- | --- | --- |
 | Autenticação e sessões | Alta | Implementado | Cadastro, login web/mobile, contexto e logout |
-| Papéis, permissões e vínculos | Alta | Implementado no servidor | Catálogo fechado e isolamento institucional |
+| Papéis, permissões e vínculos | Alta | Em desenvolvimento | Papéis somados, catálogo fechado e isolamento institucional |
+| Instituições e convites | Média | Em desenvolvimento | Cadastro, convite de uso único e aceite na web |
 | Interfaces de autenticação | Alta | Implementado | Entrada, cadastro e ambientes por perfil na web e no mobile |
 | Fichas e observações | Alta | Previsto | Dados sensíveis, histórico e auditoria |
 | Rotina, tarefas e foco | Alta | Previsto | Organização semanal e funcionamento offline |

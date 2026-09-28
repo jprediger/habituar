@@ -22,7 +22,7 @@ portas de mão única errado é como projetos morrem depois.
 
 | # | Decisão | Escolha |
 |---|---|---|
-| D1 | Paridade entre plataformas | Todas as personas em mobile e web |
+| D1 | Paridade entre plataformas | Todas as personas em mobile e web; configuração da plataforma só na web |
 | D2 | Camada de UI | Separada por plataforma; lógica compartilhada |
 | D3 | Mobile | Nativo (Expo), não PWA |
 | D4 | Backend | TypeScript — NestJS + Drizzle + zod |
@@ -43,7 +43,9 @@ portas de mão única errado é como projetos morrem depois.
 
 ## D1 — Paridade total entre plataformas
 
-Todas as personas usam mobile **e** web, com o mesmo conjunto de telas.
+Todas as personas usam mobile **e** web. A administração da plataforma (cadastro de
+instituições e convites pelo administrador geral) é feita apenas na web; o mobile
+direciona essa pessoa para a web. É a exceção explícita à paridade de telas.
 
 **Custo assumido:** cada tela é construída duas vezes, e a acessibilidade é feita duas
 vezes em duas APIs distintas (ver D12). Este é o custo mais alto de toda a arquitetura e
@@ -312,21 +314,31 @@ Três detalhes decidem se isso realmente segura:
 **Permissões são código. Papéis são dados.**
 
 O administrador geral opera fora dos vínculos institucionais e não recebe papel ou
-permissão de tenant por existir. A administração de instituição que aparece em dados
+permissão de tenant por existir. Seu catálogo separado contém apenas
+`institution.provision` e `institution.configure`; o mesmo serviço de autorização
+resolve os dois catálogos. A administração de instituição que aparece em dados
 legados será migrada de forma reversível; qualquer capacidade institucional futura ainda
 precisará passar pelo catálogo fechado e por uma concessão explícita.
 
 ```
 permissions        key ('ficha.read', 'observation.write', …), sensitive boolean
-roles              id, institution_id, name, is_system, cloned_from
+roles              id, institution_id, environment, template_key, name, is_system
 role_permissions   role_id, permission_key, scope ('own'|'assigned'|'institution')
-memberships        user ↔ institution ↔ role
-platform_administrators  user_id  -- global, sem institution_id ou membership
+memberships        user ↔ institution, environment ('student'|'professional'|'monitor')
+membership_roles   membership ↔ role (mesma instituição e mesmo ambiente)
+users.is_platform_administrator  -- global, sem membership
 assignments        staff ↔ (student | group)
 ```
 
-A coluna `scope` funde as duas dimensões: `ficha.read@assigned` para um monitor,
-`ficha.read@institution` para um coordenador. Uma permissão, escopos diferentes.
+A coluna `scope` define o alcance: `student.read@assigned` para monitor,
+`student.read@institution` para Gestão da equipe. A ação permanece uma chave só,
+e as concessões dos vários papéis de um vínculo se somam. O alcance `own` exige que
+o estudante consultado pertença ao próprio ator.
+
+Convites de acesso usam token aleatório de uso único armazenado apenas como hash,
+expiram em sete dias e só podem ser aceitos pela conta do e-mail convidado.
+A leitura sem instituição usa política RLS limitada ao hash apresentado; aceitar
+cria vínculo e atribuições na instituição gravada no convite, não na requisição.
 
 ### Proteções contra escalonamento de privilégio
 

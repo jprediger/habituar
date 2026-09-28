@@ -2,7 +2,6 @@
 import { institutionIdSchema } from '@habituar/core/identity/ids'
 import { createFileRoute } from '@tanstack/react-router'
 import { InstitutionDetailScreen } from '../../../platform/platform-screens.js'
-import { SessionRoute } from '../../../session/session-route.js'
 
 export const Route = createFileRoute('/admin/institutions/$institutionId')({
   // Parâmetro de URL é entrada externa: vira id tipado aqui, e id inválido não chega à tela.
@@ -15,5 +14,5 @@ export const Route = createFileRoute('/admin/institutions/$institutionId')({
 
 function InstitutionDetailRoute() {
   const { institutionId } = Route.useParams()
-  return <SessionRoute pathname={`/admin/institutions/${institutionId}`}>{() => <InstitutionDetailScreen institutionId={institutionId} />}</SessionRoute>
+  return <InstitutionDetailScreen institutionId={institutionId} />
 }

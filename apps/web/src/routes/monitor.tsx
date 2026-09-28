@@ -1,15 +1,27 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { Outlet, createFileRoute, useLocation } from '@tanstack/react-router'
 import type { ReactElement } from 'react'
+import { AppShell } from '../shell/app-shell.js'
+import { InstitutionSessionProvider } from '../session/institution-session.js'
 import { InstitutionSessionRoute } from '../session/session-route.js'
-import { StaffHomeScreen } from '../home/staff-home-screen.js'
 
-export const Route = createFileRoute('/monitor')({ component: MonitorRoute })
+export const Route = createFileRoute('/monitor')({ component: MonitorLayoutRoute })
 
-/** Ambiente de monitor; compartilha a tela de atendimento com o profissional. */
-export function MonitorRoute(): ReactElement {
+/**
+ * Layout do ambiente de monitor e sua única fronteira de sessão: o guard recebe o
+ * caminho real, então toda tela filha é protegida pela regra do ambiente sem repeti-la.
+ */
+export function MonitorLayoutRoute(): ReactElement {
+  const pathname = useLocation({ select: (location) => location.pathname })
+
   return (
-    <InstitutionSessionRoute pathname="/monitor">
-      {(session) => <StaffHomeScreen session={session} />}
+    <InstitutionSessionRoute pathname={pathname}>
+      {(session) => (
+        <InstitutionSessionProvider session={session}>
+          <AppShell environment="monitor" session={session}>
+            <Outlet />
+          </AppShell>
+        </InstitutionSessionProvider>
+      )}
     </InstitutionSessionRoute>
   )
 }

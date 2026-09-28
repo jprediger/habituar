@@ -19,9 +19,12 @@ import { Route as ProfessionalRouteImport } from './routes/professional'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as SelectInstitutionRouteImport } from './routes/select-institution'
 import { Route as StudentRouteImport } from './routes/student'
+import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as InviteTokenRouteImport } from './routes/invite/$token'
+import { Route as MonitorIndexRouteImport } from './routes/monitor/index'
 import { Route as ProfessionalIndexRouteImport } from './routes/professional/index'
 import { Route as ProfessionalProfileRouteImport } from './routes/professional/profile'
+import { Route as StudentIndexRouteImport } from './routes/student/index'
 import { Route as AdminInstitutionsIndexRouteImport } from './routes/admin/institutions/index'
 import { Route as AdminInstitutionsInstitutionIdRouteImport } from './routes/admin/institutions/$institutionId'
 import { Route as AdminInstitutionsNewRouteImport } from './routes/admin/institutions/new'
@@ -76,10 +79,20 @@ const StudentRoute = StudentRouteImport.update({
   path: '/student',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminRoute,
+} as any)
 const InviteTokenRoute = InviteTokenRouteImport.update({
   id: '/invite/$token',
   path: '/invite/$token',
   getParentRoute: () => rootRouteImport,
+} as any)
+const MonitorIndexRoute = MonitorIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => MonitorRoute,
 } as any)
 const ProfessionalIndexRoute = ProfessionalIndexRouteImport.update({
   id: '/',
@@ -90,6 +103,11 @@ const ProfessionalProfileRoute = ProfessionalProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
   getParentRoute: () => ProfessionalRoute,
+} as any)
+const StudentIndexRoute = StudentIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => StudentRoute,
 } as any)
 const AdminInstitutionsIndexRoute = AdminInstitutionsIndexRouteImport.update({
   id: '/institutions/',
@@ -114,31 +132,34 @@ export interface FileRoutesByFullPath {
   '/awaiting-invitation': typeof AwaitingInvitationRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
-  '/monitor': typeof MonitorRoute
+  '/monitor': typeof MonitorRouteWithChildren
   '/professional': typeof ProfessionalRouteWithChildren
   '/register': typeof RegisterRoute
   '/select-institution': typeof SelectInstitutionRoute
-  '/student': typeof StudentRoute
+  '/student': typeof StudentRouteWithChildren
   '/invite/$token': typeof InviteTokenRoute
   '/professional/profile': typeof ProfessionalProfileRoute
+  '/admin/': typeof AdminIndexRoute
+  '/monitor/': typeof MonitorIndexRoute
   '/professional/': typeof ProfessionalIndexRoute
+  '/student/': typeof StudentIndexRoute
   '/admin/institutions/$institutionId': typeof AdminInstitutionsInstitutionIdRoute
   '/admin/institutions/new': typeof AdminInstitutionsNewRoute
   '/admin/institutions/': typeof AdminInstitutionsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/admin': typeof AdminRouteWithChildren
   '/awaiting-invitation': typeof AwaitingInvitationRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
-  '/monitor': typeof MonitorRoute
   '/register': typeof RegisterRoute
   '/select-institution': typeof SelectInstitutionRoute
-  '/student': typeof StudentRoute
   '/invite/$token': typeof InviteTokenRoute
   '/professional/profile': typeof ProfessionalProfileRoute
+  '/admin': typeof AdminIndexRoute
+  '/monitor': typeof MonitorIndexRoute
   '/professional': typeof ProfessionalIndexRoute
+  '/student': typeof StudentIndexRoute
   '/admin/institutions/$institutionId': typeof AdminInstitutionsInstitutionIdRoute
   '/admin/institutions/new': typeof AdminInstitutionsNewRoute
   '/admin/institutions': typeof AdminInstitutionsIndexRoute
@@ -150,14 +171,17 @@ export interface FileRoutesById {
   '/awaiting-invitation': typeof AwaitingInvitationRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
-  '/monitor': typeof MonitorRoute
+  '/monitor': typeof MonitorRouteWithChildren
   '/professional': typeof ProfessionalRouteWithChildren
   '/register': typeof RegisterRoute
   '/select-institution': typeof SelectInstitutionRoute
-  '/student': typeof StudentRoute
+  '/student': typeof StudentRouteWithChildren
   '/invite/$token': typeof InviteTokenRoute
   '/professional/profile': typeof ProfessionalProfileRoute
+  '/admin/': typeof AdminIndexRoute
+  '/monitor/': typeof MonitorIndexRoute
   '/professional/': typeof ProfessionalIndexRoute
+  '/student/': typeof StudentIndexRoute
   '/admin/institutions/$institutionId': typeof AdminInstitutionsInstitutionIdRoute
   '/admin/institutions/new': typeof AdminInstitutionsNewRoute
   '/admin/institutions/': typeof AdminInstitutionsIndexRoute
@@ -177,24 +201,27 @@ export interface FileRouteTypes {
     | '/student'
     | '/invite/$token'
     | '/professional/profile'
+    | '/admin/'
+    | '/monitor/'
     | '/professional/'
+    | '/student/'
     | '/admin/institutions/$institutionId'
     | '/admin/institutions/new'
     | '/admin/institutions/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/admin'
     | '/awaiting-invitation'
     | '/forgot-password'
     | '/login'
-    | '/monitor'
     | '/register'
     | '/select-institution'
-    | '/student'
     | '/invite/$token'
     | '/professional/profile'
+    | '/admin'
+    | '/monitor'
     | '/professional'
+    | '/student'
     | '/admin/institutions/$institutionId'
     | '/admin/institutions/new'
     | '/admin/institutions'
@@ -212,7 +239,10 @@ export interface FileRouteTypes {
     | '/student'
     | '/invite/$token'
     | '/professional/profile'
+    | '/admin/'
+    | '/monitor/'
     | '/professional/'
+    | '/student/'
     | '/admin/institutions/$institutionId'
     | '/admin/institutions/new'
     | '/admin/institutions/'
@@ -224,11 +254,11 @@ export interface RootRouteChildren {
   AwaitingInvitationRoute: typeof AwaitingInvitationRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   LoginRoute: typeof LoginRoute
-  MonitorRoute: typeof MonitorRoute
+  MonitorRoute: typeof MonitorRouteWithChildren
   ProfessionalRoute: typeof ProfessionalRouteWithChildren
   RegisterRoute: typeof RegisterRoute
   SelectInstitutionRoute: typeof SelectInstitutionRoute
-  StudentRoute: typeof StudentRoute
+  StudentRoute: typeof StudentRouteWithChildren
   InviteTokenRoute: typeof InviteTokenRoute
 }
 
@@ -304,12 +334,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StudentRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/': {
+      id: '/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/invite/$token': {
       id: '/invite/$token'
       path: '/invite/$token'
       fullPath: '/invite/$token'
       preLoaderRoute: typeof InviteTokenRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/monitor/': {
+      id: '/monitor/'
+      path: '/'
+      fullPath: '/monitor/'
+      preLoaderRoute: typeof MonitorIndexRouteImport
+      parentRoute: typeof MonitorRoute
     }
     '/professional/': {
       id: '/professional/'
@@ -324,6 +368,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/professional/profile'
       preLoaderRoute: typeof ProfessionalProfileRouteImport
       parentRoute: typeof ProfessionalRoute
+    }
+    '/student/': {
+      id: '/student/'
+      path: '/'
+      fullPath: '/student/'
+      preLoaderRoute: typeof StudentIndexRouteImport
+      parentRoute: typeof StudentRoute
     }
     '/admin/institutions/': {
       id: '/admin/institutions/'
@@ -350,18 +401,31 @@ declare module '@tanstack/react-router' {
 }
 
 interface AdminRouteChildren {
+  AdminIndexRoute: typeof AdminIndexRoute
   AdminInstitutionsInstitutionIdRoute: typeof AdminInstitutionsInstitutionIdRoute
   AdminInstitutionsNewRoute: typeof AdminInstitutionsNewRoute
   AdminInstitutionsIndexRoute: typeof AdminInstitutionsIndexRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
+  AdminIndexRoute: AdminIndexRoute,
   AdminInstitutionsInstitutionIdRoute: AdminInstitutionsInstitutionIdRoute,
   AdminInstitutionsNewRoute: AdminInstitutionsNewRoute,
   AdminInstitutionsIndexRoute: AdminInstitutionsIndexRoute,
 }
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
+
+interface MonitorRouteChildren {
+  MonitorIndexRoute: typeof MonitorIndexRoute
+}
+
+const MonitorRouteChildren: MonitorRouteChildren = {
+  MonitorIndexRoute: MonitorIndexRoute,
+}
+
+const MonitorRouteWithChildren =
+  MonitorRoute._addFileChildren(MonitorRouteChildren)
 
 interface ProfessionalRouteChildren {
   ProfessionalProfileRoute: typeof ProfessionalProfileRoute
@@ -377,17 +441,28 @@ const ProfessionalRouteWithChildren = ProfessionalRoute._addFileChildren(
   ProfessionalRouteChildren,
 )
 
+interface StudentRouteChildren {
+  StudentIndexRoute: typeof StudentIndexRoute
+}
+
+const StudentRouteChildren: StudentRouteChildren = {
+  StudentIndexRoute: StudentIndexRoute,
+}
+
+const StudentRouteWithChildren =
+  StudentRoute._addFileChildren(StudentRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRouteWithChildren,
   AwaitingInvitationRoute: AwaitingInvitationRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
   LoginRoute: LoginRoute,
-  MonitorRoute: MonitorRoute,
+  MonitorRoute: MonitorRouteWithChildren,
   ProfessionalRoute: ProfessionalRouteWithChildren,
   RegisterRoute: RegisterRoute,
   SelectInstitutionRoute: SelectInstitutionRoute,
-  StudentRoute: StudentRoute,
+  StudentRoute: StudentRouteWithChildren,
   InviteTokenRoute: InviteTokenRoute,
 }
 export const routeTree = rootRouteImport

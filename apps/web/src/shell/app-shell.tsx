@@ -1,7 +1,6 @@
-import {
-  listProfessionalBreadcrumbs,
-  useProfessionalNavigation,
-} from '@habituar/react-client/professional-navigation'
+import type { NavigationEnvironment } from '@habituar/react-client/environment-navigation'
+import { listNavigationBreadcrumbs, useEnvironmentNavigation } from '@habituar/react-client/environment-navigation'
+import type { ActiveSession } from '@habituar/react-client/react-client'
 import { Link, useLocation } from '@tanstack/react-router'
 import { Bell, Search } from 'lucide-react'
 import type { PropsWithChildren, ReactElement } from 'react'
@@ -16,8 +15,7 @@ import {
 } from '../components/ui/breadcrumb.js'
 import { SidebarMobileTrigger, SidebarProvider } from '../components/ui/sidebar.js'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../components/ui/tooltip.js'
-import { ProfessionalSidebar } from './professional-sidebar.js'
-import type { InstitutionSession } from '../session/session-route.js'
+import { AppSidebar } from './app-sidebar.js'
 import { ThemeToggle } from '../theme/theme-toggle.js'
 import { InstitutionSwitcher } from '../session/institution-switcher.js'
 
@@ -27,14 +25,15 @@ const MAIN_CONTENT_ID = 'main-content'
 const HEADER_ACTION = 'rounded-control border border-hairline text-text-muted hover:bg-surface-muted hover:text-text'
 
 /**
- * Casca do ambiente profissional: navegação lateral em coluna inteira, cabeçalho com a
- * trilha da página e as ações globais, e a região principal onde cada tela filha entra. Não conhece o conteúdo das telas — só o lugar fixo de cada
- * coisa, que não muda entre elas.
+ * Casca comum a todos os ambientes: navegação lateral em coluna inteira, cabeçalho com a
+ * trilha da página e as ações globais, e a região principal onde cada tela filha entra.
+ * Não conhece o conteúdo das telas — só o lugar fixo de cada coisa, que não muda entre elas.
  */
-export function ProfessionalShell({
+export function AppShell({
+  environment,
   session,
   children,
-}: PropsWithChildren<Readonly<{ session: InstitutionSession }>>): ReactElement {
+}: PropsWithChildren<Readonly<{ environment: NavigationEnvironment; session: ActiveSession }>>): ReactElement {
   const { t } = useTranslation()
 
   return (
@@ -52,7 +51,7 @@ export function ProfessionalShell({
           </a>
 
           <div className="flex">
-            <ProfessionalSidebar />
+            <AppSidebar environment={environment} />
             <div className="flex min-w-0 flex-1 flex-col">
               <header
                 className={
@@ -62,17 +61,18 @@ export function ProfessionalShell({
               >
                 <div className="flex min-w-0 flex-1 items-center gap-xs">
                   <SidebarMobileTrigger />
-                  <ProfessionalBreadcrumbs />
+                  <EnvironmentBreadcrumbs environment={environment} />
                 </div>
 
                 <div className="flex shrink-0 items-center gap-md">
-                  <InstitutionSwitcher />
+                  {/* Trocar de instituição só faz sentido para quem entrou por um vínculo. */}
+                  {session.kind === 'institution' && <InstitutionSwitcher />}
                   <div className="hidden w-[16rem] md:block lg:w-[20rem]">
                     <SearchPlaceholder />
                   </div>
                   <ThemeToggle className={HEADER_ACTION} />
                   <NotificationsPlaceholder />
-                  <AccountMenu session={session} />
+                  <AccountMenu environment={environment} session={session} />
                 </div>
               </header>
 
@@ -89,11 +89,11 @@ export function ProfessionalShell({
 
 // A trilha vem do hook compartilhado; aqui só se decide que ancestral é link e o passo
 // atual é texto.
-function ProfessionalBreadcrumbs(): ReactElement {
+function EnvironmentBreadcrumbs({ environment }: Readonly<{ environment: NavigationEnvironment }>): ReactElement {
   const { t } = useTranslation()
-  const items = useProfessionalNavigation()
+  const items = useEnvironmentNavigation(environment)
   const pathname = useLocation({ select: (location) => location.pathname })
-  const trail = listProfessionalBreadcrumbs(items, pathname)
+  const trail = listNavigationBreadcrumbs(items, pathname)
 
   return (
     <Breadcrumb label={t('shell.breadcrumbs.label')}>

@@ -1,12 +1,9 @@
 import { assertNever } from '@habituar/core/assert-never'
-import type { ProfessionalNavigationIcon } from '@habituar/react-client/professional-navigation'
-import {
-  findActiveProfessionalNavigationItem,
-  useProfessionalNavigation,
-} from '@habituar/react-client/professional-navigation'
+import type { NavigationEnvironment, NavigationIcon } from '@habituar/react-client/environment-navigation'
+import { findActiveNavigationItem, useEnvironmentNavigation } from '@habituar/react-client/environment-navigation'
 import { Link, useLocation } from '@tanstack/react-router'
 import type { LucideIcon } from 'lucide-react'
-import { House, UserRound } from 'lucide-react'
+import { Building2, House, UserRound } from 'lucide-react'
 import type { ReactElement } from 'react'
 import { useTranslation } from 'react-i18next'
 import { BrandMark } from './brand-mark.js'
@@ -19,14 +16,14 @@ import {
 } from '../components/ui/sidebar.js'
 
 /**
- * Navegação do ambiente profissional na web. Quais destinos existem e qual está ativo vêm
+ * Navegação lateral de um ambiente na web. Quais destinos existem e qual está ativo vêm
  * do hook compartilhado; aqui só se decide o visual e o ícone de cada nome lógico.
  */
-export function ProfessionalSidebar(): ReactElement {
+export function AppSidebar({ environment }: Readonly<{ environment: NavigationEnvironment }>): ReactElement {
   const { t } = useTranslation()
-  const items = useProfessionalNavigation()
+  const items = useEnvironmentNavigation(environment)
   const pathname = useLocation({ select: (location) => location.pathname })
-  const activeItem = findActiveProfessionalNavigationItem(items, pathname)
+  const activeItem = findActiveNavigationItem(items, pathname)
   const activeIndex = activeItem === undefined ? undefined : items.indexOf(activeItem)
 
   return (
@@ -44,7 +41,7 @@ export function ProfessionalSidebar(): ReactElement {
             'group-data-[state=collapsed]/sidebar:opacity-0 motion-safe:transition-opacity motion-safe:duration-200'
           }
         >
-          {t('shell.sidebar.eyebrow')}
+          {getEnvironmentEyebrowText(environment, t)}
         </p>
         <SidebarMenu activeIndex={activeIndex}>
           {items.map((item) => {
@@ -57,7 +54,7 @@ export function ProfessionalSidebar(): ReactElement {
                 <SidebarMenuButton isActive={isActive} tooltip={label}>
                   <Link
                     to={item.path}
-                    // O `Link` marca `aria-current` sozinho, e por padrão trata `/professional`
+                    // O `Link` marca `aria-current` sozinho, e por padrão trata a raiz do ambiente
                     // como ativo em qualquer filha. Casamento exato para os inativos faz o
                     // roteador concordar com o item mais específico que o hook escolheu.
                     activeOptions={{ exact: !isActive }}
@@ -75,12 +72,32 @@ export function ProfessionalSidebar(): ReactElement {
   )
 }
 
-function getNavigationIcon(icon: ProfessionalNavigationIcon): LucideIcon {
+function getEnvironmentEyebrowText(
+  environment: NavigationEnvironment,
+  t: ReturnType<typeof useTranslation>['t'],
+): string {
+  switch (environment) {
+    case 'professional':
+      return t('shell.sidebar.eyebrow.professional')
+    case 'student':
+      return t('shell.sidebar.eyebrow.student')
+    case 'monitor':
+      return t('shell.sidebar.eyebrow.monitor')
+    case 'admin':
+      return t('shell.sidebar.eyebrow.admin')
+    default:
+      return assertNever(environment)
+  }
+}
+
+function getNavigationIcon(icon: NavigationIcon): LucideIcon {
   switch (icon) {
     case 'home':
       return House
     case 'user':
       return UserRound
+    case 'building':
+      return Building2
     default:
       return assertNever(icon)
   }

@@ -1,9 +1,10 @@
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { I18nProvider } from '../i18n/i18n-provider.js'
+import { InstitutionSessionProvider } from '../session/institution-session.js'
 import { createInstitutionSession } from '../session/institution-session-fixture.js'
 import { expectNoSeriousA11yViolations } from '../test/expect-no-a11y-violations.js'
-import { StaffHomeScreen } from './staff-home-screen.js'
+import { MonitorHomeScreen } from './monitor-home-screen.js'
 
 vi.mock('../client/habituar-client.js', () => ({
   habituar: {
@@ -12,11 +13,13 @@ vi.mock('../client/habituar-client.js', () => ({
   },
 }))
 
-describe('staff home', () => {
-  it('keeps serving the monitor, who stays out of the professional shell for now', () => {
+describe('monitor home', () => {
+  it('shows the monitor their institution', () => {
     render(
       <I18nProvider>
-        <StaffHomeScreen session={createInstitutionSession('monitor')} />
+        <InstitutionSessionProvider session={createInstitutionSession('monitor')}>
+          <MonitorHomeScreen />
+        </InstitutionSessionProvider>
       </I18nProvider>,
     )
 
@@ -27,7 +30,9 @@ describe('staff home', () => {
   it('keeps the environment screen free of serious accessibility violations', async () => {
     const { container } = render(
       <I18nProvider>
-        <StaffHomeScreen session={createInstitutionSession('monitor')} />
+        <InstitutionSessionProvider session={createInstitutionSession('monitor')}>
+          <MonitorHomeScreen />
+        </InstitutionSessionProvider>
       </I18nProvider>,
     )
 

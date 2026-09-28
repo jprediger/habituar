@@ -21,6 +21,7 @@ const client = vi.hoisted(
 
 vi.mock('../client/habituar-client.js', () => ({
   habituar: {
+    usePlatformInstitutions: () => ({ institutions: [], isLoading: false, error: false, create: vi.fn() }),
     useInstitutionSwitcher: () => ({ current: undefined, others: [], switchTo: vi.fn() }),
     useAuthentication: () => ({
       state: client.state,
@@ -50,6 +51,19 @@ function createAuthenticatedState(environment: MembershipEnvironment): Authentic
   return {
     status: 'authenticated',
     session: { kind: 'institution', user: context.user, membership, destination: getHomeDestination(environment) },
+  }
+}
+
+function createPlatformAdministrationState(): AuthenticationState {
+  const context = authenticationContextSchema.parse({
+    user: { id: '20000000-0000-4000-8000-000000000002', email: 'root@example.com', name: 'Rita Souza' },
+    memberships: [],
+    isPlatformAdministrator: true,
+  })
+
+  return {
+    status: 'authenticated',
+    session: { kind: 'platform-administration', user: context.user, destination: 'admin-home' },
   }
 }
 
@@ -118,7 +132,9 @@ describe('professional environment routes', () => {
       expect(router.state.location.pathname).toBe('/student')
     })
     expect(screen.queryByRole('heading', { name: 'Perfil' })).not.toBeInTheDocument()
-    expect(screen.queryByRole('navigation', { name: 'Navegação do ambiente' })).not.toBeInTheDocument()
+    // O aluno ganha a própria casca, sem os destinos do ambiente profissional.
+    const navigation = await screen.findByRole('navigation', { name: 'Navegação do ambiente' })
+    expect(within(navigation).queryByRole('link', { name: 'Perfil' })).not.toBeInTheDocument()
   })
 
   it('sends a monitor who opens the professional profile back to the monitor environment', async () => {
@@ -133,7 +149,7 @@ describe('professional environment routes', () => {
   })
 })
 
-describe('professional shell', () => {
+describe('app shell in the professional environment', () => {
   it('marks only the most specific destination as the current page', async () => {
     renderAt('/professional/profile')
     const navigation = await screen.findByRole('navigation', { name: 'Navegação do ambiente' })
@@ -283,7 +299,7 @@ describe('professional shell', () => {
   })
 })
 
-describe('professional shell on a narrow screen', () => {
+describe('app shell on a narrow screen', () => {
   it('opens the navigation as a drawer and returns focus to its trigger on Escape', async () => {
     stubMobileViewport()
     const user = userEvent.setup()
@@ -336,5 +352,53 @@ describe('professional shell on a narrow screen', () => {
     await waitFor(() => {
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
     })
+  })
+})
+
+describe('app shell in the other environments', () => {
+  it('renders an administration child screen inside the shell, under its own destination', async () => {
+    client.state = createPlatformAdministrationState()
+
+    renderAt('/admin/institutions')
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Instituições' })).toBeInTheDocument()
+    const main = screen.getByRole('main')
+    expect(within(main).getByText('Nenhuma instituição cadastrada.')).toBeInTheDocument()
+    const navigation = screen.getByRole('navigation', { name: 'Navegação do ambiente' })
+    expect(within(navigation).getByRole('link', { name: 'Instituições' })).toHaveAttribute('aria-current', 'page')
+    expect(within(navigation).getByText('Administração geral')).toBeInTheDocument()
+  })
+
+  it('sends the administration root to the institution list', async () => {
+    client.state = createPlatformAdministrationState()
+
+    const router = renderAt('/admin')
+
+    await waitFor(() => {
+      expect(router.state.location.pathname).toBe('/admin/institutions')
+    })
+    expect(await screen.findByRole('heading', { level: 1, name: 'Instituições' })).toBeInTheDocument()
+  })
+
+  it('names the platform administration scope in the account menu instead of an institution', async () => {
+    const user = userEvent.setup()
+    client.state = createPlatformAdministrationState()
+    renderAt('/admin/institutions')
+
+    await user.click(await screen.findByRole('button', { name: 'Menu da conta de Rita Souza' }))
+
+    const menu = await screen.findByRole('menu')
+    expect(within(menu).getByText('Administração geral')).toBeInTheDocument()
+    expect(within(menu).queryByRole('menuitem', { name: 'Perfil' })).not.toBeInTheDocument()
+  })
+
+  it('opens the student home inside the shell', async () => {
+    client.state = createAuthenticatedState('student')
+
+    renderAt('/student')
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Seu ambiente de aluno' })).toBeInTheDocument()
+    const navigation = screen.getByRole('navigation', { name: 'Navegação do ambiente' })
+    expect(within(navigation).getByRole('link', { name: 'Início' })).toHaveAttribute('aria-current', 'page')
   })
 })

@@ -5,7 +5,7 @@
   "awaitingInvitation": { "title": "Aguardando convite", "description": "Sua conta está pronta. Peça um convite à pessoa responsável pela instituição para começar.", "guidance": "Abra o link do convite no navegador para aceitar.", "refresh": "Verificar meu acesso" },
   "platform": {
     "back": "Voltar às instituições", "save": "Salvar dados", "saving": "Salvando...", "error": "Não foi possível concluir. Confira a conexão e tente novamente.",
-    "institutions": { "title": "Instituições", "new": "Criar instituição", "empty": "Nenhuma instituição cadastrada.", "invalid": "Confira os campos. Digite CPF ou CNPJ apenas com números e com dígitos válidos.", "sections": "Seções da instituição", "data": "Dados", "people": "Pessoas", "name": "Nome", "documentType": "Tipo de documento", "documentNumber": "CPF ou CNPJ", "contactName": "Nome do contato", "contactEmail": "E-mail do contato", "contactPhone": "Telefone do contato", "cnpj": "CNPJ", "cpf": "CPF" },
+    "institutions": { "title": "Instituições", "description": "Cadastre instituições e mantenha seus dados, membros e convites.", "newDescription": "Preencha os dados cadastrais da nova instituição.", "detailDescription": "Dados cadastrais, membros e convites desta instituição.", "detailLoading": "Carregando instituição...", "new": "Criar instituição", "empty": "Nenhuma instituição cadastrada.", "invalid": "Confira os campos. Digite CPF ou CNPJ apenas com números e com dígitos válidos.", "sections": "Seções da instituição", "data": "Dados", "people": "Pessoas", "name": "Nome", "documentType": "Tipo de documento", "documentNumber": "CPF ou CNPJ", "contactName": "Nome do contato", "contactEmail": "E-mail do contato", "contactPhone": "Telefone do contato", "cnpj": "CNPJ", "cpf": "CPF" },
     "members": { "title": "Membros", "empty": "Ainda não há membros nesta instituição." },
     "environments": { "professional": "Profissional", "monitor": "Monitor", "student": "Aluno" },
     "invitations": { "title": "Convites", "new": "Convidar pessoa", "email": "E-mail da pessoa", "environment": "Tipo de vínculo", "roles": "Papéis", "chooseRole": "Escolha ao menos um papel para continuar.", "create": "Criar convite", "revoke": "Revogar convite", "revokeConfirmation": "Revogar este convite? O link deixará de funcionar.", "confirmRevoke": "Sim, revogar", "cancelRevoke": "Manter convite", "oneTimeWarning": "Copie este link agora. Ele aparece uma única vez. Criar outro convite para este e-mail invalida o link anterior.", "copy": "Copiar link", "status": { "pending": "Pendente", "accepted": "Aceito", "revoked": "Revogado", "expired": "Expirado" } }
@@ -76,18 +76,13 @@
     "activateLight": "Ativar tema claro"
   },
   "home": {
-    "signedInAs": "Conectado como {{name}}",
     "institutionLabel": "Instituição",
     "roleLabel": "Papel",
-    "accountLabel": "Conta",
     "scopeLabel": "Alcance",
+    "membershipTitle": "Seu vínculo",
     "student-home": {
       "title": "Seu ambiente de aluno",
       "description": "Organize sua rotina, acompanhe tarefas e consulte sua agenda."
-    },
-    "professional-home": {
-      "title": "Seu ambiente profissional",
-      "description": "Acompanhe alunos, consultas, métricas e registros."
     },
     "monitor-home": {
       "title": "Seu ambiente de monitor",
@@ -95,20 +90,25 @@
     },
     "admin-home": {
       "title": "Administração geral",
-      "description": "Operação global do Habituar, fora dos vínculos institucionais.",
       "scope": "Provisionamento de instituições. Sem acesso a fichas, observações ou dados de alunos."
     }
   },
   "navigation": {
     "home": "Início",
-    "profile": "Perfil"
+    "profile": "Perfil",
+    "institutions": "Instituições"
   },
   "shell": {
     "skipToContent": "Pular para o conteúdo",
     "sidebar": {
       "title": "Menu de navegação",
       "navigationLabel": "Navegação do ambiente",
-      "eyebrow": "Ambiente profissional",
+      "eyebrow": {
+        "professional": "Ambiente profissional",
+        "student": "Ambiente do aluno",
+        "monitor": "Ambiente do monitor",
+        "admin": "Administração geral"
+      },
       "open": "Abrir menu de navegação",
       "collapse": "Recolher menu lateral",
       "expand": "Expandir menu lateral",

@@ -5,7 +5,7 @@ import { EmptyState } from '../components/ui/empty-state.js'
 import { PageHeader } from '../components/ui/page-header.js'
 import { Section } from '../components/ui/section.js'
 import { SummaryCards } from '../components/ui/summary-cards.js'
-import { useProfessionalSession } from './professional-session.js'
+import { useInstitutionSession } from '../session/institution-session.js'
 
 /**
  * Início do profissional. Mostra só o que a sessão sustenta — quem, onde e com que papel
@@ -14,7 +14,7 @@ import { useProfessionalSession } from './professional-session.js'
  */
 export function ProfessionalHomeScreen(): ReactElement {
   const { t } = useTranslation()
-  const session = useProfessionalSession()
+  const session = useInstitutionSession()
 
   return (
     <div className="flex flex-col gap-xxl">

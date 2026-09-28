@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { PageHeader } from '../components/ui/page-header.js'
 import { Section } from '../components/ui/section.js'
 import { SummaryCards } from '../components/ui/summary-cards.js'
-import { useProfessionalSession } from './professional-session.js'
+import { useInstitutionSession } from '../session/institution-session.js'
 import { SignOutButton } from '../session/sign-out-button.js'
 
 /**
@@ -12,7 +12,7 @@ import { SignOutButton } from '../session/sign-out-button.js'
  */
 export function ProfessionalProfileScreen(): ReactElement {
   const { t } = useTranslation()
-  const session = useProfessionalSession()
+  const session = useInstitutionSession()
 
   return (
     <div className="flex flex-col gap-xxl">

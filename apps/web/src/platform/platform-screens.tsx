@@ -7,7 +7,7 @@ import type { KeyboardEvent, ReactElement } from 'react'
 import { useTranslation } from 'react-i18next'
 import { habituar } from '../client/habituar-client.js'
 import { Button } from '../components/ui/button.js'
-import { SignOutButton } from '../session/sign-out-button.js'
+import { PageHeader } from '../components/ui/page-header.js'
 
 type DetailTab = 'data' | 'people'
 const DETAIL_TABS: readonly DetailTab[] = ['data', 'people']
@@ -17,14 +17,20 @@ const INSTITUTION_TEXT_FIELDS: readonly InstitutionTextField[] = ['name', 'docum
 export function InstitutionListScreen(): ReactElement {
   const { t } = useTranslation()
   const { institutions, isLoading, error } = habituar.usePlatformInstitutions()
-  return <main className="mx-auto flex max-w-4xl flex-col gap-lg p-lg">
-    <header className="flex items-center justify-between gap-md"><h1 className="text-title">{t('platform.institutions.title')}</h1><SignOutButton /></header>
+  return <div className="flex flex-col gap-xxl">
+    <PageHeader eyebrow={t('home.admin-home.title')} title={t('platform.institutions.title')} description={t('platform.institutions.description')} />
+    {/* O alcance vem antes da lista: o administrador precisa saber o que este ambiente não
+        mostra antes de procurar dados de aluno que ele nunca vai alcançar. */}
+    <aside aria-label={t('home.scopeLabel')} className="flex flex-col gap-xs rounded-field border border-hairline bg-surface px-lg py-md">
+      <p className="text-caption font-medium uppercase tracking-widest text-text-muted">{t('home.scopeLabel')}</p>
+      <p className="text-body text-text">{t('home.admin-home.scope')}</p>
+    </aside>
     <nav><Button asChild><Link to="/admin/institutions/new">{t('platform.institutions.new')}</Link></Button></nav>
     {isLoading && <p role="status">{t('authentication.loading')}</p>}
     {error && <p role="alert">{t('platform.error')}</p>}
     {!isLoading && institutions.length === 0 && <p>{t('platform.institutions.empty')}</p>}
     <ul className="flex flex-col gap-md">{institutions.map((institution) => <li key={institution.id} className="rounded-control border border-hairline p-md"><Link className="underline" to="/admin/institutions/$institutionId" params={{ institutionId: institution.id }}>{institution.name}</Link></li>)}</ul>
-  </main>
+  </div>
 }
 
 /** Formulário cadastral; criação e edição diferem só no que acontece depois de salvar. */
@@ -56,7 +62,7 @@ export function InstitutionFormScreen({ institutionId }: Readonly<{ institutionI
 /** Cadastro inicial isolado para que a criação tenha uma decisão principal. */
 export function NewInstitutionScreen(): ReactElement {
   const { t } = useTranslation()
-  return <main className="mx-auto flex max-w-2xl flex-col gap-lg p-lg"><Link to="/admin/institutions" className="underline">{t('platform.back')}</Link><h1 className="text-title">{t('platform.institutions.new')}</h1><InstitutionFormScreen /></main>
+  return <div className="flex flex-col gap-xxl"><Link to="/admin/institutions" className="underline">{t('platform.back')}</Link><PageHeader eyebrow={t('platform.institutions.title')} title={t('platform.institutions.new')} description={t('platform.institutions.newDescription')} /><InstitutionFormScreen /></div>
 }
 
 /** Apresenta cadastro, membros e convites de uma única instituição ao administrador. */
@@ -79,9 +85,9 @@ export function InstitutionDetailScreen({ institutionId }: Readonly<{ institutio
     setTab(next)
     document.getElementById(`${tabsId}-${next}-tab`)?.focus()
   }
-  return <main className="mx-auto flex max-w-4xl flex-col gap-lg p-lg">
+  return <div className="flex flex-col gap-xxl">
     <Link to="/admin/institutions" className="underline">{t('platform.back')}</Link>
-    <h1 className="text-title">{detail.institution?.name ?? t('authentication.loading')}</h1>
+    <PageHeader eyebrow={t('platform.institutions.title')} title={detail.institution?.name ?? t('platform.institutions.detailLoading')} description={t('platform.institutions.detailDescription')} />
     {detail.error && <p role="alert">{t('platform.error')}</p>}
     <div role="tablist" aria-label={t('platform.institutions.sections')} className="flex gap-sm">
       {DETAIL_TABS.map((key) => <Button key={key} id={`${tabsId}-${key}-tab`} role="tab" aria-selected={tab === key} aria-controls={`${tabsId}-panel`} tabIndex={tab === key ? 0 : -1} variant={tab === key ? 'default' : 'outline'} onClick={() => { setTab(key) }} onKeyDown={moveTab}>{t(`platform.institutions.${key}`)}</Button>)}
@@ -112,5 +118,5 @@ export function InstitutionDetailScreen({ institutionId }: Readonly<{ institutio
       </form>
       {invitation.inviteUrl && <div role="status" className="flex flex-col gap-sm rounded-control border border-border p-md"><p>{t('platform.invitations.oneTimeWarning')}</p><a className="break-all underline" href={invitation.inviteUrl}>{invitation.inviteUrl}</a><Button type="button" variant="outline" onClick={() => { if (invitation.inviteUrl !== undefined) void navigator.clipboard.writeText(invitation.inviteUrl) }}>{t('platform.invitations.copy')}</Button></div>}
     </section>}
-  </main>
+  </div>
 }

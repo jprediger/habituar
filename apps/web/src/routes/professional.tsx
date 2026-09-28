@@ -1,7 +1,7 @@
 import { Outlet, createFileRoute, useLocation } from '@tanstack/react-router'
 import type { ReactElement } from 'react'
-import { ProfessionalSessionProvider } from '../professional/professional-session.js'
-import { ProfessionalShell } from '../professional/professional-shell.js'
+import { AppShell } from '../shell/app-shell.js'
+import { InstitutionSessionProvider } from '../session/institution-session.js'
 import { InstitutionSessionRoute } from '../session/session-route.js'
 
 export const Route = createFileRoute('/professional')({ component: ProfessionalLayoutRoute })
@@ -16,11 +16,11 @@ export function ProfessionalLayoutRoute(): ReactElement {
   return (
     <InstitutionSessionRoute pathname={pathname}>
       {(session) => (
-        <ProfessionalSessionProvider session={session}>
-          <ProfessionalShell session={session}>
+        <InstitutionSessionProvider session={session}>
+          <AppShell environment="professional" session={session}>
             <Outlet />
-          </ProfessionalShell>
-        </ProfessionalSessionProvider>
+          </AppShell>
+        </InstitutionSessionProvider>
       )}
     </InstitutionSessionRoute>
   )

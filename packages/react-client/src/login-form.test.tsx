@@ -13,6 +13,8 @@ function createAuthentication(state: AuthenticationState): LoginAuthentication {
       register: vi.fn(() => Promise.resolve()),
       logout: vi.fn(() => Promise.resolve()),
       selectMembership: vi.fn(() => Promise.resolve()),
+      switchInstitution: vi.fn(() => Promise.resolve()),
+      refresh: vi.fn(() => Promise.resolve()),
       retry: vi.fn(() => Promise.resolve()),
     },
   }
@@ -116,14 +118,14 @@ describe('which failure the screen shows', () => {
   })
 
   it('keeps a failure that no attempt from this form produced', () => {
-    // `no-memberships` nasce da restauração da sessão, com token já gravado: some ao
+    // `forbidden` nasce da restauração da sessão, com token já gravado: some ao
     // digitar seria esconder o único aviso que a pessoa recebe.
-    const { result } = renderLoginForm(failedWith('no-memberships'))
+    const { result } = renderLoginForm(failedWith('forbidden'))
 
     act(() => {
       result.current.getField('email').setValue('person@example.com')
     })
 
-    expect(result.current.failure).toBe('no-memberships')
+    expect(result.current.failure).toBe('forbidden')
   })
 })

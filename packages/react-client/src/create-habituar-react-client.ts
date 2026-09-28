@@ -2,6 +2,10 @@ import { getHomeDestination } from '@habituar/core/home-destination'
 import type { InstitutionHomeDestination } from '@habituar/core/home-destination'
 import { apiContract } from '@habituar/core/contract'
 import { healthStatusSchema } from '@habituar/core/health/schema'
+import { institutionIdSchema } from '@habituar/core/identity/ids'
+import type { InstitutionId, InvitationId, RoleId } from '@habituar/core/identity/ids'
+import type { InstitutionInput } from '@habituar/core/platform'
+import type { MembershipEnvironment } from '@habituar/core/roles'
 import { createORPCClient } from '@orpc/client'
 import type { ContractRouterClient } from '@orpc/contract'
 import { OpenAPILink } from '@orpc/openapi-client/fetch'
@@ -9,6 +13,9 @@ import { QueryClient, useQuery } from '@tanstack/react-query'
 import { createContext, createElement, useContext, useEffect, useRef, useState } from 'react'
 import type { PropsWithChildren, ReactElement } from 'react'
 import type { CredentialStorage } from './credential-storage.js'
+import { createMemoryPreferenceStorage } from './preference-storage.js'
+import type { PreferenceStorage } from './preference-storage.js'
+import { queryKeys } from './query-keys.js'
 import { toHealthState } from './health-state.js'
 import type { HealthState } from './health-state.js'
 
@@ -30,7 +37,6 @@ export type AuthenticationFailure =
   | 'invalid-credentials'
   | 'network'
   | 'server'
-  | 'no-memberships'
   | 'forbidden'
 
 /**
@@ -56,22 +62,31 @@ export type AuthenticationState =
       memberships: readonly MembershipContext[]
     }>
   | Readonly<{ status: 'authenticated'; session: ActiveSession }>
+  | Readonly<{ status: 'awaiting-invitation'; user: AuthenticatedUserResult }>
   | Readonly<{ status: 'failed'; failure: AuthenticationFailure }>
 
 export type AuthenticationActions = Readonly<{
   login(input: LoginInput): Promise<void>
   register(input: RegisterInput): Promise<void>
   logout(): Promise<void>
-  selectMembership(institutionId: string): Promise<void>
+  selectMembership(institutionId: InstitutionId): Promise<void>
+  switchInstitution(institutionId: InstitutionId): Promise<void>
+  refresh(institutionId?: string): Promise<void>
   retry(): Promise<void>
 }>
 
-type AuthContextValue = Readonly<{ state: AuthenticationState; actions: AuthenticationActions }>
+type AuthContextValue = Readonly<{ state: AuthenticationState; actions: AuthenticationActions; memberships: readonly MembershipContext[] }>
+
+type InstitutionSwitcher = Readonly<{ current: MembershipContext | undefined; others: readonly MembershipContext[]; switchTo(institutionId: InstitutionId): Promise<void> }>
 
 export type HabituarReactClient = Readonly<{
   Provider(props: PropsWithChildren): ReactElement
   useHealth(): Readonly<{ state: HealthState; retry(): void }>
   useAuthentication(): AuthContextValue
+  useInstitutionSwitcher(): InstitutionSwitcher
+  usePlatformInstitutions(): Readonly<{ institutions: Awaited<ReturnType<ApiClient['platform']['listInstitutions']>>; isLoading: boolean; error: boolean; create(input: InstitutionInput): Promise<InstitutionId> }>
+  usePlatformInstitution(institutionId?: InstitutionId): Readonly<{ institution: Awaited<ReturnType<ApiClient['platform']['getInstitution']>> | undefined; members: Awaited<ReturnType<ApiClient['platform']['listMembers']>>; roles: Awaited<ReturnType<ApiClient['platform']['listRoles']>>; invitations: Awaited<ReturnType<ApiClient['platform']['listInvitations']>>; isLoading: boolean; error: boolean; update(input: InstitutionInput): Promise<void>; invite(input: Readonly<{ email: string; environment: MembershipEnvironment; roleIds: readonly RoleId[] }>): Promise<string>; revoke(invitationId: InvitationId): Promise<void> }>
+  useInvitation(token: string): Readonly<{ preview: Awaited<ReturnType<ApiClient['invitations']['preview']>> | undefined; isLoading: boolean; error: boolean; accept(): Promise<void>; acceptWithRegistration(input: Readonly<{ name: string; password: string }>): Promise<void> }>
 }>
 
 // União local, não a global `RequestCredentials` do lib DOM: este pacote não inclui essa
@@ -144,12 +159,14 @@ export function createHabituarReactClient(
     fetch?: typeof globalThis.fetch
     credentials?: CredentialsMode
     credentialStorage?: CredentialStorage
+    preferenceStorage?: PreferenceStorage
   }>,
 ): HabituarReactClient {
   const baseUrl = parseOriginOrThrow(options.origin)
   const resolvedFetch = options.fetch ?? globalThis.fetch
   const credentials = options.credentials
   const credentialStorage = options.credentialStorage
+  const preferenceStorage = options.preferenceStorage ?? createMemoryPreferenceStorage()
 
   const link = new OpenAPILink(apiContract, {
     url: baseUrl,
@@ -171,6 +188,13 @@ export function createHabituarReactClient(
 
   const apiClient: ApiClient = createORPCClient(link)
   const queryClient = new QueryClient()
+
+  // Trocar de instituição apaga, não invalida: recarregar em segundo plano deixaria a tela
+  // mostrando o dado da instituição anterior até a resposta chegar.
+  async function clearInstitutionScope(): Promise<void> {
+    await queryClient.cancelQueries({ queryKey: queryKeys.institutionScope })
+    queryClient.removeQueries({ queryKey: queryKeys.institutionScope })
+  }
 
   const instanceToken = Symbol('habituar-react-client-instance')
   const InstanceContext = createContext<symbol | undefined>(undefined)
@@ -201,9 +225,12 @@ export function createHabituarReactClient(
     // Guarda contra o double-invoke do React StrictMode em dev.
     const hasStartedRestoring = useRef(false)
     const hasPendingLogoutRetry = useRef(false)
+    const memberships = useRef<readonly MembershipContext[]>([])
+    refreshAuthenticationAfterInvitation = resolveAfterAuthentication
 
-    async function resolveAfterAuthentication(): Promise<void> {
+    async function resolveAfterAuthentication(preferredInstitutionId?: InstitutionId): Promise<void> {
       const context = await apiClient.auth.context()
+      memberships.current = context.memberships
       const firstMembership = context.memberships[0]
 
       // Precedência do administrador geral: ele é global e não deriva destino de vínculo,
@@ -217,18 +244,25 @@ export function createHabituarReactClient(
       }
 
       if (context.memberships.length === 0) {
-        setState({ status: 'failed', failure: 'no-memberships' })
+        setState({ status: 'awaiting-invitation', user: context.user })
         return
       }
 
-      if (context.memberships.length === 1 && firstMembership !== undefined) {
+      // A preferência vem de armazenamento do dispositivo: é entrada externa e passa por parse.
+      const stored = institutionIdSchema.safeParse(await preferenceStorage.read())
+      const preference = preferredInstitutionId ?? (stored.success ? stored.data : undefined)
+      const preferredMembership = context.memberships.find((entry) => entry.institution.id === preference)
+      const selectedMembership = context.memberships.length === 1 ? firstMembership : preferredMembership
+      if (selectedMembership !== undefined) {
+        await preferenceStorage.write(selectedMembership.institution.id)
+        await clearInstitutionScope()
         setState({
           status: 'authenticated',
           session: {
             kind: 'institution',
             user: context.user,
-            membership: firstMembership,
-            destination: getHomeDestination(firstMembership.role.environment),
+            membership: selectedMembership,
+            destination: getHomeDestination(selectedMembership.environment),
           },
         })
         return
@@ -302,6 +336,9 @@ export function createHabituarReactClient(
       try {
         await apiClient.auth.logout()
         hasPendingLogoutRetry.current = false
+        memberships.current = []
+        await preferenceStorage.remove()
+        queryClient.removeQueries({ queryKey: queryKeys.institutionScope })
         if (credentialStorage) {
           await credentialStorage.remove()
         }
@@ -309,6 +346,9 @@ export function createHabituarReactClient(
       } catch (error) {
         if (isUnauthorizedError(error)) {
           hasPendingLogoutRetry.current = false
+          memberships.current = []
+          await preferenceStorage.remove()
+          queryClient.removeQueries({ queryKey: queryKeys.institutionScope })
           if (credentialStorage) {
             await credentialStorage.remove()
           }
@@ -348,26 +388,29 @@ export function createHabituarReactClient(
       }
     }
 
-    function selectMembership(institutionId: string): Promise<void> {
+    async function selectMembership(institutionId: InstitutionId): Promise<void> {
+      if (state.status !== 'selecting-membership' && !(state.status === 'authenticated' && state.session.kind === 'institution')) return
+      if (!memberships.current.some((entry) => entry.institution.id === institutionId)) return
+      await preferenceStorage.write(institutionId)
+      await clearInstitutionScope()
       setState((current) => {
-        if (current.status !== 'selecting-membership') return current
-        const membership = current.memberships.find((entry) => entry.institution.id === institutionId)
+        if (current.status !== 'selecting-membership' && current.status !== 'authenticated') return current
+        const membership = memberships.current.find((entry) => entry.institution.id === institutionId)
         if (membership === undefined) return current
         return {
           status: 'authenticated',
           session: {
             kind: 'institution',
-            user: current.user,
+            user: current.status === 'authenticated' ? current.session.user : current.user,
             membership,
-            destination: getHomeDestination(membership.role.environment),
+            destination: getHomeDestination(membership.environment),
           },
         }
       })
-      return Promise.resolve()
     }
 
-    const actions: AuthenticationActions = { login, register, logout, selectMembership, retry }
-    const contextValue: AuthContextValue = { state, actions }
+    const actions: AuthenticationActions = { login, register, logout, selectMembership, switchInstitution: selectMembership, refresh: resolveAfterAuthentication, retry }
+    const contextValue: AuthContextValue = { state, actions, memberships: memberships.current }
     startAuthenticationRestoration = ensureAuthenticationRestorationStarted
 
     return createElement(
@@ -420,5 +463,73 @@ export function createHabituarReactClient(
     return value
   }
 
-  return { Provider, useHealth, useAuthentication }
+  function useInstitutionSwitcher(): InstitutionSwitcher {
+    const { state, actions, memberships } = useAuthentication()
+    const current = state.status === 'authenticated' && state.session.kind === 'institution' ? state.session.membership : undefined
+    return { current, others: current === undefined ? [] : memberships.filter((entry) => entry.institution.id !== current.institution.id), switchTo: actions.switchInstitution }
+  }
+
+  function usePlatformInstitutions() {
+    const query = useQuery({ queryKey: queryKeys.platformInstitutions, queryFn: () => apiClient.platform.listInstitutions() }, queryClient)
+    async function create(input: InstitutionInput): Promise<InstitutionId> {
+      const created = await apiClient.platform.createInstitution(input)
+      await queryClient.invalidateQueries({ queryKey: queryKeys.platformInstitutions })
+      return created.id
+    }
+    return { institutions: query.data ?? [], isLoading: query.isPending, error: query.isError, create }
+  }
+
+  function usePlatformInstitution(institutionId?: InstitutionId) {
+    // Cadastro novo ainda não tem id; as queries ficam desligadas e o id nulo nunca vai à rede.
+    const id = institutionId ?? institutionIdSchema.parse('00000000-0000-0000-0000-000000000000')
+    const key = queryKeys.platformInstitution(id)
+    const enabled = institutionId !== undefined
+    const institution = useQuery({ queryKey: [...key, 'details'], queryFn: () => apiClient.platform.getInstitution({ institutionId: id }), enabled }, queryClient)
+    const members = useQuery({ queryKey: [...key, 'members'], queryFn: () => apiClient.platform.listMembers({ institutionId: id }), enabled }, queryClient)
+    const roles = useQuery({ queryKey: [...key, 'roles'], queryFn: () => apiClient.platform.listRoles({ institutionId: id }), enabled }, queryClient)
+    const invitations = useQuery({ queryKey: [...key, 'invitations'], queryFn: () => apiClient.platform.listInvitations({ institutionId: id }), enabled }, queryClient)
+    async function update(input: InstitutionInput): Promise<void> {
+      await apiClient.platform.updateInstitution({ ...input, institutionId: id })
+      await queryClient.invalidateQueries({ queryKey: key })
+      await queryClient.invalidateQueries({ queryKey: queryKeys.platformInstitutions })
+    }
+    async function invite(input: Readonly<{ email: string; environment: MembershipEnvironment; roleIds: readonly RoleId[] }>): Promise<string> {
+      const created = await apiClient.platform.createInvitation({ ...input, institutionId: id, roleIds: [...input.roleIds] })
+      await queryClient.invalidateQueries({ queryKey: [...key, 'invitations'] })
+      return created.inviteUrl
+    }
+    async function revoke(invitationId: InvitationId): Promise<void> {
+      await apiClient.platform.revokeInvitation({ institutionId: id, invitationId })
+      await queryClient.invalidateQueries({ queryKey: [...key, 'invitations'] })
+    }
+    return { institution: institution.data, members: members.data ?? [], roles: roles.data ?? [], invitations: invitations.data ?? [], isLoading: enabled && (institution.isPending || members.isPending || roles.isPending || invitations.isPending), error: institution.isError || members.isError || roles.isError || invitations.isError, update, invite, revoke }
+  }
+
+  function useInvitation(token: string) {
+    const query = useQuery({ queryKey: queryKeys.invitation(token), queryFn: () => apiClient.invitations.preview({ token }), retry: false }, queryClient)
+    async function accept(): Promise<void> {
+      const accepted = await apiClient.invitations.accept({ token })
+      await queryClient.invalidateQueries({ queryKey: queryKeys.invitation(token) })
+      await resolveInvitationAcceptance(accepted.institutionId)
+    }
+    async function acceptWithRegistration(input: Readonly<{ name: string; password: string }>): Promise<void> {
+      await apiClient.invitations.acceptWithRegistration({ token, ...input })
+      await queryClient.invalidateQueries({ queryKey: queryKeys.invitation(token) })
+      const context = await apiClient.auth.context()
+      const membership = context.memberships.find((entry) => entry.institution.id === query.data?.institution.id)
+      await resolveInvitationAcceptance(membership?.institution.id)
+    }
+    return { preview: query.data, isLoading: query.isPending, error: query.isError, accept, acceptWithRegistration }
+  }
+
+  async function resolveInvitationAcceptance(institutionId?: InstitutionId): Promise<void> {
+    if (institutionId !== undefined) await preferenceStorage.write(institutionId)
+    await clearInstitutionScope()
+    await queryClient.invalidateQueries({ queryKey: queryKeys.invitationScope })
+    await refreshAuthenticationAfterInvitation(institutionId)
+  }
+
+  let refreshAuthenticationAfterInvitation: (institutionId?: InstitutionId) => Promise<void> = () => Promise.resolve()
+
+  return { Provider, useHealth, useAuthentication, useInstitutionSwitcher, usePlatformInstitutions, usePlatformInstitution, useInvitation }
 }

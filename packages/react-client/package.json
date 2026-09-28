@@ -19,6 +19,14 @@
     "./professional-navigation": {
       "types": "./dist/professional-navigation.d.ts",
       "import": "./dist/professional-navigation.js"
+    },
+    "./platform-forms": {
+      "types": "./dist/platform-forms.d.ts",
+      "import": "./dist/platform-forms.js"
+    },
+    "./invitation-acceptance": {
+      "types": "./dist/invitation-acceptance.d.ts",
+      "import": "./dist/invitation-acceptance.js"
     }
   },
   "scripts": {

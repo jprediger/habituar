@@ -15,3 +15,5 @@ export type {
 } from './create-habituar-react-client.js'
 export { createMemoryCredentialStorage } from './credential-storage.js'
 export type { CredentialStorage } from './credential-storage.js'
+export { createMemoryPreferenceStorage } from './preference-storage.js'
+export type { PreferenceStorage } from './preference-storage.js'

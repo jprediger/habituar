@@ -2,14 +2,14 @@
 import { institutionIdSchema } from '@habituar/core/identity/ids'
 import { act, renderHook, waitFor } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
-import { createMemoryCredentialStorage, createHabituarReactClient } from './react-client.js'
+import { createMemoryCredentialStorage, createMemoryPreferenceStorage, createHabituarReactClient } from './react-client.js'
 
 const ORIGIN = 'http://api.habituar.test'
 
 function createContext(environment: 'student' | 'professional' | 'monitor' = 'student', count = 1) {
   const memberships = [
-    { institution: { id: '00000000-0000-4000-8000-000000000001', name: 'Institution one' }, role: { id: '10000000-0000-4000-8000-000000000001', name: 'Role', environment }, permissions: [] },
-    { institution: { id: '00000000-0000-4000-8000-000000000002', name: 'Institution two' }, role: { id: '10000000-0000-4000-8000-000000000002', name: 'Role', environment }, permissions: [] },
+    { institution: { id: '00000000-0000-4000-8000-000000000001', name: 'Institution one' }, environment, roles: [{ id: '10000000-0000-4000-8000-000000000001', name: 'Role', templateKey: null }], permissions: [] },
+    { institution: { id: '00000000-0000-4000-8000-000000000002', name: 'Institution two' }, environment, roles: [{ id: '10000000-0000-4000-8000-000000000002', name: 'Role', templateKey: null }], permissions: [] },
   ]
 
   return { user: { id: '20000000-0000-4000-8000-000000000001', email: 'person@example.com', name: 'Person' }, memberships: memberships.slice(0, count), isPlatformAdministrator: false }
@@ -42,6 +42,31 @@ function createAuthenticationFetch(context = createContext(), loginStatus = 200,
 }
 
 describe('useAuthentication', () => {
+  it('remembers a switch, refuses foreign institutions and clears the choice at logout', async () => {
+    const preferenceStorage = createMemoryPreferenceStorage()
+    const adapter = createAuthenticationFetch(createContext('professional', 2))
+    const client = createHabituarReactClient({ origin: ORIGIN, fetch: adapter.fetch, preferenceStorage })
+    const hook = renderHook(() => ({ auth: client.useAuthentication(), switcher: client.useInstitutionSwitcher() }), { wrapper: client.Provider })
+    await waitFor(() => { expect(hook.result.current.auth.state.status).toBe('selecting-membership') })
+    await act(async () => { await hook.result.current.auth.actions.selectMembership(institutionIdSchema.parse('00000000-0000-4000-8000-000000000001')) })
+    await act(async () => { await hook.result.current.switcher.switchTo(institutionIdSchema.parse('00000000-0000-4000-8000-000000000002')) })
+    expect(hook.result.current.switcher.current?.institution.name).toBe('Institution two')
+    await act(async () => { await hook.result.current.switcher.switchTo(institutionIdSchema.parse('00000000-0000-4000-8000-000000000099')) })
+    expect(hook.result.current.switcher.current?.institution.name).toBe('Institution two')
+    await act(async () => { await hook.result.current.auth.actions.refresh() })
+    expect(hook.result.current.switcher.current?.institution.name).toBe('Institution two')
+    await act(async () => { await hook.result.current.auth.actions.logout() })
+    await expect(preferenceStorage.read()).resolves.toBeUndefined()
+  })
+
+  it('asks for a choice when a remembered membership was removed', async () => {
+    const preferenceStorage = createMemoryPreferenceStorage()
+    await preferenceStorage.write('00000000-0000-4000-8000-000000000099')
+    const adapter = createAuthenticationFetch(createContext('professional', 2))
+    const client = createHabituarReactClient({ origin: ORIGIN, fetch: adapter.fetch, preferenceStorage })
+    const hook = renderHook(() => client.useAuthentication(), { wrapper: client.Provider })
+    await waitFor(() => { expect(hook.result.current.state.status).toBe('selecting-membership') })
+  })
   it('restores a mobile session and activates its only membership', async () => {
     const storage = createMemoryCredentialStorage()
     await storage.write('persisted-token')
@@ -125,7 +150,7 @@ describe('useAuthentication', () => {
     const client = createHabituarReactClient({ origin: ORIGIN, fetch: adapter.fetch })
     const hook = renderHook(() => client.useAuthentication(), { wrapper: client.Provider })
 
-    await waitFor(() => { expect(hook.result.current.state).toEqual({ status: 'failed', failure: 'no-memberships' }) })
+    await waitFor(() => { expect(hook.result.current.state).toMatchObject({ status: 'awaiting-invitation' }) })
   })
 
   it('removes an invalid mobile credential during restoration', async () => {

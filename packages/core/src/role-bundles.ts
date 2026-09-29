@@ -14,6 +14,7 @@ export const ROLE_BUNDLE_KEYS = [
   'student-update',
   'guardian-link',
   'guardian-unlink',
+  'assignment-manage',
 ] as const
 
 export const roleBundleKeySchema = z.enum(ROLE_BUNDLE_KEYS)
@@ -41,6 +42,7 @@ export const ROLE_BUNDLE_CATALOG: Readonly<Record<RoleBundleKey, RoleBundleDefin
   'student-update': { labelKey: 'roleBundles.studentUpdate', permissions: ['student.update'], scopesByEnvironment: { professional: ['assigned', 'institution'] } },
   'guardian-link': { labelKey: 'roleBundles.guardianLink', permissions: ['guardian.link'], scopesByEnvironment: { professional: ['assigned', 'institution'] } },
   'guardian-unlink': { labelKey: 'roleBundles.guardianUnlink', permissions: ['guardian.unlink'], scopesByEnvironment: { professional: ['assigned', 'institution'] } },
+  'assignment-manage': { labelKey: 'roleBundles.assignmentManage', permissions: ['assignment.manage'], scopesByEnvironment: { professional: ['institution'] } },
 }
 
 export const roleBundleSelectionSchema = z.object({

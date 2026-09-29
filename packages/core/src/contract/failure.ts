@@ -27,6 +27,16 @@ export const FAILURE_CODES = [
   'invalid-role-bundles',
   'configuration-conflict',
   'invitation-authority-lost',
+  'student-not-found',
+  'student-archived',
+  'guardian-not-found',
+  'guardian-already-linked',
+  'consent-required',
+  'consent-not-found',
+  'consent-already-revoked',
+  'assignee-not-eligible',
+  'student-account-exists',
+  'student-below-account-age',
 ] as const
 
 export const failureSchema = z.object({
@@ -76,6 +86,16 @@ export const FAILURE_ERROR_MAP = {
   'invalid-role-bundles': { status: 422, message: 'invalid role bundles.', data: failureDataSchema },
   'configuration-conflict': { status: 409, message: 'configuration conflict.', data: failureDataSchema },
   'invitation-authority-lost': { status: 410, message: 'invitation authority lost.', data: failureDataSchema },
+  'student-not-found': { status: 404, message: 'student not found.', data: failureDataSchema },
+  'student-archived': { status: 409, message: 'student archived.', data: failureDataSchema },
+  'guardian-not-found': { status: 404, message: 'guardian not found.', data: failureDataSchema },
+  'guardian-already-linked': { status: 409, message: 'guardian already linked.', data: failureDataSchema },
+  'consent-required': { status: 422, message: 'institutional consent required.', data: failureDataSchema },
+  'consent-not-found': { status: 404, message: 'consent not found.', data: failureDataSchema },
+  'consent-already-revoked': { status: 409, message: 'consent already revoked.', data: failureDataSchema },
+  'assignee-not-eligible': { status: 422, message: 'assignee is not eligible.', data: failureDataSchema },
+  'student-account-exists': { status: 409, message: 'student account already exists.', data: failureDataSchema },
+  'student-below-account-age': { status: 422, message: 'student is below account age.', data: failureDataSchema },
   invalid_input: {
     status: 422,
     message: 'The request payload is invalid.',

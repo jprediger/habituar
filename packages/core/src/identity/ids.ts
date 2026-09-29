@@ -26,6 +26,9 @@ export type StudentId = z.infer<typeof studentIdSchema>
 export const guardianIdSchema = defineIdSchema('GuardianId')
 export type GuardianId = z.infer<typeof guardianIdSchema>
 
+export const consentIdSchema = defineIdSchema('ConsentId')
+export type ConsentId = z.infer<typeof consentIdSchema>
+
 export const assignmentIdSchema = defineIdSchema('AssignmentId')
 export type AssignmentId = z.infer<typeof assignmentIdSchema>
 

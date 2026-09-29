@@ -121,11 +121,13 @@ export class MembersService {
 
   private async toStaffMembers(transaction: DatabaseTransaction, rows: readonly MemberRow[]): Promise<StaffMember[]> {
     const roleRows = await this.staff.listMembershipRoles(transaction, rows.map(row => row.id))
+    const assignmentCounts = await this.staff.countStudentsByMemberships(transaction, rows.map(row => row.id))
     return rows.map(row => staffMemberSchema.parse({
       id: row.id,
       user: { id: row.userId, name: row.userName, email: row.userEmail },
       environment: row.environment,
       roles: roleRows.filter(role => role.membershipId === row.id).map(role => ({ id: role.id, name: role.name, templateKey: role.templateKey })),
+      activeStudentCount: assignmentCounts.find(assignment => assignment.membershipId === row.id)?.total ?? 0,
       version: row.version,
     }))
   }

@@ -1,8 +1,8 @@
 import { PermissionKey } from '@habituar/core/permissions'
 import { Injectable } from '@nestjs/common'
-import { and, eq, inArray, isNull } from 'drizzle-orm'
+import { and, eq, inArray, isNull, or } from 'drizzle-orm'
 import { DatabaseTransaction } from '../database/database.js'
-import { assignments, membershipRoles, memberships, rolePermissions, students, users } from '../database/schema.js'
+import { assignments, membershipRoles, memberships, rolePermissions, studentGuardians, guardians, students, users } from '../database/schema.js'
 
 /**
  * Leituras que sustentam a checagem de permissão. Nunca filtra `institution_id` à mão:
@@ -36,15 +36,19 @@ export class RbacRepository {
   }
 
   findOwnStudent(transaction: DatabaseTransaction, studentId: string, userId: string) {
-    return transaction.query.students.findFirst({
-      where: and(eq(students.id, studentId), eq(students.userId, userId)),
-    })
+    return transaction.select({ id: students.id }).from(students)
+      .leftJoin(studentGuardians, eq(studentGuardians.studentId, students.id))
+      .leftJoin(guardians, eq(guardians.id, studentGuardians.guardianId))
+      .where(and(eq(students.id, studentId), isNull(students.archivedAt), or(eq(students.userId, userId), eq(guardians.userId, userId))))
+      .limit(1).then(rows => rows[0])
   }
 
   findAssignment(transaction: DatabaseTransaction, staffUserId: string, studentId: string) {
-    return transaction.query.assignments.findFirst({
-      where: and(eq(assignments.staffUserId, staffUserId), eq(assignments.studentId, studentId)),
-    })
+    return transaction.select({ id: assignments.id }).from(assignments)
+      .innerJoin(memberships, eq(memberships.id, assignments.membershipId))
+      .innerJoin(students, eq(students.id, assignments.studentId))
+      .where(and(eq(memberships.userId, staffUserId), inArray(memberships.environment, ['professional', 'monitor']), isNull(memberships.removedAt), eq(assignments.studentId, studentId), isNull(students.archivedAt)))
+      .limit(1).then(rows => rows[0])
   }
 
   findUser(transaction: DatabaseTransaction, userId: string) {

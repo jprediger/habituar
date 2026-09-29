@@ -14,6 +14,7 @@ import { InvitationsModule } from './invitations/invitations.module.js'
 import { PlatformModule } from './platform/platform.module.js'
 import { RbacModule } from './rbac/rbac.module.js'
 import { StaffModule } from './staff/staff.module.js'
+import { StudentsModule } from './students/students.module.js'
 
 /**
  * Composição raiz: liga cada fatia, na ordem em que a borda precisa vê-las.
@@ -37,6 +38,7 @@ import { StaffModule } from './staff/staff.module.js'
     InstitutionsModule,
     InvitationsModule,
     StaffModule,
+    StudentsModule,
     HealthModule,
     // Último de propósito: o wildcard de 404 só deve capturar o que sobrou.
     ErrorsModule,

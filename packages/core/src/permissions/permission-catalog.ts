@@ -9,6 +9,7 @@ export const PERMISSION_CATALOG = [
   'student.update',
   'guardian.link',
   'guardian.unlink',
+  'assignment.manage',
   'role.assign',
   'role.manage',
   'membership.read',

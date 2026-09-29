@@ -61,6 +61,26 @@ export function mapFailureToHttpResponse(errors: FailureErrors, failure: Failure
       throw errors['configuration-conflict']()
     case 'invitation-authority-lost':
       throw errors['invitation-authority-lost']()
+    case 'student-not-found':
+      throw errors['student-not-found']()
+    case 'student-archived':
+      throw errors['student-archived']()
+    case 'guardian-not-found':
+      throw errors['guardian-not-found']()
+    case 'guardian-already-linked':
+      throw errors['guardian-already-linked']()
+    case 'consent-required':
+      throw errors['consent-required']()
+    case 'consent-not-found':
+      throw errors['consent-not-found']()
+    case 'consent-already-revoked':
+      throw errors['consent-already-revoked']()
+    case 'assignee-not-eligible':
+      throw errors['assignee-not-eligible']()
+    case 'student-account-exists':
+      throw errors['student-account-exists']()
+    case 'student-below-account-age':
+      throw errors['student-below-account-age']()
     default:
       return assertNever(failure.code)
   }

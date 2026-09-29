@@ -61,6 +61,12 @@ export class StaffRepository {
       .orderBy(roles.name, roles.id)
   }
 
+  countStudentsByMemberships(transaction: DatabaseTransaction, membershipIds: readonly string[]) {
+    if (membershipIds.length === 0) return Promise.resolve([])
+    return transaction.select({ membershipId: assignments.membershipId, total: count() }).from(assignments)
+      .where(inArray(assignments.membershipId, [...membershipIds])).groupBy(assignments.membershipId)
+  }
+
   /** Papéis de todos os vínculos ativos: é a base do cálculo do último gestor. */
   listActiveMembershipRoleIds(transaction: DatabaseTransaction) {
     return transaction.select({ membershipId: memberships.id, roleId: membershipRoles.roleId })

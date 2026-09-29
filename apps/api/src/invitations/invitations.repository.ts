@@ -3,9 +3,9 @@ import type { MembershipEnvironment } from '@habituar/core/roles'
 import { Injectable } from '@nestjs/common'
 import { assertNever } from '@habituar/core/assert-never'
 import type { InvitationState } from '@habituar/core/invitations'
-import { and, count, desc, eq, gt, inArray, isNotNull, isNull, lte, sql } from 'drizzle-orm'
+import { and, count, desc, eq, gt, inArray, isNotNull, isNull, lte, ne, sql } from 'drizzle-orm'
 import { DatabaseTransaction } from '../database/database.js'
-import { invitationRoles, invitations, membershipRoles, memberships, roles, users } from '../database/schema.js'
+import { guardians, invitationRoles, invitations, membershipRoles, memberships, roles, students, studentGuardians, users } from '../database/schema.js'
 
 export type InvitationRow = typeof invitations.$inferSelect
 
@@ -30,12 +30,36 @@ function statusCondition(status: InvitationState['status'], now: Date) {
 export class InvitationsRepository {
   /** Convites da instituição instalada como tenant, sem nunca expor o hash a quem chama o serviço. */
   list(transaction: DatabaseTransaction) {
-    return transaction.select().from(invitations).orderBy(invitations.createdAt)
+    return transaction.select().from(invitations).where(ne(invitations.environment, 'student')).orderBy(invitations.createdAt)
   }
 
   /** Convite de uma instituição específica, para revogação pela plataforma. */
   findById(transaction: DatabaseTransaction, institutionId: InstitutionId, invitationId: InvitationId) {
     return transaction.query.invitations.findFirst({ where: and(eq(invitations.id, invitationId), eq(invitations.institutionId, institutionId)) })
+  }
+
+  findStudentTarget(transaction: DatabaseTransaction, institutionId: InstitutionId, studentId: string) {
+    return transaction.query.students.findFirst({ where: and(eq(students.id, studentId), eq(students.institutionId, institutionId)) })
+  }
+
+  findGuardianTarget(transaction: DatabaseTransaction, institutionId: InstitutionId, guardianId: string) {
+    return transaction.query.guardians.findFirst({ where: and(eq(guardians.id, guardianId), eq(guardians.institutionId, institutionId)) })
+  }
+
+  findStudentGuardianLink(transaction: DatabaseTransaction, studentId: string, guardianId: string) {
+    return transaction.query.studentGuardians.findFirst({ where: and(eq(studentGuardians.studentId, studentId), eq(studentGuardians.guardianId, guardianId)) })
+  }
+
+  findTemplateRole(transaction: DatabaseTransaction, institutionId: InstitutionId, templateKey: string) {
+    return transaction.query.roles.findFirst({ where: and(eq(roles.institutionId, institutionId), eq(roles.templateKey, templateKey), eq(roles.isSystem, true)) })
+  }
+
+  linkStudentAccount(transaction: DatabaseTransaction, institutionId: InstitutionId, studentId: string, userId: string) {
+    return transaction.update(students).set({ userId }).where(and(eq(students.id, studentId), eq(students.institutionId, institutionId), isNull(students.userId), isNull(students.archivedAt))).returning()
+  }
+
+  linkGuardianAccount(transaction: DatabaseTransaction, institutionId: InstitutionId, guardianId: string, userId: string) {
+    return transaction.update(guardians).set({ userId }).where(and(eq(guardians.id, guardianId), eq(guardians.institutionId, institutionId), isNull(guardians.userId))).returning()
   }
 
   /** Único acesso sem tenant: a política `invitations_token_lookup` só libera a linha do hash instalado. */
@@ -112,14 +136,14 @@ export class InvitationsRepository {
   /** Página de convites do tenant por estado, do mais recente ao mais antigo, com desempate estável. */
   listPage(transaction: DatabaseTransaction, status: InvitationState['status'] | undefined, now: Date, limit: number, offset: number) {
     return transaction.select().from(invitations)
-      .where(status === undefined ? undefined : statusCondition(status, now))
+      .where(and(ne(invitations.environment, 'student'), status === undefined ? undefined : statusCondition(status, now)))
       .orderBy(desc(invitations.createdAt), invitations.id)
       .limit(limit).offset(offset)
   }
 
   /** Total do mesmo recorte de `listPage`, para a paginação no servidor. */
   async countPage(transaction: DatabaseTransaction, status: InvitationState['status'] | undefined, now: Date) {
-    const [row] = await transaction.select({ total: count() }).from(invitations).where(status === undefined ? undefined : statusCondition(status, now))
+    const [row] = await transaction.select({ total: count() }).from(invitations).where(and(ne(invitations.environment, 'student'), status === undefined ? undefined : statusCondition(status, now)))
     return row?.total ?? 0
   }
 

@@ -13,7 +13,7 @@ import {
   roleDeletedSchema,
   staffInvitationPathSchema,
   staffMemberPathSchema,
-  staffMemberSchema,
+  platformStaffMemberSchema,
   staffRolePathSchema,
   staffRoleSchema,
   updateRoleInputSchema,
@@ -33,8 +33,8 @@ export const platformContract = {
   revokeInvitation: oc.route({ method: 'POST', path: '/platform/institutions/{institutionId}/invitations/{invitationId}/revoke' }).input(institutionPathSchema.extend({ invitationId: invitationIdSchema })).output(invitationSchema),
   // Espelho da gestão institucional (`staff.contract.ts`), autorizado por `institution.configure`.
   // As leituras de lista acima são as da 1B, reaproveitadas como estão.
-  getMember: oc.route({ method: 'GET', path: '/platform/institutions/{institutionId}/members/{membershipId}' }).input(staffMemberPathSchema).output(staffMemberSchema),
-  replaceMemberRoles: oc.route({ method: 'PUT', path: '/platform/institutions/{institutionId}/members/{membershipId}/roles' }).input(replaceMemberRolesInputSchema).output(staffMemberSchema),
+  getMember: oc.route({ method: 'GET', path: '/platform/institutions/{institutionId}/members/{membershipId}' }).input(staffMemberPathSchema).output(platformStaffMemberSchema),
+  replaceMemberRoles: oc.route({ method: 'PUT', path: '/platform/institutions/{institutionId}/members/{membershipId}/roles' }).input(replaceMemberRolesInputSchema).output(platformStaffMemberSchema),
   removeMember: oc.route({ method: 'DELETE', path: '/platform/institutions/{institutionId}/members/{membershipId}' }).input(removeMemberInputSchema).output(memberRemovedSchema),
   resendInvitation: oc.route({ method: 'POST', path: '/platform/institutions/{institutionId}/invitations/{invitationId}/resend' }).input(staffInvitationPathSchema).output(invitationCreatedSchema),
   getRole: oc.route({ method: 'GET', path: '/platform/institutions/{institutionId}/roles/{roleId}' }).input(staffRolePathSchema).output(staffRoleSchema),

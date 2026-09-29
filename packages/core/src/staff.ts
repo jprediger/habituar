@@ -32,9 +32,19 @@ export const staffMemberSchema = z.object({
   user: authenticatedUserSchema.readonly(),
   environment: staffEnvironmentSchema,
   roles: z.array(membershipRoleSchema).readonly(),
+  activeStudentCount: z.number().int().min(0),
   version: versionSchema,
 }).strict().readonly()
 export type StaffMember = z.infer<typeof staffMemberSchema>
+
+/** Superfície da plataforma omite contagem de alunos, que pertence ao alcance institucional. */
+export const platformStaffMemberSchema = z.object({
+  id: membershipIdSchema,
+  user: authenticatedUserSchema.readonly(),
+  environment: staffEnvironmentSchema,
+  roles: z.array(membershipRoleSchema).readonly(),
+  version: versionSchema,
+}).strict().readonly()
 
 export const listStaffMembersInputSchema = institutionPathSchema.extend({
   search: z.string().trim().min(1).max(200).optional(),
@@ -50,6 +60,12 @@ export const staffMemberPageSchema = z.object({
   pageSize: z.number().int().min(1),
 }).strict().readonly()
 export type StaffMemberPage = z.infer<typeof staffMemberPageSchema>
+export const platformStaffMemberPageSchema = z.object({
+  items: z.array(platformStaffMemberSchema).readonly(),
+  total: z.number().int().min(0),
+  page: z.number().int().min(1),
+  pageSize: z.number().int().min(1),
+}).strict().readonly()
 
 export const staffMemberPathSchema = institutionPathSchema.extend({ membershipId: membershipIdSchema }).strict()
 

@@ -1,7 +1,7 @@
 import { assertNever } from '@habituar/core/assert-never'
 import { EffectivePermission, effectivePermissionSchema } from '@habituar/core/auth/context'
 import { StaffAction, StaffAuthority, StaffAuthorization, authorizeStaffAction } from '@habituar/core/delegation'
-import { PermissionKey, PlatformPermissionKey, PLATFORM_PERMISSION_CATALOG } from '@habituar/core/permissions'
+import { PermissionKey, PermissionScope, PlatformPermissionKey, PLATFORM_PERMISSION_CATALOG } from '@habituar/core/permissions'
 import { Injectable } from '@nestjs/common'
 import { Database, DatabaseTransaction } from '../database/database.js'
 import { RbacRepository } from './rbac.repository.js'
@@ -50,6 +50,29 @@ export class RbacService {
         if (!grants.some((grant) => grant.scope === 'assigned')) return false
         const assignment = await this.rbac.findAssignment(transaction, actor.userId, context.studentId)
         return assignment !== undefined
+      },
+    )
+  }
+
+  /** Revalida uma ação sobre um alvo dentro da transação que também grava seu efeito. */
+  async hasPermissionInTransaction(transaction: DatabaseTransaction, actor: { readonly userId: string }, institutionId: string, permission: PermissionKey, studentId?: string): Promise<boolean> {
+    const membership = await this.rbac.findMembership(transaction, actor.userId, institutionId)
+    if (membership === undefined) return false
+    const scopes = (await this.rbac.listGrantScopes(transaction, membership.id, permission)).map(grant => grant.scope)
+    if (scopes.includes('institution')) return true
+    if (studentId === undefined) return false
+    if (scopes.includes('own') && await this.rbac.findOwnStudent(transaction, studentId, actor.userId) !== undefined) return true
+    return scopes.includes('assigned') && await this.rbac.findAssignment(transaction, actor.userId, studentId) !== undefined
+  }
+
+  /** Escopos vigentes do ator para uma consulta que precisa filtrar linhas no banco. */
+  async listPermissionScopes(actor: { readonly userId: string; readonly sessionId: string }, institutionId: string, permission: PermissionKey): Promise<readonly PermissionScope[]> {
+    return this.database.withTenantOutsideRequest(
+      { institutionId, actorId: actor.userId, sessionId: actor.sessionId },
+      async transaction => {
+        const membership = await this.rbac.findMembership(transaction, actor.userId, institutionId)
+        if (membership === undefined) return []
+        return (await this.rbac.listGrantScopes(transaction, membership.id, permission)).map(grant => grant.scope)
       },
     )
   }

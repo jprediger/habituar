@@ -7,6 +7,8 @@ export default defineConfig({
     platform: 'src/platform.ts',
     invitations: 'src/invitations.ts',
     staff: 'src/staff.ts',
+    students: 'src/students.ts',
+    'students/contract': 'src/students/contract.ts',
     'role-bundles': 'src/role-bundles.ts',
     delegation: 'src/delegation.ts',
     'type/assert-never': 'src/type/assert-never.ts',

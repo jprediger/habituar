@@ -1,6 +1,6 @@
 import { MembershipEnvironment } from '@habituar/core/roles'
 import { sql } from 'drizzle-orm'
-import { boolean, check, foreignKey, integer, pgEnum, pgTable, text, timestamp, unique, uniqueIndex, uuid } from 'drizzle-orm/pg-core'
+import { boolean, check, date, foreignKey, integer, pgEnum, pgTable, text, timestamp, unique, uniqueIndex, uuid } from 'drizzle-orm/pg-core'
 
 export const tenantProbe = pgTable('tenant_probe', {
   id: uuid().primaryKey().defaultRandom(),
@@ -167,10 +167,14 @@ export const invitations = pgTable('invitations', {
   revokedByUserId: uuid('revoked_by_user_id').references(() => users.id),
   // Qual autoridade o aceite precisa revalidar: a do vínculo do emissor ou a de plataforma.
   issuerKind: text('issuer_kind', { enum: ['institution', 'platform'] }).notNull(),
+  studentId: uuid('student_id'),
+  guardianId: uuid('guardian_id'),
+  targetKind: text('target_kind', { enum: ['student', 'guardian'] }),
 }, (table) => [
   unique().on(table.id, table.environment), unique().on(table.id, table.institutionId),
   check('invitations_issuer_kind', sql`${table.issuerKind} in ('institution', 'platform')`),
   check('invitations_terminal_state', sql`${table.acceptedAt} is null or ${table.revokedAt} is null`),
+  check('invitations_student_target_check', sql`(${table.environment} = 'student' and ${table.studentId} is not null and ${table.targetKind} is not null and ((${table.targetKind} = 'student' and ${table.guardianId} is null) or (${table.targetKind} = 'guardian' and ${table.guardianId} is not null))) or (${table.environment} <> 'student' and ${table.studentId} is null and ${table.guardianId} is null and ${table.targetKind} is null)`),
   uniqueIndex('invitations_pending_email').on(table.institutionId, sql`lower(${table.email})`).where(sql`${table.acceptedAt} is null and ${table.revokedAt} is null`),
 ])
 
@@ -192,15 +196,20 @@ export const students = pgTable('students', {
   institutionId: uuid('institution_id')
     .notNull()
     .references(() => institutions.id, { onDelete: 'cascade' }),
-  userId: uuid('user_id')
-    .notNull()
-    .references(() => users.id),
+  userId: uuid('user_id').references(() => users.id),
   // '6-10' | '11-14' | '15-18' — literal solto de propósito neste marco; migra para
   // enum quando o produto tiver uma segunda regra dependendo desse valor.
-  ageRange: text('age_range').notNull(),
+  ageRange: text('age_range'),
+  fullName: text('full_name').notNull(),
+  socialName: text('social_name'),
+  birthDate: date('birth_date').notNull(),
+  archivedAt: timestamp('archived_at', { withTimezone: true }),
+  archivedByUserId: uuid('archived_by_user_id').references(() => users.id),
+  createdByUserId: uuid('created_by_user_id').references(() => users.id),
+  version: integer().notNull().default(1),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
-})
+}, (table) => [unique().on(table.id, table.institutionId), uniqueIndex('students_institution_user_id_unique').on(table.institutionId, table.userId).where(sql`${table.userId} IS NOT NULL`)])
 
 export const guardians = pgTable(
   'guardians',
@@ -209,16 +218,50 @@ export const guardians = pgTable(
     institutionId: uuid('institution_id')
       .notNull()
       .references(() => institutions.id, { onDelete: 'cascade' }),
-    userId: uuid('user_id')
-      .notNull()
-      .references(() => users.id),
-    studentId: uuid('student_id')
-      .notNull()
-      .references(() => students.id, { onDelete: 'cascade' }),
+    userId: uuid('user_id').references(() => users.id),
+    studentId: uuid('student_id').references(() => students.id, { onDelete: 'cascade' }),
+    fullName: text('full_name'),
+    email: text('email'),
+    phone: text('phone'),
+    createdByUserId: uuid('created_by_user_id').references(() => users.id),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
-  (table) => [unique().on(table.userId, table.studentId)],
+  (table) => [unique().on(table.id, table.institutionId), uniqueIndex('guardians_institution_user_id_unique').on(table.institutionId, table.userId).where(sql`${table.userId} IS NOT NULL`), uniqueIndex('guardians_institution_email_unique').on(table.institutionId, sql`lower(${table.email})`).where(sql`${table.email} IS NOT NULL`)],
 )
+
+export const studentGuardians = pgTable('student_guardians', {
+  id: uuid().primaryKey().defaultRandom(),
+  institutionId: uuid('institution_id').notNull().references(() => institutions.id, { onDelete: 'cascade' }),
+  studentId: uuid('student_id').notNull(),
+  guardianId: uuid('guardian_id').notNull(),
+  relationship: text().notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  check('student_guardians_relationship_check', sql`${table.relationship} in ('mother', 'father', 'grandparent', 'legal-guardian', 'other')`),
+  unique().on(table.studentId, table.guardianId),
+  foreignKey({ columns: [table.studentId, table.institutionId], foreignColumns: [students.id, students.institutionId] }).onDelete('cascade'),
+  foreignKey({ columns: [table.guardianId, table.institutionId], foreignColumns: [guardians.id, guardians.institutionId] }).onDelete('cascade'),
+])
+
+export const studentConsents = pgTable('student_consents', {
+  id: uuid().primaryKey().defaultRandom(),
+  institutionId: uuid('institution_id').notNull().references(() => institutions.id, { onDelete: 'cascade' }),
+  studentId: uuid('student_id').notNull(),
+  kind: text().notNull(),
+  termVersion: text('term_version').notNull(),
+  guardianId: uuid('guardian_id'),
+  guardianNameSnapshot: text('guardian_name_snapshot'),
+  guardianRelationshipSnapshot: text('guardian_relationship_snapshot'),
+  signedOn: date('signed_on'),
+  recordedByUserId: uuid('recorded_by_user_id').notNull().references(() => users.id),
+  recordedAt: timestamp('recorded_at', { withTimezone: true }).notNull().defaultNow(),
+  revokedAt: timestamp('revoked_at', { withTimezone: true }),
+  revokedByUserId: uuid('revoked_by_user_id').references(() => users.id),
+}, (table) => [
+  check('student_consents_kind_check', sql`${table.kind} in ('institution-record', 'guardian-confirmation')`),
+  foreignKey({ columns: [table.studentId, table.institutionId], foreignColumns: [students.id, students.institutionId] }).onDelete('cascade'),
+  foreignKey({ columns: [table.guardianId, table.institutionId], foreignColumns: [guardians.id, guardians.institutionId] }).onDelete('restrict'),
+])
 
 export const assignments = pgTable(
   'assignments',
@@ -235,7 +278,12 @@ export const assignments = pgTable(
     studentId: uuid('student_id')
       .notNull()
       .references(() => students.id, { onDelete: 'cascade' }),
+    membershipId: uuid('membership_id').notNull(),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
-  (table) => [unique().on(table.staffUserId, table.studentId)],
+  (table) => [
+    unique().on(table.membershipId, table.studentId),
+    foreignKey({ columns: [table.membershipId, table.institutionId], foreignColumns: [memberships.id, memberships.institutionId] }).onDelete('cascade'),
+    foreignKey({ columns: [table.studentId, table.institutionId], foreignColumns: [students.id, students.institutionId] }).onDelete('cascade'),
+  ],
 )

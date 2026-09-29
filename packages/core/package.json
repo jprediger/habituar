@@ -16,6 +16,14 @@
       "types": "./dist/staff.d.ts",
       "import": "./dist/staff.js"
     },
+    "./students": {
+      "types": "./dist/students.d.ts",
+      "import": "./dist/students.js"
+    },
+    "./students/contract": {
+      "types": "./dist/students/contract.d.ts",
+      "import": "./dist/students/contract.js"
+    },
     "./role-bundles": {
       "types": "./dist/role-bundles.d.ts",
       "import": "./dist/role-bundles.js"

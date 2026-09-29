@@ -5,7 +5,7 @@ import { assignments, membershipRoles, memberships, roles, students, users } fro
 
 // Faixa arbitrária entre as três aceitas por `students.age_range`; nenhuma regra depende
 // dela neste marco.
-const SEEDED_AGE_RANGE = '11-14'
+const SEEDED_BIRTH_DATE = '2015-01-01'
 
 /** Um usuário por ambiente institucional, para exercitar login e autorização localmente. */
 export const DEVELOPMENT_USERS = {
@@ -34,12 +34,12 @@ export async function seedDevelopmentUsers(
   const coordinatorUserId = await ensureUser(transaction, DEVELOPMENT_USERS.coordinator, passwordHash)
 
   await ensureMembership(transaction, institutionId, studentUserId, 'student', ['student'])
-  await ensureMembership(transaction, institutionId, professionalUserId, 'professional', ['care-assigned'])
+  const professionalMembershipId = await ensureMembership(transaction, institutionId, professionalUserId, 'professional', ['care-assigned'])
   await ensureMembership(transaction, institutionId, monitorUserId, 'monitor', ['monitoring'])
   await ensureMembership(transaction, institutionId, coordinatorUserId, 'professional', ['team-management', 'care-institution'])
 
   const studentId = await ensureStudent(transaction, institutionId, studentUserId)
-  await ensureAssignment(transaction, institutionId, professionalUserId, studentId)
+  await ensureAssignment(transaction, institutionId, professionalUserId, professionalMembershipId, studentId)
 
   return { student: studentUserId, professional: professionalUserId, monitor: monitorUserId, coordinator: coordinatorUserId }
 }
@@ -67,7 +67,7 @@ async function ensureMembership(
   userId: string,
   environment: MembershipEnvironment,
   templateKeys: readonly string[],
-): Promise<void> {
+): Promise<string> {
   const existing = await transaction.query.memberships.findFirst({
     where: and(eq(memberships.userId, userId), eq(memberships.institutionId, institutionId)),
   })
@@ -80,6 +80,7 @@ async function ensureMembership(
     if (role === undefined) throw new Error(`Institution has no system role for template "${templateKey}"`)
     await transaction.insert(membershipRoles).values({ membershipId: membership.id, roleId: role.id, institutionId, environment }).onConflictDoNothing()
   }
+  return membership.id
 }
 
 async function ensureStudent(
@@ -92,7 +93,7 @@ async function ensureStudent(
 
   const [student] = await transaction
     .insert(students)
-    .values({ institutionId, userId, ageRange: SEEDED_AGE_RANGE })
+    .values({ institutionId, userId, fullName: 'Estudante de Desenvolvimento', birthDate: SEEDED_BIRTH_DATE })
     .returning()
   if (student === undefined) throw new Error('Insert into students returned no row')
 
@@ -103,10 +104,11 @@ async function ensureAssignment(
   transaction: DatabaseTransaction,
   institutionId: string,
   staffUserId: string,
+  membershipId: string,
   studentId: string,
 ): Promise<void> {
   await transaction
     .insert(assignments)
-    .values({ institutionId, staffUserId, studentId })
+    .values({ institutionId, staffUserId, membershipId, studentId })
     .onConflictDoNothing()
 }

@@ -83,7 +83,7 @@ export class StaffHarness {
       const id = templates[key]
       if (id === undefined) throw new Error(`Fixture template ${key} is missing`)
       return { ...all, [key]: id }
-    }, { 'team-management': '', 'care-assigned': '', 'care-institution': '', monitoring: '', student: '' }) }
+    }, { 'team-management': '', 'care-assigned': '', 'care-institution': '', monitoring: '', student: '', guardian: '' }) }
   }
 
   async addMember(institutionId: string, userId: string, environment: 'professional' | 'monitor' | 'student', roleIds: readonly string[]): Promise<string> {

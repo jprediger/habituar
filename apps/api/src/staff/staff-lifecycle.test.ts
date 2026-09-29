@@ -90,8 +90,8 @@ describe('ciclo de vida da equipe', () => {
     await harness.addMember(north.id, manager.userId, 'professional', [north.templates['team-management'], north.templates['care-assigned']])
     const removedMembership = await harness.addMember(north.id, removed.userId, 'professional', [north.templates['team-management']])
     await harness.addMember(south.id, removed.userId, 'professional', [south.templates['team-management']])
-    const [student] = await harness.tenantQuery<{ id: string }>(north.id, "insert into students (institution_id, user_id, age_range) values ($1, $2, '11-14') returning id", [north.id, manager.userId])
-    await harness.tenantQuery(north.id, 'insert into assignments (institution_id, staff_user_id, student_id) values ($1, $2, $3)', [north.id, removed.userId, student?.id])
+    const [student] = await harness.tenantQuery<{ id: string }>(north.id, "insert into students (institution_id, user_id, full_name, birth_date) values ($1, $2, 'Assigned student', '2012-01-01') returning id", [north.id, manager.userId])
+    await harness.tenantQuery(north.id, 'insert into assignments (institution_id, staff_user_id, membership_id, student_id) values ($1, $2, (select id from memberships where user_id = $2 and institution_id = $1), $3)', [north.id, removed.userId, student?.id])
 
     expect((await harness.call(removed, 'GET', `/institutions/${north.id}/members`)).status).toBe(200)
     const removal = await harness.call(manager, 'DELETE', `/institutions/${north.id}/members/${removedMembership}`, { expectedVersion: 1 })

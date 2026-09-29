@@ -11,5 +11,6 @@ export const roleTemplateKeySchema = z.enum([
   'care-institution',
   'monitoring',
   'student',
+  'guardian',
 ])
 export type RoleTemplateKey = z.infer<typeof roleTemplateKeySchema>

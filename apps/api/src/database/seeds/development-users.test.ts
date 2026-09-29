@@ -68,7 +68,7 @@ describe('usuários de desenvolvimento', () => {
 
       const [outsiderStudent] = await transaction
         .insert(students)
-        .values({ institutionId: INSTITUTION_ID, userId: OUTSIDER_USER_ID, ageRange: '15-18' })
+        .values({ institutionId: INSTITUTION_ID, userId: OUTSIDER_USER_ID, fullName: 'Outsider', birthDate: '2010-01-01' })
         .returning()
       if (outsiderStudent === undefined) throw new Error('Insert into students returned no row')
       unassignedStudentId = outsiderStudent.id

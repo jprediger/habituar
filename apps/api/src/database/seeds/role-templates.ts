@@ -6,6 +6,7 @@ import { rolePermissions, roles } from '../schema.js'
 
 const ROLE_TEMPLATES = [
   { name: 'student', environment: 'student' },
+  { name: 'guardian', environment: 'student' },
   { name: 'care-assigned', environment: 'professional' },
   { name: 'care-institution', environment: 'professional' },
   { name: 'team-management', environment: 'professional' },
@@ -18,16 +19,19 @@ type Grant = readonly [PermissionKey, PermissionScope]
 // e alcance inexistente são erro de compilação, não `false` silencioso em produção.
 const TEMPLATE_GRANTS: Readonly<Record<typeof ROLE_TEMPLATES[number]['name'], readonly Grant[]>> = {
   student: [['student.read', 'own']],
+  guardian: [['student.read', 'own']],
   'care-assigned': [
     ['student.read', 'assigned'],
     ['student.update', 'assigned'],
     ['guardian.link', 'assigned'],
+    ['guardian.unlink', 'assigned'],
   ],
-  'care-institution': [['student.read', 'institution'], ['student.update', 'institution'], ['guardian.link', 'institution']],
+  'care-institution': [['student.read', 'institution'], ['student.update', 'institution'], ['student.create', 'institution'], ['guardian.link', 'institution'], ['guardian.unlink', 'institution'], ['assignment.manage', 'institution']],
   monitoring: [['student.read', 'assigned']],
   'team-management': [
     ['student.read', 'institution'],
     ['student.create', 'institution'],
+    ['assignment.manage', 'institution'],
     ['role.assign', 'institution'],
     ['role.manage', 'institution'],
     ['membership.read', 'institution'],

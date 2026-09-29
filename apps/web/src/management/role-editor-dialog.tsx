@@ -33,6 +33,8 @@ export function RoleEditorDialog({
   const isBusy = operation.status === 'saving' || operation.status === 'deleting'
   const loadedRole = state.status === 'ready' ? state.role : undefined
   const roleName = loadedRole === undefined ? '' : getRoleName(loadedRole, t)
+  // O nome gravado de um modelo do sistema é a chave técnica; o que a pessoa lê é a tradução.
+  const nameValue = loadedRole?.templateKey === null || loadedRole === undefined ? editor.name : roleName
   const title = target.mode === 'create' ? t('staff.roles.createTitle') : t('staff.roles.editTitle', { name: roleName })
   const description = target.mode === 'create' ? t('staff.roles.createDescription') : t('staff.roles.editDescription')
   const isDone = operation.status === 'deleted'
@@ -79,7 +81,7 @@ export function RoleEditorDialog({
               error={editor.nameError === undefined ? undefined : getFieldErrorText(editor.nameError, t)}
             >
               {(control) => (
-                <Input {...control} maxLength={80} value={editor.name} onChange={(event) => { editor.setName(event.target.value) }} onBlur={editor.leaveName} />
+                <Input {...control} maxLength={80} value={nameValue} onChange={(event) => { editor.setName(event.target.value) }} onBlur={editor.leaveName} />
               )}
             </FormField>
 

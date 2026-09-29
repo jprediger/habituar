@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { Page } from '../components/ui/page'
 import { PageHeader } from '../components/ui/page-header'
-import { SegmentedControl } from '../components/ui/segmented-control'
+import { ChoiceList } from '../components/ui/choice-list'
 import { ListRow } from '../components/ui/list-row'
 import { ListSection } from '../components/ui/list-section'
 import type { InstitutionSession } from '../session/session-screen'
@@ -38,9 +38,9 @@ export function ProfessionalProfileScreen({ session }: Readonly<{ session: Insti
       </ListSection>
 
       <ListSection title={t('professional.profile.appearanceSection')}>
-        <SegmentedControl
+        <ChoiceList
           label={t('professional.profile.themeLabel')}
-          options={THEME_PREFERENCES.map((preference) => ({
+          choices={THEME_PREFERENCES.map((preference) => ({
             value: preference,
             label: t(`professional.profile.theme.${preference}`),
           }))}

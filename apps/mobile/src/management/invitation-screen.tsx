@@ -10,7 +10,7 @@ import { CheckboxRow } from '../components/ui/checkbox-row'
 import { FormField } from '../components/ui/form-field'
 import { Input } from '../components/ui/input'
 import { StackPage } from '../components/ui/stack-page'
-import { SegmentedControl } from '../components/ui/segmented-control'
+import { ChoiceList } from '../components/ui/choice-list'
 import { Text } from '../components/ui/text'
 import type { InstitutionSession } from '../session/session-screen'
 import { toStaffContext } from './staff-context'
@@ -62,9 +62,9 @@ export function InvitationScreen({ session, onDone }: Readonly<{ session: Instit
           )}
         </FormField>
 
-        <SegmentedControl
+        <ChoiceList
           label={t('staff.invitations.environment')}
-          options={[
+          choices={[
             { value: 'professional', label: t('staff.environments.professional') },
             { value: 'monitor', label: t('staff.environments.monitor') },
           ]}

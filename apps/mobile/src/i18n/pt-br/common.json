@@ -149,8 +149,8 @@
       "roles": "Papéis"
     },
     "sectionDescriptions": {
-      "team": "Pessoas da instituição e seus papéis",
-      "invitations": "Convites enviados, reenvio e revogação",
+      "team": "Pessoas da instituição, seus papéis e novos convites",
+      "invitations": "Histórico de convites enviados",
       "roles": "Papéis personalizados e modelos do sistema"
     },
     "loading": "Carregando...",
@@ -212,6 +212,13 @@
     },
     "invitations": {
       "statusFilter": "Situação",
+      "detailsTitle": "Detalhes do convite",
+      "detailsSection": "Dados do convite",
+      "sentAt": "Enviado em",
+      "expiresAtLabel": "Válido até",
+      "open": "Detalhes do convite para {{email}}",
+      "notFoundTitle": "Convite não encontrado",
+      "notFoundDescription": "Este convite não está disponível na lista atual.",
       "allStatuses": "Todas",
       "status": {
         "pending": "Pendente",
@@ -223,9 +230,11 @@
       "expiresAt": "Vale até {{date}}",
       "roleSummary": "Papéis: {{roles}}",
       "emptyTitle": "Nenhum convite enviado ainda",
-      "emptyDescription": "Use o formulário de convite para chamar alguém para a equipe.",
+      "emptyDescription": "Os convites enviados aparecerão aqui para consulta e acompanhamento.",
       "noResultsTitle": "Nenhum convite nesta situação",
       "noResultsDescription": "Escolha outra situação para ver os demais convites.",
+      "revokeAction": "Revogar",
+      "resendAction": "Reenviar",
       "revoke": "Revogar convite de {{email}}",
       "resend": "Reenviar convite para {{email}}",
       "revokeConfirmation": "Revogar o convite de {{email}}? O link deixa de funcionar.",

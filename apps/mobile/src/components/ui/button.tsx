@@ -18,6 +18,7 @@ const ICON_SIZE = { default: 20, inline: 16, inlineBody: 16 } as const
 
 export type ButtonProps = Readonly<{
   label: string
+  accessibilityLabel?: string | undefined
   onPress: () => void
   icon?: IconName
   variant?: ButtonVariant
@@ -33,6 +34,7 @@ export type ButtonProps = Readonly<{
  */
 export function Button({
   label,
+  accessibilityLabel,
   onPress,
   icon,
   variant = 'primary',
@@ -48,7 +50,7 @@ export function Button({
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={label}
+      accessibilityLabel={accessibilityLabel ?? label}
       accessibilityState={{ disabled: isDisabled, busy: isBusy }}
       disabled={isDisabled}
       onPress={onPress}

@@ -1,4 +1,5 @@
 import type { StaffManagementContext } from '@habituar/react-client/staff-management'
+import { getMembershipCapabilities } from '@habituar/react-client/staff-management'
 import { useRouter } from 'expo-router'
 import { useTranslation } from 'react-i18next'
 import { habituar } from '../client/habituar-client'
@@ -17,8 +18,12 @@ import { PaginationControls, StaffListStatus, getRoleName } from './staff-feedba
  */
 export function TeamScreen({ session }: Readonly<{ session: InstitutionSession }>) {
   const { t } = useTranslation()
+  const router = useRouter()
   return (
-    <StackPage title={t('staff.sections.team')}>
+    <StackPage
+      title={t('staff.sections.team')}
+      action={getMembershipCapabilities(session.membership.permissions).canInvite ? { icon: 'user-plus', label: t('staff.invitations.new'), onPress: () => { router.push('/professional/management/invite') } } : undefined}
+    >
       <TeamList context={toStaffContext(session)} />
     </StackPage>
   )

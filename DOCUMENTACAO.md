@@ -64,7 +64,7 @@ O usuário deve poder revogar a sessão corrente e remover a credencial do clien
 
 ### RF0006 – Direcionar por perfil
 
-A interface deve encaminhar aluno, profissional, monitor e administrador geral ao ambiente correspondente, mantendo profissional e monitor na mesma tela institucional.
+A interface deve encaminhar aluno, profissional, monitor e administrador geral ao ambiente correspondente. Profissional e monitor usam o mesmo ambiente profissional, com destinos definidos pelas permissões atuais do vínculo; o endereço antigo do monitor leva a esse ambiente, e endereços digitados diretamente continuam protegidos. Quem perde o vínculo volta à escolha de instituição, a outro vínculo ou à espera por convite, sem dados da instituição anterior no dispositivo.
 
 | Prioridade | Complexidade | Situação | Versão |
 | --- | --- | --- | --- |
@@ -73,10 +73,17 @@ A interface deve encaminhar aluno, profissional, monitor e administrador geral a
 ### RF0007 – Gerenciar papéis e permissões
 
 A instituição deve controlar papéis, permissões e alcances de acesso sem permitir
-escalonamento indevido. Cada vínculo tem um tipo (aluno, profissional ou monitor),
-pode receber vários papéis compatíveis e soma suas concessões. Os cinco papéis
-iniciais são Gestão da equipe, atendimento a vinculados, atendimento institucional,
-monitoramento e aluno. A interface de gestão de papéis e membros ainda está prevista.
+escalonamento indevido. Cada vínculo tem um tipo (aluno, profissional ou monitor), pode
+receber vários papéis compatíveis e soma suas concessões. Os cinco papéis iniciais são
+Gestão da equipe, atendimento a vinculados, atendimento institucional, monitoramento e
+aluno. Na seção Gestão, na web e no mobile, quem pode consultar a equipe lista e busca
+profissionais e monitores, convida, reenvia e revoga convites, substitui o conjunto de
+papéis de um membro, remove vínculos com confirmação e cria papéis personalizados a
+partir de um modelo do sistema, escolhendo agrupamentos de permissões com nome e
+alcance. Ninguém concede o que não possui, modelos do sistema não mudam, a instituição
+não fica sem gestão completa da equipe e a mudança de um papel mostra antes o impacto
+sobre membros e convites. A trilha completa de auditoria dessas mudanças ainda está
+prevista.
 
 | Prioridade | Complexidade | Situação | Versão |
 | --- | --- | --- | --- |
@@ -134,8 +141,10 @@ Profissionais devem gerar relatórios consolidados para apoiar o acompanhamento 
 
 O administrador geral deve criar e manter instituições sem acesso implícito aos dados
 sensíveis delas. Na web, informa CPF ou CNPJ válido e contato, vê membros e papéis,
-convida pessoas, revoga convites e entrega um link que aparece uma vez. A pessoa
-aceita na web com conta nova ou existente; o convite expira em sete dias.
+convida pessoas, revoga convites e entrega um link que aparece uma vez. A pessoa aceita
+na web com conta nova ou existente; o convite expira em sete dias. Pela web, o
+administrador geral também configura equipe, convites e papéis da instituição com as
+mesmas regras, sem ganhar vínculo nem acesso a dados de alunos.
 
 | Prioridade | Complexidade | Situação | Versão |
 | --- | --- | --- | --- |
@@ -247,12 +256,14 @@ _[Diagrama de casos de uso disponível no DOCX oficial.]_
 
 ## Modelo do Banco de Dados
 
-O modelo abaixo representa as entidades atualmente implementadas. Usuários e sessões
-são globais; vínculos, papéis, permissões, convites, estudantes, responsáveis e
-atribuições preservam o contexto institucional. Cada vínculo possui um tipo e recebe
-papéis por `membership_roles`; os papéis de sistema possuem `template_key`. Convites
-guardam somente o hash do token e seus papéis ficam em `invitation_roles`. O banco
-aplica isolamento por linha para impedir acesso entre instituições.
+O modelo abaixo representa as entidades atualmente implementadas. Usuários e sessões são
+globais; vínculos, papéis, permissões, convites, estudantes, responsáveis e atribuições
+preservam o contexto institucional. Cada vínculo possui um tipo e recebe papéis por
+`membership_roles`; os papéis de sistema possuem `template_key`. Convites guardam
+somente o hash do token e seus papéis ficam em `invitation_roles`. Vínculos removidos
+recebem data e autor da remoção, sem apagar a conta nem a autoria de registros, e
+vínculos e papéis têm versão para recusar edição feita sobre dados desatualizados. O
+banco aplica isolamento por linha para impedir acesso entre instituições.
 
 _[Modelo atual do banco de dados disponível no DOCX oficial.]_
 
@@ -296,7 +307,7 @@ A API valida entradas e saídas a partir de contratos compartilhados, nega acess
 | Funcionalidade | Prioridade | Situação | Descrição |
 | --- | --- | --- | --- |
 | Autenticação e sessões | Alta | Implementado | Cadastro, login web/mobile, contexto e logout |
-| Papéis, permissões e vínculos | Alta | Em desenvolvimento | Papéis somados, catálogo fechado e isolamento institucional |
+| Papéis, permissões e vínculos | Alta | Em desenvolvimento | Papéis somados, catálogo fechado, isolamento institucional e gestão da equipe |
 | Instituições e convites | Média | Em desenvolvimento | Cadastro, convite de uso único e aceite na web |
 | Interfaces de autenticação | Alta | Implementado | Entrada, cadastro e ambientes por perfil na web e no mobile |
 | Fichas e observações | Alta | Previsto | Dados sensíveis, histórico e auditoria |

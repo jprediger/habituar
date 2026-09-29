@@ -322,9 +322,11 @@ precisará passar pelo catálogo fechado e por uma concessão explícita.
 
 ```
 permissions        key ('ficha.read', 'observation.write', …), sensitive boolean
-roles              id, institution_id, environment, template_key, name, is_system
+roles              id, institution_id, environment, template_key, name, is_system,
+                   cloned_from, version
 role_permissions   role_id, permission_key, scope ('own'|'assigned'|'institution')
-memberships        user ↔ institution, environment ('student'|'professional'|'monitor')
+memberships        user ↔ institution, environment ('student'|'professional'|'monitor'),
+                   removed_at, removed_by_user_id, version
 membership_roles   membership ↔ role (mesma instituição e mesmo ambiente)
 users.is_platform_administrator  -- global, sem membership
 assignments        staff ↔ (student | group)
@@ -344,10 +346,34 @@ cria vínculo e atribuições na instituição gravada no convite, não na requi
 
 1. Catálogo fechado — sem inventar permissões.
 2. **Não se concede o que não se possui.**
-3. Papel novo precisa **clonar um template** e então ser modificado.
-4. Hierarquia — só se atribui papel de nível igual ou inferior ao próprio.
+3. Papel novo precisa **clonar um template** e então ser modificado. Template de sistema
+   não é editável nem excluível pela aplicação; seu ajuste é migração versionada.
+4. Hierarquia — só se administra o que está dentro do próprio limite (ver abaixo).
 5. Administrador geral é invisível aos tenants, não possui membership e **não possui** leitura de ficha.
-6. Toda mudança de permissão é auditada (ator, alvo, antes/depois).
+6. Toda mudança de permissão é auditada (ator, alvo, antes/depois). **Ainda pendente:** a
+   trilha completa depende do D11; até lá esta proteção não é considerada entregue.
+
+**Hierarquia é inclusão de concessões, não nível numérico.** O limite de um ator é a união
+atual das concessões de todos os seus papéis, lida no servidor a cada operação. Para uma
+mesma ação, `institution` cobre qualquer alcance; `own` só cobre `own` e `assigned` só
+cobre `assigned` — são sujeitos distintos, não degraus. Atribuir, convidar, remover ou
+editar exige a ação administrativa correspondente **e** que o limite cubra tudo o que é
+afetado: o conjunto final de papéis e, em alteração, também o atual (rebaixar alguém mais
+poderoso é administrá-lo). Na edição de papel valem as concessões atuais e as propostas.
+Nome de papel nunca autoriza. A política é pura, em `@habituar/core/delegation`.
+
+**Gestão da equipe.** O catálogo de tenant inclui `membership.read`, `membership.invite`
+e `membership.remove`, sempre com alcance `institution`, além de `role.assign` e
+`role.manage`. Gestor completo é quem soma as cinco, em qualquer combinação de papéis.
+Onde já existe ao menos um gestor completo, nenhuma troca, remoção ou edição indireta de
+papel pode deixar zero; convite não aceito não conta. As alterações de autorização de uma
+instituição são serializadas na mesma transação que verifica e grava.
+
+**Limite da plataforma.** O administrador geral configura equipe, convites e papéis de uma
+instituição por `institution.configure`, sem ser comparado com concessões de tenant que
+não possui. Ele ainda obedece catálogo, ambientes, proteção de templates e último gestor,
+e isso não lhe dá vínculo nem leitura de dados de alunos. Web e API usam as mesmas
+operações para as duas áreas, com o ator discriminado (`institution` | `platform`).
 
 O template `institution_admin` que o seed atual criou é legado, não é template do modelo
 novo. Ele **não inclui `observation.read`**, mas isso não transforma o administrador geral
@@ -356,7 +382,13 @@ restaurável, e a representação global não copia `role_permissions` nem ganha
 implícito a fichas, observações ou outros dados sensíveis.
 
 **UX:** expor **bundles** ("Pode gerenciar registros de alunos") mapeando para permissões
-atômicas. Quarenta checkboxes são um gerador de configuração errada.
+atômicas. Quarenta checkboxes são um gerador de configuração errada. O catálogo de bundles
+(`@habituar/core/role-bundles`) é fechado em código: cada bundle declara as permissões
+exatas e os alcances permitidos por ambiente, e a matriz é coberta por testes. O contrato
+de edição recebe bundles e o servidor resolve as concessões; combinação vazia, fora da
+matriz ou que não possa ser lida de volta sem perda é recusada. Monitor só recebe
+consulta com `assigned`, gestão só existe com `institution`, e alcance só aparece como
+escolha na interface quando há mais de uma opção válida.
 
 **Ganho de D4:** o catálogo vive em `packages/core` como union type, então
 `usePermission('ficha.write')` é verificado em compilação nos dois apps e no handler.

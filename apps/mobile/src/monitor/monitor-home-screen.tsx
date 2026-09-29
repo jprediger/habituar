@@ -1,30 +1,30 @@
 import { useTranslation } from 'react-i18next'
+import { Page } from '../components/ui/page'
+import { PageHeader } from '../components/ui/page-header'
+import { Section } from '../components/ui/section'
+import { SummaryCard } from '../components/ui/summary-card'
 import { Text } from '../components/ui/text'
-import { EnvironmentCard, EnvironmentDetailList } from '../shell/environment-card'
 import type { InstitutionSession } from '../session/session-screen'
-import { SignOutButton } from '../session/sign-out-button'
-import { InstitutionSwitcher } from '../session/institution-switcher'
 
 /**
- * Tela inicial do monitor, com a própria saída de sessão. O profissional já tem ambiente
- * com navegação; o monitor passa a usá-lo quando o hook de navegação filtrar destinos por
- * permissão, e só então esta tela deixa de existir.
+ * Início do monitor dentro da casca profissional. Mostra só o vínculo; os destinos que o
+ * monitor alcança vêm das concessões dele, na barra de abas, e a saída de sessão é do Perfil.
  */
 export function MonitorHomeScreen({ session }: Readonly<{ session: InstitutionSession }>) {
   const { t } = useTranslation()
+
   return (
-    <EnvironmentCard
-      title={t('home.monitor-home.title')}
-      description={t('home.monitor-home.description')}
-      footer={<><InstitutionSwitcher /><SignOutButton /></>}
-    >
-      <Text>{t('home.signedInAs', { name: session.user.name })}</Text>
-      <EnvironmentDetailList
-        items={[
-          { label: t('home.institutionLabel'), value: session.membership.institution.name },
-          { label: t('home.roleLabel'), value: session.membership.roles.map((role) => role.templateKey === null ? role.name : t(`roles.${role.templateKey}`)).join(', ') },
-        ]}
-      />
-    </EnvironmentCard>
+    <Page>
+      <PageHeader eyebrow={t('navigation.home')} title={t('home.monitor-home.title')} />
+      <Text tone="muted">{t('home.monitor-home.description')}</Text>
+      <Section title={t('professional.home.membershipSection')}>
+        <SummaryCard
+          items={[
+            { label: t('home.institutionLabel'), value: session.membership.institution.name },
+            { label: t('home.roleLabel'), value: session.membership.roles.map((role) => (role.templateKey === null ? role.name : t(`roles.${role.templateKey}`))).join(', ') },
+          ]}
+        />
+      </Section>
+    </Page>
   )
 }

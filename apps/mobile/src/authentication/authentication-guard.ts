@@ -9,7 +9,6 @@ export type MobileAuthenticationRoute =
   | '/select-institution'
   | '/student'
   | '/professional'
-  | '/monitor'
   | '/admin'
   | '/awaiting-invitation'
 
@@ -69,8 +68,10 @@ function getDestinationPath(destination: HomeDestination): MobileAuthenticationR
       return '/student'
     case 'professional-home':
       return '/professional'
+    // Monitor e profissional dividem a casca profissional; o que cada um vê sai das
+    // concessões do vínculo, não de um ambiente próprio.
     case 'monitor-home':
-      return '/monitor'
+      return '/professional'
     // O administrador geral existe no domínio inteiro, então o app precisa de um lugar
     // para ele — mesmo que esse lugar só informe que a administração acontece na web.
     case 'admin-home':

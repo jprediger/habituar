@@ -8,7 +8,7 @@ import { useThemeTokens } from '../../theme/tokens'
 import type { TextTone } from './text'
 import { Text } from './text'
 
-export type ButtonVariant = 'primary' | 'outline' | 'link'
+export type ButtonVariant = 'primary' | 'danger' | 'outline' | 'link'
 export type ButtonSize = 'default' | 'inline' | 'inlineBody'
 
 /** Nome de ícone do conjunto já embarcado pelo Expo; não se inventa glifo fora dele. */
@@ -41,7 +41,9 @@ export function Button({
   isBusy = false,
   style,
 }: ButtonProps) {
-  const { colors, minimumTouchTarget, compactTouchTarget, radius } = useThemeTokens()
+  const { colors, minimumTouchTarget, compactTouchTarget, buttonHeight, radius } = useThemeTokens()
+  // Completa a área de toque até o alvo padrão sem aumentar o desenho do botão.
+  const verticalHitSlop = (minimumTouchTarget - buttonHeight) / 2
   const contentColor = getContentColor(variant, colors)
 
   return (
@@ -51,6 +53,7 @@ export function Button({
       accessibilityState={{ disabled: isDisabled, busy: isBusy }}
       disabled={isDisabled}
       onPress={onPress}
+      hitSlop={size === 'default' ? { top: verticalHitSlop, bottom: verticalHitSlop } : undefined}
       // Feedback por opacidade, sem animação: `prefers-reduced-motion` não é consultável
       // em todo alvo nativo, e um botão não precisa de movimento para responder ao toque.
       style={({ pressed }) => [
@@ -59,9 +62,9 @@ export function Button({
           justifyContent: 'center',
           flexDirection: 'row',
           gap: SPACING.xs,
-          minHeight: size === 'default' ? minimumTouchTarget : compactTouchTarget,
-          paddingHorizontal: size === 'default' ? SPACING.lg : 0,
-          borderRadius: radius.pill,
+          minHeight: size === 'default' ? buttonHeight : compactTouchTarget,
+          paddingHorizontal: size === 'default' ? SPACING.md : 0,
+          borderRadius: radius.button,
           opacity: isDisabled ? 0.5 : pressed ? 0.7 : 1,
           ...getSurfaceStyle(variant, colors),
         },
@@ -94,6 +97,8 @@ function getContentTone(variant: ButtonVariant): TextTone {
   switch (variant) {
     case 'primary':
       return 'onPrimary'
+    case 'danger':
+      return 'onDanger'
     case 'outline':
       return 'default'
     case 'link':
@@ -110,6 +115,8 @@ function getContentColor(
   switch (variant) {
     case 'primary':
       return colors.onPrimary
+    case 'danger':
+      return colors.onDanger
     case 'outline':
       return colors.text
     case 'link':
@@ -126,6 +133,8 @@ function getSurfaceStyle(
   switch (variant) {
     case 'primary':
       return { backgroundColor: colors.primary }
+    case 'danger':
+      return { backgroundColor: colors.danger }
     case 'outline':
       return { borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface }
     case 'link':

@@ -96,11 +96,11 @@ describe('native deep link guard', () => {
     })
   })
 
-  it('sends a monitor who opens the professional profile back to their own environment', () => {
-    expect(getMobileAuthenticationGuard(createAuthenticatedState('monitor'), '/professional/profile')).toEqual({
-      action: 'redirect',
-      route: '/monitor',
-    })
+  it('lets a monitor into the professional shell and moves the old monitor address there', () => {
+    const monitor = createAuthenticatedState('monitor')
+
+    expect(getMobileAuthenticationGuard(monitor, '/professional/profile')).toEqual({ action: 'render' })
+    expect(getMobileAuthenticationGuard(monitor, '/monitor')).toEqual({ action: 'redirect', route: '/professional' })
   })
 
   it('refuses a route that only shares the name prefix of the environment', () => {

@@ -1,7 +1,17 @@
+import type { EffectivePermission } from '@habituar/core/auth/context'
 import { INTERACTION } from '@habituar/design-tokens/interaction'
 import { fireEvent, render, screen } from '@testing-library/react-native'
+import { useEnvironmentNavigation, useProfessionalNavigation } from '@habituar/react-client/environment-navigation'
 import '../i18n/i18n'
 import { EnvironmentTabBar } from './environment-tab-bar'
+
+function ProfessionalBar({ permissions = [] }: Readonly<{ permissions?: readonly EffectivePermission[] }>) {
+  return <EnvironmentTabBar items={useProfessionalNavigation({ permissions })} />
+}
+
+function StudentBar() {
+  return <EnvironmentTabBar items={useEnvironmentNavigation('student')} />
+}
 
 const HOME = 'Início'
 const PROFILE = 'Perfil'
@@ -24,7 +34,7 @@ beforeEach(() => {
 
 describe('environment tab bar', () => {
   it('offers each destination of the environment as a tab with a visible label', () => {
-    render(<EnvironmentTabBar environment="professional" />)
+    render(<ProfessionalBar />)
 
     expect(screen.getByRole('tab', { name: HOME })).toBeOnTheScreen()
     expect(screen.getByRole('tab', { name: PROFILE })).toBeOnTheScreen()
@@ -33,7 +43,7 @@ describe('environment tab bar', () => {
   })
 
   it('tells assistive technology which tab is selected on the home route', () => {
-    render(<EnvironmentTabBar environment="professional" />)
+    render(<ProfessionalBar />)
 
     expect(screen.getByRole('tab', { name: HOME, selected: true })).toBeOnTheScreen()
     expect(screen.getByRole('tab', { name: PROFILE, selected: false })).toBeOnTheScreen()
@@ -42,14 +52,14 @@ describe('environment tab bar', () => {
   it('moves the selection to the profile when a deep link opens it', () => {
     mockRouter.pathname = '/professional/profile'
 
-    render(<EnvironmentTabBar environment="professional" />)
+    render(<ProfessionalBar />)
 
     expect(screen.getByRole('tab', { name: PROFILE, selected: true })).toBeOnTheScreen()
     expect(screen.getByRole('tab', { name: HOME, selected: false })).toBeOnTheScreen()
   })
 
   it('opens the destination of the tab that was pressed', () => {
-    render(<EnvironmentTabBar environment="professional" />)
+    render(<ProfessionalBar />)
 
     fireEvent.press(screen.getByRole('tab', { name: PROFILE }))
 
@@ -57,7 +67,7 @@ describe('environment tab bar', () => {
   })
 
   it('gives every tab a target big enough to hit', () => {
-    render(<EnvironmentTabBar environment="professional" />)
+    render(<ProfessionalBar />)
 
     for (const name of [HOME, PROFILE]) {
       expect(screen.getByRole('tab', { name })).toHaveStyle({ minHeight: INTERACTION.minimumTouchTarget })
@@ -65,7 +75,7 @@ describe('environment tab bar', () => {
   })
 
   it('keeps the labels clear of the home indicator at the bottom of the screen', () => {
-    render(<EnvironmentTabBar environment="professional" />)
+    render(<ProfessionalBar />)
 
     expect(screen.root).toHaveStyle({ paddingBottom: 34 })
   })
@@ -73,9 +83,22 @@ describe('environment tab bar', () => {
   it('stays out of the way while an environment has a single destination', () => {
     mockRouter.pathname = '/student'
 
-    render(<EnvironmentTabBar environment="student" />)
+    render(<StudentBar />)
 
     expect(screen.queryByRole('tablist')).toBeNull()
     expect(screen.queryByRole('tab')).toBeNull()
+  })
+
+  it('shows management between home and profile only to someone who can read the team', () => {
+    render(<ProfessionalBar permissions={[{ key: 'membership.read', scope: 'institution' }]} />)
+
+    const tabs = screen.getAllByRole('tab')
+    expect(tabs).toHaveLength(3)
+    expect(tabs.indexOf(screen.getByRole('tab', { name: HOME }))).toBe(0)
+    expect(tabs.indexOf(screen.getByRole('tab', { name: 'Gestão' }))).toBe(1)
+    expect(tabs.indexOf(screen.getByRole('tab', { name: PROFILE }))).toBe(2)
+
+    fireEvent.press(screen.getByRole('tab', { name: 'Gestão' }))
+    expect(mockRouter.navigate).toHaveBeenCalledWith('/professional/management')
   })
 })

@@ -1,12 +1,6 @@
 import { SPACING } from '@habituar/design-tokens/spacing'
-import type {
-  NavigationEnvironment,
-  NavigationIcon as NavigationIconName,
-} from '@habituar/react-client/environment-navigation'
-import {
-  findActiveNavigationItem,
-  useEnvironmentNavigation,
-} from '@habituar/react-client/environment-navigation'
+import type { NavigationIcon as NavigationIconName, NavigationItem, NavigationPath } from '@habituar/react-client/environment-navigation'
+import { findActiveNavigationItem } from '@habituar/react-client/environment-navigation'
 import { usePathname, useRouter } from 'expo-router'
 import { useTranslation } from 'react-i18next'
 import { Pressable, StyleSheet, View } from 'react-native'
@@ -17,21 +11,18 @@ import { useThemeTokens } from '../theme/tokens'
 
 const ICON_SIZE = 26
 
-// A administração geral não tem ambiente no app, só o aviso de que ela acontece na web.
-type MobileEnvironment = Exclude<NavigationEnvironment, 'admin'>
-
 // Uma aba sozinha não oferece escolha nenhuma: a barra só ocupa espaço e anuncia uma
 // lista de um item ao leitor de tela.
 const MINIMUM_TABS = 2
 
 /**
  * Barra inferior de todo ambiente do app. Dona só do visual e da troca de aba: quais
- * destinos existem, em que ordem e qual está ativo vêm do hook compartilhado, então esta
- * barra nunca decide sozinha o que a pessoa pode abrir.
+ * destinos existem, em que ordem e com que capacidade vêm dos hooks compartilhados de
+ * navegação, então esta barra nunca decide sozinha o que a pessoa pode abrir.
+ * A administração geral não tem casca no app, só o aviso de que ela acontece na web.
  */
-export function EnvironmentTabBar({ environment }: Readonly<{ environment: MobileEnvironment }>) {
+export function EnvironmentTabBar({ items }: Readonly<{ items: readonly NavigationItem<NavigationPath<'professional' | 'student'>>[] }>) {
   const { t } = useTranslation()
-  const items = useEnvironmentNavigation(environment)
   const pathname = usePathname()
   const router = useRouter()
   const insets = useSafeAreaInsets()

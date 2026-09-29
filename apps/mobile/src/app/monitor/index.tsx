@@ -1,7 +1,9 @@
-import { InstitutionSessionScreen } from '../../session/session-screen'
-import { MonitorHomeScreen } from '../../monitor/monitor-home-screen'
+import { Redirect } from 'expo-router'
 
-/** Ambiente do monitor; a sessão só chega aqui depois de aprovada pelo guard. */
-export default function MonitorRoute() {
-  return <InstitutionSessionScreen>{(session) => <MonitorHomeScreen session={session} />}</InstitutionSessionScreen>
+/**
+ * Endereço antigo do ambiente do monitor, mantido só para redirecionar: o monitor usa o
+ * ambiente profissional. A instituição ativa vive na sessão, então segue a mesma.
+ */
+export default function MonitorRedirectRoute() {
+  return <Redirect href="/professional" />
 }

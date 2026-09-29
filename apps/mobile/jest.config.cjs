@@ -40,5 +40,13 @@ module.exports = {
     '^@habituar/react-client/react-client$': '<rootDir>/../../packages/react-client/src/react-client.ts',
     '^@habituar/react-client/environment-navigation$':
       '<rootDir>/../../packages/react-client/src/environment-navigation.ts',
+    '^@habituar/react-client/staff-management$': '<rootDir>/../../packages/react-client/src/staff-management.ts',
+    '^@habituar/core/delegation$': '<rootDir>/../../packages/core/src/delegation.ts',
+    '^@habituar/core/identity/ids$': '<rootDir>/../../packages/core/src/identity/ids.ts',
+    '^@habituar/core/invitations$': '<rootDir>/../../packages/core/src/invitations.ts',
+    '^@habituar/core/permissions$': '<rootDir>/../../packages/core/src/permissions/permission-catalog.ts',
+    '^@habituar/core/role-bundles$': '<rootDir>/../../packages/core/src/role-bundles.ts',
+    '^@habituar/core/roles$': '<rootDir>/../../packages/core/src/roles.ts',
+    '^@habituar/core/staff$': '<rootDir>/../../packages/core/src/staff.ts',
   },
 }

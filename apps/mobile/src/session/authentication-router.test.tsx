@@ -1,5 +1,7 @@
 import type { AuthenticationState } from '@habituar/react-client/react-client'
 import { render, screen } from '@testing-library/react-native'
+import { AppState } from 'react-native'
+import type { AppStateStatus } from 'react-native'
 import type * as ReactNative from 'react-native'
 import '../i18n/i18n'
 import { AuthenticationRouter } from './authentication-router'
@@ -8,6 +10,7 @@ const ROUTE_CONTENT = 'conteúdo da rota'
 
 const mockRoute: { pathname: string } = { pathname: '/login' }
 const mockHideSplash = jest.fn()
+const mockRevalidate = jest.fn(() => Promise.resolve())
 const mockAuthentication: { state: AuthenticationState } = { state: { status: 'unauthenticated' } }
 
 jest.mock('expo-router', () => {
@@ -31,7 +34,7 @@ jest.mock('expo-splash-screen', () => ({
 }))
 
 jest.mock('../client/habituar-client', () => ({
-  habituar: { useAuthentication: () => mockAuthentication },
+  habituar: { useAuthentication: () => ({ ...mockAuthentication, actions: { revalidate: mockRevalidate } }) },
 }))
 
 beforeEach(() => {
@@ -70,5 +73,20 @@ describe('authentication router', () => {
     render(<AuthenticationRouter />)
 
     expect(mockHideSplash).toHaveBeenCalled()
+  })
+
+  it('re-reads access when the app comes back to the foreground, so a removed membership stops showing', () => {
+    const listeners: ((state: AppStateStatus) => void)[] = []
+    jest.spyOn(AppState, 'addEventListener').mockImplementation((_type, listener) => {
+      listeners.push(listener)
+      return { remove: jest.fn() }
+    })
+
+    render(<AuthenticationRouter />)
+    for (const listener of listeners) listener('background')
+    expect(mockRevalidate).not.toHaveBeenCalled()
+    for (const listener of listeners) listener('active')
+
+    expect(mockRevalidate).toHaveBeenCalledTimes(1)
   })
 })

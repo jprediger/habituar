@@ -1,3 +1,4 @@
+import { useEnvironmentNavigation } from '@habituar/react-client/environment-navigation'
 import { Tabs } from 'expo-router'
 import { EnvironmentTabBar } from '../../shell/environment-tab-bar'
 import { InstitutionSessionScreen } from '../../session/session-screen'
@@ -7,10 +8,12 @@ import { InstitutionSessionScreen } from '../../session/session-screen'
  * destino novo neste ambiente já nasça protegido e dentro da mesma barra.
  */
 export default function StudentLayout() {
+  const navigation = useEnvironmentNavigation('student')
+
   return (
     <InstitutionSessionScreen>
       {() => (
-        <Tabs tabBar={() => <EnvironmentTabBar environment="student" />} screenOptions={{ headerShown: false }}>
+        <Tabs tabBar={() => <EnvironmentTabBar items={navigation} />} screenOptions={{ headerShown: false }}>
           <Tabs.Screen name="index" />
         </Tabs>
       )}

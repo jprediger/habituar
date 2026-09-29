@@ -23,6 +23,7 @@ export type ThemeTokens = Readonly<{
   colors: Readonly<Record<ColorRole, string>>
   minimumTouchTarget: number
   compactTouchTarget: number
+  buttonHeight: number
   radius: typeof RADIUS
   fontSize: typeof FONT_SIZE
   fontFamily: typeof APP_FONT_FAMILY
@@ -51,6 +52,7 @@ export function useThemeTokens(): ThemeTokens {
     colors,
     minimumTouchTarget: INTERACTION.minimumTouchTarget,
     compactTouchTarget: INTERACTION.compactTouchTarget,
+    buttonHeight: INTERACTION.buttonHeight,
     radius: RADIUS,
     fontSize: FONT_SIZE,
     fontFamily: APP_FONT_FAMILY,

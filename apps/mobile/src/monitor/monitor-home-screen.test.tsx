@@ -1,21 +1,12 @@
-import type { AuthenticationState } from '@habituar/react-client/react-client'
-import { fireEvent, render, screen } from '@testing-library/react-native'
+import { render, screen } from '@testing-library/react-native'
+import type { ReactNode } from 'react'
 import '../i18n/i18n'
 import { createInstitutionSession } from '../session/institution-session-fixture'
 import { MonitorHomeScreen } from './monitor-home-screen'
 
-const mockAuthentication: { state: AuthenticationState; actions: Record<string, jest.Mock> } = {
-  state: { status: 'unauthenticated' },
-  actions: { logout: jest.fn() },
-}
-
-jest.mock('../client/habituar-client', () => ({
-  habituar: { useAuthentication: () => mockAuthentication, useInstitutionSwitcher: () => ({ current: undefined, others: [], switchTo: jest.fn() }) },
+jest.mock('react-native-safe-area-context', () => ({
+  SafeAreaView: ({ children }: Readonly<{ children: ReactNode }>) => children,
 }))
-
-beforeEach(() => {
-  jest.clearAllMocks()
-})
 
 describe('monitor home', () => {
   it('shows the monitor their institution', () => {
@@ -25,11 +16,9 @@ describe('monitor home', () => {
     expect(screen.getByText('Escola Aurora')).toBeOnTheScreen()
   })
 
-  it('keeps a way out of the session for the monitor, who has no profile tab yet', () => {
+  it('leaves signing out to the profile tab the monitor now shares with professionals', () => {
     render(<MonitorHomeScreen session={createInstitutionSession('monitor')} />)
 
-    fireEvent.press(screen.getByRole('button', { name: 'Sair' }))
-
-    expect(mockAuthentication.actions.logout).toHaveBeenCalledTimes(1)
+    expect(screen.queryByRole('button', { name: 'Sair' })).toBeNull()
   })
 })

@@ -12,6 +12,18 @@
       "types": "./dist/invitations.d.ts",
       "import": "./dist/invitations.js"
     },
+    "./staff": {
+      "types": "./dist/staff.d.ts",
+      "import": "./dist/staff.js"
+    },
+    "./role-bundles": {
+      "types": "./dist/role-bundles.d.ts",
+      "import": "./dist/role-bundles.js"
+    },
+    "./delegation": {
+      "types": "./dist/delegation.d.ts",
+      "import": "./dist/delegation.js"
+    },
     "./assert-never": {
       "types": "./dist/type/assert-never.d.ts",
       "import": "./dist/type/assert-never.js"

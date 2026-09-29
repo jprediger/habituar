@@ -3,6 +3,7 @@ import { authContract } from '../auth/auth.contract.js'
 import { healthContract } from '../health/health.contract.js'
 import { platformContract } from '../platform/platform.contract.js'
 import { invitationsContract } from '../invitations/invitations.contract.js'
+import { staffContract } from '../staff/staff.contract.js'
 import { FAILURE_ERROR_MAP } from './failure.js'
 
 /** D15: a versão da API vive só aqui. /v2 é outra composição sobre as mesmas fatias. */
@@ -16,4 +17,4 @@ export const API_VERSION = 'v1'
 export const apiContract = oc
   .errors(FAILURE_ERROR_MAP)
   .prefix(`/${API_VERSION}`)
-  .router({ health: healthContract, auth: authContract, platform: platformContract, invitations: invitationsContract })
+  .router({ health: healthContract, auth: authContract, platform: platformContract, invitations: invitationsContract, staff: staffContract })

@@ -11,6 +11,9 @@ export const PERMISSION_CATALOG = [
   'guardian.unlink',
   'role.assign',
   'role.manage',
+  'membership.read',
+  'membership.invite',
+  'membership.remove',
 ] as const
 
 export type PermissionKey = (typeof PERMISSION_CATALOG)[number]

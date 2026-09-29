@@ -6,6 +6,9 @@ export default defineConfig({
   entry: {
     platform: 'src/platform.ts',
     invitations: 'src/invitations.ts',
+    staff: 'src/staff.ts',
+    'role-bundles': 'src/role-bundles.ts',
+    delegation: 'src/delegation.ts',
     'type/assert-never': 'src/type/assert-never.ts',
     'identity/branded-id': 'src/identity/branded-id.ts',
     'contract/api-contract': 'src/contract/api-contract.ts',

@@ -17,6 +17,16 @@ export const FAILURE_CODES = [
   'platform-administrator-cannot-join',
   'document-already-registered',
   'invalid-role-for-environment',
+  'member-not-found',
+  'membership-already-removed',
+  'role-not-found',
+  'grant-exceeds-authority',
+  'last-team-manager',
+  'system-role-immutable',
+  'role-in-use',
+  'invalid-role-bundles',
+  'configuration-conflict',
+  'invitation-authority-lost',
 ] as const
 
 export const failureSchema = z.object({
@@ -55,6 +65,17 @@ export const FAILURE_ERROR_MAP = {
   'platform-administrator-cannot-join': { status: 403, message: 'platform administrator cannot join.', data: failureDataSchema },
   'document-already-registered': { status: 409, message: 'document already registered.', data: failureDataSchema },
   'invalid-role-for-environment': { status: 422, message: 'invalid role for environment.', data: failureDataSchema },
+  // Alvo de outro tenant cai aqui também: 404 igual ao inexistente, sem revelar que existe.
+  'member-not-found': { status: 404, message: 'member not found.', data: failureDataSchema },
+  'membership-already-removed': { status: 409, message: 'membership already removed.', data: failureDataSchema },
+  'role-not-found': { status: 404, message: 'role not found.', data: failureDataSchema },
+  'grant-exceeds-authority': { status: 403, message: 'grant exceeds authority.', data: failureDataSchema },
+  'last-team-manager': { status: 409, message: 'last team manager.', data: failureDataSchema },
+  'system-role-immutable': { status: 409, message: 'system role immutable.', data: failureDataSchema },
+  'role-in-use': { status: 409, message: 'role in use.', data: failureDataSchema },
+  'invalid-role-bundles': { status: 422, message: 'invalid role bundles.', data: failureDataSchema },
+  'configuration-conflict': { status: 409, message: 'configuration conflict.', data: failureDataSchema },
+  'invitation-authority-lost': { status: 410, message: 'invitation authority lost.', data: failureDataSchema },
   invalid_input: {
     status: 422,
     message: 'The request payload is invalid.',

@@ -31,9 +31,9 @@ export function MemberScreen({ session, membershipId, onDone }: Readonly<{ sessi
   const showToast = useToast()
   // O aviso reage ao que a ação devolveu: a remoção fecha a tela, e o aviso a sobrevive.
   const finish = (outcome: MemberOperation | undefined) => {
-    if (outcome?.status === 'saved') showToast(t('staff.member.saved'))
+    if (outcome?.status === 'saved') showToast({ type: 'success', title: t('toast.member.rolesUpdated.title'), subtitle: t('toast.member.rolesUpdated.description') })
     if (outcome?.status === 'removed') {
-      showToast(t('staff.member.removed', { institution }))
+      showToast({ type: 'success', title: t('toast.member.removed.title'), subtitle: t('toast.member.removed.description', { institution }) })
       onDone()
     }
   }

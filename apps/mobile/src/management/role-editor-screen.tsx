@@ -50,11 +50,16 @@ export function RoleEditorScreen({ session, target, onDone }: Readonly<{ session
   // qualquer nova renderização, e o aviso precisa sobreviver a isso.
   const finish = (outcome: RoleOperation | undefined) => {
     if (outcome?.status === 'saved') {
-      showToast(outcome.revokedInvitationCount > 0 ? t('staff.roles.savedWithRevocations', { count: outcome.revokedInvitationCount }) : t('staff.roles.saved'))
+      const toastContent = outcome.revokedInvitationCount > 0
+        ? { title: t('toast.role.updatedWithRevocations.title'), subtitle: t('toast.role.updatedWithRevocations.description', { count: outcome.revokedInvitationCount }) }
+        : target.mode === 'create'
+          ? { title: t('toast.role.created.title'), subtitle: t('toast.role.created.description') }
+          : { title: t('toast.role.updated.title'), subtitle: t('toast.role.updated.description') }
+      showToast({ type: 'success', ...toastContent })
       if (target.mode === 'create') onDone()
     }
     if (outcome?.status === 'deleted') {
-      showToast(t('staff.roles.deleted'))
+      showToast({ type: 'success', title: t('toast.role.deleted.title'), subtitle: t('toast.role.deleted.description') })
       onDone()
     }
   }

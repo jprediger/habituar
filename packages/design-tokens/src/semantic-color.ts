@@ -24,6 +24,8 @@ export const SEMANTIC_COLOR_LIGHT = {
   divider: COLOR.gray300,
   danger: COLOR.red700,
   onDanger: COLOR.white,
+  warning: COLOR.amber700,
+  info: COLOR.blue700,
   focusRing: COLOR.green700,
   // Aviso passageiro: um tom acima do fundo, sem inverter o tema — faixa contrastante
   // pesaria mais que a mensagem. A borda de `divider` é quem a separa do conteúdo.
@@ -50,6 +52,8 @@ export const SEMANTIC_COLOR_DARK = {
   divider: COLOR.gray700,
   danger: COLOR.red400,
   onDanger: COLOR.red900,
+  warning: COLOR.amber400,
+  info: COLOR.blue400,
   focusRing: COLOR.green400,
   toast: COLOR.gray800,
   onToast: COLOR.gray50,

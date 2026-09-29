@@ -1,4 +1,19 @@
 {
+  "toast": {
+    "member": {
+      "rolesUpdated": { "title": "Papéis atualizados", "description": "As permissões da pessoa foram salvas." },
+      "removed": { "title": "Vínculo removido", "description": "A pessoa não faz mais parte de {{institution}}." }
+    },
+    "role": {
+      "created": { "title": "Papel criado", "description": "O novo papel já pode ser atribuído à equipe." },
+      "updated": { "title": "Papel atualizado", "description": "As alterações foram aplicadas às pessoas que têm este papel." },
+      "updatedWithRevocations": { "title": "Papel atualizado", "description": "{{count}} convites pendentes foram revogados. Envie novos convites para essas pessoas." },
+      "deleted": { "title": "Papel excluído", "description": "O papel foi removido da instituição." }
+    },
+    "invitation": {
+      "revoked": { "title": "Convite revogado", "description": "O convite de {{email}} foi revogado." }
+    }
+  },
   "roles": { "team-management": "Gestão da equipe", "care-assigned": "Atendimento aos alunos vinculados", "care-institution": "Atendimento da instituição", "monitoring": "Monitoria", "student": "Aluno" },
   "roleDescriptions": { "team-management": "Organiza a equipe e consulta o cadastro básico de todos os alunos.", "care-assigned": "Acompanha os alunos vinculados a esta pessoa.", "care-institution": "Acompanha os alunos da instituição.", "monitoring": "Consulta os alunos vinculados à monitoria.", "student": "Consulta o próprio cadastro." },
   "institutionSwitcher": { "current": "Instituição atual: {{institution}}", "change": "Trocar instituição" },

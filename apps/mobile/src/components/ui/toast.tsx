@@ -5,6 +5,10 @@ import { AccessibilityInfo, Animated, StyleSheet, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useThemeTokens } from '../../theme/tokens'
 import { Text } from './text'
+import { Icon } from './icon'
+
+export type ToastType = 'success' | 'warning' | 'info' | 'error'
+export type ToastMessage = Readonly<{ type: ToastType; title: string; subtitle: string }>
 
 // Tempo de leitura, não de enfeite: abaixo disso uma frase curta some antes de ser lida.
 const MINIMUM_VISIBLE_MS = 4000
@@ -15,7 +19,7 @@ const EXIT_MS = 220
 const ENTER_OFFSET = 24
 
 type ToastContextValue = Readonly<{
-  show: (message: string) => void
+  show: (message: ToastMessage) => void
   setBottomOffset: (offset: number) => void
 }>
 
@@ -29,19 +33,19 @@ const ToastContext = createContext<ToastContextValue | undefined>(undefined)
 export function ToastProvider({ children }: PropsWithChildren) {
   const { colors, radius } = useThemeTokens()
   const insets = useSafeAreaInsets()
-  const [message, setMessage] = useState<string | undefined>(undefined)
+  const [message, setMessage] = useState<ToastMessage | undefined>(undefined)
   const [bottomOffset, setBottomOffset] = useState(0)
   const [progress] = useState(() => new Animated.Value(0))
 
-  const show = (next: string) => {
+  const show = (next: ToastMessage) => {
     progress.stopAnimation()
     progress.setValue(0)
     setMessage(next)
     // Aviso só visual não chega a quem usa leitor de tela.
-    AccessibilityInfo.announceForAccessibility(next)
+    AccessibilityInfo.announceForAccessibility(`${next.title}. ${next.subtitle}`)
     Animated.sequence([
       Animated.timing(progress, { toValue: 1, duration: ENTER_MS, useNativeDriver: true }),
-      Animated.delay(Math.max(MINIMUM_VISIBLE_MS, next.length * MS_PER_CHARACTER)),
+      Animated.delay(Math.max(MINIMUM_VISIBLE_MS, (next.title.length + next.subtitle.length) * MS_PER_CHARACTER)),
       Animated.timing(progress, { toValue: 0, duration: EXIT_MS, useNativeDriver: true }),
     ]).start(({ finished }) => { if (finished) setMessage(undefined) })
   }
@@ -59,14 +63,22 @@ export function ToastProvider({ children }: PropsWithChildren) {
               styles.toast,
               {
                 borderRadius: radius.field,
-                backgroundColor: colors.toast,
+                backgroundColor: colors.surface,
                 borderColor: colors.divider,
                 opacity: progress,
                 transform: [{ translateY: progress.interpolate({ inputRange: [0, 1], outputRange: [ENTER_OFFSET, 0] }) }],
               },
             ]}
           >
-            <Text weight="medium" tone="onToast">{message}</Text>
+            <View style={styles.content}>
+              <View style={[styles.icon, { backgroundColor: getToastColor(message.type, colors) }]}>
+                <Icon name={getToastIcon(message.type)} size={20} color={colors.surface} />
+              </View>
+              <View style={styles.copy}>
+                <Text weight="medium">{message.title}</Text>
+                <Text size="caption" tone="muted">{message.subtitle}</Text>
+              </View>
+            </View>
           </Animated.View>
         </View>
       )}
@@ -98,7 +110,26 @@ function ignoreOffset(): void {
 
 const styles = StyleSheet.create({
   host: { position: 'absolute', left: SPACING.lg, right: SPACING.lg },
-  // Borda fina em vez de sombra: a faixa é só um tom acima do fundo, e o traço a separa do
-  // conteúdo com o mesmo peso nos dois temas.
-  toast: { borderWidth: StyleSheet.hairlineWidth, paddingHorizontal: SPACING.lg, paddingVertical: SPACING.md },
+  toast: { borderWidth: StyleSheet.hairlineWidth, padding: SPACING.md, shadowColor: '#000000', shadowOpacity: 0.14, shadowRadius: 12, shadowOffset: { width: 0, height: 5 }, elevation: 5 },
+  content: { flexDirection: 'row', alignItems: 'center', gap: SPACING.md },
+  icon: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
+  copy: { flex: 1, gap: SPACING.xs },
 })
+
+function getToastIcon(type: ToastType): 'shield-check' | 'warning' | 'info' | 'warning-circle' {
+  switch (type) {
+    case 'success': return 'shield-check'
+    case 'warning': return 'warning'
+    case 'info': return 'info'
+    case 'error': return 'warning-circle'
+  }
+}
+
+function getToastColor(type: ToastType, colors: ReturnType<typeof useThemeTokens>['colors']): string {
+  switch (type) {
+    case 'success': return colors.primary
+    case 'warning': return colors.warning
+    case 'info': return colors.info
+    case 'error': return colors.danger
+  }
+}

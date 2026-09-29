@@ -19,4 +19,8 @@ export const COLOR = {
   red400: '#F87171',
   red700: '#B3261E',
   red900: '#450A0A',
+  amber700: '#B45309',
+  amber400: '#FBBF24',
+  blue700: '#1D4ED8',
+  blue400: '#60A5FA',
 } as const

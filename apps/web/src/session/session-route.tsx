@@ -1,5 +1,6 @@
 import type { ActiveSession } from '@habituar/react-client/react-client'
 import { Navigate } from '@tanstack/react-router'
+import { useEffect } from 'react'
 import type { ReactElement } from 'react'
 import { useTranslation } from 'react-i18next'
 import { CenteredPage } from '../components/ui/centered-page.js'
@@ -22,8 +23,21 @@ export function SessionRoute({
   children: (session: ActiveSession) => ReactElement
 }>): ReactElement {
   const { t } = useTranslation()
-  const { state } = habituar.useAuthentication()
+  const { state, actions } = habituar.useAuthentication()
   const guard = getWebAuthenticationGuard(state, pathname)
+  const { revalidate } = actions
+
+  // Vínculo ou permissão podem ter mudado enquanto a aba estava escondida: ao voltar, o
+  // contexto é relido para a navegação e os guards acompanharem, sem exigir WebSocket.
+  useEffect(() => {
+    function revalidateWhenVisible(): void {
+      if (document.visibilityState === 'visible') void revalidate()
+    }
+    document.addEventListener('visibilitychange', revalidateWhenVisible)
+    return () => {
+      document.removeEventListener('visibilitychange', revalidateWhenVisible)
+    }
+  }, [revalidate])
 
   if (guard.action === 'redirect') return <Navigate to={guard.route} replace />
   if (state.status === 'authenticated') return children(state.session)

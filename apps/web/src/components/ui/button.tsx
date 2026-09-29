@@ -6,7 +6,7 @@ import { cn } from '../../lib/utils.js'
 
 const buttonVariants = cva(
   'inline-flex cursor-pointer items-center justify-center gap-xs ' +
-    'whitespace-nowrap rounded-pill text-body font-medium transition-colors outline-hidden ' +
+    'whitespace-nowrap rounded-button text-body font-medium transition-colors outline-hidden ' +
     'focus-visible:outline-2 focus-visible:outline-solid focus-visible:outline-offset-2 focus-visible:outline-focus-ring ' +
     'disabled:pointer-events-none disabled:opacity-50',
   {
@@ -20,9 +20,9 @@ const buttonVariants = cva(
         link: 'text-primary underline-offset-4 hover:underline',
       },
       size: {
-        default: 'min-h-tap-target min-w-tap-target px-md py-xs',
-        sm: 'min-h-tap-target min-w-tap-target px-sm text-caption',
-        lg: 'min-h-tap-target min-w-tap-target px-lg text-title',
+        default: 'min-h-button tap-area px-md',
+        sm: 'min-h-button tap-area px-sm text-caption',
+        lg: 'min-h-tap-target px-lg text-title',
         icon: 'min-h-tap-target min-w-tap-target p-none',
         // Ação textual embutida numa linha de rótulo: o alvo padrão de 44px esticaria a
         // linha inteira e descolaria o rótulo do seu campo, então cai para o piso da

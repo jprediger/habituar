@@ -49,7 +49,7 @@ describe('web authentication routes', () => {
   })
 
   it('redirects an incompatible deep link without rendering its protected content', () => {
-    expect(getWebAuthenticationGuard(createAuthenticatedState('monitor'), '/student')).toEqual({ action: 'redirect', route: '/monitor' })
+    expect(getWebAuthenticationGuard(createAuthenticatedState('monitor'), '/student')).toEqual({ action: 'redirect', route: '/professional' })
   })
 
   it('blocks protected content while the session is restoring', () => {
@@ -97,15 +97,16 @@ describe('web authentication routes', () => {
     expect(getWebAuthenticationGuard(state, '/professional/profile')).toEqual({ action: 'render' })
   })
 
-  it('sends a student and a monitor who open a professional screen back to their own environment', () => {
+  it('sends a student who opens a professional screen back to the student environment', () => {
     expect(getWebAuthenticationGuard(createAuthenticatedState('student'), '/professional/profile')).toEqual({
       action: 'redirect',
       route: '/student',
     })
-    expect(getWebAuthenticationGuard(createAuthenticatedState('monitor'), '/professional/profile')).toEqual({
-      action: 'redirect',
-      route: '/monitor',
-    })
+  })
+
+  it('lets a monitor into the professional shell and moves the old monitor address there', () => {
+    expect(getWebAuthenticationGuard(createAuthenticatedState('monitor'), '/professional/profile')).toEqual({ action: 'render' })
+    expect(getWebAuthenticationGuard(createAuthenticatedState('monitor'), '/monitor')).toEqual({ action: 'redirect', route: '/professional' })
   })
 
   it('does not treat a route that only starts with the environment name as part of it', () => {

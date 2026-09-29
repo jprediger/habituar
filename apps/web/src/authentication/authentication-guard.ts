@@ -9,7 +9,6 @@ export type WebAuthenticationRoute =
   | '/select-institution'
   | '/student'
   | '/professional'
-  | '/monitor'
   | '/admin'
   | '/awaiting-invitation'
 
@@ -71,8 +70,10 @@ export function getDestinationPath(destination: HomeDestination): WebAuthenticat
       return '/student'
     case 'professional-home':
       return '/professional'
+    // Monitor e profissional dividem a casca profissional; o que cada um vê sai das
+    // concessões do vínculo, não de um ambiente próprio.
     case 'monitor-home':
-      return '/monitor'
+      return '/professional'
     case 'admin-home':
       return '/admin'
     default:

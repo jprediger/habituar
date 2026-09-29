@@ -13,33 +13,41 @@ import { expectNoSeriousA11yViolations } from '../test/expect-no-a11y-violations
 // O cliente é a borda: o que está sob teste é a casca montada pelo roteador de verdade,
 // com rotas, guard e navegação reais, a partir de uma sessão já resolvida.
 const client = vi.hoisted(
-  (): { state: AuthenticationState; logout: Mock<() => Promise<void>> } => ({
+  (): { state: AuthenticationState; logout: Mock<() => Promise<void>>; revalidate: Mock<() => Promise<void>> } => ({
     state: { status: 'unauthenticated' },
     logout: vi.fn(() => Promise.resolve()),
+    revalidate: vi.fn(() => Promise.resolve()),
   }),
 )
 
 vi.mock('../client/habituar-client.js', () => ({
   habituar: {
+    useTeam: () => ({
+      state: { status: 'empty' }, capabilities: {}, searchDraft: '', setSearchDraft: vi.fn(), applySearch: vi.fn(), clearSearch: vi.fn(),
+      hasActiveFilters: false, environmentFilter: 'all', setEnvironmentFilter: vi.fn(),
+      pagination: { hasPreviousPage: false, hasNextPage: false, goToPreviousPage: vi.fn(), goToNextPage: vi.fn() }, retry: vi.fn(),
+    }),
     usePlatformInstitutions: () => ({ institutions: [], isLoading: false, error: false, create: vi.fn() }),
     useInstitutionSwitcher: () => ({ current: undefined, others: [], switchTo: vi.fn() }),
     useAuthentication: () => ({
       state: client.state,
-      actions: { logout: client.logout, login: vi.fn(), register: vi.fn(), selectMembership: vi.fn(), retry: vi.fn() },
+      actions: { logout: client.logout, revalidate: client.revalidate, login: vi.fn(), register: vi.fn(), selectMembership: vi.fn(), retry: vi.fn() },
     }),
   },
 }))
 
 const { routeTree } = await import('../route-tree.gen.js')
 
-function createAuthenticatedState(environment: MembershipEnvironment): AuthenticationState {
+const TEAM_READER = [{ key: 'membership.read', scope: 'institution' }] as const
+
+function createAuthenticatedState(environment: MembershipEnvironment, permissions: readonly unknown[] = []): AuthenticationState {
   const context = authenticationContextSchema.parse({
     user: { id: '20000000-0000-4000-8000-000000000001', email: 'alex@example.com', name: 'Alex Moreira' },
     memberships: [
       {
         institution: { id: '00000000-0000-4000-8000-000000000001', name: 'Escola Aurora' },
         environment, roles: [{ id: '10000000-0000-4000-8000-000000000001', name: 'Fonoaudióloga', templateKey: null }],
-        permissions: [],
+        permissions,
       },
     ],
     isPlatformAdministrator: false,
@@ -137,15 +145,84 @@ describe('professional environment routes', () => {
     expect(within(navigation).queryByRole('link', { name: 'Perfil' })).not.toBeInTheDocument()
   })
 
-  it('sends a monitor who opens the professional profile back to the monitor environment', async () => {
+  it('lets a monitor use the professional profile, still named as a monitor', async () => {
     client.state = createAuthenticatedState('monitor')
 
-    const router = renderAt('/professional/profile')
+    renderAt('/professional/profile')
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Perfil' })).toBeInTheDocument()
+    expect(screen.getByText('Ambiente do monitor')).toBeInTheDocument()
+  })
+
+  it('moves a monitor from the old monitor address into the professional shell', async () => {
+    client.state = createAuthenticatedState('monitor')
+
+    const router = renderAt('/monitor')
 
     await waitFor(() => {
-      expect(router.state.location.pathname).toBe('/monitor')
+      expect(router.state.location.pathname).toBe('/professional')
     })
-    expect(screen.queryByRole('heading', { name: 'Perfil' })).not.toBeInTheDocument()
+    expect(await screen.findByRole('heading', { level: 1, name: 'Seu ambiente de monitor' })).toBeInTheDocument()
+    const navigation = screen.getByRole('navigation', { name: 'Navegação do ambiente' })
+    expect(within(navigation).getAllByRole('link').map((link) => link.textContent)).toEqual(['Início', 'Perfil'])
+  })
+})
+
+describe('management in the professional environment', () => {
+  it('re-reads access when the person comes back to the tab, so lost permissions leave the navigation', async () => {
+    renderAt('/professional')
+    await screen.findByRole('heading', { level: 1 })
+    client.revalidate.mockClear()
+
+    vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('visible')
+    document.dispatchEvent(new Event('visibilitychange'))
+
+    expect(client.revalidate).toHaveBeenCalled()
+  })
+
+  it('places management between home and profile for someone who can read the team', async () => {
+    client.state = createAuthenticatedState('professional', TEAM_READER)
+
+    renderAt('/professional')
+    const navigation = await screen.findByRole('navigation', { name: 'Navegação do ambiente' })
+
+    expect(within(navigation).getAllByRole('link').map((link) => link.textContent)).toEqual(['Início', 'Gestão', 'Perfil'])
+  })
+
+  it('opens the first management section when the person opens management', async () => {
+    client.state = createAuthenticatedState('professional', TEAM_READER)
+
+    const router = renderAt('/professional/management')
+
+    await waitFor(() => {
+      expect(router.state.location.pathname).toBe('/professional/management/team')
+    })
+    expect(await screen.findByRole('heading', { level: 1, name: 'Gestão' })).toBeInTheDocument()
+    expect(screen.getByText('Ainda não há ninguém na equipe')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Equipe' })).toHaveAttribute('aria-current', 'page')
+  })
+
+  it('does not open a management section typed directly by someone without access', async () => {
+    client.state = createAuthenticatedState('professional', [{ key: 'role.manage', scope: 'institution' }])
+
+    const router = renderAt('/professional/management/roles')
+
+    await waitFor(() => {
+      expect(router.state.location.pathname).toBe('/professional')
+    })
+    expect(screen.queryByRole('heading', { name: 'Gestão' })).not.toBeInTheDocument()
+    const navigation = await screen.findByRole('navigation', { name: 'Navegação do ambiente' })
+    expect(within(navigation).queryByRole('link', { name: 'Gestão' })).not.toBeInTheDocument()
+  })
+
+  it('does not open management to a monitor who types its address', async () => {
+    client.state = createAuthenticatedState('monitor', [{ key: 'student.read', scope: 'assigned' }])
+
+    const router = renderAt('/professional/management/team')
+
+    await waitFor(() => {
+      expect(router.state.location.pathname).toBe('/professional')
+    })
   })
 })
 

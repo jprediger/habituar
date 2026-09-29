@@ -1,3 +1,4 @@
+import { useEnvironmentNavigation } from '@habituar/react-client/environment-navigation'
 import { Outlet, createFileRoute, useLocation } from '@tanstack/react-router'
 import type { ReactElement } from 'react'
 import { AppShell } from '../shell/app-shell.js'
@@ -11,11 +12,12 @@ export const Route = createFileRoute('/admin')({ component: AdminLayoutRoute })
  */
 export function AdminLayoutRoute(): ReactElement {
   const pathname = useLocation({ select: (location) => location.pathname })
+  const navigation = useEnvironmentNavigation('admin')
 
   return (
     <SessionRoute pathname={pathname}>
       {(session) => (
-        <AppShell environment="admin" session={session}>
+        <AppShell environment="admin" session={session} navigation={navigation}>
           <Outlet />
         </AppShell>
       )}

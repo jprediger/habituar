@@ -1,6 +1,5 @@
 import { assertNever } from '@habituar/core/assert-never'
-import type { NavigationEnvironment } from '@habituar/react-client/environment-navigation'
-import { useEnvironmentNavigation } from '@habituar/react-client/environment-navigation'
+import type { NavigationItem } from '@habituar/react-client/environment-navigation'
 import type { ActiveSession } from '@habituar/react-client/react-client'
 import { Link } from '@tanstack/react-router'
 import { LogOut, UserRound } from 'lucide-react'
@@ -22,13 +21,13 @@ import { habituar } from '../client/habituar-client.js'
  * só dispara o logout, e o guard leva a pessoa para a entrada.
  */
 export function AccountMenu({
-  environment,
+  items,
   session,
-}: Readonly<{ environment: NavigationEnvironment; session: ActiveSession }>): ReactElement {
+}: Readonly<{ items: readonly NavigationItem[]; session: ActiveSession }>): ReactElement {
   const { t } = useTranslation()
   // Perfil só entra no menu onde o catálogo de navegação o declara: link para rota que o
   // ambiente não tem levaria a pessoa de volta ao guard.
-  const profileItem = useEnvironmentNavigation(environment).find((item) => item.id === 'profile')
+  const profileItem = items.find((item) => item.id === 'profile')
   const { state, actions } = habituar.useAuthentication()
   const isSigningOut = state.status === 'authenticating'
 

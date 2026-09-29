@@ -51,6 +51,24 @@
   height: var(--interaction-minimum-touch-target);
 }
 
+@utility min-h-button {
+  min-height: var(--interaction-button-height);
+}
+
+/*
+ * Estende a área clicável do botão compacto até o alvo de toque padrão sem mudar o
+ * desenho: o pseudo-elemento transborda na vertical e recebe o clique pelo botão.
+ */
+@utility tap-area {
+  position: relative;
+  &::before {
+    content: '';
+    position: absolute;
+    inset-inline: 0;
+    inset-block: calc((var(--interaction-button-height) - var(--interaction-minimum-touch-target)) / 2);
+  }
+}
+
 @utility min-w-tap-target {
   min-width: var(--interaction-minimum-touch-target);
 }

@@ -1,27 +1,13 @@
-import { Outlet, createFileRoute, useLocation } from '@tanstack/react-router'
+import { Navigate, createFileRoute } from '@tanstack/react-router'
 import type { ReactElement } from 'react'
-import { AppShell } from '../shell/app-shell.js'
-import { InstitutionSessionProvider } from '../session/institution-session.js'
-import { InstitutionSessionRoute } from '../session/session-route.js'
 
-export const Route = createFileRoute('/monitor')({ component: MonitorLayoutRoute })
+export const Route = createFileRoute('/monitor')({ component: MonitorRedirectRoute })
 
 /**
- * Layout do ambiente de monitor e sua única fronteira de sessão: o guard recebe o
- * caminho real, então toda tela filha é protegida pela regra do ambiente sem repeti-la.
+ * Endereço antigo do ambiente do monitor, mantido só para redirecionar: o monitor usa o
+ * ambiente profissional. A instituição ativa vive na sessão, não na URL, então ela segue
+ * a mesma depois do redirecionamento.
  */
-export function MonitorLayoutRoute(): ReactElement {
-  const pathname = useLocation({ select: (location) => location.pathname })
-
-  return (
-    <InstitutionSessionRoute pathname={pathname}>
-      {(session) => (
-        <InstitutionSessionProvider session={session}>
-          <AppShell environment="monitor" session={session}>
-            <Outlet />
-          </AppShell>
-        </InstitutionSessionProvider>
-      )}
-    </InstitutionSessionRoute>
-  )
+export function MonitorRedirectRoute(): ReactElement {
+  return <Navigate to="/professional" replace />
 }

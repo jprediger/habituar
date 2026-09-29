@@ -6,8 +6,8 @@ import { SummaryCards } from '../components/ui/summary-cards.js'
 import { useInstitutionSession } from '../session/institution-session.js'
 
 /**
- * Tela inicial do monitor. Quando o monitor ganhar destinos próprios, com limites por
- * permissão, esta tela dá lugar a eles.
+ * Início do monitor dentro da casca profissional. Mostra só o vínculo; os destinos que o
+ * monitor alcança vêm das concessões dele, na navegação, e não desta tela.
  */
 export function MonitorHomeScreen(): ReactElement {
   const { t } = useTranslation()

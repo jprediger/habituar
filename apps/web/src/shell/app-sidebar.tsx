@@ -1,9 +1,9 @@
 import { assertNever } from '@habituar/core/assert-never'
-import type { NavigationEnvironment, NavigationIcon } from '@habituar/react-client/environment-navigation'
-import { findActiveNavigationItem, useEnvironmentNavigation } from '@habituar/react-client/environment-navigation'
+import type { NavigationEnvironment, NavigationIcon, NavigationItem } from '@habituar/react-client/environment-navigation'
+import { findActiveNavigationItem } from '@habituar/react-client/environment-navigation'
 import { Link, useLocation } from '@tanstack/react-router'
 import type { LucideIcon } from 'lucide-react'
-import { Building2, House, UserRound } from 'lucide-react'
+import { Building2, House, UserRound, UsersRound } from 'lucide-react'
 import type { ReactElement } from 'react'
 import { useTranslation } from 'react-i18next'
 import { BrandMark } from './brand-mark.js'
@@ -19,9 +19,11 @@ import {
  * Navegação lateral de um ambiente na web. Quais destinos existem e qual está ativo vêm
  * do hook compartilhado; aqui só se decide o visual e o ícone de cada nome lógico.
  */
-export function AppSidebar({ environment }: Readonly<{ environment: NavigationEnvironment }>): ReactElement {
+export function AppSidebar({
+  environment,
+  items,
+}: Readonly<{ environment: NavigationEnvironment; items: readonly NavigationItem[] }>): ReactElement {
   const { t } = useTranslation()
-  const items = useEnvironmentNavigation(environment)
   const pathname = useLocation({ select: (location) => location.pathname })
   const activeItem = findActiveNavigationItem(items, pathname)
   const activeIndex = activeItem === undefined ? undefined : items.indexOf(activeItem)
@@ -94,6 +96,8 @@ function getNavigationIcon(icon: NavigationIcon): LucideIcon {
   switch (icon) {
     case 'home':
       return House
+    case 'team':
+      return UsersRound
     case 'user':
       return UserRound
     case 'building':

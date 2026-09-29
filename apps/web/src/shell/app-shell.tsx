@@ -1,5 +1,5 @@
-import type { NavigationEnvironment } from '@habituar/react-client/environment-navigation'
-import { listNavigationBreadcrumbs, useEnvironmentNavigation } from '@habituar/react-client/environment-navigation'
+import type { NavigationEnvironment, NavigationItem } from '@habituar/react-client/environment-navigation'
+import { listNavigationBreadcrumbs } from '@habituar/react-client/environment-navigation'
 import type { ActiveSession } from '@habituar/react-client/react-client'
 import { Link, useLocation } from '@tanstack/react-router'
 import { Bell, Search } from 'lucide-react'
@@ -32,8 +32,9 @@ const HEADER_ACTION = 'rounded-control border border-hairline text-text-muted ho
 export function AppShell({
   environment,
   session,
+  navigation,
   children,
-}: PropsWithChildren<Readonly<{ environment: NavigationEnvironment; session: ActiveSession }>>): ReactElement {
+}: PropsWithChildren<Readonly<{ environment: NavigationEnvironment; session: ActiveSession; navigation: readonly NavigationItem[] }>>): ReactElement {
   const { t } = useTranslation()
 
   return (
@@ -51,7 +52,7 @@ export function AppShell({
           </a>
 
           <div className="flex">
-            <AppSidebar environment={environment} />
+            <AppSidebar environment={environment} items={navigation} />
             <div className="flex min-w-0 flex-1 flex-col">
               <header
                 className={
@@ -61,7 +62,7 @@ export function AppShell({
               >
                 <div className="flex min-w-0 flex-1 items-center gap-xs">
                   <SidebarMobileTrigger />
-                  <EnvironmentBreadcrumbs environment={environment} />
+                  <EnvironmentBreadcrumbs items={navigation} />
                 </div>
 
                 <div className="flex shrink-0 items-center gap-md">
@@ -72,7 +73,7 @@ export function AppShell({
                   </div>
                   <ThemeToggle className={HEADER_ACTION} />
                   <NotificationsPlaceholder />
-                  <AccountMenu environment={environment} session={session} />
+                  <AccountMenu items={navigation} session={session} />
                 </div>
               </header>
 
@@ -89,9 +90,8 @@ export function AppShell({
 
 // A trilha vem do hook compartilhado; aqui só se decide que ancestral é link e o passo
 // atual é texto.
-function EnvironmentBreadcrumbs({ environment }: Readonly<{ environment: NavigationEnvironment }>): ReactElement {
+function EnvironmentBreadcrumbs({ items }: Readonly<{ items: readonly NavigationItem[] }>): ReactElement {
   const { t } = useTranslation()
-  const items = useEnvironmentNavigation(environment)
   const pathname = useLocation({ select: (location) => location.pathname })
   const trail = listNavigationBreadcrumbs(items, pathname)
 

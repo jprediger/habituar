@@ -82,8 +82,10 @@ papéis de um membro, remove vínculos com confirmação e cria papéis personal
 partir de um modelo do sistema, escolhendo agrupamentos de permissões com nome e
 alcance. Ninguém concede o que não possui, modelos do sistema não mudam, a instituição
 não fica sem gestão completa da equipe e a mudança de um papel mostra antes o impacto
-sobre membros e convites. A trilha completa de auditoria dessas mudanças ainda está
-prevista.
+sobre membros e convites. No mobile, a Gestão abre como uma lista de seções, cada uma
+em tela própria, e a confirmação de uma alteração bem-sucedida aparece como aviso
+passageiro, também anunciado ao leitor de tela; erros permanecem junto da ação que
+falhou. A trilha completa de auditoria dessas mudanças ainda está prevista.
 
 | Prioridade | Complexidade | Situação | Versão |
 | --- | --- | --- | --- |

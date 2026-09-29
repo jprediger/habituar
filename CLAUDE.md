@@ -149,6 +149,42 @@
   nativo.
 - Consistência visual vem de tokens, não de componente compartilhado entre plataformas.
 
+### Layout no mobile
+
+- **Lista, não cartão.** Informação e navegação aparecem em `ListRow` agrupadas por
+  `ListSection`: linhas sem borda nem superfície, título discreto por grupo e separação
+  pelo espaço da página. `Card` e `SummaryCard` só quando não houver alternativa em lista.
+- **Navegar entre seções é lista que leva a uma tela própria**, não seletor em pílula
+  alternando conteúdo na mesma tela. Detalhe mora na tela seguinte da pilha; a linha
+  mostra só o que ajuda a escolher.
+- **Raiz de aba usa `Page` + `PageHeader`; tela aninhada usa `StackPage`**, com barra
+  fixa de voltar e título. Nunca as duas na mesma tela, nem título grande em tela
+  aninhada. Toda pilha declara `initialRouteName` para que deep link tenha para onde voltar.
+- **A ação de criar da tela é ícone na barra do `StackPage`** (`+`, convidar), com rótulo
+  acessível e visível só para quem tem a permissão — nunca botão largo no topo do
+  conteúdo. No máximo uma ação na barra.
+- **Formulário é dividido em tópicos**: cada grupo é um `ListSection` com título discreto
+  e, quando precisa, rodapé explicando o grupo; tópicos se separam por `ListDivider`.
+- **Campo booleano é `SwitchRow`** (interruptor à direita), não caixa de marcar. Escolha
+  única é `ChoiceList`, com a marca à direita. Escolha que depende de outra aparece
+  recuada logo abaixo dela.
+- **Linha tocável mostra o toque**: o fundo acende de borda a borda ao pressionar e apaga
+  em transição ao soltar, igual nas duas plataformas, vindo do `PressableRow` — toda linha
+  tocável (`ListRow`, `SwitchRow`, `ChoiceList`) passa por ele. Opacidade
+  sozinha não conta como retorno.
+- **Busca fica sempre no topo da tela**, logo abaixo do cabeçalho, com `SearchField`;
+  filtros vêm depois dela e a listagem por último.
+- Informação é pouco empilhada: um título por linha, uma linha de apoio e, se houver,
+  um valor à direita. Texto longo de resumo vai para o detalhe.
+- **Sucesso de escrita é toast** (`useToast`), na base da tela, acima da barra de abas,
+  anunciado ao leitor de tela. A tela dispara o toast pelo que a ação do hook devolveu,
+  nunca observando o estado. **Erro não é toast** — fica junto do que falhou —, nem
+  informação que precisa ficar visível (link de uso único, por exemplo).
+- Ação que encerra o assunto da tela (excluir, remover) mostra o toast e volta; a tela
+  de resultado com botão "Fechar" não existe.
+- Ícone é sempre `Icon` (Phosphor, peso regular, copiado para o repositório); outra
+  biblioteca de ícones não entra.
+
 ## Testes
 
 - **Teste descreve comportamento, não implementação.** Nome do teste é uma frase sobre o

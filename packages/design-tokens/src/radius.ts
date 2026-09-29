@@ -10,10 +10,15 @@ export const RADIUS = {
    * pilha, o canto arredondado vira ruído.
    */
   control: 12,
+  /**
+   * Botão de ação. Mais reto que o campo: botão baixo com canto grande vira pílula, e a
+   * linguagem de forma pede retângulo discreto.
+   */
+  button: 8,
   /** Campo de formulário e qualquer controle que emoldure texto digitado. */
-  field: 14,
+  field: 12,
   /** Card e demais superfícies de agrupamento. */
-  surface: 20,
+  surface: 12,
   /**
    * Semicírculo. Valor alto em vez da metade da altura: a altura varia por plataforma e
    * por escala de fonte, e qualquer raio acima dela produz o mesmo semicírculo.

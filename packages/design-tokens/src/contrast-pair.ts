@@ -48,6 +48,7 @@ export const CONTRAST_PAIRS = [
   },
   { name: 'rótulo de botão primário', foreground: 'onPrimary', background: 'primary', usage: 'body-text' },
   { name: 'rótulo de botão destrutivo', foreground: 'onDanger', background: 'danger', usage: 'body-text' },
+  { name: 'texto de aviso passageiro', foreground: 'onToast', background: 'toast', usage: 'body-text' },
   {
     name: 'borda de campo sobre superfície',
     foreground: 'border',

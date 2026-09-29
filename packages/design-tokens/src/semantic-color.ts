@@ -25,6 +25,10 @@ export const SEMANTIC_COLOR_LIGHT = {
   danger: COLOR.red700,
   onDanger: COLOR.white,
   focusRing: COLOR.green700,
+  // Aviso passageiro: um tom acima do fundo, sem inverter o tema — faixa contrastante
+  // pesaria mais que a mensagem. A borda de `divider` é quem a separa do conteúdo.
+  toast: COLOR.gray100,
+  onToast: COLOR.gray900,
 } as const
 
 export type ColorRole = keyof typeof SEMANTIC_COLOR_LIGHT
@@ -47,4 +51,6 @@ export const SEMANTIC_COLOR_DARK = {
   danger: COLOR.red400,
   onDanger: COLOR.red900,
   focusRing: COLOR.green400,
+  toast: COLOR.gray800,
+  onToast: COLOR.gray50,
 } as const satisfies Record<ColorRole, string>

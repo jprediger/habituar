@@ -1,6 +1,6 @@
 import { PermissionKey } from '@habituar/core/permissions'
 import { Injectable } from '@nestjs/common'
-import { and, eq } from 'drizzle-orm'
+import { and, eq, inArray, isNull } from 'drizzle-orm'
 import { DatabaseTransaction } from '../database/database.js'
 import { assignments, membershipRoles, memberships, rolePermissions, students, users } from '../database/schema.js'
 
@@ -10,10 +10,20 @@ import { assignments, membershipRoles, memberships, rolePermissions, students, u
  */
 @Injectable()
 export class RbacRepository {
+  /** Só vínculo ativo autoriza: removido continua na tabela pela autoria, nunca pelo acesso. */
   findMembership(transaction: DatabaseTransaction, userId: string, institutionId: string) {
     return transaction.query.memberships.findFirst({
-      where: and(eq(memberships.userId, userId), eq(memberships.institutionId, institutionId)),
+      where: and(eq(memberships.userId, userId), eq(memberships.institutionId, institutionId), isNull(memberships.removedAt)),
     })
+  }
+
+  /** União das concessões de todos os papéis do vínculo, lida na transação de quem vai decidir. */
+  listMembershipGrants(transaction: DatabaseTransaction, membershipId: string) {
+    return transaction
+      .selectDistinct({ key: rolePermissions.permissionKey, scope: rolePermissions.scope })
+      .from(membershipRoles)
+      .innerJoin(rolePermissions, eq(rolePermissions.roleId, membershipRoles.roleId))
+      .where(eq(membershipRoles.membershipId, membershipId))
   }
 
   /** Alcances com que os papéis do vínculo concedem a permissão; vazio é negação. */
@@ -39,5 +49,13 @@ export class RbacRepository {
 
   findUser(transaction: DatabaseTransaction, userId: string) {
     return transaction.query.users.findFirst({ where: eq(users.id, userId) })
+  }
+
+  /** Concessões somadas de um conjunto de papéis, como ficariam num vínculo que os recebesse. */
+  listRoleGrants(transaction: DatabaseTransaction, roleIds: readonly string[]) {
+    return transaction
+      .selectDistinct({ key: rolePermissions.permissionKey, scope: rolePermissions.scope })
+      .from(rolePermissions)
+      .where(inArray(rolePermissions.roleId, [...roleIds]))
   }
 }

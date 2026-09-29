@@ -1,7 +1,9 @@
 import type { InstitutionId, InvitationId, RoleId } from '@habituar/core/identity/ids'
 import type { MembershipEnvironment } from '@habituar/core/roles'
 import { Injectable } from '@nestjs/common'
-import { and, eq, inArray, isNull, sql } from 'drizzle-orm'
+import { assertNever } from '@habituar/core/assert-never'
+import type { InvitationState } from '@habituar/core/invitations'
+import { and, count, desc, eq, gt, inArray, isNotNull, isNull, lte, sql } from 'drizzle-orm'
 import { DatabaseTransaction } from '../database/database.js'
 import { invitationRoles, invitations, membershipRoles, memberships, roles, users } from '../database/schema.js'
 
@@ -9,6 +11,16 @@ export type InvitationRow = typeof invitations.$inferSelect
 
 // Convite "pendente" no banco é só ausência de desfecho; expiração é derivada no serviço.
 const isOpen = and(isNull(invitations.acceptedAt), isNull(invitations.revokedAt))
+
+function statusCondition(status: InvitationState['status'], now: Date) {
+  switch (status) {
+    case 'pending': return and(isOpen, gt(invitations.expiresAt, now))
+    case 'expired': return and(isOpen, lte(invitations.expiresAt, now))
+    case 'accepted': return isNotNull(invitations.acceptedAt)
+    case 'revoked': return isNotNull(invitations.revokedAt)
+    default: return assertNever(status)
+  }
+}
 
 /**
  * Consultas do ciclo de convite, sempre sobre a transação já escopada pelo Database.
@@ -52,7 +64,7 @@ export class InvitationsRepository {
   }
 
   /** Filtra os papéis pedidos aos que pertencem à instituição e ao tipo de vínculo do convite. */
-  listValidRoles(transaction: DatabaseTransaction, roleIds: readonly RoleId[], institutionId: InstitutionId, environment: MembershipEnvironment) {
+  listValidRoles(transaction: DatabaseTransaction, roleIds: readonly string[], institutionId: InstitutionId, environment: MembershipEnvironment) {
     return transaction.select({ id: roles.id }).from(roles).where(and(inArray(roles.id, [...roleIds]), eq(roles.institutionId, institutionId), eq(roles.environment, environment)))
   }
 
@@ -95,5 +107,52 @@ export class InvitationsRepository {
   /** Marca o aceite só se ainda aberto; linha vazia significa corrida perdida. */
   accept(transaction: DatabaseTransaction, invitationId: string, userId: string, now: Date) {
     return transaction.update(invitations).set({ acceptedAt: now, acceptedByUserId: userId }).where(and(eq(invitations.id, invitationId), isOpen)).returning()
+  }
+
+  /** Página de convites do tenant por estado, do mais recente ao mais antigo, com desempate estável. */
+  listPage(transaction: DatabaseTransaction, status: InvitationState['status'] | undefined, now: Date, limit: number, offset: number) {
+    return transaction.select().from(invitations)
+      .where(status === undefined ? undefined : statusCondition(status, now))
+      .orderBy(desc(invitations.createdAt), invitations.id)
+      .limit(limit).offset(offset)
+  }
+
+  /** Total do mesmo recorte de `listPage`, para a paginação no servidor. */
+  async countPage(transaction: DatabaseTransaction, status: InvitationState['status'] | undefined, now: Date) {
+    const [row] = await transaction.select({ total: count() }).from(invitations).where(status === undefined ? undefined : statusCondition(status, now))
+    return row?.total ?? 0
+  }
+
+  /** Vínculo ativo do e-mail convidado: convidar quem já participa é falha, não reenvio. */
+  findActiveMembershipByEmail(transaction: DatabaseTransaction, normalizedEmail: string) {
+    return transaction.select({ id: memberships.id }).from(memberships)
+      .innerJoin(users, eq(users.id, memberships.userId))
+      .where(and(sql`lower(${users.email}) = ${normalizedEmail}`, isNull(memberships.removedAt)))
+      .limit(1)
+  }
+
+  /** Retorno de quem foi removido: mesma linha, nova participação, sem papel anterior. */
+  async reactivateMembership(transaction: DatabaseTransaction, membershipId: string, environment: MembershipEnvironment) {
+    await transaction.delete(membershipRoles).where(eq(membershipRoles.membershipId, membershipId))
+    const [row] = await transaction.update(memberships)
+      .set({ removedAt: null, removedByUserId: null, environment, version: sql`${memberships.version} + 1` })
+      .where(and(eq(memberships.id, membershipId), isNotNull(memberships.removedAt)))
+      .returning()
+    return row
+  }
+
+  /** Convites abertos que prometem o papel; mudar o que o papel concede os invalida. */
+  revokeOpenReferencingRole(transaction: DatabaseTransaction, roleId: RoleId, now: Date, actorId: string) {
+    return transaction.update(invitations).set({ revokedAt: now, revokedByUserId: actorId })
+      .where(and(isOpen, inArray(invitations.id, transaction.select({ id: invitationRoles.invitationId }).from(invitationRoles).where(eq(invitationRoles.roleId, roleId)))))
+      .returning({ id: invitations.id })
+  }
+
+  /** Convites ainda aceitáveis por papel, para o impacto exibido e para a exclusão (C8). */
+  countPendingByRole(transaction: DatabaseTransaction, now: Date) {
+    return transaction.select({ roleId: invitationRoles.roleId, total: count() }).from(invitationRoles)
+      .innerJoin(invitations, eq(invitations.id, invitationRoles.invitationId))
+      .where(and(isOpen, gt(invitations.expiresAt, now)))
+      .groupBy(invitationRoles.roleId)
   }
 }

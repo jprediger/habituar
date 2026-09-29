@@ -2,7 +2,7 @@ import type { InstitutionId } from '@habituar/core/identity/ids'
 import type { InstitutionInput } from '@habituar/core/platform'
 import { platformMemberSchema, platformRoleSchema } from '@habituar/core/platform'
 import { Injectable } from '@nestjs/common'
-import { eq } from 'drizzle-orm'
+import { and, eq, isNull } from 'drizzle-orm'
 import { DatabaseTransaction } from '../database/database.js'
 import { institutions, membershipRoles, memberships, roles, users } from '../database/schema.js'
 
@@ -44,13 +44,13 @@ export class InstitutionsRepository {
     return rows.map(row => platformRoleSchema.parse({ id: row.id, name: row.name, templateKey: row.templateKey, environment: row.environment }))
   }
 
-  /** Agrega os papéis por vínculo para a visão de pessoas da plataforma. */
+  /** Agrega os papéis por vínculo ativo para a visão de pessoas da plataforma; removido não aparece. */
   async listInstitutionMembers(transaction: DatabaseTransaction, institutionId: InstitutionId) {
     const rows = await transaction.select({ membershipId: memberships.id, environment: memberships.environment, userId: users.id, userName: users.name, userEmail: users.email, roleId: roles.id, roleName: roles.name, templateKey: roles.templateKey })
       .from(memberships).innerJoin(users, eq(users.id, memberships.userId))
       .leftJoin(membershipRoles, eq(membershipRoles.membershipId, memberships.id))
       .leftJoin(roles, eq(roles.id, membershipRoles.roleId))
-      .where(eq(memberships.institutionId, institutionId))
+      .where(and(eq(memberships.institutionId, institutionId), isNull(memberships.removedAt)))
     // Uma linha por papel (ou uma só, sem papel, pelo left join); o vínculo é o grupo.
     const rowsByMembership = new Map<string, typeof rows>()
     for (const row of rows) rowsByMembership.set(row.membershipId, [...(rowsByMembership.get(row.membershipId) ?? []), row])

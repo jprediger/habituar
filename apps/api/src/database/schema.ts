@@ -1,6 +1,6 @@
 import { MembershipEnvironment } from '@habituar/core/roles'
 import { sql } from 'drizzle-orm'
-import { boolean, check, foreignKey, pgEnum, pgTable, text, timestamp, unique, uniqueIndex, uuid } from 'drizzle-orm/pg-core'
+import { boolean, check, foreignKey, integer, pgEnum, pgTable, text, timestamp, unique, uniqueIndex, uuid } from 'drizzle-orm/pg-core'
 
 export const tenantProbe = pgTable('tenant_probe', {
   id: uuid().primaryKey().defaultRandom(),
@@ -82,8 +82,14 @@ export const roles = pgTable('roles', {
     templateKey: text('template_key'),
     isSystem: boolean('is_system').notNull().default(false),
   clonedFrom: uuid('cloned_from'),
+  // Versão de configuração: edição concorrente sobre leitura antiga vira conflito, não sobrescrita.
+  version: integer().notNull().default(1),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-}, (table) => [unique().on(table.id, table.environment), unique().on(table.id, table.institutionId), unique().on(table.institutionId, table.templateKey)])
+}, (table) => [
+  unique().on(table.id, table.environment), unique().on(table.id, table.institutionId), unique().on(table.institutionId, table.templateKey),
+  // Origem do clone na mesma instituição: a FK simples de id aceitaria template de outro tenant.
+  foreignKey({ columns: [table.clonedFrom, table.institutionId], foreignColumns: [table.id, table.institutionId] }),
+])
 
 export const rolePermissions = pgTable(
   'role_permissions',
@@ -104,7 +110,11 @@ export const rolePermissions = pgTable(
       .references(() => permissions.key),
     scope: permissionScopeEnum().notNull(),
   },
-  (table) => [unique().on(table.roleId, table.permissionKey, table.scope)],
+  (table) => [
+    unique().on(table.roleId, table.permissionKey, table.scope),
+    // A concessão pertence ao tenant do papel por integridade, não pela disciplina de quem grava.
+    foreignKey({ columns: [table.roleId, table.institutionId], foreignColumns: [roles.id, roles.institutionId] }).onDelete('cascade'),
+  ],
 )
 
 export const memberships = pgTable(
@@ -119,6 +129,11 @@ export const memberships = pgTable(
       .references(() => institutions.id, { onDelete: 'cascade' }),
     roleId: uuid('role_id').references(() => roles.id),
     environment: roleEnvironmentEnum().notNull(),
+    // Remoção lógica: ativo é a ausência de `removed_at`. Identificador e autoria sobrevivem,
+    // e o retorno por novo convite reativa esta mesma linha.
+    removedAt: timestamp('removed_at', { withTimezone: true }),
+    removedByUserId: uuid('removed_by_user_id').references(() => users.id),
+    version: integer().notNull().default(1),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [unique().on(table.userId, table.institutionId), unique().on(table.id, table.environment), unique().on(table.id, table.institutionId)],
@@ -150,8 +165,11 @@ export const invitations = pgTable('invitations', {
   acceptedByUserId: uuid('accepted_by_user_id').references(() => users.id),
   revokedAt: timestamp('revoked_at', { withTimezone: true }),
   revokedByUserId: uuid('revoked_by_user_id').references(() => users.id),
+  // Qual autoridade o aceite precisa revalidar: a do vínculo do emissor ou a de plataforma.
+  issuerKind: text('issuer_kind', { enum: ['institution', 'platform'] }).notNull(),
 }, (table) => [
   unique().on(table.id, table.environment), unique().on(table.id, table.institutionId),
+  check('invitations_issuer_kind', sql`${table.issuerKind} in ('institution', 'platform')`),
   check('invitations_terminal_state', sql`${table.acceptedAt} is null or ${table.revokedAt} is null`),
   uniqueIndex('invitations_pending_email').on(table.institutionId, sql`lower(${table.email})`).where(sql`${table.acceptedAt} is null and ${table.revokedAt} is null`),
 ])

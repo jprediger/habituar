@@ -5,6 +5,7 @@ import { drizzle, NodePgDatabase, NodePgTransaction } from 'drizzle-orm/node-pos
 import { Pool } from 'pg'
 import { Environment } from '../environment/environment.schema.js'
 import { RequestContext, TenantContext } from '../platform/request-context.js'
+import { lockInstitutionAuthorization } from './authorization-lock.js'
 import * as schema from './schema.js'
 
 export type { TenantContext }
@@ -102,6 +103,8 @@ export class Database implements OnApplicationShutdown {
       const invitation = await transaction.query.invitations.findFirst({ where: eq(schema.invitations.tokenHash, tokenHash) })
       if (invitation !== undefined) {
         await transaction.execute(sql`select set_config('app.institution_id', ${invitation.institutionId}, true)`)
+        // Instituição antes do convite: mesma ordem de locks das demais alterações de autorização.
+        await lockInstitutionAuthorization(transaction, invitation.institutionId)
         await transaction.execute(sql`select id from invitations where token_hash = ${tokenHash} for update`)
       }
       return run(transaction)

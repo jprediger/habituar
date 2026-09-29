@@ -1,7 +1,21 @@
+import { assertNever } from '@habituar/core/assert-never'
+import { EffectivePermission, effectivePermissionSchema } from '@habituar/core/auth/context'
+import { StaffAction, StaffAuthority, StaffAuthorization, authorizeStaffAction } from '@habituar/core/delegation'
 import { PermissionKey, PlatformPermissionKey, PLATFORM_PERMISSION_CATALOG } from '@habituar/core/permissions'
 import { Injectable } from '@nestjs/common'
-import { Database } from '../database/database.js'
+import { Database, DatabaseTransaction } from '../database/database.js'
 import { RbacRepository } from './rbac.repository.js'
+
+/**
+ * Quem administra a equipe e por qual autoridade. A área de plataforma e a institucional
+ * chamam as mesmas operações; só este discriminante diz qual autoridade revalidar.
+ */
+export type StaffActor =
+  | Readonly<{ kind: 'institution'; userId: string; sessionId: string }>
+  | Readonly<{ kind: 'platform'; userId: string; sessionId: string }>
+
+/** Emissor gravado no convite, cuja autoridade o aceite revalida no momento do aceite. */
+export type InvitationIssuer = Readonly<{ kind: 'institution' | 'platform'; userId: string }>
 
 /**
  * Único call site de checagem de permissão — comparar papel em outro lugar é erro
@@ -46,5 +60,56 @@ export class RbacService {
       const user = await this.rbac.findUser(transaction, actor.userId)
       return PLATFORM_PERMISSION_CATALOG.includes(permission) && user?.isPlatformAdministrator === true
     })
+  }
+
+  /**
+   * Decide uma alteração de equipe dentro da transação que vai gravá-la, já serializada
+   * pelo lock da instituição: autoridade retirada por uma alteração concorrente não vale.
+   */
+  async authorizeStaffAction(
+    transaction: DatabaseTransaction,
+    actor: StaffActor,
+    institutionId: string,
+    action: StaffAction,
+    affectedGrants: readonly EffectivePermission[],
+  ): Promise<StaffAuthorization> {
+    const authority = await this.resolveStaffAuthority(transaction, actor, institutionId)
+    if (authority === undefined) return { status: 'denied', reason: 'forbidden' }
+    return authorizeStaffAction(authority, action, affectedGrants)
+  }
+
+  /** Autoridade atual do emissor de um convite; perda de vínculo ou de concessão invalida o aceite. */
+  async isInvitationIssuerAuthorized(
+    transaction: DatabaseTransaction,
+    issuer: InvitationIssuer,
+    institutionId: string,
+    invitedGrants: readonly EffectivePermission[],
+  ): Promise<boolean> {
+    const authority = await this.resolveStaffAuthority(transaction, issuer, institutionId)
+    if (authority === undefined) return false
+    return authorizeStaffAction(authority, 'invite', invitedGrants).status === 'allowed'
+  }
+
+  /** Concessões que um conjunto de papéis daria hoje; é o que o limite de delegação compara. */
+  async listRoleGrants(transaction: DatabaseTransaction, roleIds: readonly string[]): Promise<EffectivePermission[]> {
+    if (roleIds.length === 0) return []
+    const rows = await this.rbac.listRoleGrants(transaction, roleIds)
+    return rows.map(row => effectivePermissionSchema.parse(row))
+  }
+
+  private async resolveStaffAuthority(transaction: DatabaseTransaction, actor: Readonly<{ kind: 'institution' | 'platform'; userId: string }>, institutionId: string): Promise<StaffAuthority | undefined> {
+    switch (actor.kind) {
+      case 'platform': {
+        const user = await this.rbac.findUser(transaction, actor.userId)
+        return user?.isPlatformAdministrator === true ? { kind: 'platform' } : undefined
+      }
+      case 'institution': {
+        const membership = await this.rbac.findMembership(transaction, actor.userId, institutionId)
+        if (membership === undefined) return undefined
+        const rows = await this.rbac.listMembershipGrants(transaction, membership.id)
+        return { kind: 'institution', grants: rows.map(row => effectivePermissionSchema.parse(row)) }
+      }
+      default: return assertNever(actor.kind)
+    }
   }
 }

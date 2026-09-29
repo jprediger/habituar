@@ -30,6 +30,9 @@ const TEMPLATE_GRANTS: Readonly<Record<typeof ROLE_TEMPLATES[number]['name'], re
     ['student.create', 'institution'],
     ['role.assign', 'institution'],
     ['role.manage', 'institution'],
+    ['membership.read', 'institution'],
+    ['membership.invite', 'institution'],
+    ['membership.remove', 'institution'],
   ],
 }
 

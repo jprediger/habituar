@@ -41,6 +41,26 @@ export function mapFailureToHttpResponse(errors: FailureErrors, failure: Failure
       throw errors['document-already-registered']()
     case 'invalid-role-for-environment':
       throw errors['invalid-role-for-environment']()
+    case 'member-not-found':
+      throw errors['member-not-found']()
+    case 'membership-already-removed':
+      throw errors['membership-already-removed']()
+    case 'role-not-found':
+      throw errors['role-not-found']()
+    case 'grant-exceeds-authority':
+      throw errors['grant-exceeds-authority']()
+    case 'last-team-manager':
+      throw errors['last-team-manager']()
+    case 'system-role-immutable':
+      throw errors['system-role-immutable']()
+    case 'role-in-use':
+      throw errors['role-in-use']()
+    case 'invalid-role-bundles':
+      throw errors['invalid-role-bundles']()
+    case 'configuration-conflict':
+      throw errors['configuration-conflict']()
+    case 'invitation-authority-lost':
+      throw errors['invitation-authority-lost']()
     default:
       return assertNever(failure.code)
   }

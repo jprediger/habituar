@@ -12,6 +12,8 @@ import { Clock } from '../platform/clock.js'
 import { createDisabledEmailSender } from '../platform/email-sender.js'
 import { CryptoIdGenerator } from '../platform/id-generator.js'
 import { RequestContext } from '../platform/request-context.js'
+import { RbacRepository } from '../rbac/rbac.repository.js'
+import { RbacService } from '../rbac/rbac.service.js'
 import { InstitutionsRepository } from '../institutions/institutions.repository.js'
 import { InstitutionsService } from '../institutions/institutions.service.js'
 import { InvitationsRepository } from './invitations.repository.js'
@@ -27,6 +29,8 @@ const institutionB = 'a2000000-0000-4000-8000-000000000002'
 const roleA = 'a3000000-0000-4000-8000-000000000001'
 const roleB = 'a3000000-0000-4000-8000-000000000002'
 const actor = { userId: actorId, sessionId: 'a4000000-0000-4000-8000-000000000001' }
+// Na 1B só a plataforma emitia convite; a emissão institucional tem suíte própria em staff/.
+const platformActor = { kind: 'platform', ...actor } as const
 
 function tokenFrom(url: string): string {
   return decodeURIComponent(new URL(url).pathname.split('/').at(-1) ?? '')
@@ -43,11 +47,11 @@ describe('convites vinculados à instituição', () => {
   const ids = new CryptoIdGenerator()
   const clock = new Clock()
   const authentication = new AuthenticationService(database, new AuthenticationRepository(), ids, clock)
-  const service = new InvitationsService(database, new InvitationsRepository(), new InstitutionsService(database, new InstitutionsRepository(), ids, clock), authentication, ids, clock, createDisabledEmailSender(), config)
+  const service = new InvitationsService(database, new InvitationsRepository(), new InstitutionsService(database, new InstitutionsRepository(), ids, clock), authentication, new RbacService(database, new RbacRepository()), ids, clock, createDisabledEmailSender(), config)
 
   beforeAll(async () => {
     await ownerPool.query('insert into institutions (id, name) values ($1, $2), ($3, $4)', [institutionA, 'Invite A', institutionB, 'Invite B'])
-    await ownerPool.query('insert into users (id, email, name, password_hash, is_platform_administrator) values ($1, $2, $3, $4, false), ($5, $6, $7, $8, false), ($9, $10, $11, $12, false), ($13, $14, $15, $16, true), ($17, $18, $19, $20, false)', [actorId, 'inviter@example.test', 'Inviter', 'unused', recipientId, 'recipient@example.test', 'Recipient', 'unused', foreignId, 'foreign@example.test', 'Foreign', 'unused', platformId, 'platform@example.test', 'Platform', 'unused', concurrentId, 'concurrent@example.test', 'Concurrent', 'unused'])
+    await ownerPool.query('insert into users (id, email, name, password_hash, is_platform_administrator) values ($1, $2, $3, $4, true), ($5, $6, $7, $8, false), ($9, $10, $11, $12, false), ($13, $14, $15, $16, true), ($17, $18, $19, $20, false)', [actorId, 'inviter@example.test', 'Inviter', 'unused', recipientId, 'recipient@example.test', 'Recipient', 'unused', foreignId, 'foreign@example.test', 'Foreign', 'unused', platformId, 'platform@example.test', 'Platform', 'unused', concurrentId, 'concurrent@example.test', 'Concurrent', 'unused'])
     await database.withTenantOutsideRequest({ actorId, sessionId: actor.sessionId, institutionId: institutionA }, transaction => transaction.execute(sql`insert into roles (id, institution_id, name, environment) values (${roleA}, ${institutionA}, 'Care A', 'professional')`).then(() => undefined))
     await database.withTenantOutsideRequest({ actorId, sessionId: actor.sessionId, institutionId: institutionB }, transaction => transaction.execute(sql`insert into roles (id, institution_id, name, environment) values (${roleB}, ${institutionB}, 'Care B', 'professional')`).then(() => undefined))
   })
@@ -60,7 +64,7 @@ describe('convites vinculados à instituição', () => {
 
   function create(email: string, roleIds: string[] = [roleA]) {
     const input = createInvitationInputSchema.parse({ institutionId: institutionA, email, environment: 'professional', roleIds })
-    return context.run({ correlationId: 'invite-test', tenant: { ...actor, actorId: actor.userId, institutionId: institutionA } }, () => service.create(input, actor))
+    return context.run({ correlationId: 'invite-test', tenant: { ...actor, actorId: actor.userId, institutionId: institutionA } }, () => service.create(input, platformActor))
   }
 
   it('recusa papel de outra instituição sem gravar convite', async () => {
@@ -102,7 +106,7 @@ describe('convites vinculados à instituição', () => {
     expect((await ownerPool.query('select id from memberships where institution_id = $1 and user_id in ($2, $3, $4)', [institutionA, recipientId, foreignId, platformId])).rows).toEqual([])
     expect(await service.accept(token, { userId: recipientId, sessionId: actor.sessionId })).toMatchObject({ status: 'success', value: { institutionId: institutionA } })
     expect(await service.accept(token, { userId: recipientId, sessionId: actor.sessionId })).toMatchObject({ status: 'failure', failure: { code: 'invitation-already-accepted' } })
-    const revokeAccepted = await context.run({ correlationId: 'invite-test', tenant: { actorId, sessionId: actor.sessionId, institutionId: institutionA } }, () => service.revoke(institutionA, second.value.invitation.id, actor))
+    const revokeAccepted = await context.run({ correlationId: 'invite-test', tenant: { actorId, sessionId: actor.sessionId, institutionId: institutionA } }, () => service.revoke(institutionA, second.value.invitation.id, platformActor))
     expect(revokeAccepted).toMatchObject({ status: 'failure', failure: { code: 'invitation-already-accepted' } })
     const grants = await database.withTenantOutsideRequest({ actorId, sessionId: actor.sessionId, institutionId: institutionA }, async transaction => {
       const result = await transaction.execute(sql`select mr.role_id from membership_roles mr join memberships m on m.id = mr.membership_id where m.user_id = ${recipientId} and m.institution_id = ${institutionA}`)
@@ -120,7 +124,7 @@ describe('convites vinculados à instituição', () => {
     await database.withTenantOutsideRequest({ actorId, sessionId: actor.sessionId, institutionId: institutionA }, async transaction => {
       await transaction.execute(sql`update invitations set expires_at = now() - interval '1 day' where id = ${expired.value.invitation.id}`)
     })
-    const revokeResult = await context.run({ correlationId: 'invite-test', tenant: { actorId, sessionId: actor.sessionId, institutionId: institutionA } }, () => service.revoke(institutionA, revoked.value.invitation.id, actor))
+    const revokeResult = await context.run({ correlationId: 'invite-test', tenant: { actorId, sessionId: actor.sessionId, institutionId: institutionA } }, () => service.revoke(institutionA, revoked.value.invitation.id, platformActor))
     expect(revokeResult).toMatchObject({ status: 'success', value: { state: { status: 'revoked' } } })
     expect(await service.acceptWithRegistration(tokenFrom(expired.value.inviteUrl), 'Expired', 'secure-password')).toMatchObject({ status: 'failure', failure: { code: 'invitation-expired' } })
     expect(await service.acceptWithRegistration(tokenFrom(revoked.value.inviteUrl), 'Revoked', 'secure-password')).toMatchObject({ status: 'failure', failure: { code: 'invitation-revoked' } })

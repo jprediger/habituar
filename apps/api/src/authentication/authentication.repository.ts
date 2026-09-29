@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common'
-import { eq } from 'drizzle-orm'
+import { and, eq, isNull } from 'drizzle-orm'
 import { DatabaseTransaction } from '../database/database.js'
 import { institutions, memberships, membershipRoles, rolePermissions, roles, sessions, users } from '../database/schema.js'
 
@@ -37,7 +37,10 @@ export class AuthenticationRepository {
     await transaction.delete(sessions).where(eq(sessions.id, sessionId))
   }
 
-  /** Uma linha por vínculo × papel × permissão; o agrupamento é do serviço. */
+  /**
+   * Uma linha por vínculo ativo × papel × permissão; o agrupamento é do serviço. O filtro
+   * repete a política de bootstrap de propósito: vínculo removido não pode voltar ao contexto.
+   */
   listMembershipGrants(transaction: DatabaseTransaction, userId: string) {
     return transaction
       .select({
@@ -56,6 +59,6 @@ export class AuthenticationRepository {
       .leftJoin(membershipRoles, eq(membershipRoles.membershipId, memberships.id))
       .leftJoin(roles, eq(roles.id, membershipRoles.roleId))
       .leftJoin(rolePermissions, eq(rolePermissions.roleId, roles.id))
-      .where(eq(memberships.userId, userId))
+      .where(and(eq(memberships.userId, userId), isNull(memberships.removedAt)))
   }
 }

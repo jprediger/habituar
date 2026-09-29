@@ -193,7 +193,7 @@ describe('team list', () => {
 })
 
 describe('member roles', () => {
-  it('replaces the whole role set with the version it read, then refreshes the team', async () => {
+  it('replaces the whole role set with the version it read, then refreshes the team, answering the caller with the result', async () => {
     const api = createFakeApi(tenantRoutes({ [`PUT ${TENANT}/members/${MEMBER_ID}/roles`]: () => Response.json({ ...MEMBER, version: 5 }) }))
     const client = createHabituarReactClient({ origin: ORIGIN, fetch: api.fetch })
     const hook = renderHook(() => ({ team: client.useTeam(institutionContext()), member: client.useTeamMember(institutionContext(), MEMBER_ID) }), { wrapper: client.Provider })
@@ -201,8 +201,10 @@ describe('member roles', () => {
     await waitFor(() => { expect(hook.result.current.member.state.status).toBe('ready') })
     const listReads = api.count('GET', `${TENANT}/members`)
     act(() => { hook.result.current.member.setRoleSelected(TEAM_ROLE_ID, true) })
-    await act(async () => { await hook.result.current.member.save() })
+    let outcome: unknown
+    await act(async () => { outcome = await hook.result.current.member.save() })
 
+    expect(outcome).toEqual({ status: 'saved' })
     expect(hook.result.current.member.operation).toEqual({ status: 'saved' })
     await expect(api.lastBody('PUT', `${TENANT}/members/${MEMBER_ID}/roles`)).resolves.toEqual({ roleIds: [CARE_ROLE_ID, TEAM_ROLE_ID], expectedVersion: 4 })
     await waitFor(() => { expect(api.count('GET', `${TENANT}/members`)).toBeGreaterThan(listReads) })
@@ -215,8 +217,10 @@ describe('member roles', () => {
 
     await waitFor(() => { expect(hook.result.current.state.status).toBe('ready') })
     act(() => { hook.result.current.setRoleSelected(TEAM_ROLE_ID, true) })
-    await act(async () => { await hook.result.current.save() })
+    let outcome: unknown
+    await act(async () => { outcome = await hook.result.current.save() })
 
+    expect(outcome).toEqual({ status: 'failed', failure: 'network' })
     expect(hook.result.current.operation).toEqual({ status: 'failed', failure: 'network' })
     if (hook.result.current.state.status === 'ready') expect(hook.result.current.state.member.roles.map((role) => role.id)).toEqual([CARE_ROLE_ID])
   })
@@ -263,8 +267,10 @@ describe('member roles', () => {
 
     await waitFor(() => { expect(hook.result.current.state.status).toBe('ready') })
     act(() => { hook.result.current.setRoleSelected(TEAM_ROLE_ID, false) })
-    await act(async () => { await hook.result.current.save() })
+    let outcome: unknown = 'not-called'
+    await act(async () => { outcome = await hook.result.current.save() })
 
+    expect(outcome).toBeUndefined()
     expect(hook.result.current.roleError).toBe('choose-role')
     expect(api.count('PUT', `${TENANT}/members/${MEMBER_ID}/roles`)).toBe(0)
   })
@@ -294,7 +300,7 @@ describe('member roles', () => {
 
     await waitFor(() => { expect(hook.result.current.state.status).toBe('ready') })
     act(() => { hook.result.current.setRoleSelected(TEAM_ROLE_ID, true) })
-    let pending: Promise<void> = Promise.resolve()
+    let pending: Promise<unknown> = Promise.resolve()
     act(() => { pending = hook.result.current.save() })
     hook.rerender({ context: institutionContext(INSTITUTION_B) })
     await act(async () => { answer.release(); await pending })

@@ -194,6 +194,11 @@ export type TeamView = Readonly<{
   retry: () => void
 }>
 
+/**
+ * Estado da escrita de um membro. As ações de escrita também devolvem a operação em que
+ * terminaram — ou `undefined` quando nada foi enviado —, para a borda reagir ao resultado
+ * (um aviso passageiro, por exemplo) sem observar o estado.
+ */
 export type MemberOperation =
   | Readonly<{ status: 'idle' }>
   | Readonly<{ status: 'saving' }>
@@ -221,10 +226,10 @@ export type MemberEditor = Readonly<{
   operation: MemberOperation
   roleError: 'choose-role' | undefined
   setRoleSelected: (roleId: RoleId, isSelected: boolean) => void
-  save: () => Promise<void>
+  save: () => Promise<MemberOperation | undefined>
   requestRemoval: () => void
   cancel: () => void
-  confirmRemoval: () => Promise<void>
+  confirmRemoval: () => Promise<MemberOperation | undefined>
   reload: () => void
 }>
 
@@ -251,7 +256,7 @@ export type InvitationsView = Readonly<{
   requestRevocation: (invitationId: InvitationId) => void
   requestResend: (invitationId: InvitationId) => void
   cancel: () => void
-  confirm: () => Promise<void>
+  confirm: () => Promise<InvitationOperation | undefined>
 }>
 
 export type InvitationSubmission =
@@ -341,11 +346,11 @@ export type RoleEditor = Readonly<{
   chooseTemplate: (roleId: string) => void
   setBundleSelected: (key: RoleBundleKey, isSelected: boolean) => void
   chooseScope: (key: RoleBundleKey, scope: PermissionScope) => void
-  save: () => Promise<void>
-  confirmSave: () => Promise<void>
+  save: () => Promise<RoleOperation | undefined>
+  confirmSave: () => Promise<RoleOperation | undefined>
   requestDeletion: () => void
   cancel: () => void
-  confirmDeletion: () => Promise<void>
+  confirmDeletion: () => Promise<RoleOperation | undefined>
   reload: () => void
 }>
 

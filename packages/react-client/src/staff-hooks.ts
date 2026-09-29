@@ -285,15 +285,18 @@ export function createStaffHooks(dependencies: StaffHookDependencies): StaffHook
     const state = buildState()
     const setOperation = (origin: string, operation: MemberOperation): void => { updateDraft(origin, (current) => ({ ...current, operation })) }
 
-    async function runWrite(origin: string, loaded: StaffMember, pending: MemberOperation, done: MemberOperation, write: () => Promise<unknown>): Promise<void> {
-      if (!lock.acquire(origin)) return
+    async function runWrite(origin: string, loaded: StaffMember, pending: MemberOperation, done: MemberOperation, write: () => Promise<unknown>): Promise<MemberOperation | undefined> {
+      if (!lock.acquire(origin)) return undefined
       setOperation(origin, pending)
       try {
         await guard(write)
         await afterWrite(transport, context, loaded.user.id === currentUserId)
         updateDraft(origin, () => ({ ...INITIAL_MEMBER_DRAFT, operation: done }))
+        return done
       } catch (error) {
-        setOperation(origin, { status: 'failed', failure: toStaffFailure(error) })
+        const failed: MemberOperation = { status: 'failed', failure: toStaffFailure(error) }
+        setOperation(origin, failed)
+        return failed
       } finally {
         lock.release(origin)
       }
@@ -311,19 +314,19 @@ export function createStaffHooks(dependencies: StaffHookDependencies): StaffHook
         updateDraft(scope, (current) => ({ ...current, roleIds: next, roleError: undefined, operation: { status: 'idle' } }))
       },
       save: async () => {
-        if (member === undefined || !capabilities.canAssignRoles) return
+        if (member === undefined || !capabilities.canAssignRoles) return undefined
         if (selectedRoleIds.length === 0) {
           updateDraft(scope, (current) => ({ ...current, roleError: 'choose-role' }))
-          return
+          return undefined
         }
         const roleIds = selectedRoleIds
-        await runWrite(scope, member, { status: 'saving' }, { status: 'saved' }, () => transport.replaceMemberRoles({ membershipId, roleIds, expectedVersion: member.version }))
+        return runWrite(scope, member, { status: 'saving' }, { status: 'saved' }, () => transport.replaceMemberRoles({ membershipId, roleIds, expectedVersion: member.version }))
       },
       requestRemoval: () => { if (capabilities.canRemoveMembers) setOperation(scope, { status: 'confirming-removal' }) },
       cancel: () => { setOperation(scope, { status: 'idle' }) },
       confirmRemoval: async () => {
-        if (member === undefined || draft.operation.status !== 'confirming-removal') return
-        await runWrite(scope, member, { status: 'removing' }, { status: 'removed' }, () => transport.removeMember({ membershipId, expectedVersion: member.version }))
+        if (member === undefined || draft.operation.status !== 'confirming-removal') return undefined
+        return runWrite(scope, member, { status: 'removing' }, { status: 'removed' }, () => transport.removeMember({ membershipId, expectedVersion: member.version }))
       },
       reload: () => {
         updateDraft(scope, () => INITIAL_MEMBER_DRAFT)
@@ -359,15 +362,18 @@ export function createStaffHooks(dependencies: StaffHookDependencies): StaffHook
       return query.data?.items.find((invitation) => invitation.id === invitationId)?.email ?? ''
     }
 
-    async function runWrite(origin: string, pending: InvitationOperation, write: () => Promise<InvitationOperation>): Promise<void> {
-      if (!lock.acquire(origin)) return
+    async function runWrite(origin: string, pending: InvitationOperation, write: () => Promise<InvitationOperation>): Promise<InvitationOperation | undefined> {
+      if (!lock.acquire(origin)) return undefined
       updateOperation(origin, () => pending)
       try {
         const done = await guard(write)
         await afterWrite(transport, context, false)
         updateOperation(origin, () => done)
+        return done
       } catch (error) {
-        updateOperation(origin, () => ({ status: 'failed', failure: toStaffFailure(error) }))
+        const failed: InvitationOperation = { status: 'failed', failure: toStaffFailure(error) }
+        updateOperation(origin, () => failed)
+        return failed
       } finally {
         lock.release(origin)
       }
@@ -392,19 +398,19 @@ export function createStaffHooks(dependencies: StaffHookDependencies): StaffHook
         if (operation.status === 'confirming-revocation') {
           const { invitationId } = operation
           const email = findEmail(invitationId)
-          await runWrite(scope, { status: 'revoking', invitationId }, async () => {
+          return runWrite(scope, { status: 'revoking', invitationId }, async () => {
             await transport.revokeInvitation(invitationId)
             return { status: 'revoked', email }
           })
-          return
         }
         if (operation.status === 'confirming-resend') {
           const { invitationId } = operation
-          await runWrite(scope, { status: 'resending', invitationId }, async () => {
+          return runWrite(scope, { status: 'resending', invitationId }, async () => {
             const created = await transport.resendInvitation(invitationId)
             return { status: 'resent', email: created.invitation.email, inviteUrl: created.inviteUrl }
           })
         }
+        return undefined
       },
     }
   }
@@ -579,15 +585,18 @@ export function createStaffHooks(dependencies: StaffHookDependencies): StaffHook
     const state = buildState()
     const setOperation = (origin: string, operation: RoleOperation): void => { updateDraft(origin, (current) => ({ ...current, operation })) }
 
-    async function runWrite(origin: string, pending: RoleOperation, write: () => Promise<RoleOperation>): Promise<void> {
-      if (!lock.acquire(origin)) return
+    async function runWrite(origin: string, pending: RoleOperation, write: () => Promise<RoleOperation>): Promise<RoleOperation | undefined> {
+      if (!lock.acquire(origin)) return undefined
       setOperation(origin, pending)
       try {
         const done = await guard(write)
         await afterWrite(transport, context, true)
         updateDraft(origin, () => ({ ...INITIAL_ROLE_DRAFT, operation: done }))
+        return done
       } catch (error) {
-        setOperation(origin, { status: 'failed', failure: toStaffFailure(error) })
+        const failed: RoleOperation = { status: 'failed', failure: toStaffFailure(error) }
+        setOperation(origin, failed)
+        return failed
       } finally {
         lock.release(origin)
       }
@@ -598,9 +607,9 @@ export function createStaffHooks(dependencies: StaffHookDependencies): StaffHook
       return { activeMemberCount: loaded.activeMemberCount, pendingInvitationCount: loaded.pendingInvitationCount, revokesInvitations }
     }
 
-    async function update(loaded: StaffRole, parsedName: string, impact: RoleImpact): Promise<void> {
+    async function update(loaded: StaffRole, parsedName: string, impact: RoleImpact): Promise<RoleOperation | undefined> {
       const selections = bundles
-      await runWrite(scope, { status: 'saving' }, async () => {
+      return runWrite(scope, { status: 'saving' }, async () => {
         const saved = await transport.updateRole({ roleId: loaded.id, name: parsedName, bundles: selections, expectedVersion: loaded.version })
         return { status: 'saved', role: saved, revokedInvitationCount: impact.revokesInvitations ? impact.pendingInvitationCount : 0 }
       })
@@ -643,37 +652,37 @@ export function createStaffHooks(dependencies: StaffHookDependencies): StaffHook
       save: async () => {
         updateDraft(scope, (current) => ({ ...current, hasAttemptedSubmit: true }))
         const parsedName = parseName()
-        if (state.status !== 'ready' || reason !== undefined || parsedName === undefined || bundles.length === 0) return
+        if (state.status !== 'ready' || reason !== undefined || parsedName === undefined || bundles.length === 0) return undefined
         if (target.mode === 'create') {
-          if (template === undefined) return
+          if (template === undefined) return undefined
           const templateRoleId = template.id
           const selections = bundles
-          await runWrite(scope, { status: 'saving' }, async () => {
+          return runWrite(scope, { status: 'saving' }, async () => {
             const created = await transport.createRole({ templateRoleId, name: parsedName, bundles: selections })
             return { status: 'saved', role: created, revokedInvitationCount: 0 }
           })
-          return
         }
-        if (role === undefined) return
+        if (role === undefined) return undefined
         const impact = computeImpact(role)
         // Papel com titulares muda o acesso de todos eles: a confirmação vem antes do envio.
         if (impact.activeMemberCount + impact.pendingInvitationCount > 0) {
-          setOperation(scope, { status: 'confirming-impact', impact })
-          return
+          const confirming: RoleOperation = { status: 'confirming-impact', impact }
+          setOperation(scope, confirming)
+          return confirming
         }
-        await update(role, parsedName, impact)
+        return update(role, parsedName, impact)
       },
       confirmSave: async () => {
         const parsedName = parseName()
-        if (draft.operation.status !== 'confirming-impact' || role === undefined || parsedName === undefined) return
-        await update(role, parsedName, draft.operation.impact)
+        if (draft.operation.status !== 'confirming-impact' || role === undefined || parsedName === undefined) return undefined
+        return update(role, parsedName, draft.operation.impact)
       },
       requestDeletion: () => { if (state.status === 'ready' && state.canDelete) setOperation(scope, { status: 'confirming-deletion' }) },
       cancel: () => { setOperation(scope, { status: 'idle' }) },
       confirmDeletion: async () => {
-        if (draft.operation.status !== 'confirming-deletion' || role === undefined) return
+        if (draft.operation.status !== 'confirming-deletion' || role === undefined) return undefined
         const loaded = role
-        await runWrite(scope, { status: 'deleting' }, async () => {
+        return runWrite(scope, { status: 'deleting' }, async () => {
           await transport.deleteRole({ roleId: loaded.id, expectedVersion: loaded.version })
           return { status: 'deleted' }
         })

@@ -15,6 +15,7 @@ function createAuthentication(state: AuthenticationState): LoginAuthentication {
       selectMembership: vi.fn(() => Promise.resolve()),
       switchInstitution: vi.fn(() => Promise.resolve()),
       refresh: vi.fn(() => Promise.resolve()),
+      revalidate: vi.fn(() => Promise.resolve()),
       retry: vi.fn(() => Promise.resolve()),
     },
   }

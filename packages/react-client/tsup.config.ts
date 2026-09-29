@@ -10,6 +10,7 @@ export default defineConfig({
     'environment-navigation': 'src/environment-navigation.ts',
     'platform-forms': 'src/platform-forms.ts',
     'invitation-acceptance': 'src/invitation-acceptance.ts',
+    'staff-management': 'src/staff-management.ts',
   },
   // Formato único: o monorepo inteiro é ESM, então não existe condição `require` a servir.
   format: ['esm'],

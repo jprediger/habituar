@@ -27,6 +27,10 @@
     "./invitation-acceptance": {
       "types": "./dist/invitation-acceptance.d.ts",
       "import": "./dist/invitation-acceptance.js"
+    },
+    "./staff-management": {
+      "types": "./dist/staff-management.d.ts",
+      "import": "./dist/staff-management.js"
     }
   },
   "scripts": {

@@ -1,12 +1,16 @@
-import { institutionIdSchema, membershipIdSchema } from '@habituar/core/identity/ids'
+import { institutionIdSchema, membershipIdSchema, roleIdSchema } from '@habituar/core/identity/ids'
 import { createHabituarReactClient } from '@habituar/react-client/react-client'
-import { fireEvent, render, screen } from '@testing-library/react-native'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react-native'
 import type { ReactElement, ReactNode } from 'react'
+import { AccessibilityInfo } from 'react-native'
+import { ToastProvider } from '../components/ui/toast'
 import '../i18n/i18n'
 import { createInstitutionSession } from '../session/institution-session-fixture'
 import { InvitationScreen } from './invitation-screen'
 import { ManagementScreen } from './management-screen'
 import { MemberScreen } from './member-screen'
+import { RoleEditorScreen } from './role-editor-screen'
+import { TeamScreen } from './team-screen'
 
 const INSTITUTION_ID = '00000000-0000-4000-8000-000000000001'
 const MEMBER_ID = '30000000-0000-4000-8000-000000000001'
@@ -33,6 +37,8 @@ const ROUTES: Readonly<Record<string, () => unknown>> = {
   [`GET ${PREFIX}/members`]: () => ({ items: [MEMBER], total: 1, page: 1, pageSize: 20 }),
   [`GET ${PREFIX}/members/${MEMBER_ID}`]: () => MEMBER,
   [`GET ${PREFIX}/roles`]: () => ROLES,
+  [`GET ${PREFIX}/roles/${TEAM_ROLE_ID}`]: () => ROLES[0],
+  [`GET ${PREFIX}/role-bundles`]: () => [],
   [`DELETE ${PREFIX}/members/${MEMBER_ID}`]: () => ({ id: MEMBER_ID, removedAt: '2026-09-28T12:00:00.000Z' }),
   [`POST ${PREFIX}/invitations`]: () => ({ invitation: INVITATION, inviteUrl: 'https://habituar.test/invite/once' }),
 }
@@ -60,6 +66,7 @@ jest.mock('expo-router', () => ({ useRouter: () => ({ push: jest.fn(), back: jes
 
 jest.mock('react-native-safe-area-context', () => ({
   SafeAreaView: ({ children }: Readonly<{ children: ReactNode }>) => children,
+  useSafeAreaInsets: () => ({ top: 0, right: 0, bottom: 0, left: 0 }),
 }))
 
 function createManagerSession() {
@@ -70,7 +77,7 @@ function createManagerSession() {
 function renderWithClient(screenElement: ReactElement) {
   mockClient.current = createHabituarReactClient({ origin: 'http://api.habituar.test', fetch })
   const { Provider } = mockClient.current
-  return render(<Provider>{screenElement}</Provider>)
+  return render(<Provider><ToastProvider>{screenElement}</ToastProvider></Provider>)
 }
 
 // O cache do TanStack agenda a coleta das queries inativas para minutos depois; com
@@ -86,15 +93,25 @@ afterEach(() => {
 })
 
 describe('management tab', () => {
-  it('lists the team with an accessible name for each person', async () => {
+  it('lists the sections the person can open as navigation rows', () => {
     renderWithClient(<ManagementScreen session={createManagerSession()} />)
 
-    expect(await screen.findByRole('button', { name: 'Papéis de João Lima' })).toBeOnTheScreen()
-    expect(screen.getByRole('radio', { name: 'Equipe', checked: true })).toBeOnTheScreen()
+    expect(screen.getByRole('button', { name: 'Equipe' })).toBeOnTheScreen()
+    expect(screen.getByRole('button', { name: 'Convites' })).toBeOnTheScreen()
+    expect(screen.getByRole('button', { name: 'Papéis' })).toBeOnTheScreen()
   })
 
-  it('removes a member only after a confirmation that names the person and the institution', async () => {
-    renderWithClient(<MemberScreen session={createManagerSession()} membershipId={membershipIdSchema.parse(MEMBER_ID)} onDone={jest.fn()} />)
+  it('lists the team with an accessible name for each person, below the search', async () => {
+    renderWithClient(<TeamScreen session={createManagerSession()} />)
+
+    expect(await screen.findByRole('button', { name: 'Papéis de João Lima' })).toBeOnTheScreen()
+    expect(screen.getByLabelText('Buscar por nome ou e-mail')).toBeOnTheScreen()
+  })
+
+  it('removes a member only after a confirmation that names the person and the institution, then confirms it in passing and closes', async () => {
+    const announce = jest.spyOn(AccessibilityInfo, 'announceForAccessibility')
+    const onDone = jest.fn()
+    renderWithClient(<MemberScreen session={createManagerSession()} membershipId={membershipIdSchema.parse(MEMBER_ID)} onDone={onDone} />)
 
     fireEvent.press(await screen.findByRole('button', { name: 'Remover da instituição' }))
     expect(screen.getByText(/Remover João Lima de Escola Aurora\?/)).toBeOnTheScreen()
@@ -102,7 +119,10 @@ describe('management tab', () => {
 
     fireEvent.press(screen.getByRole('button', { name: 'Sim, remover' }))
 
-    expect(await screen.findByText('Vínculo removido. A pessoa não faz mais parte de Escola Aurora.')).toBeOnTheScreen()
+    const removed = 'Vínculo removido. A pessoa não faz mais parte de Escola Aurora.'
+    await waitFor(() => { expect(onDone).toHaveBeenCalledTimes(1) })
+    expect(announce).toHaveBeenCalledWith(removed)
+    expect(screen.getByText(removed, { includeHiddenElements: true })).toBeOnTheScreen()
     expect(writes).toEqual([{ method: 'DELETE', path: `${PREFIX}/members/${MEMBER_ID}`, body: { expectedVersion: 4 } }])
   })
 
@@ -121,5 +141,14 @@ describe('management tab', () => {
 
     expect(await screen.findByText('https://habituar.test/invite/once')).toBeOnTheScreen()
     expect(writes).toEqual([{ method: 'POST', path: `${PREFIX}/invitations`, body: { email: 'nova@example.com', environment: 'monitor', roleIds: [MONITORING_ROLE_ID] } }])
+  })
+
+  it('shows a system template by its translated name, never by its stored key, without offering to rename it', async () => {
+    renderWithClient(<RoleEditorScreen session={createManagerSession()} target={{ mode: 'edit', roleId: roleIdSchema.parse(TEAM_ROLE_ID) }} onDone={jest.fn()} />)
+
+    expect(await screen.findByRole('header', { name: 'Gestão da equipe' })).toBeOnTheScreen()
+    expect(screen.queryByText('team-management')).not.toBeOnTheScreen()
+    expect(screen.queryByRole('button', { name: 'Editar nome do papel' })).not.toBeOnTheScreen()
+    expect(screen.getByRole('header', { name: 'Detalhes do papel' })).toBeOnTheScreen()
   })
 })

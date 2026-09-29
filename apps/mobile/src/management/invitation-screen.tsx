@@ -3,12 +3,13 @@ import { useTranslation } from 'react-i18next'
 import { StyleSheet, View } from 'react-native'
 import { getFieldErrorText } from '../authentication/form-messages'
 import { habituar } from '../client/habituar-client'
+import { ListSectionSkeleton } from '../components/skeletons/list-section-skeleton'
+import { Skeleton } from '../components/skeletons/skeleton'
 import { Button } from '../components/ui/button'
 import { CheckboxRow } from '../components/ui/checkbox-row'
 import { FormField } from '../components/ui/form-field'
 import { Input } from '../components/ui/input'
-import { Page } from '../components/ui/page'
-import { PageHeader } from '../components/ui/page-header'
+import { StackPage } from '../components/ui/stack-page'
 import { SegmentedControl } from '../components/ui/segmented-control'
 import { Text } from '../components/ui/text'
 import type { InstitutionSession } from '../session/session-screen'
@@ -26,8 +27,7 @@ export function InvitationScreen({ session, onDone }: Readonly<{ session: Instit
 
   if (submission.status === 'created') {
     return (
-      <Page>
-        <PageHeader eyebrow={t('staff.sections.invitations')} title={t('staff.invitations.new')} />
+      <StackPage title={t('staff.invitations.new')}>
         <ResultAnnouncement>
           <Text>{t('staff.invitations.created', { email: submission.email })}</Text>
           <Text size="caption" tone="muted">{t('staff.invitations.oneTimeWarning')}</Text>
@@ -35,13 +35,12 @@ export function InvitationScreen({ session, onDone }: Readonly<{ session: Instit
         </ResultAnnouncement>
         <Button variant="outline" label={t('staff.invitations.another')} onPress={composer.startAnother} />
         <Button label={t('staff.close')} onPress={onDone} />
-      </Page>
+      </StackPage>
     )
   }
 
   return (
-    <Page>
-      <PageHeader eyebrow={t('staff.sections.invitations')} title={t('staff.invitations.new')} />
+    <StackPage title={t('staff.invitations.new')}>
       <View style={styles.stack}>
         <FormField
           id="invitation-email"
@@ -75,7 +74,7 @@ export function InvitationScreen({ session, onDone }: Readonly<{ session: Instit
 
         <Text accessibilityRole="header" weight="medium">{t('staff.invitations.roles')}</Text>
         <Text size="caption" tone="muted">{t('staff.invitations.rolesHint')}</Text>
-        {composer.rolesState.status === 'loading' && <Text accessibilityLiveRegion="polite" tone="muted">{t('staff.loading')}</Text>}
+        {composer.rolesState.status === 'loading' && <Skeleton><ListSectionSkeleton rows={4} /></Skeleton>}
         {composer.rolesState.status === 'failed' && <FailureNotice failure={composer.rolesState.failure} onRetry={composer.retryRoles} actionLabel={t('staff.retry')} />}
         {composer.rolesState.status === 'ready' && composer.roleOptions.length === 0 && <Text>{t('staff.invitations.noRoles')}</Text>}
         {composer.roleOptions.map((option) => (
@@ -99,7 +98,7 @@ export function InvitationScreen({ session, onDone }: Readonly<{ session: Instit
           onPress={() => { void composer.submit() }}
         />
       </View>
-    </Page>
+    </StackPage>
   )
 }
 

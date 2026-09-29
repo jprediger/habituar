@@ -86,7 +86,8 @@
     "home": "Início",
     "management": "Gestão",
     "profile": "Perfil",
-    "institutions": "Instituições"
+    "institutions": "Instituições",
+    "back": "Voltar"
   },
   "professional": {
     "eyebrow": "Ambiente profissional",
@@ -131,6 +132,11 @@
       "team": "Equipe",
       "invitations": "Convites",
       "roles": "Papéis"
+    },
+    "sectionDescriptions": {
+      "team": "Pessoas da instituição e seus papéis",
+      "invitations": "Convites enviados, reenvio e revogação",
+      "roles": "Papéis personalizados e modelos do sistema"
     },
     "loading": "Carregando...",
     "retry": "Tentar novamente",
@@ -184,6 +190,7 @@
       "removeConfirmation": "Remover {{name}} de {{institution}}? A pessoa perde o acesso a esta instituição, mas a conta continua funcionando nas outras.",
       "removeSelfConfirmation": "Remover o seu próprio vínculo com {{institution}}? Você perde o acesso a esta instituição agora.",
       "confirmRemove": "Sim, remover",
+      "removeTitle": "Remover da equipe",
       "keep": "Manter vínculo",
       "removing": "Removendo...",
       "removed": "Vínculo removido. A pessoa não faz mais parte de {{institution}}."
@@ -209,7 +216,9 @@
       "revokeConfirmation": "Revogar o convite de {{email}}? O link deixa de funcionar.",
       "resendConfirmation": "Reenviar o convite para {{email}}? O link anterior deixa de funcionar e um novo é criado.",
       "confirmRevoke": "Sim, revogar",
+      "revokeTitle": "Revogar convite",
       "confirmResend": "Sim, reenviar",
+      "resendTitle": "Reenviar convite",
       "revoked": "Convite de {{email}} revogado.",
       "resent": "Novo convite para {{email}} criado.",
       "oneTimeWarning": "Copie este link agora. Ele aparece uma única vez.",
@@ -238,7 +247,8 @@
       "open": "Abrir papel {{name}}",
       "notRepresentable": "Permissões fora dos agrupamentos editáveis.",
       "createTitle": "Novo papel",
-      "editTitle": "Papel {{name}}",
+      "detailsTitle": "Detalhes do papel",
+      "editName": "Editar nome do papel",
       "createDescription": "Parta de um modelo do sistema e ajuste o que o novo papel permite.",
       "editDescription": "Mudanças aqui valem para todas as pessoas que têm este papel.",
       "template": "Modelo de partida",
@@ -264,6 +274,7 @@
       "delete": "Excluir papel",
       "deleteConfirmation": "Excluir o papel {{name}}? Esta ação não pode ser desfeita.",
       "confirmDelete": "Sim, excluir",
+      "deleteTitle": "Excluir papel",
       "deleting": "Excluindo...",
       "deleted": "Papel excluído."
     },
@@ -291,5 +302,11 @@
       "invitation-revoked": "Este convite já foi revogado.",
       "invitation-expired": "Este convite expirou. Reenvie para criar um novo."
     }
+  },
+  "confirmationSheet": {
+    "dismiss": "Fechar confirmação"
+  },
+  "skeleton": {
+    "loading": "Carregando..."
   }
 }

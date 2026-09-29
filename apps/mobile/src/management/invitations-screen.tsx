@@ -1,30 +1,34 @@
-import { SPACING } from '@habituar/design-tokens/spacing'
-import type { InvitationItem, InvitationsView, StaffManagementContext } from '@habituar/react-client/staff-management'
+import type { InvitationItem, InvitationOperation, InvitationsView } from '@habituar/react-client/staff-management'
 import { useRouter } from 'expo-router'
 import { useTranslation } from 'react-i18next'
-import { StyleSheet, View } from 'react-native'
 import { habituar } from '../client/habituar-client'
+import { ConfirmationSheet } from '../components/ui/confirmation-sheet'
 import { Button } from '../components/ui/button'
-import { Card } from '../components/ui/card'
 import { ChoiceList } from '../components/ui/choice-list'
+import { ListRow } from '../components/ui/list-row'
+import { ListSection } from '../components/ui/list-section'
+import { StackPage } from '../components/ui/stack-page'
 import { Text } from '../components/ui/text'
-import { ConfirmationPanel, FailureNotice, PaginationControls, ResultAnnouncement, StaffListStatus, formatDay, getRoleName } from './staff-feedback'
+import { useToast } from '../components/ui/toast'
+import type { InstitutionSession } from '../session/session-screen'
+import { toStaffContext } from './staff-context'
+import { FailureNotice, PaginationControls, ResultAnnouncement, StaffListStatus, formatDay, getRoleName } from './staff-feedback'
 
 /**
  * Seção Convites no app: atalho para convidar, filtro por situação, lista paginada e
  * reenvio ou revogação sempre confirmados.
  */
-export function InvitationsSection({ context }: Readonly<{ context: StaffManagementContext }>) {
+export function InvitationsScreen({ session }: Readonly<{ session: InstitutionSession }>) {
   const { t } = useTranslation()
   const router = useRouter()
-  const invitations = habituar.useInvitations(context)
+  const invitations = habituar.useInvitations(toStaffContext(session))
   const { operation } = invitations
 
   return (
-    <View style={styles.stack}>
-      {invitations.capabilities.canInvite && (
-        <Button icon="person-add-outline" label={t('staff.invitations.new')} onPress={() => { router.push('/professional/management/invite') }} />
-      )}
+    <StackPage
+      title={t('staff.sections.invitations')}
+      action={invitations.capabilities.canInvite ? { icon: 'user-plus', label: t('staff.invitations.new'), onPress: () => { router.push('/professional/management/invite') } } : undefined}
+    >
       <ChoiceList
         label={t('staff.invitations.statusFilter')}
         choices={[
@@ -39,7 +43,6 @@ export function InvitationsSection({ context }: Readonly<{ context: StaffManagem
       />
 
       {operation.status === 'failed' && <FailureNotice failure={operation.failure} />}
-      {operation.status === 'revoked' && <ResultAnnouncement><Text>{t('staff.invitations.revoked', { email: operation.email })}</Text></ResultAnnouncement>}
       {operation.status === 'resent' && (
         <ResultAnnouncement>
           <Text>{t('staff.invitations.resent', { email: operation.email })}</Text>
@@ -56,45 +59,55 @@ export function InvitationsSection({ context }: Readonly<{ context: StaffManagem
       />
 
       {invitations.state.status === 'ready' && (
-        <View style={styles.stack}>
-          {invitations.state.items.map((item) => <InvitationCard key={item.invitation.id} item={item} invitations={invitations} />)}
+        <>
+          <ListSection>
+            {invitations.state.items.map((item) => <InvitationRow key={item.invitation.id} item={item} invitations={invitations} />)}
+          </ListSection>
           <PaginationControls pagination={invitations.pagination} page={invitations.state.page} pageCount={invitations.state.pageCount} />
-        </View>
+        </>
       )}
-    </View>
+    </StackPage>
   )
 }
 
-function InvitationCard({ item, invitations }: Readonly<{ item: InvitationItem; invitations: InvitationsView }>) {
+function InvitationRow({ item, invitations }: Readonly<{ item: InvitationItem; invitations: InvitationsView }>) {
   const { t } = useTranslation()
+  const showToast = useToast()
+  // Revogação vira aviso passageiro; o reenvio fica na tela porque traz o link de uso único.
+  const finish = (outcome: InvitationOperation | undefined) => {
+    if (outcome?.status === 'revoked') showToast(t('staff.invitations.revoked', { email: outcome.email }))
+  }
   const { invitation } = item
   const { operation } = invitations
   const isTarget = 'invitationId' in operation && operation.invitationId === invitation.id
 
   return (
-    <Card>
-      <Text weight="medium">{invitation.email}</Text>
-      <Text size="caption" tone="muted">{t(`staff.invitations.status.${invitation.state.status}`)}</Text>
-      <Text size="caption" tone="muted">
-        {`${t(`staff.environments.${invitation.environment}`)} · ${t('staff.invitations.roleSummary', { roles: item.roles.map((role) => getRoleName(role, t)).join(', ') })} · ${t('staff.invitations.expiresAt', { date: formatDay(invitation.expiresAt) })}`}
-      </Text>
+    <ListRow
+      title={invitation.email}
+      value={t(`staff.invitations.status.${invitation.state.status}`)}
+      description={`${t(`staff.environments.${invitation.environment}`)} · ${t('staff.invitations.roleSummary', { roles: item.roles.map((role) => getRoleName(role, t)).join(', ') })} · ${t('staff.invitations.expiresAt', { date: formatDay(invitation.expiresAt) })}`}
+    >
       {isTarget && (operation.status === 'confirming-revocation' || operation.status === 'revoking') && (
-        <ConfirmationPanel
+        <ConfirmationSheet
+          title={t('staff.invitations.revokeTitle')}
+          confirmVariant="danger"
           message={t('staff.invitations.revokeConfirmation', { email: invitation.email })}
           confirmLabel={t('staff.invitations.confirmRevoke')}
           cancelLabel={t('staff.cancel')}
           isBusy={operation.status === 'revoking'}
-          onConfirm={() => { void invitations.confirm() }}
+          onConfirm={() => { void invitations.confirm().then(finish) }}
           onCancel={invitations.cancel}
         />
       )}
       {isTarget && (operation.status === 'confirming-resend' || operation.status === 'resending') && (
-        <ConfirmationPanel
+        <ConfirmationSheet
+          title={t('staff.invitations.resendTitle')}
+          confirmVariant="primary"
           message={t('staff.invitations.resendConfirmation', { email: invitation.email })}
           confirmLabel={t('staff.invitations.confirmResend')}
           cancelLabel={t('staff.cancel')}
           isBusy={operation.status === 'resending'}
-          onConfirm={() => { void invitations.confirm() }}
+          onConfirm={() => { void invitations.confirm().then(finish) }}
           onCancel={invitations.cancel}
         />
       )}
@@ -102,12 +115,8 @@ function InvitationCard({ item, invitations }: Readonly<{ item: InvitationItem; 
         <Button variant="outline" label={t('staff.invitations.resend', { email: invitation.email })} onPress={() => { invitations.requestResend(invitation.id) }} />
       )}
       {!isTarget && invitations.capabilities.canRevokeInvitations && invitation.state.status === 'pending' && (
-        <Button variant="outline" label={t('staff.invitations.revoke', { email: invitation.email })} onPress={() => { invitations.requestRevocation(invitation.id) }} />
+        <Button variant="dangerOutline" label={t('staff.invitations.revoke', { email: invitation.email })} onPress={() => { invitations.requestRevocation(invitation.id) }} />
       )}
-    </Card>
+    </ListRow>
   )
 }
-
-const styles = StyleSheet.create({
-  stack: { gap: SPACING.md },
-})

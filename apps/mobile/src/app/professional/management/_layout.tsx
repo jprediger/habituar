@@ -2,6 +2,10 @@ import { Stack } from 'expo-router'
 import { ManagementGate } from '../../../management/management-gate'
 import { InstitutionSessionScreen } from '../../../session/session-screen'
 
+// Deep link direto para uma tela aninhada monta a lista de seções por baixo: sem isso o
+// voltar do `StackPage` não teria para onde ir.
+export const unstable_settings = { initialRouteName: 'index' }
+
 /**
  * Pilha da aba Gestão. O guard envolve a pilha inteira, então deep link para membro,
  * convite ou papel também volta ao Início quando a pessoa não pode ler a equipe.

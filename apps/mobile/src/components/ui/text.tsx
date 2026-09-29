@@ -4,7 +4,7 @@ import type { FontWeightRole } from '../../theme/tokens'
 import { useThemeTokens } from '../../theme/tokens'
 
 export type TextSize = 'caption' | 'body' | 'title' | 'display'
-export type TextTone = 'default' | 'muted' | 'danger' | 'primary' | 'onPrimary' | 'onDanger'
+export type TextTone = 'default' | 'muted' | 'danger' | 'primary' | 'onPrimary' | 'onDanger' | 'onToast'
 
 export type TextProps = Omit<NativeTextProps, 'style'> &
   Readonly<{
@@ -71,5 +71,7 @@ function getToneColor(tone: TextTone, colors: ReturnType<typeof useThemeTokens>[
       return colors.onPrimary
     case 'onDanger':
       return colors.onDanger
+    case 'onToast':
+      return colors.onToast
   }
 }

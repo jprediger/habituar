@@ -116,7 +116,7 @@ export function RegisterScreen() {
         <View style={styles.success}>
           <Text accessibilityLiveRegion="polite">{t('authentication.register.success')}</Text>
           <Button
-            icon="log-in-outline"
+            icon="sign-in"
             label={t('authentication.login.title')}
             onPress={() => {
               router.replace('/login')
@@ -193,7 +193,7 @@ export function RegisterScreen() {
           )}
 
           <Button
-            icon="person-add-outline"
+            icon="user-plus"
             label={isSubmitting ? t('authentication.register.submitting') : t('authentication.register.submit')}
             onPress={handleSubmit}
             isDisabled={isSubmitting}

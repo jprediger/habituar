@@ -10,7 +10,7 @@ export function SignOutButton() {
 
   return (
     <Button
-      icon="log-out-outline"
+      icon="sign-out"
       variant="outline"
       isDisabled={isSigningOut}
       isBusy={isSigningOut}

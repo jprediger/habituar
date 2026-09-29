@@ -5,6 +5,8 @@ import type { Pagination, StaffFailure, StaffListState } from '@habituar/react-c
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { StyleSheet, View } from 'react-native'
+import { ListSectionSkeleton } from '../components/skeletons/list-section-skeleton'
+import { Skeleton } from '../components/skeletons/skeleton'
 import { Button } from '../components/ui/button'
 import { EmptyState } from '../components/ui/empty-state'
 import { Text } from '../components/ui/text'
@@ -45,7 +47,7 @@ export function StaffListStatus<Item>({
   const { t } = useTranslation()
   switch (state.status) {
     case 'loading':
-      return <Text accessibilityLiveRegion="polite" tone="muted">{t('staff.loading')}</Text>
+      return <Skeleton><ListSectionSkeleton rows={6} /></Skeleton>
     case 'failed':
       return <FailureNotice failure={state.failure} onRetry={onRetry} actionLabel={t('staff.retry')} />
     case 'empty':
@@ -76,28 +78,6 @@ export function FailureNotice({
     <View style={[styles.notice, { borderColor: colors.danger, borderRadius: radius.field }]}>
       <Text accessibilityRole="alert" accessibilityLiveRegion="polite">{getStaffFailureText(failure, t)}</Text>
       {onRetry !== undefined && actionLabel !== undefined && <Button variant="outline" label={actionLabel} onPress={onRetry} />}
-    </View>
-  )
-}
-
-/**
- * Confirmação explícita de uma ação sem volta, no lugar da ação: a frase nomeia o alvo e
- * "voltar" é sempre a outra opção.
- */
-export function ConfirmationPanel({
-  message,
-  confirmLabel,
-  cancelLabel,
-  isBusy,
-  onConfirm,
-  onCancel,
-}: Readonly<{ message: string; confirmLabel: string; cancelLabel: string; isBusy: boolean; onConfirm: () => void; onCancel: () => void }>) {
-  const { colors, radius } = useThemeTokens()
-  return (
-    <View style={[styles.notice, { borderColor: colors.danger, borderRadius: radius.field }]}>
-      <Text accessibilityLiveRegion="polite">{message}</Text>
-      <Button variant="danger" label={confirmLabel} isDisabled={isBusy} isBusy={isBusy} onPress={onConfirm} />
-      <Button variant="outline" label={cancelLabel} isDisabled={isBusy} onPress={onCancel} />
     </View>
   )
 }

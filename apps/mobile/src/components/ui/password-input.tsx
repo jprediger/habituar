@@ -1,4 +1,3 @@
-import Ionicons from '@expo/vector-icons/Ionicons'
 import { SPACING } from '@habituar/design-tokens/spacing'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -6,6 +5,7 @@ import { Pressable, StyleSheet, View } from 'react-native'
 import { useThemeTokens } from '../../theme/tokens'
 import type { InputProps } from './input'
 import { Input } from './input'
+import { Icon } from './icon'
 
 const ICON_SIZE = 20
 
@@ -50,10 +50,8 @@ export function PasswordInput({ style, ...props }: PasswordInputProps) {
         }}
       >
         {/* O ícone é decoração: o rótulo do botão já diz o que o toque faz. */}
-        <Ionicons
-          accessibilityElementsHidden
-          importantForAccessibility="no-hide-descendants"
-          name={isVisible ? 'eye-off-outline' : 'eye-outline'}
+        <Icon
+          name={isVisible ? 'eye-slash' : 'eye'}
           size={ICON_SIZE}
           color={colors.textMuted}
         />

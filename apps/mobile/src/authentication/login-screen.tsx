@@ -102,7 +102,7 @@ export function LoginScreen() {
       {form.failure !== undefined && <AuthenticationFailureAlert failure={form.failure} />}
 
       <Button
-        icon="log-in-outline"
+        icon="sign-in"
         label={form.isSubmitting ? t('authentication.login.submitting') : t('authentication.login.submit')}
         onPress={form.submit}
         isDisabled={form.isSubmitting}

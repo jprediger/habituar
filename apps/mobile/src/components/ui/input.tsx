@@ -11,6 +11,8 @@ export type InputProps = TextInputProps & Readonly<{ hasError?: boolean; ref?: R
  * erro — rótulo, validação e mensagem continuam sendo do chamador.
  */
 export function Input({ hasError = false, style, ...props }: InputProps) {
+  // Campo só leitura precisa parecer só leitura: igual ao editável, a pessoa tenta digitar.
+  const isReadOnly = props.editable === false
   const { colors, minimumTouchTarget, fontSize, fontFamily, radius } = useThemeTokens()
 
   return (
@@ -28,8 +30,8 @@ export function Input({ hasError = false, style, ...props }: InputProps) {
           paddingVertical: SPACING.sm,
           fontSize: fontSize.body,
           fontFamily: fontFamily.regular,
-          color: colors.text,
-          backgroundColor: colors.surface,
+          color: isReadOnly ? colors.textMuted : colors.text,
+          backgroundColor: isReadOnly ? colors.surfaceMuted : colors.surface,
         },
         style,
       ]}

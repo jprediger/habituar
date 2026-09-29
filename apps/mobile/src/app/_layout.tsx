@@ -1,6 +1,7 @@
 import { NavigationBar } from 'expo-navigation-bar'
 import { StatusBar } from 'expo-status-bar'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
+import { ToastProvider } from '../components/ui/toast'
 import { AuthenticationRouter } from '../session/authentication-router'
 import { habituar } from '../client/habituar-client'
 import { AppearanceGate } from '../theme/appearance-gate'
@@ -21,7 +22,9 @@ export default function RootLayout() {
           {/* O Android pinta a barra de navegação pelo tema do sistema, não pelo escolhido no
               Perfil; `auto` segue o `Appearance`, que é onde essa escolha vive. */}
           <NavigationBar style="auto" />
-          <AuthenticationRouter />
+          <ToastProvider>
+            <AuthenticationRouter />
+          </ToastProvider>
         </habituar.Provider>
       </SafeAreaProvider>
     </AppearanceGate>

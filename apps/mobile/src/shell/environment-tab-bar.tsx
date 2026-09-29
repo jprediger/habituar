@@ -8,6 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Text } from '../components/ui/text'
 import { NavigationIcon } from './navigation-icon'
 import { useThemeTokens } from '../theme/tokens'
+import { useToastBottomOffset } from '../components/ui/toast'
 
 const ICON_SIZE = 26
 
@@ -28,12 +29,14 @@ export function EnvironmentTabBar({ items }: Readonly<{ items: readonly Navigati
   const insets = useSafeAreaInsets()
   const { colors } = useThemeTokens()
   const activeItem = findActiveNavigationItem(items, pathname)
+  const setToastBottomOffset = useToastBottomOffset()
 
   if (items.length < MINIMUM_TABS) return null
 
   return (
     <View
       accessibilityRole="tablist"
+      onLayout={(event) => { setToastBottomOffset(event.nativeEvent.layout.height) }}
       style={[
         styles.bar,
         {

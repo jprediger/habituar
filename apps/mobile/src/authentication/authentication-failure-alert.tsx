@@ -1,4 +1,3 @@
-import Ionicons from '@expo/vector-icons/Ionicons'
 import { SPACING } from '@habituar/design-tokens/spacing'
 import type { AuthenticationFailure } from '@habituar/react-client/react-client'
 import { useTranslation } from 'react-i18next'
@@ -8,6 +7,7 @@ import { Button } from '../components/ui/button'
 import { Text } from '../components/ui/text'
 import { habituar } from '../client/habituar-client'
 import { useThemeTokens } from '../theme/tokens'
+import { Icon } from '../components/ui/icon'
 
 const ICON_SIZE = 20
 
@@ -35,14 +35,9 @@ export function AuthenticationFailureAlert({ failure }: Readonly<{ failure: Auth
     >
       <View style={styles.message}>
         {/* O ícone é reforço do texto, nunca o sinal único da falha (WCAG 1.4.1). */}
-        <Ionicons
-          accessibilityElementsHidden
-          importantForAccessibility="no-hide-descendants"
-          name="alert-circle-outline"
-          size={ICON_SIZE}
-          color={colors.danger}
-          style={styles.icon}
-        />
+        <View style={styles.icon}>
+          <Icon name="warning-circle" size={ICON_SIZE} color={colors.danger} />
+        </View>
         {/* O `Text` do kit não recebe `style`: a largura restante é dada pela caixa. */}
         <View style={styles.text}>
           <Text tone="danger">{getAuthenticationFailureText(failure, t)}</Text>

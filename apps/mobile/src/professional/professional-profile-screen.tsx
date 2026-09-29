@@ -2,8 +2,8 @@ import { useTranslation } from 'react-i18next'
 import { Page } from '../components/ui/page'
 import { PageHeader } from '../components/ui/page-header'
 import { SegmentedControl } from '../components/ui/segmented-control'
-import { Section } from '../components/ui/section'
-import { SummaryCard } from '../components/ui/summary-card'
+import { ListRow } from '../components/ui/list-row'
+import { ListSection } from '../components/ui/list-section'
 import type { InstitutionSession } from '../session/session-screen'
 import { SignOutButton } from '../session/sign-out-button'
 import { InstitutionSwitcher } from '../session/institution-switcher'
@@ -22,26 +22,22 @@ export function ProfessionalProfileScreen({ session }: Readonly<{ session: Insti
     <Page>
       <PageHeader eyebrow={t('professional.eyebrow')} title={t('navigation.profile')} />
 
-      <Section title={t('professional.profile.accountSection')}>
-        <SummaryCard
-          items={[
-            { label: t('professional.profile.nameLabel'), value: session.user.name },
-            { label: t('professional.profile.emailLabel'), value: session.user.email },
-          ]}
-        />
-      </Section>
+      <ListSection title={t('professional.profile.accountSection')}>
+        <ListRow icon="user" title={session.user.name} description={t('professional.profile.nameLabel')} />
+        <ListRow icon="envelope-simple" title={session.user.email} description={t('professional.profile.emailLabel')} />
+      </ListSection>
 
-      <Section title={t('professional.profile.institutionSection')}>
+      <ListSection title={t('professional.profile.institutionSection')}>
+        <ListRow icon="buildings" title={session.membership.institution.name} description={t('home.institutionLabel')} />
+        <ListRow
+          icon="identification-card"
+          title={session.membership.roles.map((role) => role.templateKey === null ? role.name : t(`roles.${role.templateKey}`)).join(', ')}
+          description={t('home.roleLabel')}
+        />
         <InstitutionSwitcher />
-        <SummaryCard
-          items={[
-            { label: t('home.institutionLabel'), value: session.membership.institution.name },
-            { label: t('home.roleLabel'), value: session.membership.roles.map((role) => role.templateKey === null ? role.name : t(`roles.${role.templateKey}`)).join(", ") },
-          ]}
-        />
-      </Section>
+      </ListSection>
 
-      <Section title={t('professional.profile.appearanceSection')}>
+      <ListSection title={t('professional.profile.appearanceSection')}>
         <SegmentedControl
           label={t('professional.profile.themeLabel')}
           options={THEME_PREFERENCES.map((preference) => ({
@@ -53,7 +49,7 @@ export function ProfessionalProfileScreen({ session }: Readonly<{ session: Insti
           value={themePreference.state.status === 'ready' ? themePreference.state.preference : 'system'}
           onChange={themePreference.select}
         />
-      </Section>
+      </ListSection>
 
       <SignOutButton />
     </Page>

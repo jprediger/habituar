@@ -1,4 +1,4 @@
-import { PERMISSION_CATALOG } from '@habituar/core/permissions'
+import { PERMISSION_CATALOG, SENSITIVE_PERMISSIONS } from '@habituar/core/permissions'
 import { DatabaseTransaction } from '../database.js'
 import { permissions } from '../schema.js'
 
@@ -10,6 +10,6 @@ import { permissions } from '../schema.js'
 export async function seedPermissionCatalog(transaction: DatabaseTransaction): Promise<void> {
   await transaction
     .insert(permissions)
-    .values(PERMISSION_CATALOG.map((key) => ({ key })))
+    .values(PERMISSION_CATALOG.map((key) => ({ key, sensitive: SENSITIVE_PERMISSIONS.includes(key) })))
     .onConflictDoNothing()
 }

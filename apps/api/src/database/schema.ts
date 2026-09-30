@@ -1,6 +1,7 @@
 import { MembershipEnvironment } from '@habituar/core/roles'
 import { sql } from 'drizzle-orm'
-import { boolean, check, date, foreignKey, integer, pgEnum, pgTable, text, timestamp, unique, uniqueIndex, uuid } from 'drizzle-orm/pg-core'
+import type { StudentCondition } from '@habituar/core/student-records'
+import { boolean, check, date, foreignKey, index, integer, pgEnum, pgTable, text, timestamp, unique, uniqueIndex, uuid } from 'drizzle-orm/pg-core'
 
 export const tenantProbe = pgTable('tenant_probe', {
   id: uuid().primaryKey().defaultRandom(),
@@ -287,3 +288,70 @@ export const assignments = pgTable(
     foreignKey({ columns: [table.studentId, table.institutionId], foreignColumns: [students.id, students.institutionId] }).onDelete('cascade'),
   ],
 )
+
+// Literais repetidos de STUDENT_CONDITIONS pelo mesmo motivo de ROLE_ENVIRONMENT_VALUES:
+// drizzle-kit carrega este arquivo sem executar entrypoints ESM do core.
+const STUDENT_CONDITION_VALUES = [
+  'adhd',
+  'autism',
+  'intellectual-disability',
+  'learning-disorder',
+  'physical-disability',
+  'visual-impairment',
+  'hearing-impairment',
+  'other',
+] as const satisfies readonly [StudentCondition, ...StudentCondition[]]
+export const studentConditionEnum = pgEnum('student_condition', STUDENT_CONDITION_VALUES)
+
+// Append-only: a ficha atual é a revisão mais recente, e o histórico é a sequência delas.
+// A migração não cria política de UPDATE/DELETE — nenhuma revisão é reescrita, nem por bug,
+// nem por query escrita às pressas. Nascimento e responsáveis ficam no cadastro do aluno.
+export const studentProfileRevisions = pgTable('student_profile_revisions', {
+  id: uuid().primaryKey().defaultRandom(),
+  institutionId: uuid('institution_id').notNull(),
+  studentId: uuid('student_id').notNull(),
+  // Ordem das revisões de um aluno. Não se usa `recorded_at`: duas gravações no mesmo
+  // milissegundo tornariam ambígua qual é a ficha atual.
+  revisionNumber: integer('revision_number').notNull(),
+  schoolGrade: text('school_grade'),
+  conditions: studentConditionEnum().array().notNull().default(sql`'{}'`),
+  supportNeeds: text('support_needs'),
+  recordedByUserId: uuid('recorded_by_user_id').notNull().references(() => users.id),
+  recordedAt: timestamp('recorded_at', { withTimezone: true }).notNull(),
+}, (table) => [
+  // FK composta: a revisão não pode apontar para aluno de outra instituição, nem por engano.
+  foreignKey({ columns: [table.studentId, table.institutionId], foreignColumns: [students.id, students.institutionId] }).onDelete('cascade'),
+  unique('student_profile_revisions_student_revision_number').on(table.studentId, table.revisionNumber),
+])
+
+// Mesma regra de append-only das revisões: correção é uma observação nova, não edição.
+export const studentObservations = pgTable('student_observations', {
+  id: uuid().primaryKey().defaultRandom(),
+  institutionId: uuid('institution_id').notNull(),
+  studentId: uuid('student_id').notNull(),
+  authorUserId: uuid('author_user_id').notNull().references(() => users.id),
+  body: text().notNull(),
+  recordedAt: timestamp('recorded_at', { withTimezone: true }).notNull(),
+}, (table) => [
+  foreignKey({ columns: [table.studentId, table.institutionId], foreignColumns: [students.id, students.institutionId] }).onDelete('cascade'),
+  index('student_observations_student_recorded_at').on(table.studentId, table.recordedAt),
+  check('student_observations_body_length', sql`char_length(${table.body}) between 1 and 4000`),
+])
+
+// Diário de consultas já realizadas. Append-only como as observações: consulta registrada
+// é fato, e corrigir é registrar uma observação nova na ficha.
+export const studentConsultations = pgTable('student_consultations', {
+  id: uuid().primaryKey().defaultRandom(),
+  institutionId: uuid('institution_id').notNull(),
+  studentId: uuid('student_id').notNull(),
+  professionalUserId: uuid('professional_user_id').notNull().references(() => users.id),
+  occurredAt: timestamp('occurred_at', { withTimezone: true }).notNull(),
+  durationMinutes: integer('duration_minutes').notNull(),
+  notes: text().notNull(),
+  recordedAt: timestamp('recorded_at', { withTimezone: true }).notNull(),
+}, (table) => [
+  foreignKey({ columns: [table.studentId, table.institutionId], foreignColumns: [students.id, students.institutionId] }).onDelete('cascade'),
+  index('student_consultations_student_occurred_at').on(table.studentId, table.occurredAt),
+  check('student_consultations_duration', sql`${table.durationMinutes} between 1 and 480`),
+  check('student_consultations_notes_length', sql`char_length(${table.notes}) between 1 and 4000`),
+])

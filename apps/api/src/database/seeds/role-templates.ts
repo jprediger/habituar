@@ -25,8 +25,10 @@ const TEMPLATE_GRANTS: Readonly<Record<typeof ROLE_TEMPLATES[number]['name'], re
     ['student.update', 'assigned'],
     ['guardian.link', 'assigned'],
     ['guardian.unlink', 'assigned'],
+    ['record.read', 'assigned'],
+    ['record.write', 'assigned'],
   ],
-  'care-institution': [['student.read', 'institution'], ['student.update', 'institution'], ['student.create', 'institution'], ['guardian.link', 'institution'], ['guardian.unlink', 'institution'], ['assignment.manage', 'institution']],
+  'care-institution': [['student.read', 'institution'], ['student.update', 'institution'], ['student.create', 'institution'], ['guardian.link', 'institution'], ['guardian.unlink', 'institution'], ['assignment.manage', 'institution'], ['record.read', 'institution'], ['record.write', 'institution']],
   monitoring: [['student.read', 'assigned']],
   'team-management': [
     ['student.read', 'institution'],

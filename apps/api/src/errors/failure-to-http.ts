@@ -81,6 +81,8 @@ export function mapFailureToHttpResponse(errors: FailureErrors, failure: Failure
       throw errors['student-account-exists']()
     case 'student-below-account-age':
       throw errors['student-below-account-age']()
+    case 'consultation-in-future':
+      throw errors['consultation-in-future']()
     default:
       return assertNever(failure.code)
   }

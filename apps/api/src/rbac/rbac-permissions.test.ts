@@ -75,9 +75,9 @@ describe('alcance da permissão do aluno', () => {
       await transaction.insert(students).values([
         { id: ownStudentId, institutionId, userId: actorId, fullName: 'Own student', birthDate: '2012-01-01' },
         { id: otherStudentId, institutionId, userId: otherId, fullName: 'Other student', birthDate: '2012-01-01' },
-        { id: guardianStudentId, institutionId, userId: otherId, fullName: 'Guardian student', birthDate: '2012-01-01' },
+        { id: guardianStudentId, institutionId, userId: null, fullName: 'Guardian student', birthDate: '2012-01-01' },
         { id: updateRaceStudentId, institutionId, userId: updateRaceActorId, fullName: 'Race update student', birthDate: '2012-01-01' },
-        { id: assignmentRaceStudentId, institutionId, userId: otherId, fullName: 'Race assignment student', birthDate: '2012-01-01' },
+        { id: assignmentRaceStudentId, institutionId, userId: null, fullName: 'Race assignment student', birthDate: '2012-01-01' },
       ])
       await transaction.insert(guardians).values({ id: guardianId, institutionId, userId: actorId, fullName: 'Parent', email: 'parent@example.test', phone: '+5551999999999' })
       await transaction.insert(studentGuardians).values({ institutionId, studentId: guardianStudentId, guardianId, relationship: 'mother' })

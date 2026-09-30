@@ -1,6 +1,6 @@
 import { authenticationContextSchema } from '@habituar/core/auth/context'
 import { invitationCreatedSchema } from '@habituar/core/invitations'
-import { staffMemberPageSchema, staffMemberSchema, staffRoleSchema } from '@habituar/core/staff'
+import { platformStaffMemberSchema, staffMemberPageSchema, staffMemberSchema, staffRoleSchema } from '@habituar/core/staff'
 import { afterAll, beforeAll, describe, expect, inject, it } from 'vitest'
 import { Account, ProvisionedInstitution, StaffHarness, tokenFromInviteUrl } from '../database/staff-fixture.js'
 
@@ -31,7 +31,7 @@ describe('ciclo de vida da equipe', () => {
   })
 
   async function memberVersion(institution: ProvisionedInstitution, membershipId: string): Promise<number> {
-    return staffMemberSchema.parse((await harness.call(platform, 'GET', `/platform/institutions/${institution.id}/members/${membershipId}`)).body).version
+    return platformStaffMemberSchema.parse((await harness.call(platform, 'GET', `/platform/institutions/${institution.id}/members/${membershipId}`)).body).version
   }
 
   it('recusa remover ou rebaixar o último gestor completo, inclusive a si mesmo', async () => {

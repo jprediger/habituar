@@ -51,7 +51,7 @@ describe('templates de papel', () => {
         transaction
           .update(roles)
           .set({ name: 'Estudante com nome editável' })
-          .where(and(eq(roles.institutionId, INSTITUTION_ID), eq(roles.environment, 'student'))),
+          .where(and(eq(roles.institutionId, INSTITUTION_ID), eq(roles.templateKey, 'student'))),
     )
     await database.withTenantOutsideRequest(
       { institutionId: INSTITUTION_ID, actorId: INSTITUTION_ID, sessionId: INSTITUTION_ID },

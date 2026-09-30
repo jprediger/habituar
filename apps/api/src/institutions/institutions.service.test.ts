@@ -30,14 +30,14 @@ describe('provisionamento institucional', () => {
     await database.onApplicationShutdown()
   })
 
-  it('cria os cinco templates de sistema na mesma instituição', async () => {
+  it('cria os seis templates de sistema na mesma instituição', async () => {
     const outcome = await service.create(ACTOR, INPUT)
     expect(outcome.status).toBe('success')
     if (outcome.status === 'failure') return
 
     const roles = await service.listRoles(ACTOR, outcome.value.id)
     expect(roles.map(role => role.templateKey).sort()).toEqual([
-      'care-assigned', 'care-institution', 'monitoring', 'student', 'team-management',
+      'care-assigned', 'care-institution', 'guardian', 'monitoring', 'student', 'team-management',
     ])
     expect(roles.every(role => role.id !== '')).toBe(true)
   })

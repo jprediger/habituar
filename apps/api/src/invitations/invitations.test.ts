@@ -1,6 +1,7 @@
 import { institutionIdSchema } from '@habituar/core/identity/ids'
 import { createInvitationInputSchema } from '@habituar/core/invitations'
 import { createStudentInvitationInputSchema } from '@habituar/core/students'
+import type { CreateStudentInvitationInput } from '@habituar/core/students'
 import { ConfigService } from '@nestjs/config'
 import { sql } from 'drizzle-orm'
 import { Pool } from 'pg'
@@ -64,16 +65,23 @@ describe('convites vinculados à instituição', () => {
 
   beforeAll(async () => {
     await ownerPool.query('insert into institutions (id, name) values ($1, $2), ($3, $4)', [institutionA, 'Invite A', institutionB, 'Invite B'])
-    await ownerPool.query('insert into students (id, institution_id, full_name, birth_date) values ($1, $2, $3, $4)', [invitationStudentId, institutionA, 'Invitation target', '2010-01-01'])
-    await ownerPool.query('insert into users (id, email, name, password_hash, is_platform_administrator) values ($1, $2, $3, $4, true), ($5, $6, $7, $8, false), ($9, $10, $11, $12, false), ($13, $14, $15, $16, true), ($17, $18, $19, $20, false)', [actorId, 'inviter@example.test', 'Inviter', 'unused', recipientId, 'recipient@example.test', 'Recipient', 'unused', foreignId, 'foreign@example.test', 'Foreign', 'unused', platformId, 'platform@example.test', 'Platform', 'unused', concurrentId, 'concurrent@example.test', 'Concurrent', 'unused'])
-    await ownerPool.query('insert into users (id, email, name, password_hash) values ($1, $2, $3, $4), ($5, $6, $7, $8), ($9, $10, $11, $12), ($13, $14, $15, $16)', [studentIssuerId, 'student-issuer@example.test', 'Student Issuer', 'unused', guardianIssuerId, 'guardian-issuer@example.test', 'Guardian Issuer', 'unused', studentRecipientId, 'student-invitee@example.test', 'Student Invitee', 'unused', guardianRecipientId, 'guardian-invitee@example.test', 'Guardian Invitee', 'unused'])
-    await ownerPool.query(`insert into permissions (key) values ('guardian.link') on conflict do nothing`)
-    await ownerPool.query('insert into roles (id, institution_id, name, template_key, environment, is_system) values ($1, $2, $3, $4, $5, true), ($6, $2, $7, $8, $9, true), ($10, $2, $11, null, $12, false), ($13, $2, $14, null, $12, false)', [studentTemplateRoleId, institutionA, 'student', 'student', 'student', guardianTemplateRoleId, 'guardian', 'guardian', 'student', issuerRoleId, 'Student invitation issuer', 'professional', guardianIssuerRoleId, 'Guardian invitation issuer'])
-    await ownerPool.query('insert into role_permissions (institution_id, role_id, permission_key, scope) values ($1, $2, $3, $4), ($1, $5, $3, $4)', [institutionA, issuerRoleId, 'guardian.link', 'institution', guardianIssuerRoleId])
-    await ownerPool.query('insert into memberships (id, user_id, institution_id, environment) values ($1, $2, $3, $4), ($5, $6, $3, $4)', [studentIssuerMembershipId, studentIssuerId, institutionA, 'professional', guardianIssuerMembershipId, guardianIssuerId])
-    await ownerPool.query('insert into membership_roles (membership_id, role_id, institution_id, environment) values ($1, $2, $3, $4), ($5, $6, $3, $4)', [studentIssuerMembershipId, issuerRoleId, institutionA, 'professional', guardianIssuerMembershipId, guardianIssuerRoleId])
-    await ownerPool.query('insert into guardians (id, institution_id, full_name, email) values ($1, $2, $3, $4)', [invitationGuardianId, institutionA, 'Invitation guardian', 'guardian-invitee@example.test'])
-    await ownerPool.query('insert into student_guardians (institution_id, student_id, guardian_id, relationship) values ($1, $2, $3, $4)', [institutionA, invitationStudentId, invitationGuardianId, 'mother'])
+    // FORCE RLS vale também para o dono: o setup grava as linhas da instituição A com o
+    // tenant instalado, pelo mesmo mecanismo da aplicação, em vez de contornar a política.
+    const setup = await ownerPool.connect()
+    await setup.query('begin')
+    await setup.query("select set_config('app.institution_id', $1, true)", [institutionA])
+    await setup.query('insert into students (id, institution_id, full_name, birth_date) values ($1, $2, $3, $4)', [invitationStudentId, institutionA, 'Invitation target', '2010-01-01'])
+    await setup.query('insert into users (id, email, name, password_hash, is_platform_administrator) values ($1, $2, $3, $4, true), ($5, $6, $7, $8, false), ($9, $10, $11, $12, false), ($13, $14, $15, $16, true), ($17, $18, $19, $20, false)', [actorId, 'inviter@example.test', 'Inviter', 'unused', recipientId, 'recipient@example.test', 'Recipient', 'unused', foreignId, 'foreign@example.test', 'Foreign', 'unused', platformId, 'platform@example.test', 'Platform', 'unused', concurrentId, 'concurrent@example.test', 'Concurrent', 'unused'])
+    await setup.query('insert into users (id, email, name, password_hash) values ($1, $2, $3, $4), ($5, $6, $7, $8), ($9, $10, $11, $12), ($13, $14, $15, $16)', [studentIssuerId, 'student-issuer@example.test', 'Student Issuer', 'unused', guardianIssuerId, 'guardian-issuer@example.test', 'Guardian Issuer', 'unused', studentRecipientId, 'student-invitee@example.test', 'Student Invitee', 'unused', guardianRecipientId, 'guardian-invitee@example.test', 'Guardian Invitee', 'unused'])
+    await setup.query(`insert into permissions (key) values ('guardian.link') on conflict do nothing`)
+    await setup.query('insert into roles (id, institution_id, name, template_key, environment, is_system) values ($1, $2, $3, $4, $5, true), ($6, $2, $7, $8, $9, true), ($10, $2, $11, null, $12, false), ($13, $2, $14, null, $12, false)', [studentTemplateRoleId, institutionA, 'student', 'student', 'student', guardianTemplateRoleId, 'guardian', 'guardian', 'student', issuerRoleId, 'Student invitation issuer', 'professional', guardianIssuerRoleId, 'Guardian invitation issuer'])
+    await setup.query('insert into role_permissions (institution_id, role_id, permission_key, scope) values ($1, $2, $3, $4), ($1, $5, $3, $4)', [institutionA, issuerRoleId, 'guardian.link', 'institution', guardianIssuerRoleId])
+    await setup.query('insert into memberships (id, user_id, institution_id, environment) values ($1, $2, $3, $4), ($5, $6, $3, $4)', [studentIssuerMembershipId, studentIssuerId, institutionA, 'professional', guardianIssuerMembershipId, guardianIssuerId])
+    await setup.query('insert into membership_roles (membership_id, role_id, institution_id, environment) values ($1, $2, $3, $4), ($5, $6, $3, $4)', [studentIssuerMembershipId, issuerRoleId, institutionA, 'professional', guardianIssuerMembershipId, guardianIssuerRoleId])
+    await setup.query('insert into guardians (id, institution_id, full_name, email) values ($1, $2, $3, $4)', [invitationGuardianId, institutionA, 'Invitation guardian', 'guardian-invitee@example.test'])
+    await setup.query('insert into student_guardians (institution_id, student_id, guardian_id, relationship) values ($1, $2, $3, $4)', [institutionA, invitationStudentId, invitationGuardianId, 'mother'])
+    await setup.query('commit')
+    setup.release()
     await database.withTenantOutsideRequest({ actorId, sessionId: actor.sessionId, institutionId: institutionA }, transaction => transaction.execute(sql`insert into roles (id, institution_id, name, environment) values (${roleA}, ${institutionA}, 'Care A', 'professional')`).then(() => undefined))
     await database.withTenantOutsideRequest({ actorId, sessionId: actor.sessionId, institutionId: institutionB }, transaction => transaction.execute(sql`insert into roles (id, institution_id, name, environment) values (${roleB}, ${institutionB}, 'Care B', 'professional')`).then(() => undefined))
   })
@@ -84,6 +92,28 @@ describe('convites vinculados à instituição', () => {
     await ownerPool.end()
   })
 
+  // Emissão pela instituição roda dentro de uma requisição com o tenant do emissor, como
+  // na rota real; fora dela o serviço não tem instituição para instalar.
+  function issueStudentInvitation(input: CreateStudentInvitationInput, issuerId: string) {
+    return context.run({ correlationId: 'invite-test', tenant: { actorId: issuerId, sessionId: actor.sessionId, institutionId: institutionA } },
+      () => service.createStudentInvitation(input, { kind: 'institution', userId: issuerId, sessionId: actor.sessionId }))
+  }
+
+  // FORCE RLS vale para o dono: sem o tenant instalado, delete e select nas tabelas da
+  // instituição afetariam zero linhas em silêncio e o teste provaria outra coisa.
+  async function queryAsOwnerInA(text: string, values: readonly unknown[]) {
+    const client = await ownerPool.connect()
+    try {
+      await client.query('begin')
+      await client.query("select set_config('app.institution_id', $1, true)", [institutionA])
+      const result = await client.query(text, [...values])
+      await client.query('commit')
+      return result
+    } finally {
+      client.release()
+    }
+  }
+
   function create(email: string, roleIds: string[] = [roleA]) {
     const input = createInvitationInputSchema.parse({ institutionId: institutionA, email, environment: 'professional', roleIds })
     return context.run({ correlationId: 'invite-test', tenant: { ...actor, actorId: actor.userId, institutionId: institutionA } }, () => service.create(input, platformActor))
@@ -92,15 +122,15 @@ describe('convites vinculados à instituição', () => {
   it('recusa papel de outra instituição sem gravar convite', async () => {
     const result = await create('cross-tenant@example.test', [roleB])
     expect(result).toMatchObject({ status: 'failure', failure: { code: 'invalid-role-for-environment' } })
-    const rows = await ownerPool.query('select id from invitations where email = $1', ['cross-tenant@example.test'])
+    const rows = await queryAsOwnerInA('select id from invitations where email = $1', ['cross-tenant@example.test'])
     expect(rows.rows).toEqual([])
   })
 
   it('recusa convite de aluno quando o emissor não tem autoridade de guardian.link', async () => {
     const input = createStudentInvitationInputSchema.parse({ institutionId: institutionA, studentId: invitationStudentId, target: 'student', guardianId: null, email: 'student-target@example.test' })
-    const result = await service.createStudentInvitation(input, { kind: 'institution', userId: actorId, sessionId: actor.sessionId })
+    const result = await issueStudentInvitation(input, actorId)
     expect(result).toMatchObject({ status: 'failure', failure: { code: 'student-not-found' } })
-    const rows = await ownerPool.query('select id from invitations where email = $1', ['student-target@example.test'])
+    const rows = await queryAsOwnerInA('select id from invitations where email = $1', ['student-target@example.test'])
     expect(rows.rows).toEqual([])
   })
 
@@ -110,28 +140,28 @@ describe('convites vinculados à instituição', () => {
 
   it('recusa aceite de convite de aluno se o emissor perder guardian.link após a emissão', async () => {
     const input = createStudentInvitationInputSchema.parse({ institutionId: institutionA, studentId: invitationStudentId, target: 'student', guardianId: null, email: 'student-invitee@example.test' })
-    const issued = await service.createStudentInvitation(input, { kind: 'institution', userId: studentIssuerId, sessionId: actor.sessionId })
+    const issued = await issueStudentInvitation(input, studentIssuerId)
     expect(issued.status).toBe('success')
     if (issued.status === 'failure') return
 
-    await ownerPool.query('delete from role_permissions where institution_id = $1 and role_id = $2 and permission_key = $3', [institutionA, issuerRoleId, 'guardian.link'])
+    await queryAsOwnerInA('delete from role_permissions where institution_id = $1 and role_id = $2 and permission_key = $3', [institutionA, issuerRoleId, 'guardian.link'])
     const accepted = await service.accept(tokenFrom(issued.value.inviteUrl), { userId: studentRecipientId, sessionId: actor.sessionId })
     expect(accepted).toMatchObject({ status: 'failure', failure: { code: 'invitation-authority-lost' } })
-    expect((await ownerPool.query('select user_id from students where id = $1', [invitationStudentId])).rows).toEqual([{ user_id: null }])
-    expect((await ownerPool.query('select id from memberships where institution_id = $1 and user_id = $2', [institutionA, studentRecipientId])).rows).toEqual([])
+    expect((await queryAsOwnerInA('select user_id from students where id = $1', [invitationStudentId])).rows).toEqual([{ user_id: null }])
+    expect((await queryAsOwnerInA('select id from memberships where institution_id = $1 and user_id = $2', [institutionA, studentRecipientId])).rows).toEqual([])
   })
 
   it('recusa aceite de convite de responsável após o vínculo com o aluno ser removido', async () => {
     const input = createStudentInvitationInputSchema.parse({ institutionId: institutionA, studentId: invitationStudentId, target: 'guardian', guardianId: invitationGuardianId, email: 'guardian-invitee@example.test' })
-    const issued = await service.createStudentInvitation(input, { kind: 'institution', userId: guardianIssuerId, sessionId: actor.sessionId })
+    const issued = await issueStudentInvitation(input, guardianIssuerId)
     expect(issued.status).toBe('success')
     if (issued.status === 'failure') return
 
-    await ownerPool.query('delete from student_guardians where student_id = $1 and guardian_id = $2', [invitationStudentId, invitationGuardianId])
+    await queryAsOwnerInA('delete from student_guardians where student_id = $1 and guardian_id = $2', [invitationStudentId, invitationGuardianId])
     const accepted = await service.accept(tokenFrom(issued.value.inviteUrl), { userId: guardianRecipientId, sessionId: actor.sessionId })
     expect(accepted).toMatchObject({ status: 'failure', failure: { code: 'invitation-authority-lost' } })
-    expect((await ownerPool.query('select user_id from guardians where id = $1', [invitationGuardianId])).rows).toEqual([{ user_id: null }])
-    expect((await ownerPool.query('select id from memberships where institution_id = $1 and user_id = $2', [institutionA, guardianRecipientId])).rows).toEqual([])
+    expect((await queryAsOwnerInA('select user_id from guardians where id = $1', [invitationGuardianId])).rows).toEqual([{ user_id: null }])
+    expect((await queryAsOwnerInA('select id from memberships where institution_id = $1 and user_id = $2', [institutionA, guardianRecipientId])).rows).toEqual([])
   })
 
   it('não revela convites sem tenant nem token válido', async () => {

@@ -34,7 +34,7 @@ instituição depende de convite; quem tem conta sem vínculo vê o estado de es
 
 | Prioridade | Complexidade | Situação | Versão |
 | --- | --- | --- | --- |
-| Alta | Média | Em desenvolvimento | Atual |
+| Alta | Média | Implementado | Atual |
 
 ### RF0003 – Autenticar usuário
 
@@ -52,7 +52,7 @@ pode trocar de instituição sem sair; o cliente lembra a última escolha.
 
 | Prioridade | Complexidade | Situação | Versão |
 | --- | --- | --- | --- |
-| Alta | Alta | Em desenvolvimento | Atual |
+| Alta | Alta | Implementado | Atual |
 
 ### RF0005 – Encerrar sessão
 
@@ -68,7 +68,7 @@ A interface deve encaminhar aluno, profissional, monitor e administrador geral a
 
 | Prioridade | Complexidade | Situação | Versão |
 | --- | --- | --- | --- |
-| Alta | Média | Em desenvolvimento | Atual |
+| Alta | Média | Implementado | Atual |
 
 ### RF0007 – Gerenciar papéis e permissões
 
@@ -89,25 +89,26 @@ falhou. A trilha completa de auditoria dessas mudanças ainda está prevista.
 
 | Prioridade | Complexidade | Situação | Versão |
 | --- | --- | --- | --- |
-| Alta | Alta | Em desenvolvimento | Atual |
+| Alta | Alta | Implementado | Atual |
 
 ### RF0008 – Vincular acompanhamento
 
 O sistema deve relacionar profissionais ou monitores aos estudantes que acompanham.
 Quem gerencia acompanhamentos define, por estudante, as pessoas da equipe que o
 acompanham; só vínculos ativos de profissional ou monitor são aceitos, e remover alguém
-da instituição encerra os acompanhamentos dessa pessoa. A interface dessa definição
-ainda está prevista.
+da instituição encerra os acompanhamentos dessa pessoa. Na web e no mobile, essa
+definição fica no detalhe do estudante, dentro da seção Gestão.
 
 | Prioridade | Complexidade | Situação | Versão |
 | --- | --- | --- | --- |
-| Alta | Média | Em desenvolvimento | Atual |
+| Alta | Média | Implementado | Atual |
 
 ### RF0009 – Manter ficha do estudante
 
 Profissionais autorizados devem registrar dados, observações e histórico do estudante.
-O cadastro civil e o termo institucional assinado, com PDF ou imagem de até 2 MB,
-estão em desenvolvimento na web e no mobile.
+Na seção Gestão, na web e no mobile, quem gerencia estudantes cadastra e edita os dados
+civis e os responsáveis, anexa o termo institucional assinado, em PDF ou imagem de até
+2 MB, e arquiva o estudante.
 A ficha reúne turma, condições acompanhadas e necessidades de apoio; data de nascimento,
 nome social e responsáveis vêm do cadastro do estudante e aparecem na ficha para
 consulta. Cada gravação preserva a versão anterior, e observações não podem ser editadas
@@ -119,7 +120,7 @@ a ficha apenas para consulta.
 
 | Prioridade | Complexidade | Situação | Versão |
 | --- | --- | --- | --- |
-| Alta | Alta | Em desenvolvimento | Atual |
+| Alta | Alta | Implementado | Atual |
 
 ### RF0010 – Organizar rotina e tarefas
 
@@ -168,7 +169,7 @@ mesmas regras, sem ganhar vínculo nem acesso a dados de alunos.
 
 | Prioridade | Complexidade | Situação | Versão |
 | --- | --- | --- | --- |
-| Média | Alta | Em desenvolvimento | Atual |
+| Média | Alta | Implementado | Atual |
 
 ### RF0015 – Recuperar senha
 
@@ -287,15 +288,13 @@ somente o hash do token e seus papéis ficam em `invitation_roles`. Vínculos re
 recebem data e autor da remoção, sem apagar a conta nem a autoria de registros, e
 vínculos e papéis têm versão para recusar edição feita sobre dados desatualizados. O
 estudante pode ser cadastrado sem conta própria; seus responsáveis ficam em
-`student_guardians`, os consentimentos em `student_consents` e cada acompanhamento
+`student_guardians`, os consentimentos, com o termo assinado, em `student_consents` e cada acompanhamento
 liga um vínculo ativo de profissional ou monitor ao estudante. A ficha do estudante
 fica em `student_profile_revisions`, uma revisão por gravação, as observações em
 `student_observations` e as consultas realizadas em `student_consultations`; as três
 tabelas aceitam somente leitura e inserção, com autoria igual à pessoa autenticada. A
 grade semanal do aluno fica em `routine_blocks`, com versão para recusar edição feita
-sobre dados desatualizados. As tabelas de responsáveis, consentimentos, ficha e rotina
-ainda não aparecem no diagrama. O
-banco aplica isolamento por linha para impedir acesso entre instituições.
+sobre dados desatualizados. O banco aplica isolamento por linha para impedir acesso entre instituições.
 
 _[Modelo atual do banco de dados disponível no DOCX oficial.]_
 
@@ -339,10 +338,10 @@ A API valida entradas e saídas a partir de contratos compartilhados, nega acess
 | Funcionalidade | Prioridade | Situação | Descrição |
 | --- | --- | --- | --- |
 | Autenticação e sessões | Alta | Implementado | Cadastro, login web/mobile, contexto e logout |
-| Papéis, permissões e vínculos | Alta | Em desenvolvimento | Papéis somados, catálogo fechado, isolamento institucional e gestão da equipe |
-| Instituições e convites | Média | Em desenvolvimento | Cadastro, convite de uso único e aceite na web |
+| Papéis, permissões e vínculos | Alta | Implementado | Papéis somados, catálogo fechado, isolamento institucional, gestão da equipe e acompanhamentos |
+| Instituições e convites | Média | Implementado | Cadastro, convite de uso único e aceite na web |
 | Interfaces de autenticação | Alta | Implementado | Entrada, cadastro e ambientes por perfil na web e no mobile |
-| Fichas e observações | Alta | Em desenvolvimento | Dados de apoio, histórico e consultas realizadas; auditoria prevista |
+| Fichas e observações | Alta | Implementado | Cadastro do estudante, termo assinado, ficha, histórico e consultas realizadas; auditoria prevista |
 | Rotina, tarefas e foco | Alta | Em desenvolvimento | Grade semanal pronta; tarefas, foco e offline previstos |
 | Agenda e atendimentos | Alta | Previsto | Consultas, anotações e notificações |
 | Métricas e grupos | Média | Previsto | Indicadores configuráveis por instituição |
@@ -351,7 +350,53 @@ A API valida entradas e saídas a partir de contratos compartilhados, nega acess
 
 ## Sprint 1
 
+Período: 19/08/2026 a 09/09/2026.
+
+A primeira sprint preparou a base técnica do produto. O objetivo foi deixar o repositório pronto para receber funcionalidades com segurança: aplicações separadas, pacotes compartilhados, regras de desenvolvimento verificadas automaticamente e uma primeira função ponta a ponta, a consulta de estado do serviço, funcionando na API, na web e no mobile.
+
+Todas as entregas previstas para a sprint foram concluídas; a tabela apresenta a data em que cada uma foi entregue.
+
+**Entregas da Sprint 1**
+
+| Entrega | Área | Data de entrega | Descrição |
+| --- | --- | --- | --- |
+| Monorepo e automação | Infraestrutura | 22/08/2026 | pnpm workspaces, Turborepo, TypeScript 6 e ESM em todos os pacotes; integração contínua executa lint, tipos, testes e build de cada workspace. |
+| Regras de desenvolvimento | Infraestrutura | 26/08/2026 | Regras de arquitetura, idioma, tipos, erros e testes; lint de fronteiras entre pacotes, proibição de any, forwardRef e class-validator, nomes em kebab-case e Conventional Commits. |
+| Separação das aplicações | Infraestrutura | 27/08/2026 | Aplicações api, web e mobile e pacotes core, design-tokens, react-client e config, cada um com entrypoints públicos explícitos. |
+| Contrato da API | Pacote compartilhado | 28/08/2026 | Contrato versionado em /v1 declarado com Zod e oRPC, catálogo fechado de falhas, identificadores tipados e documento OpenAPI gerado. |
+| Tokens visuais | Pacote compartilhado | 29/08/2026 | Escalas de cor, espaçamento e tipografia com verificação automática de contraste WCAG 2.2 AA e variáveis de tema para a web. |
+| Banco de dados e isolamento | API | 01/09/2026 | PostgreSQL 18 em Docker Compose, papel de aplicação sem posse das tabelas, transação com contexto de instituição, ator e sessão e isolamento por linha provado em banco real. |
+| Base da API | API | 02/09/2026 | NestJS 12 com configuração validada na inicialização, rotas negadas por padrão, identificador de correlação, logs estruturados com Pino e rota de saúde. |
+| Cliente React compartilhado | Pacote compartilhado | 03/09/2026 | Cliente tipado com TanStack Query, sem interface, consumido igualmente pela web e pelo mobile. |
+| Scaffolding da web | Web | 04/09/2026 | Vite, React, Tailwind CSS e TanStack Router, textos em pt-BR via i18n tipado e tela de estado do serviço com testes de acessibilidade. |
+| Scaffolding do mobile | Mobile | 05/09/2026 | Expo e Expo Router, tokens, i18n tipado, tela de estado do serviço com testes de acessibilidade e perfis de build. |
+| Autenticação e permissões | API e pacote compartilhado | 09/09/2026 | Cadastro e entrada pela API, cookie seguro para web e credencial Bearer para mobile, sessões opacas guardadas como hash, encerramento de sessão e catálogo fechado de permissões aplicado a toda rota. |
+
+Resultado: RF0001 foi entregue, a autenticação e as permissões ficaram disponíveis na API para as telas da sprint seguinte, e os requisitos RNF0003, RNF0004, RNF0005, RNF0006, RNF0008 e RNF0009 passaram a ser verificados automaticamente desde a base do projeto. As regras definidas nesta sprint valem para todo o código das sprints seguintes.
+
 ## Sprint 2
+
+Período: 16/09/2026 a 30/09/2026.
+
+A segunda sprint transformou a base em produto utilizável pelas instituições. Foram entregues o acesso das pessoas, a estrutura de instituições, papéis e equipe e o primeiro conjunto de funções de acompanhamento dos estudantes, sempre na web e no mobile sobre o mesmo contrato.
+
+Todas as entregas previstas para a sprint foram concluídas; a tabela apresenta a data em que cada uma foi entregue.
+
+**Entregas da Sprint 2**
+
+| Entrega | Área | Data de entrega | Descrição |
+| --- | --- | --- | --- |
+| Telas de autenticação | Web e mobile | 18/09/2026 | Telas de entrada, cadastro e saída sobre a API da sprint anterior, com mensagens de falha junto do campo e credencial guardada com proteção nativa no mobile (RF0002, RF0003 e RF0005). |
+| Contexto e ambientes por perfil | Web e mobile | 22/09/2026 | Resolução de instituições, papéis e permissões após a entrada, troca de instituição, espera por convite e ambiente profissional com navegação definida pelas permissões (RF0004 e RF0006). |
+| Instituições e convites | API e web | 24/09/2026 | O administrador geral cadastra instituições, consulta membros e papéis e convida pessoas por link de uso único válido por sete dias (RF0014). |
+| Papéis e permissões | API e pacote compartilhado | 26/09/2026 | Cinco papéis iniciais, papéis somados por vínculo e papéis personalizados sem escalonamento indevido (RF0007). |
+| Gestão da equipe | Web e mobile | 28/09/2026 | Listagem e busca de profissionais e monitores, convites, troca de papéis e remoção de vínculos com confirmação. |
+| Padrão de interface mobile | Mobile | 29/09/2026 | Layout em listas, telas em pilha, avisos passageiros anunciados ao leitor de tela, ícones Phosphor e escolha de tema. |
+| Estudantes e acompanhamentos | API, web e mobile | 30/09/2026 | Cadastro civil, responsáveis, termo institucional assinado, arquivamento e definição da equipe que acompanha cada estudante (RF0008). |
+| Ficha do estudante | API, web e mobile | 30/09/2026 | Ficha com histórico de revisões, observações e consultas realizadas que não podem ser alteradas depois de registradas (RF0009). |
+| Consentimento e rotina semanal | API, web e mobile | 30/09/2026 | O responsável confirma e revoga o consentimento registrado pela instituição; a equipe monta a grade semanal do aluno, que aluno e responsável consultam na aba Rotina (RF0010, parcial). |
+
+Resultado: os requisitos RF0002 a RF0009 e RF0014 estão implementados, e a grade semanal do RF0010 já está disponível. Ficam para as próximas sprints as tarefas do aluno, o uso sem conexão, a agenda de atendimentos, as métricas, os relatórios, a recuperação de senha e a trilha de auditoria.
 
 ## Sprint 3
 

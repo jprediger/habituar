@@ -25,6 +25,7 @@ import { Route as ProfessionalIndexRouteImport } from './routes/professional/ind
 import { Route as ProfessionalManagementRouteImport } from './routes/professional/management'
 import { Route as ProfessionalProfileRouteImport } from './routes/professional/profile'
 import { Route as StudentIndexRouteImport } from './routes/student/index'
+import { Route as StudentRoutineRouteImport } from './routes/student/routine'
 import { Route as AdminInstitutionsIndexRouteImport } from './routes/admin/institutions/index'
 import { Route as AdminInstitutionsInstitutionIdRouteImport } from './routes/admin/institutions/$institutionId'
 import { Route as AdminInstitutionsNewRouteImport } from './routes/admin/institutions/new'
@@ -114,6 +115,11 @@ const StudentIndexRoute = StudentIndexRouteImport.update({
   path: '/',
   getParentRoute: () => StudentRoute,
 } as any)
+const StudentRoutineRoute = StudentRoutineRouteImport.update({
+  id: '/routine',
+  path: '/routine',
+  getParentRoute: () => StudentRoute,
+} as any)
 const AdminInstitutionsIndexRoute = AdminInstitutionsIndexRouteImport.update({
   id: '/institutions/',
   path: '/institutions/',
@@ -175,6 +181,7 @@ export interface FileRoutesByFullPath {
   '/invite/$token': typeof InviteTokenRoute
   '/professional/management': typeof ProfessionalManagementRouteWithChildren
   '/professional/profile': typeof ProfessionalProfileRoute
+  '/student/routine': typeof StudentRoutineRoute
   '/admin/': typeof AdminIndexRoute
   '/professional/': typeof ProfessionalIndexRoute
   '/student/': typeof StudentIndexRoute
@@ -197,6 +204,7 @@ export interface FileRoutesByTo {
   '/select-institution': typeof SelectInstitutionRoute
   '/invite/$token': typeof InviteTokenRoute
   '/professional/profile': typeof ProfessionalProfileRoute
+  '/student/routine': typeof StudentRoutineRoute
   '/admin': typeof AdminIndexRoute
   '/professional': typeof ProfessionalIndexRoute
   '/student': typeof StudentIndexRoute
@@ -224,6 +232,7 @@ export interface FileRoutesById {
   '/invite/$token': typeof InviteTokenRoute
   '/professional/management': typeof ProfessionalManagementRouteWithChildren
   '/professional/profile': typeof ProfessionalProfileRoute
+  '/student/routine': typeof StudentRoutineRoute
   '/admin/': typeof AdminIndexRoute
   '/professional/': typeof ProfessionalIndexRoute
   '/student/': typeof StudentIndexRoute
@@ -252,6 +261,7 @@ export interface FileRouteTypes {
     | '/invite/$token'
     | '/professional/management'
     | '/professional/profile'
+    | '/student/routine'
     | '/admin/'
     | '/professional/'
     | '/student/'
@@ -274,6 +284,7 @@ export interface FileRouteTypes {
     | '/select-institution'
     | '/invite/$token'
     | '/professional/profile'
+    | '/student/routine'
     | '/admin'
     | '/professional'
     | '/student'
@@ -300,6 +311,7 @@ export interface FileRouteTypes {
     | '/invite/$token'
     | '/professional/management'
     | '/professional/profile'
+    | '/student/routine'
     | '/admin/'
     | '/professional/'
     | '/student/'
@@ -441,6 +453,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StudentIndexRouteImport
       parentRoute: typeof StudentRoute
     }
+    '/student/routine': {
+      id: '/student/routine'
+      path: '/routine'
+      fullPath: '/student/routine'
+      preLoaderRoute: typeof StudentRoutineRouteImport
+      parentRoute: typeof StudentRoute
+    }
     '/admin/institutions/': {
       id: '/admin/institutions/'
       path: '/institutions'
@@ -556,10 +575,12 @@ const ProfessionalRouteWithChildren = ProfessionalRoute._addFileChildren(
 )
 
 interface StudentRouteChildren {
+  StudentRoutineRoute: typeof StudentRoutineRoute
   StudentIndexRoute: typeof StudentIndexRoute
 }
 
 const StudentRouteChildren: StudentRouteChildren = {
+  StudentRoutineRoute: StudentRoutineRoute,
   StudentIndexRoute: StudentIndexRoute,
 }
 

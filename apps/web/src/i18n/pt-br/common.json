@@ -91,6 +91,7 @@
     }
   },
   "navigation": {
+    "routine": "Rotina",
     "home": "Início",
     "management": "Gestão",
     "profile": "Perfil",
@@ -161,7 +162,9 @@
     "guardianUnlink": "Desvincular responsáveis",
     "assignmentManage": "Gerenciar acompanhamentos",
     "recordRead": "Consultar fichas de alunos",
-    "recordWrite": "Registrar em fichas de alunos"
+    "recordWrite": "Registrar em fichas de alunos",
+  "routineRead": "Consultar rotina de alunos",
+  "routineWrite": "Montar rotina de alunos"
   },
   "staff": {
     "title": "Gestão",
@@ -483,5 +486,112 @@
       "legal-guardian": "Responsável legal",
       "other": "Outro vínculo"
     }
+  },
+  "studentHome": {
+    "self": {
+      "title": "Seu cadastro",
+      "combinedTitle": "Cadastros que você pode consultar",
+      "description": "Dados que a instituição tem sobre você. Para corrigir algo, fale com a instituição.",
+      "birthDate": "Data de nascimento",
+      "birthDateValue": "Data de nascimento: {{date}}",
+      "loading": "Carregando seu cadastro...",
+      "failed": "Não foi possível carregar seu cadastro. Confira a conexão e tente novamente.",
+      "emptyTitle": "Nenhum cadastro encontrado",
+      "emptyDescription": "A instituição ainda não ligou um cadastro de estudante à sua conta."
+    },
+    "consent": {
+      "pendingTitle": "Consentimentos para confirmar",
+      "pendingDescription": "A instituição registrou o consentimento para acompanhar estes estudantes. Falta a sua confirmação.",
+      "confirmedTitle": "Estudantes sob sua responsabilidade",
+      "confirmedDescription": "Consentimentos que você já confirmou. Você pode revogar quando quiser.",
+      "termSummary": "Ao confirmar, você concorda que a instituição registre e use dados de cadastro, necessidades de apoio e registros de atendimento de {{name}} para acompanhar a aprendizagem. Só a equipe autorizada da instituição tem acesso. Você pode revogar esta confirmação quando quiser, nesta mesma tela.",
+      "termReviewNote": "Resumo provisório do termo, pendente de revisão jurídica.",
+      "termMeta": "Termo versão {{version}} · Resumo provisório do termo, pendente de revisão jurídica.",
+      "termVersion": "Termo versão {{version}}",
+      "confirmedOn": "Confirmado em {{date}}",
+      "confirm": "Confirmar consentimento",
+      "confirmTitle": "Confirmar consentimento",
+      "confirmQuestion": "Confirmar o consentimento para {{name}}?",
+      "confirmYes": "Sim, confirmar",
+      "revoke": "Revogar consentimento",
+      "revokeTitle": "Revogar consentimento",
+      "revokeQuestion": "Revogar o consentimento para {{name}}? A instituição passa a ver seu consentimento como revogado. Você pode confirmar de novo depois.",
+      "revokeYes": "Sim, revogar",
+      "cancel": "Voltar",
+      "saving": "Enviando...",
+      "confirmed": "Consentimento confirmado para {{name}}.",
+      "revoked": "Consentimento revogado para {{name}}.",
+      "failed": "Não foi possível enviar. Confira a conexão e tente novamente.",
+      "loading": "Carregando consentimentos...",
+      "loadFailed": "Não foi possível carregar os consentimentos. Confira a conexão e tente novamente.",
+      "noneTitle": "Nenhum estudante sob sua responsabilidade",
+      "noneDescription": "Quando a instituição ligar um estudante a você como responsável, ele aparece aqui."
+    }
+  },
+  "routine": {
+    "title": "Rotina semanal",
+    "studentTitle": "Rotina de {{name}}",
+    "description": "A semana do aluno, de segunda a domingo.",
+    "readOnlyHint": "Quem monta a rotina é a equipe que acompanha o aluno.",
+    "today": "Hoje",
+    "todayTitle": "{{day}} (hoje)",
+    "kindWithNotes": "{{kind}} · {{notes}}",
+    "emptyDay": "Nada planejado",
+    "emptyTitle": "Rotina ainda não montada",
+    "emptyDescription": "Quando a equipe montar a rotina da semana, ela aparece aqui.",
+    "loading": "Carregando a rotina...",
+    "failed": "Não foi possível carregar a rotina. Confira a conexão e tente novamente.",
+    "forbidden": "Seu papel não inclui a rotina deste aluno.",
+    "noStudentsTitle": "Nenhuma rotina para mostrar",
+    "noStudentsDescription": "Quando a instituição ligar um cadastro de estudante à sua conta, a rotina aparece aqui.",
+    "weekdays": {
+      "1": "Segunda-feira",
+      "2": "Terça-feira",
+      "3": "Quarta-feira",
+      "4": "Quinta-feira",
+      "5": "Sexta-feira",
+      "6": "Sábado",
+      "7": "Domingo"
+    },
+    "kinds": {
+      "class": "Aula",
+      "study": "Estudo",
+      "therapy": "Atendimento",
+      "activity": "Atividade",
+      "rest": "Descanso",
+      "other": "Outro"
+    },
+    "time": "{{start}} às {{end}}",
+    "timeHint": "Use o formato 08:30.",
+    "addTo": "Adicionar bloco em {{day}}",
+    "newBlock": "Novo bloco",
+    "editBlock": "Editar {{title}}",
+    "removeBlock": "Remover {{title}}",
+    "removeTitle": "Remover bloco",
+    "removeQuestion": "Remover {{title}} de {{day}}? O bloco sai da rotina da semana.",
+    "removeYes": "Sim, remover",
+    "cancel": "Cancelar",
+    "fields": {
+      "weekday": "Dia",
+      "startsAt": "Início",
+      "endsAt": "Fim",
+      "title": "Título",
+      "kind": "Tipo",
+      "notes": "Observação"
+    },
+    "invalid": {
+      "weekday": "Escolha o dia.",
+      "startsAt": "Informe o horário de início.",
+      "endsAt": "O fim precisa ser depois do início.",
+      "title": "Escreva um título com até {{maximum}} caracteres.",
+      "kind": "Escolha o tipo.",
+      "notes": "Use até {{maximum}} caracteres."
+    },
+    "save": "Salvar bloco",
+    "saving": "Salvando...",
+    "saved": "Rotina atualizada.",
+    "removed": "Bloco removido da rotina.",
+    "conflict": "Outra pessoa mudou a rotina enquanto você editava. A versão atual já está na tela; confira e tente de novo.",
+    "writeFailed": "Não foi possível salvar. Tente novamente."
   }
 }

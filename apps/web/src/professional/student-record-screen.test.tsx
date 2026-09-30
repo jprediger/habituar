@@ -60,7 +60,10 @@ const consultation = studentConsultationSchema.parse({
 const client = vi.hoisted((): { access: StudentRecordAccess | undefined } => ({ access: undefined }))
 
 vi.mock('../client/habituar-client.js', () => ({
-  habituar: { useStudentRecord: () => client.access },
+  habituar: {
+    useStudentRecord: () => client.access,
+    useStudentRoutine: () => ({ state: { status: 'ready', days: [], isEmpty: true }, canEdit: false, add: vi.fn(), update: vi.fn(), remove: vi.fn() }),
+  },
 }))
 
 function createAccess(overrides: Partial<StudentRecordAccess> = {}): StudentRecordAccess {

@@ -21,6 +21,7 @@ import { PageHeader } from '../components/ui/page-header.js'
 import { Section } from '../components/ui/section.js'
 import { Textarea } from '../components/ui/textarea.js'
 import { useInstitutionSession } from '../session/institution-session.js'
+import { StudentRoutineEditor } from './student-routine-editor.js'
 
 /**
  * Ficha do estudante no ambiente profissional: cadastro para consulta, dados de apoio,
@@ -70,6 +71,10 @@ function StudentRecordView({ student, record, access, back }: Readonly<{ student
         {form.isEditing
           ? <StudentProfileEditor form={form} />
           : <StudentProfileSummary profile={record.profile} canWrite={access.canWrite} onEdit={form.startEditing} />}
+      </Section>
+
+      <Section title={t('routine.title')} description={t('routine.description')}>
+        <StudentRoutineEditor studentId={student.id} />
       </Section>
 
       <Section title={t('students.consultations.title')} description={t('students.consultations.description')}>

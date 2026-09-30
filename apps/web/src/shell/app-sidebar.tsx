@@ -3,7 +3,7 @@ import type { NavigationEnvironment, NavigationIcon, NavigationItem } from '@hab
 import { findActiveNavigationItem } from '@habituar/react-client/environment-navigation'
 import { Link, useLocation } from '@tanstack/react-router'
 import type { LucideIcon } from 'lucide-react'
-import { Building2, House, UserRound, UsersRound } from 'lucide-react'
+import { Building2, CalendarDays, House, UserRound, UsersRound } from 'lucide-react'
 import type { ReactElement } from 'react'
 import { useTranslation } from 'react-i18next'
 import { BrandMark } from './brand-mark.js'
@@ -96,6 +96,8 @@ function getNavigationIcon(icon: NavigationIcon): LucideIcon {
   switch (icon) {
     case 'home':
       return House
+    case 'calendar':
+      return CalendarDays
     case 'team':
       return UsersRound
     case 'user':

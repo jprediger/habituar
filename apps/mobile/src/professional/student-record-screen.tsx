@@ -27,6 +27,7 @@ import { Textarea } from '../components/ui/textarea'
 import { useToast } from '../components/ui/toast'
 import type { InstitutionSession } from '../session/session-screen'
 import { readCurrentTime } from '../time/current-time'
+import { StudentRoutineEditor } from './student-routine-editor'
 
 /**
  * Ficha do estudante no ambiente profissional: cadastro para consulta, dados de apoio,
@@ -49,13 +50,13 @@ export function StudentRecordScreen({ session, studentId }: Readonly<{ session: 
         </StackPage>
       )
     case 'ready':
-      return <StudentRecordView student={access.record.student} record={access.record.record} access={access} />
+      return <StudentRecordView session={session} student={access.record.student} record={access.record.record} access={access} />
     default:
       return assertNever(access.record)
   }
 }
 
-function StudentRecordView({ student, record, access }: Readonly<{ student: StudentDetail; record: StudentRecord; access: StudentRecordAccess }>) {
+function StudentRecordView({ session, student, record, access }: Readonly<{ session: InstitutionSession; student: StudentDetail; record: StudentRecord; access: StudentRecordAccess }>) {
   const { t } = useTranslation()
   const toast = useToast()
   const form = useStudentProfileForm({ profile: record.profile, save: access.recordProfile })
@@ -77,6 +78,11 @@ function StudentRecordView({ student, record, access }: Readonly<{ student: Stud
       {form.isEditing
         ? <StudentProfileEditor form={form} onSave={() => { void saveProfile() }} />
         : <StudentProfileSummary profile={record.profile} canWrite={access.canWrite} onEdit={form.startEditing} />}
+      <ListDivider />
+
+      <ListSection title={t('routine.title')} footer={t('routine.description')}>
+        <StudentRoutineEditor session={session} studentId={student.id} />
+      </ListSection>
       <ListDivider />
 
       <ListSection title={t('students.consultations.title')} footer={t('students.consultations.description')}>

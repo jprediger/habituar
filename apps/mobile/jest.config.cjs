@@ -50,6 +50,8 @@ module.exports = {
     '^@habituar/core/staff$': '<rootDir>/../../packages/core/src/staff.ts',
     '^@habituar/core/students$': '<rootDir>/../../packages/core/src/students.ts',
     '^@habituar/core/student-records$': '<rootDir>/../../packages/core/src/student-records.ts',
+    '^@habituar/core/routines$': '<rootDir>/../../packages/core/src/routines.ts',
+    '^@habituar/react-client/routine-forms$': '<rootDir>/../../packages/react-client/src/routine-forms.ts',
     '^@habituar/react-client/student-record-forms$':
       '<rootDir>/../../packages/react-client/src/student-record-forms.ts',
   },

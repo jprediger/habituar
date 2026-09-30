@@ -4,7 +4,7 @@ import Svg, { Path } from 'react-native-svg'
 type NavigationIconWeight = 'regular' | 'fill'
 
 // Desenhos do Phosphor Icons (MIT, phosphoricons.com), grade de 256; `team` é o
-// `users-three`. Copiados em vez de
+// `users-three` e `calendar` é o `calendar-blank`. Copiados em vez de
 // importar `phosphor-react-native`: a raiz do pacote arrasta os ~1.500 ícones para o
 // bundle (o Metro não faz tree-shaking), e o import por ícone expõe a fonte da biblioteca
 // ao nosso typecheck estrito. Ícone novo no catálogo quebra o build aqui até ganhar os
@@ -14,6 +14,11 @@ const GLYPHS: Readonly<Record<NavigationIconName, Readonly<Record<NavigationIcon
     regular:
       'm219.31 108.68-80-80a16 16 0 0 0-22.62 0l-80 80A15.87 15.87 0 0 0 32 120v96a8 8 0 0 0 8 8h64a8 8 0 0 0 8-8v-56h32v56a8 8 0 0 0 8 8h64a8 8 0 0 0 8-8v-96a15.87 15.87 0 0 0-4.69-11.32M208 208h-48v-56a8 8 0 0 0-8-8h-48a8 8 0 0 0-8 8v56H48v-88l80-80 80 80Z',
     fill: 'M224 120v96a8 8 0 0 1-8 8h-56a8 8 0 0 1-8-8v-52a4 4 0 0 0-4-4h-40a4 4 0 0 0-4 4v52a8 8 0 0 1-8 8H40a8 8 0 0 1-8-8v-96a16 16 0 0 1 4.69-11.31l80-80a16 16 0 0 1 22.62 0l80 80A16 16 0 0 1 224 120',
+  },
+  calendar: {
+    regular:
+      'M208,32H184V24a8,8,0,0,0-16,0v8H88V24a8,8,0,0,0-16,0v8H48A16,16,0,0,0,32,48V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V48A16,16,0,0,0,208,32ZM72,48v8a8,8,0,0,0,16,0V48h80v8a8,8,0,0,0,16,0V48h24V80H48V48ZM208,208H48V96H208V208Z',
+    fill: 'M208,32H184V24a8,8,0,0,0-16,0v8H88V24a8,8,0,0,0-16,0v8H48A16,16,0,0,0,32,48V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V48A16,16,0,0,0,208,32Zm0,48H48V48H72v8a8,8,0,0,0,16,0V48h80v8a8,8,0,0,0,16,0V48h24Z',
   },
   team: {
     regular:

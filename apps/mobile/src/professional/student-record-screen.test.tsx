@@ -60,7 +60,10 @@ const consultation = studentConsultationSchema.parse({
 const mockClient: { access: StudentRecordAccess | undefined } = { access: undefined }
 
 jest.mock('../client/habituar-client', () => ({
-  habituar: { useStudentRecord: () => mockClient.access },
+  habituar: {
+    useStudentRecord: () => mockClient.access,
+    useStudentRoutine: () => ({ state: { status: 'ready', days: [], isEmpty: true }, canEdit: false, add: jest.fn(), update: jest.fn(), remove: jest.fn() }),
+  },
 }))
 
 jest.mock('expo-router', () => ({

@@ -161,6 +161,7 @@ valida o padrão Conventional Commits.
 
 ## Documentação
 
+- [Conceitos do sistema](docs/README.md)
 - [Documentação consolidada](DOCUMENTACAO.md)
 - [Documento oficial](documentacao_habituar.docx)
 - [Arquitetura](ARCHITECTURE.md)

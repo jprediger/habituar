@@ -1,4 +1,4 @@
-import { resolve } from 'node:path'
+import { resolve, sep } from 'node:path'
 import { ESLint } from 'eslint'
 import { describe, expect, it } from 'vitest'
 
@@ -9,7 +9,8 @@ const eslint = new ESLint({
 
 async function lintArchitectureFile(file: string) {
   const [result] = await eslint.lintFiles([`fixtures/architecture/${file}`])
-  expect(result?.filePath).toContain(file)
+  // O ESLint devolve o caminho com o separador do sistema; no Windows seria `\`.
+  expect(result?.filePath.split(sep).join('/')).toContain(file)
   return result
 }
 

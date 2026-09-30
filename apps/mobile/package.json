@@ -23,6 +23,7 @@
     "@habituar/design-tokens": "workspace:*",
     "@habituar/react-client": "workspace:*",
     "@react-native-async-storage/async-storage": "2.2.0",
+    "@react-native-community/datetimepicker": "9.1.0",
     "expo": "~57.0.25",
     "expo-constants": "~57.0.19",
     "expo-dev-client": "~57.0.19",

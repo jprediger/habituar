@@ -48,5 +48,9 @@ module.exports = {
     '^@habituar/core/role-bundles$': '<rootDir>/../../packages/core/src/role-bundles.ts',
     '^@habituar/core/roles$': '<rootDir>/../../packages/core/src/roles.ts',
     '^@habituar/core/staff$': '<rootDir>/../../packages/core/src/staff.ts',
+    '^@habituar/core/students$': '<rootDir>/../../packages/core/src/students.ts',
+    '^@habituar/core/student-records$': '<rootDir>/../../packages/core/src/student-records.ts',
+    '^@habituar/react-client/student-record-forms$':
+      '<rootDir>/../../packages/react-client/src/student-record-forms.ts',
   },
 }

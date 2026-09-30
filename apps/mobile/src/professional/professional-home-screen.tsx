@@ -1,15 +1,14 @@
 import { useTranslation } from 'react-i18next'
-import { EmptyState } from '../components/ui/empty-state'
 import { Page } from '../components/ui/page'
 import { PageHeader } from '../components/ui/page-header'
 import { Section } from '../components/ui/section'
 import { SummaryCard } from '../components/ui/summary-card'
 import type { InstitutionSession } from '../session/session-screen'
+import { StudentList } from './student-list'
 
 /**
- * Início do ambiente profissional. Mostra só o que a sessão já sabe — quem é, onde e
- * em qual papel — e reserva o lugar do acompanhamento sem preenchê-lo com exemplo. A
- * saída de sessão não mora aqui: é do Perfil.
+ * Início do ambiente profissional: quem é, onde, em qual papel, e os alunos que a pessoa
+ * acompanha. A saída de sessão não mora aqui: é do Perfil.
  */
 export function ProfessionalHomeScreen({ session }: Readonly<{ session: InstitutionSession }>) {
   const { t } = useTranslation()
@@ -27,9 +26,7 @@ export function ProfessionalHomeScreen({ session }: Readonly<{ session: Institut
         />
       </Section>
 
-      <Section title={t('professional.home.followUpSection')}>
-        <EmptyState title={t('professional.home.emptyTitle')} description={t('professional.home.emptyDescription')} />
-      </Section>
+      <StudentList session={session} title={t('professional.home.followUpSection')} />
     </Page>
   )
 }

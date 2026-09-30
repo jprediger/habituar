@@ -11,7 +11,14 @@ const mockAuthentication: { state: AuthenticationState; actions: Record<string, 
 }
 
 jest.mock('../client/habituar-client', () => ({
-  habituar: { useAuthentication: () => mockAuthentication, useInstitutionSwitcher: () => ({ current: undefined, others: [], switchTo: jest.fn() }) },
+  habituar: {
+    useAuthentication: () => mockAuthentication,
+    useInstitutionSwitcher: () => ({ current: undefined, others: [], switchTo: jest.fn() }),
+    useAccessibleStudents: () => ({
+      state: { status: 'ready', students: [], total: 0, page: 1, pageCount: 1 }, searchDraft: '', setSearchDraft: jest.fn(), applySearch: jest.fn(), clearSearch: jest.fn(),
+      activeSearch: '', pagination: { hasPreviousPage: false, hasNextPage: false, goToPreviousPage: jest.fn(), goToNextPage: jest.fn() }, canOpenRecord: true,
+    }),
+  },
 }))
 
 jest.mock('react-native-safe-area-context', () => ({
@@ -37,11 +44,11 @@ describe('professional home', () => {
     expect(screen.getByText('Fonoaudióloga')).toBeOnTheScreen()
   })
 
-  it('explains what will appear once follow-up exists instead of showing sample data', () => {
+  it('lists the students the person follows, explaining when there are none yet', () => {
     render(<ProfessionalHomeScreen session={createInstitutionSession('professional')} />)
 
-    expect(screen.getByText('Nada para acompanhar por enquanto')).toBeOnTheScreen()
-    expect(screen.getByText(/seus estudantes e os próximos atendimentos vão aparecer aqui/)).toBeOnTheScreen()
+    expect(screen.getByText('Nenhum estudante para mostrar')).toBeOnTheScreen()
+    expect(screen.getByLabelText(/Buscar estudante pelo nome/)).toBeOnTheScreen()
   })
 
   it('leaves signing out to the profile', () => {

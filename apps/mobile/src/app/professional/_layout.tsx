@@ -20,6 +20,8 @@ export default function ProfessionalLayout() {
           <Tabs.Screen name="index" />
           <Tabs.Screen name="management" />
           <Tabs.Screen name="profile" />
+          {/* Fora da barra: a ficha abre a partir da lista do Início, e voltar leva a ele. */}
+          <Tabs.Screen name="students/[student-id]" />
         </Tabs>
       )}
     </InstitutionSessionScreen>

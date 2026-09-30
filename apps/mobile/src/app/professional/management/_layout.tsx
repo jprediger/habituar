@@ -8,7 +8,7 @@ export const unstable_settings = { initialRouteName: 'index' }
 
 /**
  * Pilha da aba Gestão. O guard envolve a pilha inteira, então deep link para membro,
- * convite ou papel também volta ao Início quando a pessoa não pode ler a equipe.
+ * convite, papel ou estudante também verifica as permissões atuais.
  */
 export default function ManagementLayout() {
   return (

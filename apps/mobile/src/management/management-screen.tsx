@@ -1,5 +1,3 @@
-import { getMembershipCapabilities, listManagementSections } from '@habituar/react-client/staff-management'
-import type { ManagementSection } from '@habituar/react-client/staff-management'
 import { assertNever } from '@habituar/core/assert-never'
 import { useRouter } from 'expo-router'
 import { useTranslation } from 'react-i18next'
@@ -9,6 +7,8 @@ import { ListSection } from '../components/ui/list-section'
 import { Page } from '../components/ui/page'
 import { PageHeader } from '../components/ui/page-header'
 import type { InstitutionSession } from '../session/session-screen'
+import { listMobileManagementSections } from './management-navigation'
+import type { MobileManagementSection } from './management-navigation'
 
 /**
  * Aba Gestão: lista das seções que a pessoa pode abrir. Cada seção é uma tela própria na
@@ -17,7 +17,7 @@ import type { InstitutionSession } from '../session/session-screen'
 export function ManagementScreen({ session }: Readonly<{ session: InstitutionSession }>) {
   const { t } = useTranslation()
   const router = useRouter()
-  const sections = listManagementSections(getMembershipCapabilities(session.membership.permissions))
+  const sections = listMobileManagementSections(session)
 
   return (
     <Page>
@@ -37,8 +37,10 @@ export function ManagementScreen({ session }: Readonly<{ session: InstitutionSes
   )
 }
 
-function getSectionIcon(section: ManagementSection): IconName {
+function getSectionIcon(section: MobileManagementSection): IconName {
   switch (section) {
+    case 'students':
+      return 'user'
     case 'team':
       return 'users-three'
     case 'invitations':

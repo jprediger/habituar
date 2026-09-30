@@ -1,31 +1,103 @@
 {
   "toast": {
-    "routine": {"routineSaved": {"title": "Rotina atualizada", "description": "O aluno já vê a mudança."}, "routineRemoved": {"title": "Bloco removido", "description": "Ele saiu da rotina da semana."}},
-    "studentHome": {"consentConfirmed": {"title": "Consentimento confirmado", "description": "A instituição já vê a sua confirmação."}, "consentRevoked": {"title": "Consentimento revogado", "description": "Você pode confirmar de novo quando quiser."}},
+    "routine": {
+      "routineSaved": {
+        "title": "Rotina atualizada",
+        "description": "O aluno já vê a mudança."
+      },
+      "routineRemoved": {
+        "title": "Bloco removido",
+        "description": "Ele saiu da rotina da semana."
+      }
+    },
+    "studentHome": {
+      "consentConfirmed": {
+        "title": "Consentimento confirmado",
+        "description": "A instituição já vê a sua confirmação."
+      },
+      "consentRevoked": {
+        "title": "Consentimento revogado",
+        "description": "Você pode confirmar de novo quando quiser."
+      }
+    },
     "studentRecord": {
-      "profileSaved": { "title": "Ficha salva", "description": "A versão anterior continua no histórico." },
-      "observationSaved": { "title": "Observação registrada", "description": "Ela aparece no histórico da ficha." },
-      "consultationSaved": { "title": "Consulta registrada", "description": "Ela aparece na lista de consultas." }
+      "profileSaved": {
+        "title": "Ficha salva",
+        "description": "A versão anterior continua no histórico."
+      },
+      "observationSaved": {
+        "title": "Observação registrada",
+        "description": "Ela aparece no histórico da ficha."
+      },
+      "consultationSaved": {
+        "title": "Consulta registrada",
+        "description": "Ela aparece na lista de consultas."
+      }
     },
     "member": {
-      "rolesUpdated": { "title": "Papéis atualizados", "description": "As permissões da pessoa foram salvas." },
-      "removed": { "title": "Vínculo removido", "description": "A pessoa não faz mais parte de {{institution}}." }
+      "rolesUpdated": {
+        "title": "Papéis atualizados",
+        "description": "As permissões da pessoa foram salvas."
+      },
+      "removed": {
+        "title": "Vínculo removido",
+        "description": "A pessoa não faz mais parte de {{institution}}."
+      }
     },
     "role": {
-      "created": { "title": "Papel criado", "description": "O novo papel já pode ser atribuído à equipe." },
-      "updated": { "title": "Papel atualizado", "description": "As alterações foram aplicadas às pessoas que têm este papel." },
-      "updatedWithRevocations": { "title": "Papel atualizado", "description": "{{count}} convites pendentes foram revogados. Envie novos convites para essas pessoas." },
-      "deleted": { "title": "Papel excluído", "description": "O papel foi removido da instituição." }
+      "created": {
+        "title": "Papel criado",
+        "description": "O novo papel já pode ser atribuído à equipe."
+      },
+      "updated": {
+        "title": "Papel atualizado",
+        "description": "As alterações foram aplicadas às pessoas que têm este papel."
+      },
+      "updatedWithRevocations": {
+        "title": "Papel atualizado",
+        "description": "{{count}} convites pendentes foram revogados. Envie novos convites para essas pessoas."
+      },
+      "deleted": {
+        "title": "Papel excluído",
+        "description": "O papel foi removido da instituição."
+      }
     },
     "invitation": {
-      "revoked": { "title": "Convite revogado", "description": "O convite de {{email}} foi revogado." }
+      "revoked": {
+        "title": "Convite revogado",
+        "description": "O convite de {{email}} foi revogado."
+      }
     }
   },
-  "roles": { "team-management": "Gestão da equipe", "care-assigned": "Atendimento aos alunos vinculados", "care-institution": "Atendimento da instituição", "monitoring": "Monitoria", "student": "Aluno", "guardian": "Responsável" },
-  "roleDescriptions": { "team-management": "Organiza a equipe e consulta o cadastro básico de todos os alunos.", "care-assigned": "Acompanha os alunos vinculados a esta pessoa.", "care-institution": "Acompanha os alunos da instituição.", "monitoring": "Consulta os alunos vinculados à monitoria.", "student": "Consulta o próprio cadastro.", "guardian": "Consulta o cadastro dos alunos pelos quais responde." },
-  "institutionSwitcher": { "current": "Instituição atual: {{institution}}", "change": "Trocar instituição" },
-  "awaitingInvitation": { "title": "Aguardando convite", "description": "Sua conta está pronta. Peça um convite à pessoa responsável pela instituição para começar.", "guidance": "Abra o link do convite no navegador para aceitar.", "refresh": "Verificar meu acesso" },
-  "platform": { "mobileNotice": "A administração das instituições está disponível na versão web. Acesse o Habituar pelo navegador." },
+  "roles": {
+    "team-management": "Gestão da equipe",
+    "care-assigned": "Atendimento aos alunos vinculados",
+    "care-institution": "Atendimento da instituição",
+    "monitoring": "Monitoria",
+    "student": "Aluno",
+    "guardian": "Responsável"
+  },
+  "roleDescriptions": {
+    "team-management": "Organiza a equipe e consulta o cadastro básico de todos os alunos.",
+    "care-assigned": "Acompanha os alunos vinculados a esta pessoa.",
+    "care-institution": "Acompanha os alunos da instituição.",
+    "monitoring": "Consulta os alunos vinculados à monitoria.",
+    "student": "Consulta o próprio cadastro.",
+    "guardian": "Consulta o cadastro dos alunos pelos quais responde."
+  },
+  "institutionSwitcher": {
+    "current": "Instituição atual: {{institution}}",
+    "change": "Trocar instituição"
+  },
+  "awaitingInvitation": {
+    "title": "Aguardando convite",
+    "description": "Sua conta está pronta. Peça um convite à pessoa responsável pela instituição para começar.",
+    "guidance": "Abra o link do convite no navegador para aceitar.",
+    "refresh": "Verificar meu acesso"
+  },
+  "platform": {
+    "mobileNotice": "A administração das instituições está disponível na versão web. Acesse o Habituar pelo navegador."
+  },
   "authentication": {
     "brandName": "Habituar",
     "heroAlt": "Folhagem verde iluminada pelo sol",
@@ -73,7 +145,12 @@
     }
   },
   "form": {
-    "dateTime": {"placeholderDate": "Toque para escolher a data", "placeholderDateTime": "Toque para escolher a data e a hora", "done": "Concluir", "clear": "Limpar data"},
+    "dateTime": {
+      "placeholderDate": "Toque para escolher a data",
+      "placeholderDateTime": "Toque para escolher a data e a hora",
+      "done": "Concluir",
+      "clear": "Limpar data"
+    },
     "requiredFieldLabel": "{{label}}, campo obrigatório",
     "password": {
       "show": "Mostrar senha",
@@ -112,14 +189,17 @@
     "management": "Gestão",
     "profile": "Perfil",
     "institutions": "Instituições",
-    "back": "Voltar"
+    "back": "Voltar",
+    "students": "Estudantes"
   },
   "professional": {
     "eyebrow": "Ambiente profissional",
     "home": {
       "greeting": "Olá, {{name}}",
       "membershipSection": "Vínculo ativo",
-      "followUpSection": "Acompanhamento"
+      "followUpSection": "Acompanhamento",
+      "emptyTitle": "Nada para acompanhar por enquanto",
+      "emptyDescription": "Quando o acompanhamento de estudantes estiver disponível, seus estudantes e os próximos atendimentos vão aparecer aqui."
     },
     "profile": {
       "accountSection": "Conta",
@@ -149,8 +229,8 @@
     "assignmentManage": "Gerenciar acompanhamentos",
     "recordRead": "Consultar fichas de alunos",
     "recordWrite": "Registrar em fichas de alunos",
-  "routineRead": "Consultar rotina de alunos",
-  "routineWrite": "Montar rotina de alunos"
+    "routineRead": "Consultar rotina de alunos",
+    "routineWrite": "Montar rotina de alunos"
   },
   "staff": {
     "title": "Gestão",
@@ -159,12 +239,14 @@
     "sections": {
       "team": "Equipe",
       "invitations": "Convites",
-      "roles": "Papéis"
+      "roles": "Papéis",
+      "students": "Estudantes"
     },
     "sectionDescriptions": {
       "team": "Pessoas da instituição, seus papéis e novos convites",
       "invitations": "Histórico de convites enviados",
-      "roles": "Papéis personalizados e modelos do sistema"
+      "roles": "Papéis personalizados e modelos do sistema",
+      "students": "Cadastros, responsáveis e acompanhamentos dos estudantes"
     },
     "loading": "Carregando...",
     "retry": "Tentar novamente",
@@ -496,7 +578,100 @@
       "grandparent": "Avó ou avô",
       "legal-guardian": "Responsável legal",
       "other": "Outro vínculo"
-    }
+    },
+    "title": "Estudantes",
+    "search": "Buscar estudante",
+    "loading": "Carregando estudantes...",
+    "loadFailed": "Não foi possível carregar os estudantes.",
+    "retry": "Tentar novamente",
+    "noResults": "Nenhum estudante encontrado para esta busca.",
+    "empty": "Nenhum estudante cadastrado.",
+    "total": "{{count}} estudantes",
+    "previous": "Anterior",
+    "next": "Próxima",
+    "create": "Cadastrar estudante",
+    "edit": "Editar estudante",
+    "data": "Dados",
+    "fullName": "Nome completo",
+    "socialName": "Nome social",
+    "birthDate": "Data de nascimento",
+    "datePlaceholder": "AAAA-MM-DD",
+    "dateHint": "Informe no formato AAAA-MM-DD.",
+    "invalidDate": "Informe uma data válida no formato AAAA-MM-DD.",
+    "required": "Este campo é obrigatório.",
+    "ageRangeLabel": "Faixa etária",
+    "ageRange": {
+      "0-5": "0 a 5 anos",
+      "6-10": "6 a 10 anos",
+      "11-14": "11 a 14 anos",
+      "15-17": "15 a 17 anos",
+      "18+": "18 anos ou mais"
+    },
+    "guardians": "Responsáveis",
+    "noGuardians": "Nenhum responsável vinculado.",
+    "addGuardian": "Adicionar responsável",
+    "guardianName": "Nome do responsável",
+    "guardianEmail": "E-mail do responsável",
+    "manageGuardians": "Gerenciar responsáveis",
+    "guardianAdded": "Responsável adicionado",
+    "guardianRemoved": "Responsável removido",
+    "inviteGuardian": "Convidar",
+    "removeGuardian": "Remover",
+    "consent": "Consentimento",
+    "consentHint": "Para menores de 18 anos, anexe o termo institucional assinado (PDF ou imagem de até 2 MB).",
+    "termSigned": "Termo assinado pelo responsável",
+    "signedOn": "Data da assinatura",
+    "consentStatusLabel": "Situação do consentimento",
+    "consentStatus": {
+      "not-required": "Não necessário",
+      "institution-recorded": "Registrado pela instituição",
+      "pending-guardian": "Aguardando responsável",
+      "confirmed": "Confirmado",
+      "revoked": "Revogado"
+    },
+    "accountStatusLabel": "Situação da conta",
+    "accountStatus": {
+      "none": "Sem conta",
+      "invitation-pending": "Convite pendente",
+      "active": "Conta ativa"
+    },
+    "assignments": "Acompanhantes",
+    "noAssignments": "Nenhum acompanhante definido.",
+    "manageAssignments": "Gerenciar acompanhamentos",
+    "editAssignments": "Editar acompanhantes",
+    "assignmentsSaved": "Acompanhamentos atualizados",
+    "assignmentPageHint": "Navegue pelas páginas da equipe para escolher acompanhantes.",
+    "environment": {
+      "professional": "Profissional",
+      "monitor": "Monitor"
+    },
+    "save": "Salvar",
+    "saving": "Salvando...",
+    "saved": "Estudante atualizado",
+    "created": "Estudante cadastrado",
+    "saveFailed": "Não foi possível salvar os dados. Confira os campos e tente novamente.",
+    "actionFailed": "Não foi possível concluir esta ação.",
+    "archiveSection": "Arquivamento",
+    "archive": "Arquivar estudante",
+    "unarchive": "Desarquivar estudante",
+    "archiveConfirm": "Arquivar {{name}}? Os acompanhamentos ativos serão encerrados.",
+    "unarchiveConfirm": "Desarquivar {{name}}?",
+    "archived": "Estudante arquivado",
+    "unarchived": "Estudante desarquivado",
+    "cancel": "Cancelar",
+    "selectStudent": "Escolha o estudante",
+    "selected": "Selecionado",
+    "pendingConsents": "Termos pendentes",
+    "termVersion": "Versão {{version}}",
+    "termUnavailable": "A confirmação ficará disponível quando o texto do termo for publicado.",
+    "confirmConsent": "Confirmar termo",
+    "selectDate": "Selecionar data",
+    "dateDone": "Concluído",
+    "consentDocument": "Documento do termo assinado",
+    "selectDocument": "Selecionar PDF ou imagem",
+    "documentRequired": "Anexe o termo assinado.",
+    "invalidDocument": "Selecione um PDF ou imagem válida de até 2 MB.",
+    "documentLoadFailed": "Não foi possível abrir o documento do termo."
   },
   "studentHome": {
     "self": {

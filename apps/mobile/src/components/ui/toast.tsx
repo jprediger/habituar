@@ -128,8 +128,8 @@ function getToastIcon(type: ToastType): 'shield-check' | 'warning' | 'info' | 'w
 function getToastColor(type: ToastType, colors: ReturnType<typeof useThemeTokens>['colors']): string {
   switch (type) {
     case 'success': return colors.primary
-    case 'warning': return colors.warning
-    case 'info': return colors.info
+    case 'warning': return colors.danger
+    case 'info': return colors.primary
     case 'error': return colors.danger
   }
 }

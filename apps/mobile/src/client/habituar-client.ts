@@ -1,6 +1,7 @@
 import { createHabituarReactClient } from '@habituar/react-client/react-client'
 import { sessionCredentialStorage } from './session-credential-storage'
 import { institutionPreferenceStorage } from './institution-preference-storage'
+import { studentPreferenceStorage } from './student-preference-storage'
 
 /**
  * Dono da origem da API neste app: só garante que a variável existe. A forma da origem
@@ -29,4 +30,5 @@ export const habituar = createHabituarReactClient({
   origin: readApiOriginOrThrow(),
   credentialStorage: sessionCredentialStorage,
   preferenceStorage: institutionPreferenceStorage,
+  studentPreferenceStorage,
 })

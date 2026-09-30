@@ -1,12 +1,15 @@
 import type { EffectivePermission } from '@habituar/core/auth/context'
 import { INTERACTION } from '@habituar/design-tokens/interaction'
 import { fireEvent, render, screen } from '@testing-library/react-native'
-import { useEnvironmentNavigation, useProfessionalNavigation } from '@habituar/react-client/environment-navigation'
+import { useEnvironmentNavigation } from '@habituar/react-client/environment-navigation'
 import '../i18n/i18n'
+import { useMobileProfessionalTabs } from '../management/management-navigation'
+import { createInstitutionSession } from '../session/institution-session-fixture'
 import { EnvironmentTabBar } from './environment-tab-bar'
 
 function ProfessionalBar({ permissions = [] }: Readonly<{ permissions?: readonly EffectivePermission[] }>) {
-  return <EnvironmentTabBar items={useProfessionalNavigation({ permissions })} />
+  const session = createInstitutionSession('professional')
+  return <EnvironmentTabBar items={useMobileProfessionalTabs({ ...session, membership: { ...session.membership, permissions } })} />
 }
 
 function StudentBar() {
@@ -111,5 +114,19 @@ describe('environment tab bar', () => {
 
     fireEvent.press(screen.getByRole('tab', { name: 'Gestão' }))
     expect(mockRouter.navigate).toHaveBeenCalledWith('/professional/management')
+  })
+
+  it('shows Gestão for assigned student access without adding an Estudantes tab', () => {
+    render(<ProfessionalBar permissions={[{ key: 'student.read', scope: 'assigned' }]} />)
+
+    expect(screen.getByRole('tab', { name: 'Gestão' })).toBeOnTheScreen()
+    expect(screen.queryByRole('tab', { name: 'Estudantes' })).toBeNull()
+  })
+
+  it('keeps Gestão selected in the student section', () => {
+    mockRouter.pathname = '/professional/management/students/student/123'
+    render(<ProfessionalBar permissions={[{ key: 'student.read', scope: 'assigned' }]} />)
+
+    expect(screen.getByRole('tab', { name: 'Gestão', selected: true })).toBeOnTheScreen()
   })
 })

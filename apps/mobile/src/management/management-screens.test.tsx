@@ -62,7 +62,8 @@ jest.mock('../client/habituar-client', () => ({
   },
 }))
 
-jest.mock('expo-router', () => ({ useRouter: () => ({ push: jest.fn(), back: jest.fn() }) }))
+const mockPush = jest.fn()
+jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush, back: jest.fn() }) }))
 
 jest.mock('react-native-safe-area-context', () => ({
   SafeAreaView: ({ children }: Readonly<{ children: ReactNode }>) => children,
@@ -85,6 +86,7 @@ function renderWithClient(screenElement: ReactElement) {
 // falso avança sozinho, então as esperas do teste continuam reais.
 beforeEach(() => {
   writes.length = 0
+  mockPush.mockClear()
   jest.useFakeTimers({ advanceTimers: true })
 })
 
@@ -99,6 +101,19 @@ describe('management tab', () => {
     expect(screen.getByRole('button', { name: 'Equipe' })).toBeOnTheScreen()
     expect(screen.getByRole('button', { name: 'Convites' })).toBeOnTheScreen()
     expect(screen.getByRole('button', { name: 'Papéis' })).toBeOnTheScreen()
+  })
+
+  it('shows only Estudantes when the person can read assigned students but cannot read the team', () => {
+    const session = createManagerSession()
+    renderWithClient(<ManagementScreen session={{ ...session, membership: { ...session.membership, permissions: [{ key: 'student.read', scope: 'assigned' }] } }} />)
+
+    expect(screen.getByRole('button', { name: 'Estudantes' })).toBeOnTheScreen()
+    expect(screen.queryByRole('button', { name: 'Equipe' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Convites' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Papéis' })).toBeNull()
+
+    fireEvent.press(screen.getByRole('button', { name: 'Estudantes' }))
+    expect(mockPush).toHaveBeenCalledWith('/professional/management/students')
   })
 
   it('lists the team with an accessible name for each person, below the search', async () => {

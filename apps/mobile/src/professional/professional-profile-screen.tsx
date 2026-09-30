@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next'
 import { Page } from '../components/ui/page'
 import { PageHeader } from '../components/ui/page-header'
 import { ChoiceList } from '../components/ui/choice-list'
+import { ListDivider } from '../components/ui/list-divider'
 import { ListRow } from '../components/ui/list-row'
 import { ListSection } from '../components/ui/list-section'
 import type { InstitutionSession } from '../session/session-screen'
@@ -27,6 +28,7 @@ export function ProfessionalProfileScreen({ session }: Readonly<{ session: Insti
         <ListRow icon="envelope-simple" title={session.user.email} description={t('professional.profile.emailLabel')} />
       </ListSection>
 
+      <ListDivider />
       <ListSection title={t('professional.profile.institutionSection')}>
         <ListRow icon="buildings" title={session.membership.institution.name} description={t('home.institutionLabel')} />
         <ListRow
@@ -37,6 +39,7 @@ export function ProfessionalProfileScreen({ session }: Readonly<{ session: Insti
         <InstitutionSwitcher />
       </ListSection>
 
+      <ListDivider />
       <ListSection title={t('professional.profile.appearanceSection')}>
         <ChoiceList
           label={t('professional.profile.themeLabel')}
@@ -51,6 +54,7 @@ export function ProfessionalProfileScreen({ session }: Readonly<{ session: Insti
         />
       </ListSection>
 
+      <ListDivider />
       <SignOutButton />
     </Page>
   )

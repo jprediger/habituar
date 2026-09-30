@@ -1,5 +1,6 @@
 import { CanActivate, ExecutionContext, ForbiddenException, Injectable, UnauthorizedException } from '@nestjs/common'
 import { Reflector } from '@nestjs/core'
+import { institutionIdSchema, studentIdSchema } from '@habituar/core/identity/ids'
 import { PermissionKey, PlatformPermissionKey } from '@habituar/core/permissions'
 import { AuthenticatedRequest } from '../authorization/authentication.guard.js'
 import { PERMISSION_KEY } from './require-permission.decorator.js'
@@ -42,15 +43,20 @@ export class PermissionGuard implements CanActivate {
     }
     if (required === undefined) throw new ForbiddenException()
 
-    const institutionId = request.params?.institutionId
-    if (institutionId === undefined) throw new ForbiddenException()
+    // Parâmetro de rota é entrada externa e o guard roda antes do parse do contrato: id que
+    // não é uuid seria erro de cast no Postgres (500), então é negado aqui.
+    const institutionId = institutionIdSchema.safeParse(request.params?.institutionId)
+    if (!institutionId.success) throw new ForbiddenException()
 
-    const studentId = request.params?.studentId
+    const rawStudentId = request.params?.studentId
+    const studentId = rawStudentId === undefined ? undefined : studentIdSchema.safeParse(rawStudentId)
+    if (studentId?.success === false) throw new ForbiddenException()
+
     const allowed = await this.rbac.hasPermission(
       request.actor,
-      institutionId,
+      institutionId.data,
       required,
-      studentId === undefined ? {} : { studentId },
+      studentId === undefined ? {} : { studentId: studentId.data },
     )
     if (!allowed) throw new ForbiddenException()
 

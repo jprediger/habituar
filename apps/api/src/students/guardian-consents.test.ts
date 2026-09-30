@@ -102,7 +102,7 @@ describe('consentimento pelo responsável', () => {
   // respondia 500; confirmar e revogar pelo responsável tinham o mesmo defeito.
   it('registra e revoga pela equipe o consentimento institucional, respondendo pelo contrato', async () => {
     const path = `/institutions/${institution.id}/students/${childOfB}/consents`
-    const recorded = await harness.call(careInstitution, 'POST', path, { kind: 'institution-record', termVersion: '2026-01', guardianId: null, signedOn: '2026-02-01' })
+    const recorded = await harness.call(careInstitution, 'POST', path, { kind: 'institution-record', termVersion: '2026-01', guardianId: null, signedOn: '2026-02-01', document: { fileName: 'termo.pdf', mediaType: 'application/pdf', base64: 'JVBERi0xLjQ=' } })
     expect(recorded.status).toBe(200)
     const consent = consentSchema.parse(recorded.body)
     expect(consent).toMatchObject({ kind: 'institution-record', signedOn: '2026-02-01', revokedAt: null })

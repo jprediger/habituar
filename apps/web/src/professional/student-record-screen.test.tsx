@@ -26,6 +26,8 @@ const student = studentDetailSchema.parse({
   assignments: [],
   consentStatus: 'institution-recorded',
   accountStatus: 'none',
+  institutionalDocumentName: null,
+  institutionalDocumentId: null,
 })
 
 const record = studentRecordSchema.parse({

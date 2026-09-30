@@ -98,12 +98,12 @@ export function createStaffTransport(apiClient: ApiClient, context: StaffManagem
         if (!isStaffEnvironment(environment)) return []
         if (query.environment !== undefined && environment !== query.environment) return []
         if (search !== undefined && !normalizeForSearch(`${member.user.name} ${member.user.email}`).includes(search)) return []
-        return [{ id: member.id, user: member.user, environment, roles: member.roles, activeStudentCount: 0 }]
+        return [{ id: member.id, user: member.user, environment, roles: member.roles }]
       })
       const sorted = [...matching].sort((first, second) => first.user.name.localeCompare(second.user.name, 'pt-BR') || first.id.localeCompare(second.id))
       return paginate(sorted, query.page)
     },
-    getMember: async (membershipId) => ({ ...await platform.getMember({ ...path, membershipId }), activeStudentCount: 0 }),
+    getMember: async (membershipId) => platform.getMember({ ...path, membershipId }),
     replaceMemberRoles: async (input) => ({ ...await platform.replaceMemberRoles({ ...path, ...input, roleIds: [...input.roleIds] }), activeStudentCount: 0 }),
     removeMember: async (input) => { await platform.removeMember({ ...path, ...input }) },
     listInvitations: async (query) => {

@@ -68759,6 +68759,34 @@
                           "const": true
                         },
                         "code": {
+                          "const": "consultation-in-future"
+                        },
+                        "status": {
+                          "const": 422
+                        },
+                        "message": {
+                          "type": "string",
+                          "default": "consultation cannot be in the future."
+                        },
+                        "data": {
+                          "type": "object",
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": [
+                        "defined",
+                        "code",
+                        "status",
+                        "message"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "defined": {
+                          "const": true
+                        },
+                        "code": {
                           "const": "invalid_input"
                         },
                         "status": {

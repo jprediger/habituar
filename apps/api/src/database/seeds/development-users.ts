@@ -1,19 +1,18 @@
 import { MembershipEnvironment } from '@habituar/core/roles'
-import { and, eq } from 'drizzle-orm'
+import { and, eq, sql } from 'drizzle-orm'
 import { DatabaseTransaction } from '../database.js'
 import { assignments, guardians, routineBlocks, membershipRoles, memberships, roles, studentConsents, studentGuardians, students, users } from '../schema.js'
 
-// Faixa arbitrária entre as três aceitas por `students.age_range`; nenhuma regra depende
-// dela neste marco.
+// Data estável para o cadastro de exemplo; nenhuma regra do seed depende da idade.
 const SEEDED_BIRTH_DATE = '2015-01-01'
 
 /** Um usuário por ambiente e papel institucional, para exercitar login e autorização localmente. */
 export const DEVELOPMENT_USERS = {
-  student: { email: 'student@habituar.dev', name: 'Estudante de Desenvolvimento' },
-  professional: { email: 'professional@habituar.dev', name: 'Profissional de Desenvolvimento' },
-  monitor: { email: 'monitor@habituar.dev', name: 'Monitor de Desenvolvimento' },
-  coordinator: { email: 'coordinator@habituar.dev', name: 'Coordenador de Desenvolvimento' },
-  guardian: { email: 'guardian@habituar.dev', name: 'Responsável de Desenvolvimento' },
+  student: { email: 'student@habituar.dev', name: 'Lia Martins' },
+  professional: { email: 'professional@habituar.dev', name: 'Manoel Ferreira' },
+  monitor: { email: 'monitor@habituar.dev', name: 'Ana Ribeiro' },
+  coordinator: { email: 'coordinator@habituar.dev', name: 'Clara Almeida' },
+  guardian: { email: 'guardian@habituar.dev', name: 'Rosa Martins' },
 } as const
 
 export type SeededUsers = Readonly<Record<keyof typeof DEVELOPMENT_USERS, string>>
@@ -22,7 +21,8 @@ export type SeededUsers = Readonly<Record<keyof typeof DEVELOPMENT_USERS, string
  * Cria um usuário por ambiente com vínculo no template do ambiente, mais a ficha do
  * estudante, a atribuição que dá ao profissional alguém sob o alcance `assigned` e o
  * responsável com o consentimento institucional registrado, à espera da confirmação dele.
- * Recusa instituição sem templates de papel e não sobrescreve nada que já exista.
+ * Recusa instituição sem templates de papel; contas existentes recebem os nomes atuais
+ * do seed, sem trocar IDs nem senhas, e o restante não é sobrescrito.
  * Exige transação já escopada à instituição — as tabelas escritas aqui têm RLS.
  */
 export async function seedDevelopmentUsers(
@@ -42,7 +42,7 @@ export async function seedDevelopmentUsers(
   await ensureMembership(transaction, institutionId, coordinatorUserId, 'professional', ['team-management', 'care-institution'])
   await ensureMembership(transaction, institutionId, guardianUserId, 'student', ['guardian'])
 
-  const studentId = await ensureStudent(transaction, institutionId, studentUserId)
+  const studentId = await ensureStudent(transaction, institutionId, studentUserId, DEVELOPMENT_USERS.student.name)
   await ensureAssignment(transaction, institutionId, professionalUserId, professionalMembershipId, studentId)
   await ensureGuardianWithInstitutionConsent(transaction, institutionId, guardianUserId, coordinatorUserId, studentId)
   await ensureRoutine(transaction, institutionId, professionalUserId, studentId)
@@ -56,7 +56,10 @@ async function ensureUser(
   passwordHash: string,
 ): Promise<string> {
   const existing = await transaction.query.users.findFirst({ where: eq(users.email, specification.email) })
-  if (existing !== undefined) return existing.id
+  if (existing !== undefined) {
+    if (existing.name !== specification.name) await transaction.update(users).set({ name: specification.name }).where(eq(users.id, existing.id))
+    return existing.id
+  }
 
   const [user] = await transaction
     .insert(users)
@@ -93,13 +96,17 @@ async function ensureStudent(
   transaction: DatabaseTransaction,
   institutionId: string,
   userId: string,
+  fullName: string,
 ): Promise<string> {
-  const existing = await transaction.query.students.findFirst({ where: eq(students.userId, userId) })
-  if (existing !== undefined) return existing.id
+  const existing = await transaction.query.students.findFirst({ where: and(eq(students.userId, userId), eq(students.institutionId, institutionId)) })
+  if (existing !== undefined) {
+    if (existing.fullName !== fullName) await transaction.update(students).set({ fullName, version: sql`${students.version} + 1`, updatedAt: sql`now()` }).where(eq(students.id, existing.id))
+    return existing.id
+  }
 
   const [student] = await transaction
     .insert(students)
-    .values({ institutionId, userId, fullName: 'Estudante de Desenvolvimento', birthDate: SEEDED_BIRTH_DATE })
+    .values({ institutionId, userId, fullName, birthDate: SEEDED_BIRTH_DATE })
     .returning()
   if (student === undefined) throw new Error('Insert into students returned no row')
 

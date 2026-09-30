@@ -57,6 +57,8 @@ describe('usuários de desenvolvimento', () => {
       await seedPermissionCatalog(transaction)
       await seedRoleTemplates(transaction, INSTITUTION_ID)
       seeded = await seedDevelopmentUsers(transaction, INSTITUTION_ID, passwordHash)
+      await transaction.update(users).set({ name: 'Profissional de Desenvolvimento' }).where(eq(users.id, seeded.professional))
+      await transaction.update(students).set({ fullName: 'Estudante de Desenvolvimento' }).where(eq(students.userId, seeded.student))
       // Segundo seed no mesmo container: o script é rodado mais de uma vez em base local.
       await seedDevelopmentUsers(transaction, INSTITUTION_ID, passwordHash)
 
@@ -102,6 +104,21 @@ describe('usuários de desenvolvimento', () => {
       return [links.length, consents.filter((consent) => consent.kind === 'institution-record').length]
     })
     expect(counts).toEqual([1, 1])
+  })
+
+  it('exibe nomes de pessoas e atualiza os nomes antigos ao repetir o seed', async () => {
+    const people = await database.withTenantOutsideRequest(TENANT, async (transaction) => {
+      const result: { email: string; name: string }[] = []
+      for (const { email } of Object.values(DEVELOPMENT_USERS)) {
+        const person = await transaction.query.users.findFirst({ where: eq(users.email, email) })
+        if (person !== undefined) result.push({ email: person.email, name: person.name })
+      }
+      const student = await transaction.query.students.findFirst({ where: eq(students.userId, seeded.student) })
+      return { users: result, studentName: student?.fullName }
+    })
+
+    expect(people.users).toEqual(Object.values(DEVELOPMENT_USERS))
+    expect(people.studentName).toBe(DEVELOPMENT_USERS.student.name)
   })
 
   it('deixa o estudante ler a própria ficha', async () => {

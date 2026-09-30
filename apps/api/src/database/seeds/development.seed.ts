@@ -43,7 +43,7 @@ async function main(): Promise<void> {
     )
 
     console.log(`Usuários de desenvolvimento prontos em "${DEFAULT_INSTITUTION_NAME}":`)
-    for (const { email } of Object.values(DEVELOPMENT_USERS)) console.log(`  ${email}`)
+    for (const { email, name } of Object.values(DEVELOPMENT_USERS)) console.log(`  ${name}: ${email}`)
   } finally {
     await database.onApplicationShutdown()
   }

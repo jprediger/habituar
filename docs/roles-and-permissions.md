@@ -118,9 +118,11 @@ Não existe "profissional + monitor" na mesma instituição: o vínculo tem um t
 de monitor não pode ser dado a vínculo de profissional (o banco recusa por FK composta).
 
 Usuários de desenvolvimento (`apps/api/src/database/seeds/development-users.ts`):
-`professional@habituar.dev` (Atendimento aos vinculados), `monitor@habituar.dev`
-(Monitoria), `coordinator@habituar.dev` (Gestão da equipe + Atendimento da instituição) e
-`student@habituar.dev` (Aluno).
+`professional@habituar.dev` (Manoel Ferreira; Atendimento aos vinculados),
+`monitor@habituar.dev` (Ana Ribeiro; Monitoria),
+`coordinator@habituar.dev` (Clara Almeida; Gestão da equipe + Atendimento da
+instituição) e `student@habituar.dev` (Lia Martins; Aluno). Rodar o seed de
+desenvolvimento novamente atualiza os nomes das contas existentes.
 
 ## Papéis personalizados
 

@@ -106,6 +106,8 @@ ainda está prevista.
 ### RF0009 – Manter ficha do estudante
 
 Profissionais autorizados devem registrar dados, observações e histórico do estudante.
+O cadastro civil e o termo institucional assinado, com PDF ou imagem de até 2 MB,
+estão em desenvolvimento na web e no mobile.
 A ficha reúne turma, condições acompanhadas e necessidades de apoio; data de nascimento,
 nome social e responsáveis vêm do cadastro do estudante e aparecem na ficha para
 consulta. Cada gravação preserva a versão anterior, e observações não podem ser editadas

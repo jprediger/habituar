@@ -22,11 +22,14 @@ arquivo está desatualizado:
 - **Concessão**: uma permissão com um alcance, por exemplo `student.read@assigned`.
 - **Alcance**:
   - `own` — dados do próprio ator;
-  - `assigned` — dados dos alunos vinculados ao ator em `assignments`;
+  - `assigned` — dados dos alunos atribuídos ao vínculo ativo do ator em `assignments`;
   - `institution` — qualquer dado da instituição.
 
   `institution` cobre os outros dois; `own` e `assigned` não se cobrem, porque tratam de
   pessoas diferentes.
+
+O cadastro do aluno e a atribuição de acompanhantes são explicados em
+[Estudantes e acompanhamentos](students-and-assignments.md).
 
 ## Permissões
 
@@ -37,6 +40,7 @@ arquivo está desatualizado:
 | `student.update` | Atualizar o cadastro do aluno |
 | `guardian.link` | Vincular responsável a um aluno |
 | `guardian.unlink` | Desvincular responsável de um aluno |
+| `assignment.manage` | Substituir os profissionais e monitores que acompanham um aluno |
 | `membership.read` | Ver equipe, convites e papéis da instituição |
 | `membership.invite` | Convidar, reenviar e revogar convites (convidar exige também `role.assign`) |
 | `membership.remove` | Remover o vínculo de um membro |
@@ -64,6 +68,7 @@ Administra a instituição. É o papel de quem coordena a equipe.
 | `role.manage@institution` | Cria papéis personalizados a partir dos templates |
 | `student.create@institution` | Cadastra alunos |
 | `student.read@institution` | Consulta o cadastro básico de todos os alunos |
+| `assignment.manage@institution` | Define quem acompanha cada aluno |
 
 Não atualiza cadastro nem vincula responsáveis: isso é atendimento. Pela regra "não se
 concede o que não se possui", um gestor só com este papel **não consegue** convidar
@@ -79,16 +84,21 @@ Acompanha apenas os alunos vinculados a esta pessoa.
 | `student.read@assigned` | Consulta o cadastro dos alunos vinculados a si |
 | `student.update@assigned` | Atualiza o cadastro deles |
 | `guardian.link@assigned` | Vincula responsáveis a eles |
+| `guardian.unlink@assigned` | Desvincula responsáveis deles |
 
 ### Atendimento da instituição (`care-institution`) — profissional
 
-Mesmas ações do anterior, mas sobre **todos** os alunos da instituição.
+Atende **todos** os alunos da instituição e pode cadastrar alunos e definir seus
+acompanhantes.
 
 | Concessão | Na prática |
 |---|---|
 | `student.read@institution` | Consulta o cadastro de qualquer aluno |
 | `student.update@institution` | Atualiza o cadastro de qualquer aluno |
+| `student.create@institution` | Cadastra alunos |
 | `guardian.link@institution` | Vincula responsáveis a qualquer aluno |
+| `guardian.unlink@institution` | Desvincula responsáveis de qualquer aluno |
+| `assignment.manage@institution` | Define acompanhantes de qualquer aluno |
 
 ### Monitoria (`monitoring`) — monitor
 
@@ -105,6 +115,16 @@ Não recebe gestão por compartilhar esse ambiente.
 |---|---|
 | `student.read@own` | Consulta o próprio cadastro |
 
+### Responsável (`guardian`) — ambiente de aluno
+
+Concede `student.read@own` à pessoa responsável vinculada ao aluno. O alcance `own`
+inclui o estudante ligado à conta do ator e os estudantes ligados a ele como responsável.
+O template existe no servidor; os nomes exibidos nas interfaces ainda não o incluem.
+
+| Concessão | Na prática |
+|---|---|
+| `student.read@own` | Consulta o cadastro do aluno pelo qual é responsável |
+
 ## Combinações comuns
 
 | Função na instituição | Tipo do vínculo | Papéis |
@@ -113,6 +133,7 @@ Não recebe gestão por compartilhar esse ambiente.
 | Coordenador que atende só os seus | profissional | Gestão da equipe + Atendimento aos vinculados |
 | Profissional de atendimento | profissional | Atendimento aos vinculados |
 | Monitor | monitor | Monitoria |
+| Responsável com acesso | aluno | Responsável |
 
 Não existe "profissional + monitor" na mesma instituição: o vínculo tem um tipo só, e papel
 de monitor não pode ser dado a vínculo de profissional (o banco recusa por FK composta).
@@ -141,10 +162,11 @@ Todo papel novo nasce como clone de um template de sistema do mesmo tipo e é aj
 | Atualizar cadastro de alunos | `student.update` | `assigned` ou `institution` | — |
 | Vincular responsáveis | `guardian.link` | `assigned` ou `institution` | — |
 | Desvincular responsáveis | `guardian.unlink` | `assigned` ou `institution` | — |
+| Gerenciar acompanhantes | `assignment.manage` | `institution` | — |
 
-Papel de aluno não é personalizável. Um papel personalizado só pode ser excluído quando
-nenhum membro ativo nem convite pendente o usa. Alterar suas concessões afeta todos os
-titulares e revoga os convites pendentes que o referenciam.
+Papéis do ambiente de aluno não são personalizáveis. Um papel personalizado só pode ser
+excluído quando nenhum membro ativo nem convite pendente o usa. Alterar suas concessões
+afeta todos os titulares e revoga os convites pendentes que o referenciam.
 
 ## Regras de delegação
 

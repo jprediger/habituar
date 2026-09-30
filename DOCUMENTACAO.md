@@ -122,10 +122,14 @@ a ficha apenas para consulta.
 ### RF0010 – Organizar rotina e tarefas
 
 O aluno deve montar a grade semanal, receber tarefas e acompanhar entregas e avaliações.
+A grade semanal já existe: a equipe que acompanha o aluno monta, na ficha, os blocos de
+cada dia (horário, título, tipo e observação), e o aluno e o responsável veem a semana
+na aba Rotina, com o dia de hoje em destaque. Tarefas, entregas, avaliações e o uso sem
+conexão ainda estão previstos.
 
 | Prioridade | Complexidade | Situação | Versão |
 | --- | --- | --- | --- |
-| Alta | Alta | Previsto | Futura |
+| Alta | Alta | Em desenvolvimento | Atual |
 
 ### RF0011 – Agendar atendimentos
 
@@ -185,6 +189,9 @@ As interfaces devem atender WCAG 2.2 AA e regras cognitivas adequadas ao públic
 ### RNF0002 – Privacidade
 
 Dados pessoais e sensíveis devem ser tratados conforme a LGPD e o princípio do menor acesso.
+O responsável confirma e revoga, pela web e pelo aplicativo, o consentimento que a
+instituição registrou para o estudante; o texto do termo exibido é um resumo provisório,
+pendente de revisão jurídica.
 
 | Prioridade | Complexidade | Situação | Versão |
 | --- | --- | --- | --- |
@@ -282,13 +289,15 @@ estudante pode ser cadastrado sem conta própria; seus responsáveis ficam em
 liga um vínculo ativo de profissional ou monitor ao estudante. A ficha do estudante
 fica em `student_profile_revisions`, uma revisão por gravação, as observações em
 `student_observations` e as consultas realizadas em `student_consultations`; as três
-tabelas aceitam somente leitura e inserção, com autoria igual à pessoa autenticada. As
-tabelas de responsáveis, consentimentos e ficha ainda não aparecem no diagrama. O
+tabelas aceitam somente leitura e inserção, com autoria igual à pessoa autenticada. A
+grade semanal do aluno fica em `routine_blocks`, com versão para recusar edição feita
+sobre dados desatualizados. As tabelas de responsáveis, consentimentos, ficha e rotina
+ainda não aparecem no diagrama. O
 banco aplica isolamento por linha para impedir acesso entre instituições.
 
 _[Modelo atual do banco de dados disponível no DOCX oficial.]_
 
-Entidades previstas para evolução do produto incluem rotina, tarefas, agenda de consultas, métricas, grupos e relatórios. Elas ainda não fazem parte do modelo físico apresentado.
+Entidades previstas para evolução do produto incluem tarefas, agenda de consultas, métricas, grupos e relatórios. Elas ainda não fazem parte do modelo físico apresentado.
 
 ## Tecnologias utilizadas
 
@@ -332,7 +341,7 @@ A API valida entradas e saídas a partir de contratos compartilhados, nega acess
 | Instituições e convites | Média | Em desenvolvimento | Cadastro, convite de uso único e aceite na web |
 | Interfaces de autenticação | Alta | Implementado | Entrada, cadastro e ambientes por perfil na web e no mobile |
 | Fichas e observações | Alta | Em desenvolvimento | Dados de apoio, histórico e consultas realizadas; auditoria prevista |
-| Rotina, tarefas e foco | Alta | Previsto | Organização semanal e funcionamento offline |
+| Rotina, tarefas e foco | Alta | Em desenvolvimento | Grade semanal pronta; tarefas, foco e offline previstos |
 | Agenda e atendimentos | Alta | Previsto | Consultas, anotações e notificações |
 | Métricas e grupos | Média | Previsto | Indicadores configuráveis por instituição |
 | Relatórios | Alta | Previsto | Consolidação e exportação de acompanhamento |

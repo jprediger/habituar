@@ -23,6 +23,16 @@ versionamento segue [SemVer](https://semver.org/lang/pt-BR/).
 ## [Não publicado]
 
 ### Adicionado
+- `[web] [mobile] [api] [core]` Rotina semanal do aluno: a equipe que acompanha monta, na
+  ficha do estudante, os blocos de cada dia da semana (horário, título, tipo e observação),
+  e o aluno e o responsável veem a semana na nova aba Rotina, com o dia de hoje em
+  destaque. Edição feita sobre uma versão que outra pessoa já mudou é recusada. Novas
+  permissões `routine.read` e `routine.write`, também disponíveis em papéis personalizados.
+- `[web] [mobile] [api] [core]` No ambiente de aluno, o responsável vê os consentimentos
+  que a instituição registrou, confirma cada um e revoga quando quiser, com confirmação
+  antes de cada ação. O aluno vê o próprio cadastro. A nova rota `GET /v1/me/consents`
+  lista as confirmações vigentes do próprio responsável. O texto do termo é um resumo
+  provisório, pendente de revisão jurídica.
 - `[api] [web] [mobile] [core]` Ficha do estudante: quem atende alunos vê, na tela inicial,
   os estudantes que acompanha, com busca por nome, e abre a ficha de cada um. A ficha
   reúne turma, condições acompanhadas e necessidades de apoio, e mostra para consulta a
@@ -110,6 +120,8 @@ versionamento segue [SemVer](https://semver.org/lang/pt-BR/).
   primeira migração do M1, antes de qualquer release ou dado de produção.
 
 ### Corrigido
+- `[api]` Registrar, confirmar e revogar consentimento respondiam com erro interno: a
+  resposta levava colunas do banco que o contrato não declara.
 - `[api] [core]` A lista de alunos recusava o filtro de arquivados vindo pela URL, porque
   o valor chega como texto; qualquer tela que filtrasse recebia erro. Agora `true` e
   `false` em texto são aceitos, e outro texto continua recusado.

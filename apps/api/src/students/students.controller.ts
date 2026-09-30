@@ -129,6 +129,14 @@ export class StudentsController {
     })
   }
 
+  @Implement(apiContract.students.listOwnConsents)
+  handleListOwnConsents(@Req() request: AuthenticatedRequest) {
+    return implement(apiContract.students.listOwnConsents).handler(async ({ errors }) => {
+      if (request.actor === undefined) throw errors.unauthenticated()
+      return this.students.listOwnConsents(request.actor)
+    })
+  }
+
   @Implement(apiContract.students.pendingConsents)
   handlePendingConsents(@Req() request: AuthenticatedRequest) {
     return implement(apiContract.students.pendingConsents).handler(async ({ errors }) => {

@@ -1,6 +1,6 @@
 import { FailureCode, Outcome } from '@habituar/core/failure'
 import { guardianIdSchema } from '@habituar/core/identity/ids'
-import { calculateAgeInYears, CONSENT_TERMS, deriveAgeRange, AddStudentGuardianInput, Consent, ConsentPath, CreateStudentInput, ListStudentsInput, OwnConsentPath, PendingConsent, pendingConsentSchema, RecordConsentInput, RemoveStudentGuardianInput, ReplaceAssignmentsInput, StudentDetail, studentDetailSchema, StudentPage, studentPageSchema, StudentSummary, studentSummarySchema, UpdateStudentInput, consentSchema } from '@habituar/core/students'
+import { calculateAgeInYears, CONSENT_TERMS, deriveAgeRange, AddStudentGuardianInput, Consent, ConsentPath, CreateStudentInput, ListStudentsInput, OwnConsent, OwnConsentPath, ownConsentSchema, PendingConsent, pendingConsentSchema, RecordConsentInput, RemoveStudentGuardianInput, ReplaceAssignmentsInput, StudentDetail, studentDetailSchema, StudentPage, studentPageSchema, StudentSummary, studentSummarySchema, UpdateStudentInput, consentSchema } from '@habituar/core/students'
 import { Injectable } from '@nestjs/common'
 import { Database } from '../database/database.js'
 import { lockInstitutionAuthorization } from '../database/authorization-lock.js'
@@ -211,7 +211,7 @@ export class StudentsService {
       if (input.guardianId !== null && guardianSnapshot === undefined) return fail<Consent>('guardian-not-found')
       const [consent] = await this.repository.insertConsent(transaction, { institutionId: input.institutionId, studentId: input.studentId, kind: input.kind, termVersion: input.termVersion, guardianId: input.guardianId, guardianNameSnapshot: guardianSnapshot?.fullName ?? null, guardianRelationshipSnapshot: guardianSnapshot?.relationship ?? null, signedOn: input.signedOn, recordedByUserId: actor.userId })
       if (consent === undefined) throw new Error('Consent insert returned no row')
-      return { status: 'success', value: consentSchema.parse({ ...consent, recordedAt: consent.recordedAt.toISOString(), revokedAt: consent.revokedAt?.toISOString() ?? null }) }
+      return { status: 'success', value: toConsent(consent) }
     })
   }
 
@@ -225,7 +225,7 @@ export class StudentsService {
       if (current.revokedAt !== null) return fail<Consent>('consent-already-revoked')
       const [revoked] = await this.repository.revokeConsent(transaction, input.studentId, input.consentId, actor.userId, this.clock.now())
       if (revoked === undefined) return fail<Consent>('consent-already-revoked')
-      return { status: 'success', value: consentSchema.parse({ ...revoked, recordedAt: revoked.recordedAt.toISOString(), revokedAt: revoked.revokedAt?.toISOString() ?? null }) }
+      return { status: 'success', value: toConsent(revoked) }
     })
   }
 
@@ -248,10 +248,34 @@ export class StudentsService {
 
   /** Lista termos vigentes apenas para responsáveis com conta e vínculo ativo. */
   async listPendingConsents(actor: { readonly userId: string; readonly sessionId: string }): Promise<readonly PendingConsent[]> {
+    const guarded = await this.listGuardedStudents(actor)
+    return guarded.flatMap(({ student, guardianId, consents }) => {
+      const institutionConsent = consents.find(consent => consent.kind === 'institution-record' && consent.revokedAt === null)
+      if (institutionConsent === undefined) return []
+      const confirmation = consents.find(consent => consent.kind === 'guardian-confirmation' && consent.guardianId === guardianId && consent.termVersion === CONSENT_TERMS.guardianConfirmation && consent.revokedAt === null)
+      if (confirmation !== undefined) return []
+      return [pendingConsentSchema.parse({ student: this.toSummary(student), termVersion: CONSENT_TERMS.guardianConfirmation })]
+    })
+  }
+
+  /** Confirmações vigentes do próprio responsável, com o id que a revogação pede. */
+  async listOwnConsents(actor: { readonly userId: string; readonly sessionId: string }): Promise<readonly OwnConsent[]> {
+    const guarded = await this.listGuardedStudents(actor)
+    return guarded.flatMap(({ student, guardianId, consents }) => consents
+      .filter(consent => consent.kind === 'guardian-confirmation' && consent.guardianId === guardianId && consent.revokedAt === null)
+      .map(consent => ownConsentSchema.parse({
+        student: this.toSummary(student),
+        consent: toConsent(consent),
+      })))
+  }
+
+  // Estudantes ativos pelos quais o ator responde, em cada instituição onde tem vínculo de
+  // aluno. A leitura roda por instituição porque a RLS só enxerga um tenant por vez.
+  private async listGuardedStudents(actor: { readonly userId: string; readonly sessionId: string }) {
     const memberships = await this.database.withIdentity({ actorId: actor.userId, sessionId: actor.sessionId }, transaction => this.repository.listStudentMembershipsForUser(transaction, actor.userId))
-    const pending: PendingConsent[] = []
+    const guarded: { student: StudentRecord; guardianId: string; consents: Awaited<ReturnType<StudentsRepository['listStudentConsents']>> }[] = []
     for (const membership of memberships) {
-      const students = await this.database.withTenantOutsideRequest({ institutionId: membership.institutionId, actorId: actor.userId, sessionId: actor.sessionId }, async transaction => {
+      const rows = await this.database.withTenantOutsideRequest({ institutionId: membership.institutionId, actorId: actor.userId, sessionId: actor.sessionId }, async transaction => {
         const accessible: Awaited<ReturnType<StudentsRepository['listOwnStudents']>> = []
         const pageSize = 50
         for (let offset = 0; ; offset += pageSize) {
@@ -259,22 +283,21 @@ export class StudentsService {
           accessible.push(...page)
           if (page.length < pageSize) break
         }
-        const results: PendingConsent[] = []
+        const found: typeof guarded = []
         for (const { student } of accessible) {
           const guardian = await this.repository.findGuardianForActor(transaction, student.id, actor.userId)
           if (guardian === undefined) continue
-          const consents = await this.repository.listStudentConsents(transaction, student.id)
-          const institutionConsent = consents.find(consent => consent.kind === 'institution-record' && consent.revokedAt === null)
-          if (institutionConsent === undefined) continue
-          const confirmation = consents.find(consent => consent.kind === 'guardian-confirmation' && consent.guardianId === guardian.id && consent.termVersion === CONSENT_TERMS.guardianConfirmation && consent.revokedAt === null)
-          if (confirmation !== undefined) continue
-          results.push(pendingConsentSchema.parse({ student: { id: student.id, fullName: student.fullName, socialName: student.socialName, birthDate: student.birthDate, ageRange: this.ageRange(student.birthDate), archivedAt: null }, termVersion: CONSENT_TERMS.guardianConfirmation }))
+          found.push({ student, guardianId: guardian.id, consents: await this.repository.listStudentConsents(transaction, student.id) })
         }
-        return results
+        return found
       })
-      pending.push(...students)
+      guarded.push(...rows)
     }
-    return pending
+    return guarded
+  }
+
+  private toSummary(student: StudentRecord) {
+    return { id: student.id, fullName: student.fullName, socialName: student.socialName, birthDate: student.birthDate, ageRange: this.ageRange(student.birthDate), archivedAt: null }
   }
 
   /** Confirma a versão vigente somente pelo responsável vinculado ao aluno. */
@@ -290,12 +313,12 @@ export class StudentsService {
         const consents = await this.repository.listStudentConsents(transaction, studentId)
         if (!consents.some(consent => consent.kind === 'institution-record' && consent.revokedAt === null)) return undefined
         const existing = consents.find(consent => consent.kind === 'guardian-confirmation' && consent.guardianId === guardian.id && consent.termVersion === CONSENT_TERMS.guardianConfirmation && consent.revokedAt === null)
-        if (existing !== undefined) return consentSchema.parse({ ...existing, recordedAt: existing.recordedAt.toISOString(), revokedAt: null })
+        if (existing !== undefined) return toConsent(existing)
         const guardianSnapshot = await this.repository.findGuardianSnapshot(transaction, studentId, guardian.id)
         if (guardianSnapshot === undefined) return undefined
         const [consent] = await this.repository.insertConsent(transaction, { institutionId: membership.institutionId, studentId, kind: 'guardian-confirmation', termVersion: CONSENT_TERMS.guardianConfirmation, guardianId: guardianIdSchema.parse(guardian.id), guardianNameSnapshot: guardianSnapshot.fullName, guardianRelationshipSnapshot: guardianSnapshot.relationship, signedOn: null, recordedByUserId: actor.userId })
         if (consent === undefined) throw new Error('Consent insert returned no row')
-        return consentSchema.parse({ ...consent, recordedAt: consent.recordedAt.toISOString(), revokedAt: null })
+        return toConsent(consent)
       })
       if (outcome !== undefined) return { status: 'success', value: outcome }
     }
@@ -314,7 +337,7 @@ export class StudentsService {
         if (current === undefined || current.guardianId !== guardian.id || current.revokedAt !== null) return undefined
         const [revoked] = await this.repository.revokeConsent(transaction, input.studentId, input.consentId, actor.userId, this.clock.now())
         if (revoked === undefined) return undefined
-        return consentSchema.parse({ ...revoked, recordedAt: revoked.recordedAt.toISOString(), revokedAt: revoked.revokedAt?.toISOString() ?? null })
+        return toConsent(revoked)
       })
       if (consent !== undefined) return { status: 'success', value: consent }
     }
@@ -326,4 +349,20 @@ export class StudentsService {
     return deriveAgeRange(birthDate, today)
   }
 
+}
+
+type ConsentRow = Awaited<ReturnType<StudentsRepository['listStudentConsents']>>[number]
+
+// O contrato é estrito e a linha do banco tem colunas que não saem pela API (instituição,
+// aluno, snapshots, autoria): espalhar a linha no schema derrubava a resposta em 500.
+function toConsent(row: ConsentRow): Consent {
+  return consentSchema.parse({
+    id: row.id,
+    kind: row.kind,
+    termVersion: row.termVersion,
+    guardianId: row.guardianId,
+    signedOn: row.signedOn,
+    recordedAt: row.recordedAt.toISOString(),
+    revokedAt: row.revokedAt?.toISOString() ?? null,
+  })
 }

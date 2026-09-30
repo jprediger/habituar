@@ -49,6 +49,10 @@ export const CONTRAST_PAIRS = [
   { name: 'rótulo de botão primário', foreground: 'onPrimary', background: 'primary', usage: 'body-text' },
   { name: 'rótulo de botão destrutivo', foreground: 'onDanger', background: 'danger', usage: 'body-text' },
   { name: 'texto de aviso passageiro', foreground: 'onToast', background: 'toast', usage: 'body-text' },
+  // O tipo do aviso é um ícone vazado na cor da superfície sobre um selo colorido: sem
+  // esse par no mínimo de componente gráfico, alerta e informação se distinguem só pelo texto.
+  { name: 'ícone sobre selo de alerta do aviso', foreground: 'surface', background: 'warning', usage: 'ui-component' },
+  { name: 'ícone sobre selo informativo do aviso', foreground: 'surface', background: 'info', usage: 'ui-component' },
   {
     name: 'borda de campo sobre superfície',
     foreground: 'border',

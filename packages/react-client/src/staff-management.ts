@@ -101,6 +101,9 @@ export const ROLE_BUNDLE_LABEL_KEYS = {
   'student-update': 'roleBundles.studentUpdate',
   'guardian-link': 'roleBundles.guardianLink',
   'guardian-unlink': 'roleBundles.guardianUnlink',
+  'assignment-manage': 'roleBundles.assignmentManage',
+  'record-read': 'roleBundles.recordRead',
+  'record-write': 'roleBundles.recordWrite',
 } as const satisfies Readonly<Record<RoleBundleKey, `roleBundles.${string}`>>
 
 /**
@@ -153,7 +156,12 @@ export function isAccessFailure(failure: StaffFailure): boolean {
   return failure === 'forbidden' || failure === 'unauthenticated'
 }
 
-export type StaffMemberSummary = Omit<StaffMember, 'version'>
+/**
+ * Membro como as duas superfícies o entregam. A contagem de alunos acompanhados é do
+ * alcance institucional: a plataforma não a recebe, então a tela não pode depender dela.
+ */
+export type StaffMemberDetail = Omit<StaffMember, 'activeStudentCount'>
+export type StaffMemberSummary = Omit<StaffMemberDetail, 'version'>
 export type StaffInvitationStatus = Invitation['state']['status']
 
 /** Papel como opção de escolha, com o limite do ator já aplicado. */
@@ -213,7 +221,7 @@ export type MemberEditorState =
   | Readonly<{ status: 'failed'; failure: StaffFailure }>
   | Readonly<{
       status: 'ready'
-      member: StaffMember
+      member: StaffMemberDetail
       roleOptions: readonly RoleOption[]
       isSelf: boolean
       isDirty: boolean

@@ -4,7 +4,7 @@ import { createInvitationInputSchema } from '@habituar/core/invitations'
 import type { PermissionScope } from '@habituar/core/permissions'
 import type { RoleBundleCatalogEntry, RoleBundleKey, RoleBundleSelection } from '@habituar/core/role-bundles'
 import { createRoleInputSchema, staffEnvironmentSchema } from '@habituar/core/staff'
-import type { StaffEnvironment, StaffMember, StaffRole } from '@habituar/core/staff'
+import type { StaffEnvironment, StaffRole } from '@habituar/core/staff'
 import type { QueryClient, UseQueryResult } from '@tanstack/react-query'
 import { useQuery } from '@tanstack/react-query'
 import { useEffect, useRef, useState } from 'react'
@@ -39,6 +39,7 @@ import type {
   StaffInvitationFilter,
   StaffListState,
   StaffManagementContext,
+  StaffMemberDetail,
   TeamView,
 } from './staff-management.js'
 import { createStaffTransport } from './staff-transport.js'
@@ -285,7 +286,7 @@ export function createStaffHooks(dependencies: StaffHookDependencies): StaffHook
     const state = buildState()
     const setOperation = (origin: string, operation: MemberOperation): void => { updateDraft(origin, (current) => ({ ...current, operation })) }
 
-    async function runWrite(origin: string, loaded: StaffMember, pending: MemberOperation, done: MemberOperation, write: () => Promise<unknown>): Promise<MemberOperation | undefined> {
+    async function runWrite(origin: string, loaded: StaffMemberDetail, pending: MemberOperation, done: MemberOperation, write: () => Promise<unknown>): Promise<MemberOperation | undefined> {
       if (!lock.acquire(origin)) return undefined
       setOperation(origin, pending)
       try {

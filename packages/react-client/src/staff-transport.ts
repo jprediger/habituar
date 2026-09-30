@@ -2,10 +2,10 @@ import type { InvitationId, MembershipId, RoleId } from '@habituar/core/identity
 import type { Invitation } from '@habituar/core/invitations'
 import type { RoleBundleCatalogEntry, RoleBundleSelection } from '@habituar/core/role-bundles'
 import type { MembershipEnvironment } from '@habituar/core/roles'
-import type { StaffEnvironment, StaffMember, StaffRole } from '@habituar/core/staff'
+import type { StaffEnvironment, StaffRole } from '@habituar/core/staff'
 import type { ApiClient } from './api-client.js'
 import { queryKeys } from './query-keys.js'
-import type { StaffInvitationStatus, StaffManagementContext, StaffMemberSummary } from './staff-management.js'
+import type { StaffInvitationStatus, StaffManagementContext, StaffMemberDetail, StaffMemberSummary } from './staff-management.js'
 
 /** Mesmo tamanho de página nas duas áreas, para a navegação entre páginas não mudar de ritmo. */
 export const STAFF_PAGE_SIZE = 20
@@ -24,8 +24,8 @@ export type StaffTransport = Readonly<{
   queryScope: readonly unknown[]
   invalidationScope: readonly unknown[]
   listMembers: (query: MemberQuery) => Promise<StaffPage<StaffMemberSummary>>
-  getMember: (membershipId: MembershipId) => Promise<StaffMember>
-  replaceMemberRoles: (input: Readonly<{ membershipId: MembershipId; roleIds: readonly RoleId[]; expectedVersion: number }>) => Promise<StaffMember>
+  getMember: (membershipId: MembershipId) => Promise<StaffMemberDetail>
+  replaceMemberRoles: (input: Readonly<{ membershipId: MembershipId; roleIds: readonly RoleId[]; expectedVersion: number }>) => Promise<StaffMemberDetail>
   removeMember: (input: Readonly<{ membershipId: MembershipId; expectedVersion: number }>) => Promise<void>
   listInvitations: (query: InvitationQuery) => Promise<StaffPage<Invitation>>
   createInvitation: (input: Readonly<{ email: string; environment: StaffEnvironment; roleIds: readonly RoleId[] }>) => Promise<CreatedInvitation>

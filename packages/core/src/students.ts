@@ -36,11 +36,18 @@ export const assignmentSchema = z.object({ id: assignmentIdSchema, membershipId:
 export const studentDetailSchema = studentSummaryObjectSchema.extend({
   version: versionSchema, guardians: z.array(guardianSchema).readonly(), assignments: z.array(assignmentSchema).readonly(),
   consentStatus: z.enum(['not-required', 'institution-recorded', 'pending-guardian', 'confirmed', 'revoked']),
-  accountStatus: z.enum(['none', 'invitation-pending', 'active']),
+  accountStatus: z.enum(['none', 'invitation-pending', 'active']), institutionalDocumentName: z.string().nullable(), institutionalDocumentId: consentIdSchema.nullable(),
 }).strict().readonly()
 export type StudentDetail = z.infer<typeof studentDetailSchema>
 
-export const institutionConsentInputSchema = z.object({ signedOn: birthDateSchema, termVersion: z.string().min(1).max(32) }).strict()
+export const consentDocumentInputSchema = z.object({
+  fileName: z.string().trim().min(1).max(200),
+  mediaType: z.enum(['application/pdf', 'image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/heic', 'image/heif']),
+  base64: z.base64().min(4).max(2_800_000),
+}).strict()
+export type ConsentDocumentInput = Readonly<z.infer<typeof consentDocumentInputSchema>>
+export const consentDocumentSchema = consentDocumentInputSchema.readonly()
+export const institutionConsentInputSchema = z.object({ signedOn: birthDateSchema, termVersion: z.string().min(1).max(32), document: consentDocumentInputSchema }).strict()
 export const studentGuardianInputSchema = z.object({ fullName: z.string().trim().min(1).max(200), relationship: relationshipSchema, email: z.email().nullable(), phone: z.string().trim().max(40).nullable() }).strict()
 export const createStudentInputSchema = studentInstitutionPathSchema.extend({
   fullName: z.string().trim().min(1).max(200), socialName: z.string().trim().max(200).nullable(), birthDate: birthDateSchema,
@@ -54,7 +61,7 @@ export const addStudentGuardianInputSchema = studentPathSchema.extend({ guardian
 export type AddStudentGuardianInput = Readonly<z.infer<typeof addStudentGuardianInputSchema>>
 export const removeStudentGuardianInputSchema = studentGuardianPathSchema
 export type RemoveStudentGuardianInput = Readonly<z.infer<typeof removeStudentGuardianInputSchema>>
-export const recordConsentInputSchema = studentPathSchema.extend({ kind: consentKindSchema, termVersion: z.string().min(1).max(32), guardianId: guardianIdSchema.nullable(), signedOn: birthDateSchema.nullable() }).strict()
+export const recordConsentInputSchema = studentPathSchema.extend({ kind: consentKindSchema, termVersion: z.string().min(1).max(32), guardianId: guardianIdSchema.nullable(), signedOn: birthDateSchema.nullable(), document: consentDocumentInputSchema }).strict()
 export type RecordConsentInput = Readonly<z.infer<typeof recordConsentInputSchema>>
 export const consentPathSchema = studentPathSchema.extend({ consentId: consentIdSchema }).strict()
 export type ConsentPath = Readonly<z.infer<typeof consentPathSchema>>

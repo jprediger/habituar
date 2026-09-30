@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { canInviteStudentAccount, deriveAgeRange, listStudentsInputSchema, studentGuardianInputSchema } from './students.js'
+import { canInviteStudentAccount, createStudentInputSchema, deriveAgeRange, listStudentsInputSchema, studentGuardianInputSchema } from './students.js'
 
 describe('student age rules', () => {
   it('moves to the next age range on the birthday', () => {
@@ -29,5 +29,13 @@ describe('listagem de alunos pela URL', () => {
 
   it('recusa texto que não é booleano em vez de tratá-lo como verdadeiro', () => {
     expect(listStudentsInputSchema.safeParse({ institutionId, archived: 'no' }).success).toBe(false)
+  })
+})
+
+describe('institutional consent input', () => {
+  it('requires an attached document when the institution records a signed term', () => {
+    const input = { institutionId: 'ca4a057e-7417-48a5-ade3-bd8ff83e2f78', fullName: 'Ana', socialName: null, birthDate: '2015-01-01', institutionalConsent: { signedOn: '2026-01-01', termVersion: '2026-01' } }
+    expect(createStudentInputSchema.safeParse(input).success).toBe(false)
+    expect(createStudentInputSchema.safeParse({ ...input, institutionalConsent: { ...input.institutionalConsent, document: { fileName: 'term.pdf', mediaType: 'application/pdf', base64: 'JVBERi0xLjQ=' } } }).success).toBe(true)
   })
 })

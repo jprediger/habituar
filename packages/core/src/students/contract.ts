@@ -1,6 +1,6 @@
 import { oc } from '@orpc/contract'
 import { z } from 'zod'
-import { addStudentGuardianInputSchema, consentPathSchema, consentSchema, createStudentInputSchema, createStudentInvitationInputSchema, listStudentsInputSchema, ownConsentPathSchema, ownConsentSchema, pendingConsentSchema, recordConsentInputSchema, removeStudentGuardianInputSchema, replaceAssignmentsInputSchema, studentArchivedSchema, studentDetailSchema, studentPageSchema, studentPathSchema, updateStudentInputSchema } from '../students.js'
+import { addStudentGuardianInputSchema, consentPathSchema, consentDocumentSchema, consentSchema, createStudentInputSchema, createStudentInvitationInputSchema, listStudentsInputSchema, ownConsentPathSchema, ownConsentSchema, pendingConsentSchema, recordConsentInputSchema, removeStudentGuardianInputSchema, replaceAssignmentsInputSchema, studentArchivedSchema, studentDetailSchema, studentPageSchema, studentPathSchema, updateStudentInputSchema } from '../students.js'
 import { invitationCreatedSchema } from '../invitations.js'
 
 /** Contrato de alunos, responsáveis, consentimentos e acompanhamentos da instituição. */
@@ -14,6 +14,7 @@ export const studentsContract = {
   addGuardian: oc.route({ method: 'POST', path: '/institutions/{institutionId}/students/{studentId}/guardians' }).input(addStudentGuardianInputSchema).output(studentDetailSchema),
   removeGuardian: oc.route({ method: 'DELETE', path: '/institutions/{institutionId}/students/{studentId}/guardians/{guardianId}' }).input(removeStudentGuardianInputSchema).output(studentDetailSchema),
   recordConsent: oc.route({ method: 'POST', path: '/institutions/{institutionId}/students/{studentId}/consents' }).input(recordConsentInputSchema).output(consentSchema),
+  getConsentDocument: oc.route({ method: 'GET', path: '/institutions/{institutionId}/students/{studentId}/consents/{consentId}/document' }).input(consentPathSchema).output(consentDocumentSchema),
   revokeConsent: oc.route({ method: 'POST', path: '/institutions/{institutionId}/students/{studentId}/consents/{consentId}/revoke' }).input(consentPathSchema).output(consentSchema),
   replaceAssignments: oc.route({ method: 'PUT', path: '/institutions/{institutionId}/students/{studentId}/assignments' }).input(replaceAssignmentsInputSchema).output(studentDetailSchema),
   invite: oc.route({ method: 'POST', path: '/institutions/{institutionId}/students/{studentId}/invitations' }).input(createStudentInvitationInputSchema).output(invitationCreatedSchema),

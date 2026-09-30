@@ -117,7 +117,7 @@ function StudentRegistration({ student }: Readonly<{ student: StudentDetail }>):
                 <span className="font-medium">{guardian.fullName}</span>
                 {' — '}
                 {t('students.record.registration.guardianContact', {
-                  relationship: t(`students.relationship.${guardian.relationship}`),
+                  relationship: t(`students.recordRelationship.${guardian.relationship}`),
                   contact: [guardian.phone, guardian.email].filter((value) => value !== null).join(' · '),
                 })}
               </dd>

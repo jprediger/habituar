@@ -1,13 +1,73 @@
 {
-  "roles": { "team-management": "Gestão da equipe", "care-assigned": "Atendimento aos alunos vinculados", "care-institution": "Atendimento da instituição", "monitoring": "Monitoria", "student": "Aluno", "guardian": "Responsável" },
-  "roleDescriptions": { "team-management": "Organiza a equipe e consulta o cadastro básico de todos os alunos.", "care-assigned": "Acompanha os alunos vinculados a esta pessoa.", "care-institution": "Acompanha os alunos da instituição.", "monitoring": "Consulta os alunos vinculados à monitoria.", "student": "Consulta o próprio cadastro.", "guardian": "Consulta o cadastro dos alunos pelos quais responde." },
-  "institutionSwitcher": { "current": "Instituição atual: {{institution}}", "change": "Trocar instituição" },
-  "awaitingInvitation": { "title": "Aguardando convite", "description": "Sua conta está pronta. Peça um convite à pessoa responsável pela instituição para começar.", "guidance": "Abra o link do convite no navegador para aceitar.", "refresh": "Verificar meu acesso" },
-  "platform": {
-    "back": "Voltar às instituições", "save": "Salvar dados", "saving": "Salvando...", "error": "Não foi possível concluir. Confira a conexão e tente novamente.",
-    "institutions": { "title": "Instituições", "description": "Cadastre instituições e mantenha seus dados, membros e convites.", "newDescription": "Preencha os dados cadastrais da nova instituição.", "detailDescription": "Dados cadastrais, equipe, convites e papéis desta instituição. Nenhuma seção mostra dados de alunos.", "detailLoading": "Carregando instituição...", "new": "Criar instituição", "empty": "Nenhuma instituição cadastrada.", "invalid": "Confira os campos. Digite CPF ou CNPJ apenas com números e com dígitos válidos.", "sections": "Seções da instituição", "data": "Dados", "name": "Nome", "documentType": "Tipo de documento", "documentNumber": "CPF ou CNPJ", "contactName": "Nome do contato", "contactEmail": "E-mail do contato", "contactPhone": "Telefone do contato", "cnpj": "CNPJ", "cpf": "CPF" }
+  "roles": {
+    "team-management": "Gestão da equipe",
+    "care-assigned": "Atendimento aos alunos vinculados",
+    "care-institution": "Atendimento da instituição",
+    "monitoring": "Monitoria",
+    "student": "Aluno",
+    "guardian": "Responsável"
   },
-  "invitation": { "title": "Convite para a instituição", "from": "{{institution}} convidou {{email}}.", "unavailable": "Este link não foi encontrado. Peça um novo convite à instituição.", "signInFirst": "Entre com a conta deste e-mail para aceitar o convite.", "signInError": "Não foi possível entrar. Confira e-mail e senha.", "accept": "Aceitar convite", "createAndAccept": "Criar senha e aceitar", "invalidRegistration": "Digite seu nome e uma senha com pelo menos 8 caracteres.", "acceptError": "Não foi possível aceitar. Confira os dados ou peça um novo convite.", "status": { "pending": "Convite pronto para aceitar.", "accepted": "Este convite já foi aceito. Entre na sua conta.", "revoked": "Este convite foi revogado. Peça outro à instituição.", "expired": "Este convite expirou. Peça outro à instituição." } },
+  "roleDescriptions": {
+    "team-management": "Organiza a equipe e consulta o cadastro básico de todos os alunos.",
+    "care-assigned": "Acompanha os alunos vinculados a esta pessoa.",
+    "care-institution": "Acompanha os alunos da instituição.",
+    "monitoring": "Consulta os alunos vinculados à monitoria.",
+    "student": "Consulta o próprio cadastro.",
+    "guardian": "Consulta o cadastro dos alunos pelos quais responde."
+  },
+  "institutionSwitcher": {
+    "current": "Instituição atual: {{institution}}",
+    "change": "Trocar instituição"
+  },
+  "awaitingInvitation": {
+    "title": "Aguardando convite",
+    "description": "Sua conta está pronta. Peça um convite à pessoa responsável pela instituição para começar.",
+    "guidance": "Abra o link do convite no navegador para aceitar.",
+    "refresh": "Verificar meu acesso"
+  },
+  "platform": {
+    "back": "Voltar às instituições",
+    "save": "Salvar dados",
+    "saving": "Salvando...",
+    "error": "Não foi possível concluir. Confira a conexão e tente novamente.",
+    "institutions": {
+      "title": "Instituições",
+      "description": "Cadastre instituições e mantenha seus dados, membros e convites.",
+      "newDescription": "Preencha os dados cadastrais da nova instituição.",
+      "detailDescription": "Dados cadastrais, equipe, convites e papéis desta instituição. Nenhuma seção mostra dados de alunos.",
+      "detailLoading": "Carregando instituição...",
+      "new": "Criar instituição",
+      "empty": "Nenhuma instituição cadastrada.",
+      "invalid": "Confira os campos. Digite CPF ou CNPJ apenas com números e com dígitos válidos.",
+      "sections": "Seções da instituição",
+      "data": "Dados",
+      "name": "Nome",
+      "documentType": "Tipo de documento",
+      "documentNumber": "CPF ou CNPJ",
+      "contactName": "Nome do contato",
+      "contactEmail": "E-mail do contato",
+      "contactPhone": "Telefone do contato",
+      "cnpj": "CNPJ",
+      "cpf": "CPF"
+    }
+  },
+  "invitation": {
+    "title": "Convite para a instituição",
+    "from": "{{institution}} convidou {{email}}.",
+    "unavailable": "Este link não foi encontrado. Peça um novo convite à instituição.",
+    "signInFirst": "Entre com a conta deste e-mail para aceitar o convite.",
+    "signInError": "Não foi possível entrar. Confira e-mail e senha.",
+    "accept": "Aceitar convite",
+    "createAndAccept": "Criar senha e aceitar",
+    "invalidRegistration": "Digite seu nome e uma senha com pelo menos 8 caracteres.",
+    "acceptError": "Não foi possível aceitar. Confira os dados ou peça um novo convite.",
+    "status": {
+      "pending": "Convite pronto para aceitar.",
+      "accepted": "Este convite já foi aceito. Entre na sua conta.",
+      "revoked": "Este convite foi revogado. Peça outro à instituição.",
+      "expired": "Este convite expirou. Peça outro à instituição."
+    }
+  },
   "authentication": {
     "loading": "Verificando sua sessão...",
     "retry": "Tentar novamente",
@@ -95,7 +155,8 @@
     "home": "Início",
     "management": "Gestão",
     "profile": "Perfil",
-    "institutions": "Instituições"
+    "institutions": "Instituições",
+    "students": "Estudantes"
   },
   "shell": {
     "skipToContent": "Pular para o conteúdo",
@@ -136,7 +197,9 @@
       "studentsTitle": "Estudantes acompanhados",
       "appointmentsTitle": "Próximos atendimentos",
       "appointmentsEmptyTitle": "Nenhum atendimento para mostrar ainda",
-      "appointmentsEmptyDescription": "Quando a agenda chegar ao Habituar, seus próximos atendimentos aparecem aqui, em ordem de horário."
+      "appointmentsEmptyDescription": "Quando a agenda chegar ao Habituar, seus próximos atendimentos aparecem aqui, em ordem de horário.",
+      "studentsEmptyTitle": "Nenhum estudante para mostrar ainda",
+      "studentsEmptyDescription": "Quando o acompanhamento de estudantes chegar ao Habituar, as pessoas que você acompanha aparecem nesta lista."
     },
     "profile": {
       "eyebrow": "Sua conta",
@@ -163,8 +226,8 @@
     "assignmentManage": "Gerenciar acompanhamentos",
     "recordRead": "Consultar fichas de alunos",
     "recordWrite": "Registrar em fichas de alunos",
-  "routineRead": "Consultar rotina de alunos",
-  "routineWrite": "Montar rotina de alunos"
+    "routineRead": "Consultar rotina de alunos",
+    "routineWrite": "Montar rotina de alunos"
   },
   "staff": {
     "title": "Gestão",
@@ -479,7 +542,121 @@
         "profile-revision": "Atualização da ficha"
       }
     },
-    "relationship": {
+    "relationship": "Parentesco",
+    "title": "Estudantes",
+    "description": "Consulte os alunos que você acompanha nesta instituição.",
+    "new": "Cadastrar estudante",
+    "edit": "Editar estudante",
+    "formDescription": "Dados cadastrais e responsáveis do estudante.",
+    "detailDescription": "Cadastro, responsáveis, consentimento e acompanhamentos.",
+    "searchLabel": "Buscar por nome",
+    "search": "Buscar",
+    "showArchived": "Mostrar arquivados",
+    "loading": "Carregando estudantes...",
+    "loadError": "Não foi possível carregar os estudantes.",
+    "retry": "Tentar novamente",
+    "empty": "Nenhum estudante cadastrado",
+    "noResults": "Nenhum estudante encontrado",
+    "emptyDescription": "A lista mostra somente os estudantes dentro do seu alcance.",
+    "total": "{{count}} estudantes",
+    "listLabel": "Lista de estudantes",
+    "paginationLabel": "Páginas de estudantes",
+    "previousPage": "Página anterior",
+    "nextPage": "Próxima página",
+    "page": "Página {{page}}",
+    "back": "Voltar aos estudantes",
+    "dataSection": "Dados",
+    "guardiansSection": "Responsáveis",
+    "consentSection": "Consentimento",
+    "assignmentsSection": "Acompanhamentos",
+    "archiveSection": "Arquivo",
+    "fullName": "Nome completo",
+    "socialName": "Nome social",
+    "birthDate": "Data de nascimento",
+    "ageRangeLabel": "Faixa etária",
+    "account": "Conta",
+    "consent": "Consentimento",
+    "guardianName": "Nome do responsável",
+    "email": "E-mail",
+    "phone": "Telefone",
+    "required": "Campo obrigatório",
+    "initialGuardianHint": "Você pode cadastrar um responsável agora ou adicionar depois.",
+    "consentHint": "Para menores de 18 anos, anexe o termo assinado pelo responsável (PDF ou imagem de até 2 MB).",
+    "institutionConsent": "O termo foi assinado pelo responsável",
+    "signedOn": "Data da assinatura",
+    "invalid": "Confira os dados informados e o termo, quando necessário.",
+    "saveError": "Não foi possível salvar. Revise os dados ou recarregue a página se outra pessoa os alterou.",
+    "actionError": "Não foi possível concluir a ação. Tente novamente.",
+    "save": "Salvar estudante",
+    "saving": "Salvando...",
+    "cancel": "Cancelar",
+    "noGuardians": "Nenhum responsável vinculado.",
+    "noAssignments": "Nenhum acompanhante definido.",
+    "assignmentHint": "A equipe pode ser definida por quem gerencia acompanhamentos.",
+    "invite": "Convidar",
+    "remove": "Remover",
+    "addGuardian": "Adicionar responsável",
+    "guardianAdded": "Responsável adicionado.",
+    "guardianRemoved": "Responsável removido.",
+    "invitationLink": "Link do convite (copie agora)",
+    "archive": "Arquivar estudante",
+    "unarchive": "Desarquivar estudante",
+    "archived": "Estudante arquivado.",
+    "unarchived": "Estudante desarquivado.",
+    "ageRange": {
+      "0-5": "0 a 5 anos",
+      "6-10": "6 a 10 anos",
+      "11-14": "11 a 14 anos",
+      "15-17": "15 a 17 anos",
+      "18+": "18 anos ou mais"
+    },
+    "relationships": {
+      "mother": "Mãe",
+      "father": "Pai",
+      "grandparent": "Avó ou avô",
+      "legal-guardian": "Tutor legal",
+      "other": "Outro"
+    },
+    "accountStatus": {
+      "none": "Sem conta",
+      "invitation-pending": "Convite pendente",
+      "active": "Com conta"
+    },
+    "consentStatus": {
+      "not-required": "Não exigido",
+      "institution-recorded": "Registrado pela instituição",
+      "pending-guardian": "Aguardando confirmação do responsável",
+      "confirmed": "Confirmado",
+      "revoked": "Revogado"
+    },
+    "assignmentEnvironment": {
+      "professional": "Profissional",
+      "monitor": "Monitor"
+    },
+    "studentAccountSection": "Conta do estudante",
+    "studentAccountHint": "Convide o estudante se ele tiver idade para acessar a própria conta.",
+    "studentEmail": "E-mail do estudante",
+    "inviteStudent": "Convidar estudante",
+    "saveAssignments": "Salvar acompanhamentos",
+    "assignmentsSaved": "Acompanhamentos atualizados.",
+    "loadingTeam": "Carregando equipe...",
+    "teamError": "Não foi possível carregar a equipe.",
+    "noTeam": "Não há profissionais ou monitores para selecionar.",
+    "pickerTitle": "Escolha o estudante",
+    "selectedStudent": "Estudante selecionado",
+    "pendingConsentTitle": "Confirmação pendente",
+    "pendingConsentDescription": "O termo vigente de {{name}} aguarda sua confirmação.",
+    "termVersion": "Versão do termo: {{version}}",
+    "termUnavailable": "O texto do termo ainda não está disponível para leitura. A confirmação ficará disponível quando ele for publicado.",
+    "personWithRole": "{{name}} · {{role}}",
+    "selectDate": "Selecionar data",
+    "dateDone": "Concluído",
+    "consentDocument": "Documento do termo assinado",
+    "selectDocument": "Selecionar PDF ou imagem",
+    "documentRequired": "Anexe o termo assinado.",
+    "invalidDocument": "Selecione um PDF ou imagem válida de até 2 MB.",
+    "documentLoadFailed": "Não foi possível abrir o documento do termo.",
+    "recordRelationship": {
       "mother": "Mãe",
       "father": "Pai",
       "grandparent": "Avó ou avô",

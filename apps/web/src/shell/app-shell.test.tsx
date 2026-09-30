@@ -32,6 +32,9 @@ vi.mock('../client/habituar-client.js', () => ({
       activeSearch: '', pagination: { hasPreviousPage: false, hasNextPage: false, goToPreviousPage: vi.fn(), goToNextPage: vi.fn() }, canOpenRecord: false,
     }),
     usePlatformInstitutions: () => ({ institutions: [], isLoading: false, error: false, create: vi.fn() }),
+    useStudentPicker: () => ({ state: { status: 'ready', items: [], total: 0, page: 1, pageSize: 20 }, selectedStudentId: undefined, selectStudent: vi.fn() }),
+    usePendingConsents: () => ({ state: { status: 'ready', items: [] }, confirm: vi.fn(), refresh: vi.fn() }),
+    useStudentList: () => ({ state: { status: 'ready', items: [], total: 0, page: 1, pageSize: 20 }, search: '', setSearch: vi.fn(), archived: false, setArchived: vi.fn(), page: 1, setPage: vi.fn(), refresh: vi.fn() }),
     useInstitutionSwitcher: () => ({ current: undefined, others: [], switchTo: vi.fn() }),
     useAuthentication: () => ({
       state: client.state,
@@ -116,6 +119,20 @@ afterEach(() => {
 })
 
 describe('professional environment routes', () => {
+  it('shows Students to a monitor with student.read and protects the typed URL without it', async () => {
+    client.state = createAuthenticatedState('monitor', [{ key: 'student.read', scope: 'assigned' }])
+    renderAt('/professional')
+    const navigation = await screen.findByRole('navigation', { name: 'Navegação do ambiente' })
+    expect(within(navigation).getByRole('link', { name: 'Estudantes' })).toBeInTheDocument()
+  })
+
+  it('redirects a direct Students URL when student.read is absent', async () => {
+    const router = renderAt('/professional/students')
+    await waitFor(() => { expect(router.state.location.pathname).toBe('/professional') })
+    const navigation = await screen.findByRole('navigation', { name: 'Navegação do ambiente' })
+    expect(within(navigation).queryByRole('link', { name: 'Estudantes' })).not.toBeInTheDocument()
+  })
+
   it('greets the professional with only what the session provides', async () => {
     renderAt('/professional')
 

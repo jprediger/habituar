@@ -19,8 +19,12 @@ const studentSummaryObjectSchema = z.object({
 export const studentSummarySchema = studentSummaryObjectSchema.readonly()
 export type StudentSummary = z.infer<typeof studentSummarySchema>
 
+// Em GET a entrada chega pela URL, onde booleano é texto. `z.coerce.boolean()` leria
+// "false" como verdadeiro, então só "true" e "false" literais são aceitos além do booleano.
+const queryBooleanSchema = z.union([z.boolean(), z.enum(['true', 'false']).transform(value => value === 'true')])
+
 export const listStudentsInputSchema = studentInstitutionPathSchema.extend({
-  search: z.string().trim().min(1).max(200).optional(), archived: z.boolean().default(false),
+  search: z.string().trim().min(1).max(200).optional(), archived: queryBooleanSchema.default(false),
   page: z.coerce.number().int().min(1).default(1), pageSize: z.coerce.number().int().min(1).max(50).default(20),
 }).strict()
 export type ListStudentsInput = Readonly<z.infer<typeof listStudentsInputSchema>>

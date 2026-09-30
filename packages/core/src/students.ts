@@ -68,6 +68,9 @@ export const studentArchivedSchema = z.object({ id: studentIdSchema, archivedAt:
 export const consentSchema = z.object({ id: consentIdSchema, kind: consentKindSchema, termVersion: z.string(), guardianId: guardianIdSchema.nullable(), signedOn: birthDateSchema.nullable(), recordedAt: z.iso.datetime(), revokedAt: z.iso.datetime().nullable() }).strict().readonly()
 export type Consent = z.infer<typeof consentSchema>
 export const pendingConsentSchema = z.object({ student: studentSummarySchema, termVersion: z.string().min(1) }).strict().readonly()
+/** Confirmação vigente do próprio responsável; o id é o que a revogação pede. */
+export const ownConsentSchema = z.object({ student: studentSummarySchema, consent: consentSchema }).strict().readonly()
+export type OwnConsent = z.infer<typeof ownConsentSchema>
 export type PendingConsent = z.infer<typeof pendingConsentSchema>
 
 /** Deriva faixa na data fornecida pelo adaptador de relógio para manter a regra determinística. */

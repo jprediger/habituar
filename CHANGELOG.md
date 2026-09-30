@@ -23,6 +23,22 @@ versionamento segue [SemVer](https://semver.org/lang/pt-BR/).
 ## [Não publicado]
 
 ### Adicionado
+- `[api] [web] [mobile] [core]` Ficha do estudante: quem atende alunos vê, na tela inicial,
+  os estudantes que acompanha, com busca por nome, e abre a ficha de cada um. A ficha
+  reúne turma, condições acompanhadas e necessidades de apoio, e mostra para consulta a
+  data de nascimento, o nome social e os responsáveis do cadastro. Cada gravação guarda a
+  versão anterior no histórico, e a gravação feita a partir de uma versão que já mudou é
+  recusada em vez de sobrescrever a de outra pessoa.
+- `[api] [web] [mobile]` Observações datadas e com autoria na ficha do estudante. Depois
+  de registrada, a observação não pode ser editada nem apagada; a tela pede confirmação antes.
+- `[api] [web] [mobile]` Registro de consultas na ficha do estudante: o profissional
+  informa data e hora, duração e anotação de cada atendimento que já aconteceu. Data no
+  futuro é recusada, e a consulta registrada não pode ser editada nem apagada. No
+  aplicativo, a data vem do seletor nativo, que não oferece momento depois de agora.
+- `[api]` Novas rotas em `/v1/institutions/{institutionId}/students/{studentId}/record`,
+  protegidas pelas permissões `record.read` e `record.write`, concedidas aos papéis de
+  atendimento e disponíveis como agrupamentos em papéis personalizados. Gestão da equipe
+  e monitoria não recebem acesso às fichas; estudante arquivado mantém a ficha só para leitura.
 - `[api] [web]` O administrador geral pode cadastrar instituições, consultar membros e
   papéis e convidar pessoas por link de uso único; o aceite está disponível na web.
 - `[web] [mobile]` Contas sem vínculo passam a ver a espera por convite, e pessoas com
@@ -94,11 +110,26 @@ versionamento segue [SemVer](https://semver.org/lang/pt-BR/).
   primeira migração do M1, antes de qualquer release ou dado de produção.
 
 ### Corrigido
+- `[api] [core]` A lista de alunos recusava o filtro de arquivados vindo pela URL, porque
+  o valor chega como texto; qualquer tela que filtrasse recebia erro. Agora `true` e
+  `false` em texto são aceitos, e outro texto continua recusado.
+- `[api]` Consultar ou trocar os papéis de um membro pela área do administrador geral
+  respondia com erro interno; a resposta agora segue o contrato da plataforma, que não
+  inclui a contagem de alunos acompanhados.
+- `[web] [mobile]` O papel de responsável aparece com o nome traduzido nas telas de
+  equipe e de convite, em vez da chave interna do texto.
+- `[infra]` Os ícones de alerta e de informação dos avisos passageiros entram no gate
+  de contraste, que voltou a passar.
 - `[api]` SIGTERM agora fecha o pool de conexões antes do processo sair. O hook já
   existia mas nunca era acionado; reinício e deploy deixavam conexão pendurada até o
   timeout do Postgres.
 
 ### Segurança
+- `[api]` Revisões da ficha, observações e consultas só aceitam leitura e inserção no
+  banco, inclusive para o dono das tabelas, e a autoria gravada precisa ser a da pessoa
+  autenticada.
+- `[api]` Identificador de instituição ou de aluno malformado numa rota protegida por
+  permissão é negado, em vez de chegar ao banco e virar erro interno.
 - `[api]` Convites persistem somente o hash do token, expiram em sete dias e exigem
   e-mail correspondente no aceite; a RLS restringe a consulta pública ao token apresentado.
 - `[api]` `student.read@own` exige que o aluno consultado pertença ao próprio ator.

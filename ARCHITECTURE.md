@@ -321,7 +321,7 @@ legados será migrada de forma reversível; qualquer capacidade institucional fu
 precisará passar pelo catálogo fechado e por uma concessão explícita.
 
 ```
-permissions        key ('ficha.read', 'observation.write', …), sensitive boolean
+permissions        key ('student.read', 'record.read', 'record.write', …), sensitive boolean
 roles              id, institution_id, environment, template_key, name, is_system,
                    cloned_from, version
 role_permissions   role_id, permission_key, scope ('own'|'assigned'|'institution')

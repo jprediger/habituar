@@ -94,18 +94,30 @@ falhou. A trilha completa de auditoria dessas mudanças ainda está prevista.
 ### RF0008 – Vincular acompanhamento
 
 O sistema deve relacionar profissionais ou monitores aos estudantes que acompanham.
+Quem gerencia acompanhamentos define, por estudante, as pessoas da equipe que o
+acompanham; só vínculos ativos de profissional ou monitor são aceitos, e remover alguém
+da instituição encerra os acompanhamentos dessa pessoa. A interface dessa definição
+ainda está prevista.
 
 | Prioridade | Complexidade | Situação | Versão |
 | --- | --- | --- | --- |
-| Alta | Média | Implementado no servidor | Atual |
+| Alta | Média | Em desenvolvimento | Atual |
 
 ### RF0009 – Manter ficha do estudante
 
 Profissionais autorizados devem registrar dados, observações e histórico do estudante.
+A ficha reúne turma, condições acompanhadas e necessidades de apoio; data de nascimento,
+nome social e responsáveis vêm do cadastro do estudante e aparecem na ficha para
+consulta. Cada gravação preserva a versão anterior, e observações não podem ser editadas
+nem apagadas. Na web e no aplicativo mobile, o profissional abre a ficha a partir da
+lista dos estudantes que acompanha, com busca por nome, e registra as consultas
+realizadas, com data, duração e anotação, que também não podem ser alteradas. A
+monitoria vê os estudantes que acompanha sem abrir a ficha, e estudante arquivado mantém
+a ficha apenas para consulta.
 
 | Prioridade | Complexidade | Situação | Versão |
 | --- | --- | --- | --- |
-| Alta | Alta | Previsto | Futura |
+| Alta | Alta | Em desenvolvimento | Atual |
 
 ### RF0010 – Organizar rotina e tarefas
 
@@ -265,11 +277,18 @@ preservam o contexto institucional. Cada vínculo possui um tipo e recebe papéi
 somente o hash do token e seus papéis ficam em `invitation_roles`. Vínculos removidos
 recebem data e autor da remoção, sem apagar a conta nem a autoria de registros, e
 vínculos e papéis têm versão para recusar edição feita sobre dados desatualizados. O
+estudante pode ser cadastrado sem conta própria; seus responsáveis ficam em
+`student_guardians`, os consentimentos em `student_consents` e cada acompanhamento
+liga um vínculo ativo de profissional ou monitor ao estudante. A ficha do estudante
+fica em `student_profile_revisions`, uma revisão por gravação, as observações em
+`student_observations` e as consultas realizadas em `student_consultations`; as três
+tabelas aceitam somente leitura e inserção, com autoria igual à pessoa autenticada. As
+tabelas de responsáveis, consentimentos e ficha ainda não aparecem no diagrama. O
 banco aplica isolamento por linha para impedir acesso entre instituições.
 
 _[Modelo atual do banco de dados disponível no DOCX oficial.]_
 
-Entidades previstas para evolução do produto incluem fichas, observações, rotina, tarefas, consultas, métricas, grupos e relatórios. Elas ainda não fazem parte do modelo físico apresentado.
+Entidades previstas para evolução do produto incluem rotina, tarefas, agenda de consultas, métricas, grupos e relatórios. Elas ainda não fazem parte do modelo físico apresentado.
 
 ## Tecnologias utilizadas
 
@@ -312,7 +331,7 @@ A API valida entradas e saídas a partir de contratos compartilhados, nega acess
 | Papéis, permissões e vínculos | Alta | Em desenvolvimento | Papéis somados, catálogo fechado, isolamento institucional e gestão da equipe |
 | Instituições e convites | Média | Em desenvolvimento | Cadastro, convite de uso único e aceite na web |
 | Interfaces de autenticação | Alta | Implementado | Entrada, cadastro e ambientes por perfil na web e no mobile |
-| Fichas e observações | Alta | Previsto | Dados sensíveis, histórico e auditoria |
+| Fichas e observações | Alta | Em desenvolvimento | Dados de apoio, histórico e consultas realizadas; auditoria prevista |
 | Rotina, tarefas e foco | Alta | Previsto | Organização semanal e funcionamento offline |
 | Agenda e atendimentos | Alta | Previsto | Consultas, anotações e notificações |
 | Métricas e grupos | Média | Previsto | Indicadores configuráveis por instituição |

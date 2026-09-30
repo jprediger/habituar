@@ -13,6 +13,15 @@ export type {
   AuthenticationState,
   MembershipContext,
 } from './create-habituar-react-client.js'
+export type {
+  AccessibleStudents,
+  StudentConsultationsState,
+  StudentHistoryState,
+  StudentListState,
+  StudentLoadFailure,
+  StudentRecordAccess,
+  StudentRecordState,
+} from './student-record-hooks.js'
 export { createMemoryCredentialStorage } from './credential-storage.js'
 export type { CredentialStorage } from './credential-storage.js'
 export { createMemoryPreferenceStorage } from './preference-storage.js'

@@ -18,6 +18,8 @@ import { queryKeys } from './query-keys.js'
 import { toHealthState } from './health-state.js'
 import type { HealthState } from './health-state.js'
 import { createStaffHooks } from './staff-hooks.js'
+import { createStudentRecordHooks } from './student-record-hooks.js'
+import type { StudentRecordHooks } from './student-record-hooks.js'
 import type { StaffHooks } from './staff-hooks.js'
 
 type RegisterInput = Parameters<ApiClient['auth']['register']>[0]
@@ -80,7 +82,7 @@ type AuthContextValue = Readonly<{ state: AuthenticationState; actions: Authenti
 
 type InstitutionSwitcher = Readonly<{ current: MembershipContext | undefined; others: readonly MembershipContext[]; switchTo(institutionId: InstitutionId): Promise<void> }>
 
-export type HabituarReactClient = StaffHooks & Readonly<{
+export type HabituarReactClient = StaffHooks & StudentRecordHooks & Readonly<{
   Provider(props: PropsWithChildren): ReactElement
   useHealth(): Readonly<{ state: HealthState; retry(): void }>
   useAuthentication(): AuthContextValue
@@ -574,5 +576,6 @@ export function createHabituarReactClient(
 
   const staffHooks = createStaffHooks({ apiClient, queryClient, revalidateAccess: revalidateAccessOnce, useCurrentUserId })
 
-  return { Provider, useHealth, useAuthentication, useInstitutionSwitcher, usePlatformInstitutions, usePlatformInstitution, useInvitation, ...staffHooks }
+  const studentRecordHooks = createStudentRecordHooks({ apiClient, queryClient })
+  return { Provider, useHealth, useAuthentication, useInstitutionSwitcher, usePlatformInstitutions, usePlatformInstitution, useInvitation, ...staffHooks, ...studentRecordHooks }
 }

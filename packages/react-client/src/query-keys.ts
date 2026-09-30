@@ -1,4 +1,4 @@
-import type { InstitutionId } from '@habituar/core/identity/ids'
+import type { InstitutionId, StudentId } from '@habituar/core/identity/ids'
 
 /**
  * Única fonte das chaves de query do cliente. Todo dado de tenant mora sob
@@ -9,6 +9,11 @@ import type { InstitutionId } from '@habituar/core/identity/ids'
 export const queryKeys = {
   institutionScope: ['institution'],
   institutionStaff: (institutionId: InstitutionId) => ['institution', institutionId, 'staff'],
+  students: (institutionId: InstitutionId) => ['institution', institutionId, 'students'],
+  studentDetail: (institutionId: InstitutionId, studentId: StudentId) => ['institution', institutionId, 'students', studentId, 'detail'],
+  studentRecord: (institutionId: InstitutionId, studentId: StudentId) => ['institution', institutionId, 'students', studentId, 'record'],
+  studentHistory: (institutionId: InstitutionId, studentId: StudentId) => ['institution', institutionId, 'students', studentId, 'history'],
+  studentConsultations: (institutionId: InstitutionId, studentId: StudentId) => ['institution', institutionId, 'students', studentId, 'consultations'],
   platformInstitutions: ['platform', 'institutions'],
   platformInstitution: (institutionId: InstitutionId) => ['platform', 'institution', institutionId],
   platformInstitutionStaff: (institutionId: InstitutionId) => ['platform', 'institution', institutionId, 'staff'],

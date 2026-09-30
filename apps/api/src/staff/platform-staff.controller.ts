@@ -1,5 +1,7 @@
 import { apiContract } from '@habituar/core/contract'
 import { listRoleBundleCatalog } from '@habituar/core/role-bundles'
+import { platformStaffMemberSchema } from '@habituar/core/staff'
+import type { StaffMember } from '@habituar/core/staff'
 import { Controller, Req } from '@nestjs/common'
 import { Implement, implement } from '@orpc/nest'
 import type { AuthenticatedRequest } from '../authorization/authentication.guard.js'
@@ -25,7 +27,7 @@ export class PlatformStaffController {
       const actor: StaffActor = { kind: 'platform', ...request.actor }
       const outcome = await this.members.get(actor, input.institutionId, input.membershipId)
       if (outcome.status === 'failure') return mapFailureToHttpResponse(errors, outcome.failure)
-      return outcome.value
+      return toPlatformMember(outcome.value)
     })
   }
 
@@ -37,7 +39,7 @@ export class PlatformStaffController {
       const actor: StaffActor = { kind: 'platform', ...request.actor }
       const outcome = await this.members.replaceRoles(actor, input)
       if (outcome.status === 'failure') return mapFailureToHttpResponse(errors, outcome.failure)
-      return outcome.value
+      return toPlatformMember(outcome.value)
     })
   }
 
@@ -108,4 +110,10 @@ export class PlatformStaffController {
       return outcome.value
     })
   }
+}
+
+// A contagem de alunos acompanhados é leitura do alcance institucional; o contrato da
+// plataforma é estrito e não a declara, então repassá-la derrubava a resposta em 500.
+function toPlatformMember(member: StaffMember) {
+  return platformStaffMemberSchema.parse({ id: member.id, user: member.user, environment: member.environment, roles: member.roles, version: member.version })
 }

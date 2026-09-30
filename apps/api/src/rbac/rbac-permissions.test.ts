@@ -10,7 +10,7 @@ import { assignments, guardians, institutions, membershipRoles, memberships, per
 import { StudentsRepository } from '../students/students.repository.js'
 import { StudentsService } from '../students/students.service.js'
 import { Clock } from '../platform/clock.js'
-import { CONSENT_TERMS, updateStudentInputSchema, recordConsentInputSchema, replaceAssignmentsInputSchema } from '@habituar/core/students'
+import { CONSENT_TERMS, consentPathSchema, updateStudentInputSchema, recordConsentInputSchema, replaceAssignmentsInputSchema } from '@habituar/core/students'
 import { lockInstitutionAuthorization } from '../database/authorization-lock.js'
 
 const institutionId = 'b1000000-0000-4000-8000-000000000001'
@@ -116,8 +116,10 @@ describe('alcance da permissão do aluno', () => {
     const update = await studentsService.update(actor, updateStudentInputSchema.parse({ institutionId, studentId: ownStudentId, fullName: 'Tampered', socialName: null, birthDate: '2012-01-01', expectedVersion: 1 }))
     expect(update).toMatchObject({ status: 'failure', failure: { code: 'student-not-found' } })
 
-    const consent = await studentsService.recordConsent(actor, recordConsentInputSchema.parse({ institutionId, studentId: ownStudentId, kind: 'institution-record', termVersion: CONSENT_TERMS.institutionRecord, guardianId: null, signedOn: '2026-01-01' }))
+    const consent = await studentsService.recordConsent(actor, recordConsentInputSchema.parse({ institutionId, studentId: ownStudentId, kind: 'institution-record', termVersion: CONSENT_TERMS.institutionRecord, guardianId: null, signedOn: '2026-01-01', document: { fileName: 'termo.pdf', mediaType: 'application/pdf', base64: Buffer.from('%PDF-1.4').toString('base64') } }))
     expect(consent).toMatchObject({ status: 'failure', failure: { code: 'student-not-found' } })
+    const document = await studentsService.getConsentDocument(actor, consentPathSchema.parse({ institutionId, studentId: ownStudentId, consentId: '624ca4b6-b4c0-4f0c-901b-53de73723343' }))
+    expect(document).toMatchObject({ status: 'failure', failure: { code: 'student-not-found' } })
 
     const assignment = await studentsService.replaceAssignments(actor, replaceAssignmentsInputSchema.parse({ institutionId, studentId: ownStudentId, membershipIds: [] }))
     expect(assignment).toMatchObject({ status: 'failure', failure: { code: 'student-not-found' } })

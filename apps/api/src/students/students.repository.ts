@@ -87,7 +87,7 @@ export class StudentsRepository {
   }
 
   findCurrentInstitutionConsent(transaction: DatabaseTransaction, studentId: string) {
-    return transaction.query.studentConsents.findFirst({ where: and(eq(studentConsents.studentId, studentId), eq(studentConsents.kind, 'institution-record'), isNull(studentConsents.revokedAt)) })
+    return transaction.query.studentConsents.findFirst({ columns: { documentBase64: false }, where: and(eq(studentConsents.studentId, studentId), eq(studentConsents.kind, 'institution-record'), isNull(studentConsents.revokedAt)) })
   }
 
   findPendingStudentInvitation(transaction: DatabaseTransaction, studentId: string, now: Date) {
@@ -101,7 +101,7 @@ export class StudentsRepository {
   }
 
   listStudentConsents(transaction: DatabaseTransaction, studentId: string) {
-    return transaction.select().from(studentConsents).where(eq(studentConsents.studentId, studentId)).orderBy(sql`${studentConsents.recordedAt} DESC`)
+    return transaction.query.studentConsents.findMany({ columns: { documentBase64: false }, where: eq(studentConsents.studentId, studentId), orderBy: (consent, { desc }) => [desc(consent.recordedAt)] })
   }
 
   insertStudent(transaction: DatabaseTransaction, input: Readonly<{ institutionId: string; fullName: string; socialName: string | null; birthDate: string; createdByUserId: string }>) {
@@ -164,7 +164,11 @@ export class StudentsRepository {
       .where(and(eq(memberships.institutionId, institutionId), eq(memberships.userId, userId), eq(memberships.environment, 'student'), isNull(memberships.removedAt))).returning()
   }
 
-  insertConsent(transaction: DatabaseTransaction, input: Readonly<{ institutionId: string; studentId: string; kind: string; termVersion: string; guardianId: string | null; guardianNameSnapshot: string | null; guardianRelationshipSnapshot: string | null; signedOn: string | null; recordedByUserId: string }>) {
+  findConsentDocument(transaction: DatabaseTransaction, institutionId: string, studentId: string, consentId: string) {
+    return transaction.query.studentConsents.findFirst({ where: and(eq(studentConsents.institutionId, institutionId), eq(studentConsents.studentId, studentId), eq(studentConsents.id, consentId), eq(studentConsents.kind, 'institution-record')) })
+  }
+
+  insertConsent(transaction: DatabaseTransaction, input: Readonly<{ institutionId: string; studentId: string; kind: string; termVersion: string; guardianId: string | null; guardianNameSnapshot: string | null; guardianRelationshipSnapshot: string | null; signedOn: string | null; documentName?: string | null; documentMediaType?: string | null; documentBase64?: string | null; recordedByUserId: string }>) {
     return transaction.insert(studentConsents).values(input).returning()
   }
 

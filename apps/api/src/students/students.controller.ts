@@ -1,5 +1,5 @@
 import { apiContract } from '@habituar/core/contract'
-import { Controller, Req } from '@nestjs/common'
+import { Controller, Header, Req } from '@nestjs/common'
 import { Implement, implement } from '@orpc/nest'
 import type { AuthenticatedRequest } from '../authorization/authentication.guard.js'
 import { mapFailureToHttpResponse } from '../errors/failure-to-http.js'
@@ -102,6 +102,18 @@ export class StudentsController {
     return implement(apiContract.students.recordConsent).handler(async ({ input, errors }) => {
       if (request.actor === undefined) throw errors.unauthenticated()
       const outcome = await this.students.recordConsent(request.actor, input)
+      if (outcome.status === 'failure') return mapFailureToHttpResponse(errors, outcome.failure)
+      return outcome.value
+    })
+  }
+
+  @RequirePermission('guardian.link')
+  @Header('Cache-Control', 'no-store')
+  @Implement(apiContract.students.getConsentDocument)
+  handleGetConsentDocument(@Req() request: AuthenticatedRequest) {
+    return implement(apiContract.students.getConsentDocument).handler(async ({ input, errors }) => {
+      if (request.actor === undefined) throw errors.unauthenticated()
+      const outcome = await this.students.getConsentDocument(request.actor, input)
       if (outcome.status === 'failure') return mapFailureToHttpResponse(errors, outcome.failure)
       return outcome.value
     })

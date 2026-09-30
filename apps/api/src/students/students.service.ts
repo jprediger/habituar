@@ -1,6 +1,6 @@
 import { FailureCode, Outcome } from '@habituar/core/failure'
 import { guardianIdSchema } from '@habituar/core/identity/ids'
-import { calculateAgeInYears, CONSENT_TERMS, deriveAgeRange, AddStudentGuardianInput, Consent, ConsentPath, CreateStudentInput, ListStudentsInput, OwnConsent, OwnConsentPath, ownConsentSchema, PendingConsent, pendingConsentSchema, RecordConsentInput, RemoveStudentGuardianInput, ReplaceAssignmentsInput, StudentDetail, studentDetailSchema, StudentPage, studentPageSchema, StudentSummary, studentSummarySchema, UpdateStudentInput, consentSchema } from '@habituar/core/students'
+import { calculateAgeInYears, CONSENT_TERMS, consentDocumentSchema, deriveAgeRange, AddStudentGuardianInput, Consent, ConsentPath, CreateStudentInput, ListStudentsInput, OwnConsent, OwnConsentPath, ownConsentSchema, PendingConsent, pendingConsentSchema, RecordConsentInput, RemoveStudentGuardianInput, ReplaceAssignmentsInput, StudentDetail, studentDetailSchema, StudentPage, studentPageSchema, StudentSummary, studentSummarySchema, UpdateStudentInput, consentSchema } from '@habituar/core/students'
 import { Injectable } from '@nestjs/common'
 import { Database } from '../database/database.js'
 import { lockInstitutionAuthorization } from '../database/authorization-lock.js'
@@ -8,6 +8,7 @@ import { Clock } from '../platform/clock.js'
 import { RbacService } from '../rbac/rbac.service.js'
 import { StudentsRepository } from './students.repository.js'
 import type { StudentRecord } from './students.repository.js'
+import { isValidConsentDocument } from './consent-document.js'
 
 function fail<T>(code: FailureCode): Outcome<T> { return { status: 'failure', failure: { code, message: code } } }
 
@@ -79,6 +80,8 @@ export class StudentsService {
         guardians: guardianRows.map(guardian => ({ ...guardian, email: canReadContacts ? guardian.email : null, phone: canReadContacts ? guardian.phone : null })),
         assignments: assignees,
         consentStatus: ageRange === '18+' ? 'not-required' : isConsentRevoked ? 'revoked' : latestGuardianConfirmation !== undefined ? 'confirmed' : consent === undefined ? 'pending-guardian' : 'institution-recorded',
+        institutionalDocumentName: canReadContacts ? consent?.documentName ?? null : null,
+        institutionalDocumentId: canReadContacts && consent?.documentName ? consent.id : null,
         accountStatus: student.userId !== null ? 'active' : pendingInvitation === undefined ? 'none' : 'invitation-pending',
       })
       return { status: 'success', value }
@@ -91,6 +94,7 @@ export class StudentsService {
     const today = this.clock.now().toISOString().slice(0, 10)
     const isMinor = calculateAgeInYears(input.birthDate, today) < 18
     if (input.birthDate > today || calculateAgeInYears(input.birthDate, today) > 120) return fail<StudentDetail>('invalid_input')
+    if (input.institutionalConsent !== undefined && !isValidConsentDocument(input.institutionalConsent.document)) return fail<StudentDetail>('invalid_input')
     if (isMinor && input.institutionalConsent === undefined) return fail<StudentDetail>('consent-required')
     if (input.institutionalConsent?.termVersion !== undefined && input.institutionalConsent.termVersion !== CONSENT_TERMS.institutionRecord) return fail<StudentDetail>('configuration-conflict')
     if ((input.guardian !== undefined || input.institutionalConsent !== undefined) && !await this.rbac.hasPermission(actor, input.institutionId, 'guardian.link')) return fail<StudentDetail>('forbidden')
@@ -112,7 +116,7 @@ export class StudentsService {
       if (input.institutionalConsent !== undefined) {
         const guardianSnapshot = guardianId === null ? undefined : await this.repository.findGuardianSnapshot(transaction, student.id, guardianId)
         if (guardianId !== null && guardianSnapshot === undefined) throw new Error('Consent guardian is not linked to the student')
-        const [consent] = await this.repository.insertConsent(transaction, { institutionId: input.institutionId, studentId: student.id, kind: 'institution-record', termVersion: CONSENT_TERMS.institutionRecord, guardianId, guardianNameSnapshot: guardianSnapshot?.fullName ?? null, guardianRelationshipSnapshot: guardianSnapshot?.relationship ?? null, signedOn: input.institutionalConsent.signedOn, recordedByUserId: actor.userId })
+        const [consent] = await this.repository.insertConsent(transaction, { institutionId: input.institutionId, studentId: student.id, kind: 'institution-record', termVersion: CONSENT_TERMS.institutionRecord, guardianId, guardianNameSnapshot: guardianSnapshot?.fullName ?? null, guardianRelationshipSnapshot: guardianSnapshot?.relationship ?? null, signedOn: input.institutionalConsent.signedOn, documentName: input.institutionalConsent.document.fileName, documentMediaType: input.institutionalConsent.document.mediaType, documentBase64: input.institutionalConsent.document.base64, recordedByUserId: actor.userId })
         if (consent === undefined) throw new Error('Consent insert returned no row')
       }
       return { status: 'success' as const, value: student.id }
@@ -201,7 +205,7 @@ export class StudentsService {
 
   /** Registra consentimento institucional como evento imutável. */
   async recordConsent(actor: { readonly userId: string; readonly sessionId: string }, input: RecordConsentInput): Promise<Outcome<Consent>> {
-    if (input.kind !== 'institution-record' || input.termVersion !== CONSENT_TERMS.institutionRecord || input.signedOn === null) return fail<Consent>('invalid_input')
+    if (input.kind !== 'institution-record' || input.termVersion !== CONSENT_TERMS.institutionRecord || input.signedOn === null || !isValidConsentDocument(input.document)) return fail<Consent>('invalid_input')
     return this.database.withTenantOutsideRequest({ institutionId: input.institutionId, actorId: actor.userId, sessionId: actor.sessionId }, async transaction => {
       await lockInstitutionAuthorization(transaction, input.institutionId)
       if (!await this.rbac.hasPermissionInTransaction(transaction, actor, input.institutionId, 'guardian.link', input.studentId)) return fail<Consent>('student-not-found')
@@ -209,9 +213,19 @@ export class StudentsService {
       if (student === undefined || student.archivedAt !== null) return fail<Consent>('student-not-found')
       const guardianSnapshot = input.guardianId === null ? undefined : await this.repository.findGuardianSnapshot(transaction, input.studentId, input.guardianId)
       if (input.guardianId !== null && guardianSnapshot === undefined) return fail<Consent>('guardian-not-found')
-      const [consent] = await this.repository.insertConsent(transaction, { institutionId: input.institutionId, studentId: input.studentId, kind: input.kind, termVersion: input.termVersion, guardianId: input.guardianId, guardianNameSnapshot: guardianSnapshot?.fullName ?? null, guardianRelationshipSnapshot: guardianSnapshot?.relationship ?? null, signedOn: input.signedOn, recordedByUserId: actor.userId })
+      const [consent] = await this.repository.insertConsent(transaction, { institutionId: input.institutionId, studentId: input.studentId, kind: input.kind, termVersion: input.termVersion, guardianId: input.guardianId, guardianNameSnapshot: guardianSnapshot?.fullName ?? null, guardianRelationshipSnapshot: guardianSnapshot?.relationship ?? null, signedOn: input.signedOn, documentName: input.document.fileName, documentMediaType: input.document.mediaType, documentBase64: input.document.base64, recordedByUserId: actor.userId })
       if (consent === undefined) throw new Error('Consent insert returned no row')
       return { status: 'success', value: toConsent(consent) }
+    })
+  }
+
+  /** Entrega o anexo apenas a quem pode gerenciar responsáveis deste estudante. */
+  async getConsentDocument(actor: { readonly userId: string; readonly sessionId: string }, input: ConsentPath): Promise<Outcome<ReturnType<typeof consentDocumentSchema.parse>>> {
+    if (!await this.rbac.hasPermission(actor, input.institutionId, 'guardian.link', { studentId: input.studentId })) return fail('student-not-found')
+    return this.database.withTenantOutsideRequest({ institutionId: input.institutionId, actorId: actor.userId, sessionId: actor.sessionId }, async transaction => {
+      const consent = await this.repository.findConsentDocument(transaction, input.institutionId, input.studentId, input.consentId)
+      if (consent?.documentName === null || consent?.documentName === undefined || consent.documentMediaType === null || consent.documentBase64 === null) return fail('consent-not-found')
+      return { status: 'success', value: consentDocumentSchema.parse({ fileName: consent.documentName, mediaType: consent.documentMediaType, base64: consent.documentBase64 }) }
     })
   }
 

@@ -1,6 +1,11 @@
-import { cleanup } from '@testing-library/react'
+import { cleanup, configure } from '@testing-library/react'
 import '@testing-library/jest-dom/vitest'
 import { afterEach, vi } from 'vitest'
+
+// O primeiro teste de cada arquivo paga o carregamento do cliente e do React Query; no
+// runner do CI isso passa de 1 s, o padrão do `findBy*`, e a tela ainda mostra
+// "Carregando...". Esperar mais não esconde falha: consulta errada continua falhando.
+configure({ asyncUtilTimeout: 5000 })
 
 // `globals: false` (spec de testes): sem `afterEach` global, a Testing Library não
 // registra limpeza sozinha — cada suíte herdaria o DOM da anterior sem isto.

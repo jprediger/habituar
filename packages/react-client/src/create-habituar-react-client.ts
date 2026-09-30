@@ -25,6 +25,8 @@ import type { StudentHomeHooks } from './student-home-hooks.js'
 import { createStudentRecordHooks } from './student-record-hooks.js'
 import type { StudentRecordHooks } from './student-record-hooks.js'
 import type { StaffHooks } from './staff-hooks.js'
+import { createStudentHooks } from './student-hooks.js'
+import type { StudentHooks } from './student-hooks.js'
 
 type RegisterInput = Parameters<ApiClient['auth']['register']>[0]
 type LoginInput = Parameters<ApiClient['auth']['loginWeb']>[0]
@@ -86,7 +88,7 @@ type AuthContextValue = Readonly<{ state: AuthenticationState; actions: Authenti
 
 type InstitutionSwitcher = Readonly<{ current: MembershipContext | undefined; others: readonly MembershipContext[]; switchTo(institutionId: InstitutionId): Promise<void> }>
 
-export type HabituarReactClient = StaffHooks & StudentRecordHooks & StudentHomeHooks & RoutineHooks & Readonly<{
+export type HabituarReactClient = StaffHooks & StudentHooks & StudentRecordHooks & StudentHomeHooks & RoutineHooks & Readonly<{
   Provider(props: PropsWithChildren): ReactElement
   useHealth(): Readonly<{ state: HealthState; retry(): void }>
   useAuthentication(): AuthContextValue
@@ -167,6 +169,7 @@ export function createHabituarReactClient(
     credentials?: CredentialsMode
     credentialStorage?: CredentialStorage
     preferenceStorage?: PreferenceStorage
+    studentPreferenceStorage?: PreferenceStorage
   }>,
 ): HabituarReactClient {
   const baseUrl = parseOriginOrThrow(options.origin)
@@ -582,9 +585,10 @@ export function createHabituarReactClient(
   }
 
   const staffHooks = createStaffHooks({ apiClient, queryClient, revalidateAccess: revalidateAccessOnce, useCurrentUserId })
+  const studentHooks = createStudentHooks({ apiClient, queryClient, preferenceStorage: options.studentPreferenceStorage ?? createMemoryPreferenceStorage() })
 
   const studentRecordHooks = createStudentRecordHooks({ apiClient, queryClient })
   const studentHomeHooks = createStudentHomeHooks({ apiClient, queryClient })
   const routineHooks = createRoutineHooks({ apiClient, queryClient })
-  return { Provider, useHealth, useAuthentication, useInstitutionSwitcher, usePlatformInstitutions, usePlatformInstitution, useInvitation, ...staffHooks, ...studentRecordHooks, ...studentHomeHooks, ...routineHooks }
+  return { Provider, useHealth, useAuthentication, useInstitutionSwitcher, usePlatformInstitutions, usePlatformInstitution, useInvitation, ...staffHooks, ...studentHooks, ...studentRecordHooks, ...studentHomeHooks, ...routineHooks }
 }

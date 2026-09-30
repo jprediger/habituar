@@ -17,14 +17,14 @@ import type { StaffCapabilities } from './staff-management.js'
  */
 export type NavigationEnvironment = MembershipEnvironment | 'admin'
 
-export type NavigationId = 'home' | 'routine' | 'management' | 'profile' | 'institutions'
+export type NavigationId = 'home' | 'routine' | 'management' | 'students' | 'profile' | 'institutions'
 
-export type NavigationIcon = 'home' | 'calendar' | 'team' | 'user' | 'building'
+export type NavigationIcon = 'home' | 'calendar' | 'team' | 'students' | 'user' | 'building'
 
 // Caminhos por casca: quem consome uma casca só recebe as rotas dela, então a plataforma
 // que não tem a rota de outra (o app não tem administração geral) não precisa declará-la.
 type ShellNavigationPaths = Readonly<{
-  professional: '/professional' | '/professional/management' | '/professional/profile'
+  professional: '/professional' | '/professional/management' | '/professional/students' | '/professional/profile'
   student: '/student' | '/student/routine'
   admin: '/admin/institutions'
 }>
@@ -47,6 +47,7 @@ type ProfessionalNavigationEntry = ProfessionalItem & Readonly<{ isAllowed: (cap
 const PROFESSIONAL_NAVIGATION: readonly ProfessionalNavigationEntry[] = [
   { id: 'home', labelKey: 'navigation.home', path: '/professional', icon: 'home', isAllowed: () => true },
   { id: 'management', labelKey: 'navigation.management', path: '/professional/management', icon: 'team', isAllowed: (capabilities) => capabilities.canReadTeam },
+  { id: 'students', labelKey: 'navigation.students', path: '/professional/students', icon: 'students', isAllowed: (capabilities) => capabilities.canReadStudents },
   { id: 'profile', labelKey: 'navigation.profile', path: '/professional/profile', icon: 'user', isAllowed: () => true },
 ]
 

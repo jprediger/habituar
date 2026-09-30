@@ -28,7 +28,7 @@ const FULL_MANAGER: readonly EffectivePermission[] = [
 describe('staff capabilities', () => {
   it('gives a full team manager every management action', () => {
     expect(getStaffCapabilities(institution(FULL_MANAGER))).toEqual({
-      canReadTeam: true, canInvite: true, canRevokeInvitations: true, canAssignRoles: true, canRemoveMembers: true, canManageRoles: true,
+      canReadStudents: true, canReadTeam: true, canInvite: true, canRevokeInvitations: true, canAssignRoles: true, canRemoveMembers: true, canManageRoles: true,
     })
   })
 

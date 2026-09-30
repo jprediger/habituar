@@ -56,10 +56,10 @@ describe('professional navigation by capability', () => {
     expect(findActiveNavigationItem(items, '/professional/management/roles')?.id).toBe('management')
   })
 
-  it('keeps a default monitor on home and profile only', () => {
+  it('shows the student list to a monitor with assigned reading permission', () => {
     const items = useProfessionalNavigation({ permissions: [{ key: 'student.read', scope: 'assigned' }] })
 
-    expect(items.map((item) => item.id)).toEqual(['home', 'profile'])
+    expect(items.map((item) => item.id)).toEqual(['home', 'students', 'profile'])
   })
 
   it('does not open management for a write permission that comes without reading the team', () => {

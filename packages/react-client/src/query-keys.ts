@@ -15,6 +15,7 @@ export const queryKeys = {
   studentHistory: (institutionId: InstitutionId, studentId: StudentId) => ['institution', institutionId, 'students', studentId, 'history'],
   studentConsultations: (institutionId: InstitutionId, studentId: StudentId) => ['institution', institutionId, 'students', studentId, 'consultations'],
   studentRoutine: (institutionId: InstitutionId, studentId: StudentId) => ['institution', institutionId, 'students', studentId, 'routine'],
+  institutionStudents: (institutionId: InstitutionId) => ['institution', institutionId, 'students'],
   platformInstitutions: ['platform', 'institutions'],
   platformInstitution: (institutionId: InstitutionId) => ['platform', 'institution', institutionId],
   platformInstitutionStaff: (institutionId: InstitutionId) => ['platform', 'institution', institutionId, 'staff'],

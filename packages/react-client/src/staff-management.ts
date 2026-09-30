@@ -22,6 +22,7 @@ export type StaffManagementContext =
   | Readonly<{ kind: 'platform'; institutionId: InstitutionId }>
 
 export type StaffCapabilities = Readonly<{
+  canReadStudents: boolean
   canReadTeam: boolean
   canInvite: boolean
   canRevokeInvitations: boolean
@@ -31,6 +32,7 @@ export type StaffCapabilities = Readonly<{
 }>
 
 const PLATFORM_CAPABILITIES: StaffCapabilities = {
+  canReadStudents: false,
   canReadTeam: true,
   canInvite: true,
   canRevokeInvitations: true,
@@ -52,6 +54,7 @@ export function getMembershipCapabilities(permissions: readonly EffectivePermiss
   // Toda escrita começa por uma leitura da lista; sem `membership.read` não há tela onde agir.
   const canReadTeam = holds('membership.read')
   return {
+    canReadStudents: permissions.some((permission) => permission.key === 'student.read'),
     canReadTeam,
     canInvite: canReadTeam && holds('membership.invite') && holds('role.assign'),
     canRevokeInvitations: canReadTeam && holds('membership.invite'),
@@ -363,4 +366,3 @@ export type RoleEditor = Readonly<{
   confirmDeletion: () => Promise<RoleOperation | undefined>
   reload: () => void
 }>
-

@@ -8,7 +8,7 @@ import { RequestContext } from '../../platform/request-context.js'
 import { RbacRepository } from '../../rbac/rbac.repository.js'
 import { RbacService } from '../../rbac/rbac.service.js'
 import { Database, TenantContext } from '../database.js'
-import { students, users } from '../schema.js'
+import { studentConsents, studentGuardians, students, users } from '../schema.js'
 import { DEVELOPMENT_USERS, SeededUsers, seedDevelopmentUsers } from './development-users.js'
 import { seedPermissionCatalog } from './permission-catalog.seed.js'
 import { seedRoleTemplates } from './role-templates.js'
@@ -92,7 +92,16 @@ describe('usuários de desenvolvimento', () => {
     )
 
     expect(stored).toHaveLength(1)
-    expect(new Set(Object.values(seeded)).size).toBe(4)
+    expect(new Set(Object.values(seeded)).size).toBe(5)
+  })
+
+  it('vincula o responsável ao estudante com o consentimento institucional, sem duplicar', async () => {
+    const counts = await database.withTenantOutsideRequest(TENANT, async (transaction) => {
+      const links = await transaction.select().from(studentGuardians).where(eq(studentGuardians.studentId, assignedStudentId))
+      const consents = await transaction.select().from(studentConsents).where(eq(studentConsents.studentId, assignedStudentId))
+      return [links.length, consents.filter((consent) => consent.kind === 'institution-record').length]
+    })
+    expect(counts).toEqual([1, 1])
   })
 
   it('deixa o estudante ler a própria ficha', async () => {

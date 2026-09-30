@@ -1,7 +1,8 @@
 import { MembershipEnvironment } from '@habituar/core/roles'
 import { sql } from 'drizzle-orm'
+import type { RoutineKind } from '@habituar/core/routines'
 import type { StudentCondition } from '@habituar/core/student-records'
-import { boolean, check, date, foreignKey, index, integer, pgEnum, pgTable, text, timestamp, unique, uniqueIndex, uuid } from 'drizzle-orm/pg-core'
+import { boolean, check, date, foreignKey, index, integer, pgEnum, pgTable, smallint, text, time, timestamp, unique, uniqueIndex, uuid } from 'drizzle-orm/pg-core'
 
 export const tenantProbe = pgTable('tenant_probe', {
   id: uuid().primaryKey().defaultRandom(),
@@ -354,4 +355,35 @@ export const studentConsultations = pgTable('student_consultations', {
   index('student_consultations_student_occurred_at').on(table.studentId, table.occurredAt),
   check('student_consultations_duration', sql`${table.durationMinutes} between 1 and 480`),
   check('student_consultations_notes_length', sql`char_length(${table.notes}) between 1 and 4000`),
+])
+
+// Literais repetidos de ROUTINE_KINDS pelo mesmo motivo de STUDENT_CONDITION_VALUES.
+const ROUTINE_KIND_VALUES = ['class', 'study', 'therapy', 'activity', 'rest', 'other'] as const satisfies readonly [RoutineKind, ...RoutineKind[]]
+export const routineKindEnum = pgEnum('routine_kind', ROUTINE_KIND_VALUES)
+
+// Grade semanal: blocos que se repetem toda semana. Diferente da ficha, é editável e
+// apagável — rotina muda, e o que conta é a versão atual. `version` recusa a edição feita
+// sobre uma versão que outra pessoa já mudou.
+export const routineBlocks = pgTable('routine_blocks', {
+  id: uuid().primaryKey().defaultRandom(),
+  institutionId: uuid('institution_id').notNull(),
+  studentId: uuid('student_id').notNull(),
+  weekday: smallint().notNull(),
+  startsAt: time('starts_at').notNull(),
+  endsAt: time('ends_at').notNull(),
+  title: text().notNull(),
+  kind: routineKindEnum().notNull(),
+  notes: text(),
+  version: integer().notNull().default(1),
+  createdByUserId: uuid('created_by_user_id').notNull().references(() => users.id),
+  updatedByUserId: uuid('updated_by_user_id').notNull().references(() => users.id),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull(),
+}, (table) => [
+  foreignKey({ columns: [table.studentId, table.institutionId], foreignColumns: [students.id, students.institutionId] }).onDelete('cascade'),
+  index('routine_blocks_student_weekday').on(table.studentId, table.weekday, table.startsAt),
+  check('routine_blocks_weekday', sql`${table.weekday} between 1 and 7`),
+  check('routine_blocks_time_order', sql`${table.endsAt} > ${table.startsAt}`),
+  check('routine_blocks_title_length', sql`char_length(${table.title}) between 1 and 80`),
+  check('routine_blocks_notes_length', sql`${table.notes} is null or char_length(${table.notes}) between 1 and 500`),
 ])

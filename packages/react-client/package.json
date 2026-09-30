@@ -35,6 +35,10 @@
     "./student-record-forms": {
       "types": "./dist/student-record-forms.d.ts",
       "import": "./dist/student-record-forms.js"
+    },
+    "./routine-forms": {
+      "types": "./dist/routine-forms.d.ts",
+      "import": "./dist/routine-forms.js"
     }
   },
   "scripts": {

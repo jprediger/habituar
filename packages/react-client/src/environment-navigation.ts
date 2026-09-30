@@ -17,15 +17,15 @@ import type { StaffCapabilities } from './staff-management.js'
  */
 export type NavigationEnvironment = MembershipEnvironment | 'admin'
 
-export type NavigationId = 'home' | 'management' | 'profile' | 'institutions'
+export type NavigationId = 'home' | 'routine' | 'management' | 'profile' | 'institutions'
 
-export type NavigationIcon = 'home' | 'team' | 'user' | 'building'
+export type NavigationIcon = 'home' | 'calendar' | 'team' | 'user' | 'building'
 
 // Caminhos por casca: quem consome uma casca só recebe as rotas dela, então a plataforma
 // que não tem a rota de outra (o app não tem administração geral) não precisa declará-la.
 type ShellNavigationPaths = Readonly<{
   professional: '/professional' | '/professional/management' | '/professional/profile'
-  student: '/student'
+  student: '/student' | '/student/routine'
   admin: '/admin/institutions'
 }>
 
@@ -51,7 +51,10 @@ const PROFESSIONAL_NAVIGATION: readonly ProfessionalNavigationEntry[] = [
 ]
 
 const ENVIRONMENT_NAVIGATION: { readonly [Shell in 'student' | 'admin']: readonly NavigationItem<NavigationPath<Shell>>[] } = {
-  student: [{ id: 'home', labelKey: 'navigation.home', path: '/student', icon: 'home' }],
+  student: [
+    { id: 'home', labelKey: 'navigation.home', path: '/student', icon: 'home' },
+    { id: 'routine', labelKey: 'navigation.routine', path: '/student/routine', icon: 'calendar' },
+  ],
   admin: [{ id: 'institutions', labelKey: 'navigation.institutions', path: '/admin/institutions', icon: 'building' }],
 }
 

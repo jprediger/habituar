@@ -12,6 +12,7 @@ export default defineConfig({
     'invitation-acceptance': 'src/invitation-acceptance.ts',
     'staff-management': 'src/staff-management.ts',
     'student-record-forms': 'src/student-record-forms.ts',
+    'routine-forms': 'src/routine-forms.ts',
   },
   // Formato único: o monorepo inteiro é ESM, então não existe condição `require` a servir.
   format: ['esm'],

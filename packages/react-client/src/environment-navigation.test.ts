@@ -77,7 +77,7 @@ describe('professional navigation by capability', () => {
 
 describe('environment navigation catalog', () => {
   it('keeps every destination inside its own environment', () => {
-    expect(useEnvironmentNavigation('student').map((item) => item.path)).toEqual(['/student'])
+    expect(useEnvironmentNavigation('student').map((item) => item.path)).toEqual(['/student', '/student/routine'])
     expect(useEnvironmentNavigation('admin').map((item) => item.path)).toEqual(['/admin/institutions'])
   })
 

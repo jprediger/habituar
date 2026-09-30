@@ -22,6 +22,9 @@ export type {
   StudentRecordAccess,
   StudentRecordState,
 } from './student-record-hooks.js'
+export type { RoutineLoadFailure, RoutineState, RoutineWriteResult, StudentRoutine } from './routine-hooks.js'
+export { listStudentHomeSections } from './student-home-hooks.js'
+export type { GuardianConsents, OwnConsentsState, PendingConsentsState, StudentHomeSections } from './student-home-hooks.js'
 export { createMemoryCredentialStorage } from './credential-storage.js'
 export type { CredentialStorage } from './credential-storage.js'
 export { createMemoryPreferenceStorage } from './preference-storage.js'

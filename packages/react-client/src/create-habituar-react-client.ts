@@ -18,6 +18,10 @@ import { queryKeys } from './query-keys.js'
 import { toHealthState } from './health-state.js'
 import type { HealthState } from './health-state.js'
 import { createStaffHooks } from './staff-hooks.js'
+import { createRoutineHooks } from './routine-hooks.js'
+import type { RoutineHooks } from './routine-hooks.js'
+import { createStudentHomeHooks } from './student-home-hooks.js'
+import type { StudentHomeHooks } from './student-home-hooks.js'
 import { createStudentRecordHooks } from './student-record-hooks.js'
 import type { StudentRecordHooks } from './student-record-hooks.js'
 import type { StaffHooks } from './staff-hooks.js'
@@ -82,7 +86,7 @@ type AuthContextValue = Readonly<{ state: AuthenticationState; actions: Authenti
 
 type InstitutionSwitcher = Readonly<{ current: MembershipContext | undefined; others: readonly MembershipContext[]; switchTo(institutionId: InstitutionId): Promise<void> }>
 
-export type HabituarReactClient = StaffHooks & StudentRecordHooks & Readonly<{
+export type HabituarReactClient = StaffHooks & StudentRecordHooks & StudentHomeHooks & RoutineHooks & Readonly<{
   Provider(props: PropsWithChildren): ReactElement
   useHealth(): Readonly<{ state: HealthState; retry(): void }>
   useAuthentication(): AuthContextValue
@@ -301,6 +305,7 @@ export function createHabituarReactClient(
         memberships.current = []
         activeInstitutionId.current = undefined
         queryClient.removeQueries({ queryKey: queryKeys.institutionScope })
+        queryClient.removeQueries({ queryKey: queryKeys.personalScope })
         if (credentialStorage) await credentialStorage.remove()
         setState({ status: 'unauthenticated' })
       }
@@ -375,6 +380,7 @@ export function createHabituarReactClient(
         activeInstitutionId.current = undefined
         await preferenceStorage.remove()
         queryClient.removeQueries({ queryKey: queryKeys.institutionScope })
+        queryClient.removeQueries({ queryKey: queryKeys.personalScope })
         if (credentialStorage) {
           await credentialStorage.remove()
         }
@@ -386,6 +392,7 @@ export function createHabituarReactClient(
           activeInstitutionId.current = undefined
           await preferenceStorage.remove()
           queryClient.removeQueries({ queryKey: queryKeys.institutionScope })
+          queryClient.removeQueries({ queryKey: queryKeys.personalScope })
           if (credentialStorage) {
             await credentialStorage.remove()
           }
@@ -577,5 +584,7 @@ export function createHabituarReactClient(
   const staffHooks = createStaffHooks({ apiClient, queryClient, revalidateAccess: revalidateAccessOnce, useCurrentUserId })
 
   const studentRecordHooks = createStudentRecordHooks({ apiClient, queryClient })
-  return { Provider, useHealth, useAuthentication, useInstitutionSwitcher, usePlatformInstitutions, usePlatformInstitution, useInvitation, ...staffHooks, ...studentRecordHooks }
+  const studentHomeHooks = createStudentHomeHooks({ apiClient, queryClient })
+  const routineHooks = createRoutineHooks({ apiClient, queryClient })
+  return { Provider, useHealth, useAuthentication, useInstitutionSwitcher, usePlatformInstitutions, usePlatformInstitution, useInvitation, ...staffHooks, ...studentRecordHooks, ...studentHomeHooks, ...routineHooks }
 }

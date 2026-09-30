@@ -14,9 +14,15 @@ export const queryKeys = {
   studentRecord: (institutionId: InstitutionId, studentId: StudentId) => ['institution', institutionId, 'students', studentId, 'record'],
   studentHistory: (institutionId: InstitutionId, studentId: StudentId) => ['institution', institutionId, 'students', studentId, 'history'],
   studentConsultations: (institutionId: InstitutionId, studentId: StudentId) => ['institution', institutionId, 'students', studentId, 'consultations'],
+  studentRoutine: (institutionId: InstitutionId, studentId: StudentId) => ['institution', institutionId, 'students', studentId, 'routine'],
   platformInstitutions: ['platform', 'institutions'],
   platformInstitution: (institutionId: InstitutionId) => ['platform', 'institution', institutionId],
   platformInstitutionStaff: (institutionId: InstitutionId) => ['platform', 'institution', institutionId, 'staff'],
   invitationScope: ['invitation'],
+  // Dados da própria pessoa, fora de qualquer instituição: saem junto com a sessão, senão
+  // quem entrar depois no mesmo aparelho veria os consentimentos de quem saiu.
+  personalScope: ['me'],
+  ownConsents: ['me', 'consents'],
+  pendingConsents: ['me', 'consents', 'pending'],
   invitation: (token: string) => ['invitation', token],
 } as const

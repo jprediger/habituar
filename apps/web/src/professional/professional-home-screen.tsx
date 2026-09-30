@@ -1,4 +1,4 @@
-import { CalendarDays, UsersRound } from 'lucide-react'
+import { CalendarDays } from 'lucide-react'
 import type { ReactElement } from 'react'
 import { useTranslation } from 'react-i18next'
 import { EmptyState } from '../components/ui/empty-state.js'
@@ -6,11 +6,11 @@ import { PageHeader } from '../components/ui/page-header.js'
 import { Section } from '../components/ui/section.js'
 import { SummaryCards } from '../components/ui/summary-cards.js'
 import { useInstitutionSession } from '../session/institution-session.js'
+import { StudentList } from './student-list.js'
 
 /**
- * Início do profissional. Mostra só o que a sessão sustenta — quem, onde e com que papel
- * — e reserva, com estado vazio honesto, o lugar dos estudantes e dos atendimentos até os
- * módulos que os alimentam existirem.
+ * Início do profissional: quem, onde e com que papel, e os alunos cuja ficha a pessoa
+ * alcança. Reserva, com estado vazio honesto, o lugar dos atendimentos até a agenda existir.
  */
 export function ProfessionalHomeScreen(): ReactElement {
   const { t } = useTranslation()
@@ -35,11 +35,7 @@ export function ProfessionalHomeScreen(): ReactElement {
 
       <div className="grid gap-xxl lg:grid-cols-2 lg:gap-xl">
         <Section title={t('professional.home.studentsTitle')}>
-          <EmptyState
-            icon={UsersRound}
-            title={t('professional.home.studentsEmptyTitle')}
-            description={t('professional.home.studentsEmptyDescription')}
-          />
+          <StudentList />
         </Section>
         <Section title={t('professional.home.appointmentsTitle')}>
           <EmptyState

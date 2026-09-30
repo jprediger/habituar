@@ -1,6 +1,6 @@
 {
-  "roles": { "team-management": "Gestão da equipe", "care-assigned": "Atendimento aos alunos vinculados", "care-institution": "Atendimento da instituição", "monitoring": "Monitoria", "student": "Aluno" },
-  "roleDescriptions": { "team-management": "Organiza a equipe e consulta o cadastro básico de todos os alunos.", "care-assigned": "Acompanha os alunos vinculados a esta pessoa.", "care-institution": "Acompanha os alunos da instituição.", "monitoring": "Consulta os alunos vinculados à monitoria.", "student": "Consulta o próprio cadastro." },
+  "roles": { "team-management": "Gestão da equipe", "care-assigned": "Atendimento aos alunos vinculados", "care-institution": "Atendimento da instituição", "monitoring": "Monitoria", "student": "Aluno", "guardian": "Responsável" },
+  "roleDescriptions": { "team-management": "Organiza a equipe e consulta o cadastro básico de todos os alunos.", "care-assigned": "Acompanha os alunos vinculados a esta pessoa.", "care-institution": "Acompanha os alunos da instituição.", "monitoring": "Consulta os alunos vinculados à monitoria.", "student": "Consulta o próprio cadastro.", "guardian": "Consulta o cadastro dos alunos pelos quais responde." },
   "institutionSwitcher": { "current": "Instituição atual: {{institution}}", "change": "Trocar instituição" },
   "awaitingInvitation": { "title": "Aguardando convite", "description": "Sua conta está pronta. Peça um convite à pessoa responsável pela instituição para começar.", "guidance": "Abra o link do convite no navegador para aceitar.", "refresh": "Verificar meu acesso" },
   "platform": {
@@ -133,8 +133,6 @@
       "description": "Este é o seu ponto de partida no Habituar. Aqui você vai encontrar quem acompanha e o que vem pela frente.",
       "membershipTitle": "Seu vínculo",
       "studentsTitle": "Estudantes acompanhados",
-      "studentsEmptyTitle": "Nenhum estudante para mostrar ainda",
-      "studentsEmptyDescription": "Quando o acompanhamento de estudantes chegar ao Habituar, as pessoas que você acompanha aparecem nesta lista.",
       "appointmentsTitle": "Próximos atendimentos",
       "appointmentsEmptyTitle": "Nenhum atendimento para mostrar ainda",
       "appointmentsEmptyDescription": "Quando a agenda chegar ao Habituar, seus próximos atendimentos aparecem aqui, em ordem de horário."
@@ -160,7 +158,10 @@
     "studentRead": "Consultar cadastro de alunos",
     "studentUpdate": "Atualizar cadastro de alunos",
     "guardianLink": "Vincular responsáveis",
-    "guardianUnlink": "Desvincular responsáveis"
+    "guardianUnlink": "Desvincular responsáveis",
+    "assignmentManage": "Gerenciar acompanhamentos",
+    "recordRead": "Consultar fichas de alunos",
+    "recordWrite": "Registrar em fichas de alunos"
   },
   "staff": {
     "title": "Gestão",
@@ -329,6 +330,158 @@
       "invitation-already-accepted": "Este convite já foi aceito.",
       "invitation-revoked": "Este convite já foi revogado.",
       "invitation-expired": "Este convite expirou. Reenvie para criar um novo."
+    }
+  },
+  "students": {
+    "list": {
+      "loading": "Carregando estudantes...",
+      "failed": "Não foi possível carregar os estudantes. Confira a conexão e tente novamente.",
+      "emptyTitle": "Nenhum estudante para mostrar",
+      "emptyDescription": "Quando a instituição vincular estudantes ao seu acompanhamento, eles aparecem nesta lista.",
+      "forbiddenTitle": "Seu papel não inclui fichas de estudantes",
+      "forbiddenDescription": "Fale com a gestão da instituição se o seu trabalho precisar desse acesso.",
+      "searchLabel": "Buscar estudante pelo nome",
+      "search": "Buscar",
+      "clearSearch": "Limpar busca",
+      "noMatchTitle": "Nenhum estudante com esse nome",
+      "noMatchDescription": "Confira a grafia ou limpe a busca para ver todos.",
+      "paginationLabel": "Páginas da lista de estudantes",
+      "previousPage": "Página anterior",
+      "nextPage": "Próxima página",
+      "pageStatus": "Página {{page}} de {{pageCount}}",
+      "noRecordAccess": "Você acompanha este estudante, mas seu papel não abre a ficha."
+    },
+    "record": {
+      "back": "Voltar ao início",
+      "eyebrow": "Ficha do estudante",
+      "description": "Dados de acompanhamento e histórico. São informações sensíveis: use-as só para o acompanhamento deste estudante.",
+      "loading": "Carregando a ficha...",
+      "failed": "Não foi possível carregar a ficha. Confira a conexão e tente novamente.",
+      "forbidden": {
+        "title": "Você não tem acesso a esta ficha",
+        "description": "A ficha só abre para quem acompanha este estudante ou tem acesso a todos os estudantes da instituição."
+      },
+      "not-found": {
+        "title": "Estudante não encontrado",
+        "description": "Este estudante não existe nesta instituição. Confira se você está na instituição certa."
+      },
+      "registration": {
+        "title": "Cadastro",
+        "description": "Dados do cadastro do estudante na instituição. Para corrigi-los, fale com quem gerencia os cadastros.",
+        "birthDate": "Data de nascimento",
+        "socialName": "Nome social",
+        "guardians": "Responsáveis",
+        "noGuardians": "Nenhum responsável cadastrado.",
+        "guardianContact": "{{relationship}} · {{contact}}"
+      },
+      "archived": "Este estudante está arquivado. A ficha continua disponível para consulta, mas não recebe registros novos."
+    },
+    "profile": {
+      "title": "Dados da ficha",
+      "emptyTitle": "Ficha ainda não preenchida",
+      "emptyDescription": "Preencha os dados que ajudam a acompanhar este estudante. Nenhum campo é obrigatório.",
+      "emptyReadOnly": "Ninguém preencheu esta ficha ainda.",
+      "fill": "Preencher ficha",
+      "edit": "Editar ficha",
+      "notInformed": "Não informado",
+      "lastUpdate": "Atualizada por {{name}} em {{date}}.",
+      "editorHint": "Nenhum campo é obrigatório. Cada vez que você salva, a versão anterior continua no histórico.",
+      "conditionsHint": "Marque só o que a instituição acompanha. Deixe tudo desmarcado se não se aplica.",
+      "supportNeedsHint": "Por exemplo: tempo extra em provas, lugar perto da lousa, pausas curtas.",
+      "save": "Salvar ficha",
+      "saveReplacing": "Salvar e substituir a versão atual",
+      "saving": "Salvando...",
+      "cancel": "Cancelar",
+      "fields": {
+        "schoolGrade": "Turma ou série",
+        "conditions": "Condições acompanhadas",
+        "supportNeeds": "Necessidades de apoio e adaptações"
+      },
+      "invalid": {
+        "schoolGrade": "Use até 80 caracteres.",
+        "supportNeeds": "Use até 4.000 caracteres."
+      },
+      "failure": {
+        "invalid": "Confira os campos marcados antes de salvar.",
+        "conflict": "Outra pessoa salvou esta ficha enquanto você editava. Suas alterações continuam no formulário. Cancele para ver a versão atual, ou salve de novo para substituí-la.",
+        "server": "Não foi possível salvar. Suas alterações continuam no formulário; tente novamente."
+      }
+    },
+    "conditions": {
+      "adhd": "TDAH",
+      "autism": "Transtorno do espectro autista (TEA)",
+      "intellectual-disability": "Deficiência intelectual",
+      "learning-disorder": "Transtorno de aprendizagem (como dislexia)",
+      "physical-disability": "Deficiência física",
+      "visual-impairment": "Deficiência visual",
+      "hearing-impairment": "Deficiência auditiva",
+      "other": "Outra condição"
+    },
+    "observation": {
+      "label": "Nova observação",
+      "hint": "Até {{maximum}} caracteres. Depois de registrada, a observação não pode ser editada nem apagada; para corrigir, registre outra.",
+      "invalid": "Escreva a observação, com até {{maximum}} caracteres.",
+      "submit": "Registrar observação",
+      "confirmTitle": "Confirmar registro",
+      "confirmDescription": "Registrar esta observação? Depois de registrada, ela não pode ser editada nem apagada.",
+      "confirm": "Sim, registrar",
+      "keepEditing": "Voltar e editar",
+      "saving": "Registrando...",
+      "failed": "Não foi possível registrar. O texto continua no campo; tente novamente."
+    },
+    "consultations": {
+      "title": "Consultas",
+      "description": "Atendimentos que já aconteceram, do mais recente para o mais antigo.",
+      "open": "Registrar consulta",
+      "close": "Fechar",
+      "submit": "Revisar e registrar",
+      "confirmTitle": "Confirmar registro da consulta",
+      "confirmDescription": "Registrar esta consulta? Depois de registrada, ela não pode ser editada nem apagada. Para corrigir, registre uma observação na ficha.",
+      "confirm": "Sim, registrar",
+      "keepEditing": "Voltar e editar",
+      "saving": "Registrando...",
+      "loading": "Carregando consultas...",
+      "failed": "Não foi possível carregar as consultas. Confira a conexão e tente novamente.",
+      "emptyTitle": "Nenhuma consulta registrada",
+      "emptyDescription": "Depois de cada atendimento, registre aqui a data, a duração e o que foi trabalhado.",
+      "notesHint": "O que foi trabalhado e o que combinar para a próxima vez.",
+      "summary": "{{date}} · {{minutes}} min",
+      "recordedBy": "Registrada por {{name}}",
+      "fields": {
+        "occurredAt": "Data e hora da consulta",
+        "durationMinutes": "Duração em minutos",
+        "notes": "Anotação"
+      },
+      "invalid": {
+        "occurredAt": "Informe a data e a hora da consulta.",
+        "durationMinutes": "Use um número inteiro de minutos, de 1 a {{maximum}}.",
+        "notes": "Escreva a anotação, com até {{maximum}} caracteres."
+      },
+      "failure": {
+        "future": "A data está no futuro. Aqui se registra só consulta que já aconteceu; confira a data e a hora.",
+        "server": "Não foi possível registrar. Os dados continuam no formulário; tente novamente."
+      }
+    },
+    "history": {
+      "title": "Observações e histórico",
+      "description": "Tudo o que foi registrado nesta ficha, do mais recente para o mais antigo.",
+      "loading": "Carregando o histórico...",
+      "failed": "Não foi possível carregar o histórico. Confira a conexão e tente novamente.",
+      "emptyTitle": "Nada registrado ainda",
+      "emptyDescription": "Observações e atualizações da ficha aparecem aqui, com quem registrou e quando.",
+      "meta": "{{name}}, em {{date}}",
+      "changedFields": "Atualizou: {{fields}}.",
+      "kind": {
+        "observation": "Observação",
+        "profile-revision": "Atualização da ficha"
+      }
+    },
+    "relationship": {
+      "mother": "Mãe",
+      "father": "Pai",
+      "grandparent": "Avó ou avô",
+      "legal-guardian": "Responsável legal",
+      "other": "Outro vínculo"
     }
   }
 }

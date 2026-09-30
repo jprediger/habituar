@@ -27,6 +27,10 @@ vi.mock('../client/habituar-client.js', () => ({
       hasActiveFilters: false, environmentFilter: 'all', setEnvironmentFilter: vi.fn(),
       pagination: { hasPreviousPage: false, hasNextPage: false, goToPreviousPage: vi.fn(), goToNextPage: vi.fn() }, retry: vi.fn(),
     }),
+    useAccessibleStudents: () => ({
+      state: { status: 'ready', students: [], total: 0, page: 1, pageCount: 1 }, searchDraft: '', setSearchDraft: vi.fn(), applySearch: vi.fn(), clearSearch: vi.fn(),
+      activeSearch: '', pagination: { hasPreviousPage: false, hasNextPage: false, goToPreviousPage: vi.fn(), goToNextPage: vi.fn() }, canOpenRecord: false,
+    }),
     usePlatformInstitutions: () => ({ institutions: [], isLoading: false, error: false, create: vi.fn() }),
     useInstitutionSwitcher: () => ({ current: undefined, others: [], switchTo: vi.fn() }),
     useAuthentication: () => ({
@@ -119,7 +123,7 @@ describe('professional environment routes', () => {
     expect(screen.getByText('Escola Aurora')).toBeInTheDocument()
     expect(screen.getByText('Fonoaudióloga')).toBeInTheDocument()
     expect(screen.getByRole('region', { name: 'Estudantes acompanhados' })).toHaveTextContent(
-      'Nenhum estudante para mostrar ainda',
+      'Nenhum estudante para mostrar',
     )
   })
 

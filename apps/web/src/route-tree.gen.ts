@@ -32,6 +32,7 @@ import { Route as ProfessionalManagementIndexRouteImport } from './routes/profes
 import { Route as ProfessionalManagementInvitationsRouteImport } from './routes/professional/management/invitations'
 import { Route as ProfessionalManagementRolesRouteImport } from './routes/professional/management/roles'
 import { Route as ProfessionalManagementTeamRouteImport } from './routes/professional/management/team'
+import { Route as ProfessionalStudentsStudentIdRouteImport } from './routes/professional/students/$studentId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -153,6 +154,12 @@ const ProfessionalManagementTeamRoute =
     path: '/team',
     getParentRoute: () => ProfessionalManagementRoute,
   } as any)
+const ProfessionalStudentsStudentIdRoute =
+  ProfessionalStudentsStudentIdRouteImport.update({
+    id: '/students/$studentId',
+    path: '/students/$studentId',
+    getParentRoute: () => ProfessionalRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -176,6 +183,7 @@ export interface FileRoutesByFullPath {
   '/professional/management/invitations': typeof ProfessionalManagementInvitationsRoute
   '/professional/management/roles': typeof ProfessionalManagementRolesRoute
   '/professional/management/team': typeof ProfessionalManagementTeamRoute
+  '/professional/students/$studentId': typeof ProfessionalStudentsStudentIdRoute
   '/admin/institutions/': typeof AdminInstitutionsIndexRoute
   '/professional/management/': typeof ProfessionalManagementIndexRoute
 }
@@ -197,6 +205,7 @@ export interface FileRoutesByTo {
   '/professional/management/invitations': typeof ProfessionalManagementInvitationsRoute
   '/professional/management/roles': typeof ProfessionalManagementRolesRoute
   '/professional/management/team': typeof ProfessionalManagementTeamRoute
+  '/professional/students/$studentId': typeof ProfessionalStudentsStudentIdRoute
   '/admin/institutions': typeof AdminInstitutionsIndexRoute
   '/professional/management': typeof ProfessionalManagementIndexRoute
 }
@@ -223,6 +232,7 @@ export interface FileRoutesById {
   '/professional/management/invitations': typeof ProfessionalManagementInvitationsRoute
   '/professional/management/roles': typeof ProfessionalManagementRolesRoute
   '/professional/management/team': typeof ProfessionalManagementTeamRoute
+  '/professional/students/$studentId': typeof ProfessionalStudentsStudentIdRoute
   '/admin/institutions/': typeof AdminInstitutionsIndexRoute
   '/professional/management/': typeof ProfessionalManagementIndexRoute
 }
@@ -250,6 +260,7 @@ export interface FileRouteTypes {
     | '/professional/management/invitations'
     | '/professional/management/roles'
     | '/professional/management/team'
+    | '/professional/students/$studentId'
     | '/admin/institutions/'
     | '/professional/management/'
   fileRoutesByTo: FileRoutesByTo
@@ -271,6 +282,7 @@ export interface FileRouteTypes {
     | '/professional/management/invitations'
     | '/professional/management/roles'
     | '/professional/management/team'
+    | '/professional/students/$studentId'
     | '/admin/institutions'
     | '/professional/management'
   id:
@@ -296,6 +308,7 @@ export interface FileRouteTypes {
     | '/professional/management/invitations'
     | '/professional/management/roles'
     | '/professional/management/team'
+    | '/professional/students/$studentId'
     | '/admin/institutions/'
     | '/professional/management/'
   fileRoutesById: FileRoutesById
@@ -477,6 +490,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProfessionalManagementTeamRouteImport
       parentRoute: typeof ProfessionalManagementRoute
     }
+    '/professional/students/$studentId': {
+      id: '/professional/students/$studentId'
+      path: '/students/$studentId'
+      fullPath: '/professional/students/$studentId'
+      preLoaderRoute: typeof ProfessionalStudentsStudentIdRouteImport
+      parentRoute: typeof ProfessionalRoute
+    }
   }
 }
 
@@ -521,12 +541,14 @@ interface ProfessionalRouteChildren {
   ProfessionalManagementRoute: typeof ProfessionalManagementRouteWithChildren
   ProfessionalProfileRoute: typeof ProfessionalProfileRoute
   ProfessionalIndexRoute: typeof ProfessionalIndexRoute
+  ProfessionalStudentsStudentIdRoute: typeof ProfessionalStudentsStudentIdRoute
 }
 
 const ProfessionalRouteChildren: ProfessionalRouteChildren = {
   ProfessionalManagementRoute: ProfessionalManagementRouteWithChildren,
   ProfessionalProfileRoute: ProfessionalProfileRoute,
   ProfessionalIndexRoute: ProfessionalIndexRoute,
+  ProfessionalStudentsStudentIdRoute: ProfessionalStudentsStudentIdRoute,
 }
 
 const ProfessionalRouteWithChildren = ProfessionalRoute._addFileChildren(

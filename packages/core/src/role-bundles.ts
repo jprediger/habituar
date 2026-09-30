@@ -17,6 +17,8 @@ export const ROLE_BUNDLE_KEYS = [
   'assignment-manage',
   'record-read',
   'record-write',
+  'routine-read',
+  'routine-write',
 ] as const
 
 export const roleBundleKeySchema = z.enum(ROLE_BUNDLE_KEYS)
@@ -48,6 +50,8 @@ export const ROLE_BUNDLE_CATALOG: Readonly<Record<RoleBundleKey, RoleBundleDefin
   'assignment-manage': { labelKey: 'roleBundles.assignmentManage', permissions: ['assignment.manage'], scopesByEnvironment: { professional: ['institution'] } },
   'record-read': { labelKey: 'roleBundles.recordRead', permissions: ['record.read'], scopesByEnvironment: { professional: ['assigned', 'institution'] } },
   'record-write': { labelKey: 'roleBundles.recordWrite', permissions: ['record.write'], scopesByEnvironment: { professional: ['assigned', 'institution'] } },
+  'routine-read': { labelKey: 'roleBundles.routineRead', permissions: ['routine.read'], scopesByEnvironment: { professional: ['assigned', 'institution'] } },
+  'routine-write': { labelKey: 'roleBundles.routineWrite', permissions: ['routine.write'], scopesByEnvironment: { professional: ['assigned', 'institution'] } },
 }
 
 export const roleBundleSelectionSchema = z.object({

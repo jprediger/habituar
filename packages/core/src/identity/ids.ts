@@ -43,3 +43,6 @@ export type StudentObservationId = z.infer<typeof studentObservationIdSchema>
 
 export const studentConsultationIdSchema = defineIdSchema('StudentConsultationId')
 export type StudentConsultationId = z.infer<typeof studentConsultationIdSchema>
+
+export const routineBlockIdSchema = defineIdSchema('RoutineBlockId')
+export type RoutineBlockId = z.infer<typeof routineBlockIdSchema>

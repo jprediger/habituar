@@ -17,6 +17,8 @@ export const PERMISSION_CATALOG = [
   'membership.remove',
   'record.read',
   'record.write',
+  'routine.read',
+  'routine.write',
 ] as const
 
 export type PermissionKey = (typeof PERMISSION_CATALOG)[number]

@@ -122,7 +122,9 @@ describe('management tab', () => {
     const removed = 'Vínculo removido. A pessoa não faz mais parte de Escola Aurora.'
     await waitFor(() => { expect(onDone).toHaveBeenCalledTimes(1) })
     expect(announce).toHaveBeenCalledWith(removed)
-    expect(screen.getByText(removed, { includeHiddenElements: true })).toBeOnTheScreen()
+    // O aviso visível separa título e explicação; o leitor de tela recebe as duas numa frase só.
+    expect(screen.getByText('Vínculo removido', { includeHiddenElements: true })).toBeOnTheScreen()
+    expect(screen.getByText('A pessoa não faz mais parte de Escola Aurora.', { includeHiddenElements: true })).toBeOnTheScreen()
     expect(writes).toEqual([{ method: 'DELETE', path: `${PREFIX}/members/${MEMBER_ID}`, body: { expectedVersion: 4 } }])
   })
 

@@ -102,7 +102,7 @@ export function InvitationDetailsScreen({ session, invitationId }: Readonly<{ se
             || invitations.capabilities.canRevokeInvitations && invitation.state.status === 'pending'
           ) && (
             <View style={styles.actions}>
-              {invitations.capabilities.canInvite && invitation.state.status !== 'accepted' && (
+              {invitations.capabilities.canInvite && (
                 <Button
                   variant="outline"
                   icon="envelope-simple"

@@ -1,7 +1,3 @@
-import type * as ReactNative from 'react-native'
-
-type ReactNativeModule = typeof ReactNative
-
 // `@testing-library/react-native` já registra seus próprios matchers e a limpeza
 // automática entre testes só de ser importado (ver seu `build/index.js`); este arquivo
 // existe para configurações globais que ele não cobre.

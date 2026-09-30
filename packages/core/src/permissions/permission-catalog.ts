@@ -15,9 +15,17 @@ export const PERMISSION_CATALOG = [
   'membership.read',
   'membership.invite',
   'membership.remove',
+  'record.read',
+  'record.write',
 ] as const
 
 export type PermissionKey = (typeof PERMISSION_CATALOG)[number]
+
+/**
+ * Chaves que servem dado pessoal sensível (LGPD, Art. 11) — hoje, a ficha do estudante.
+ * A auditoria de leitura sensível (D11) parte desta lista, não de um julgamento por rota.
+ */
+export const SENSITIVE_PERMISSIONS: readonly PermissionKey[] = ['record.read', 'record.write']
 
 /**
  * Alcance de uma concessão a partir do titular. `own`: dados do próprio ator.

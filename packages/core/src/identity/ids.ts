@@ -34,3 +34,12 @@ export type AssignmentId = z.infer<typeof assignmentIdSchema>
 
 export const invitationIdSchema = defineIdSchema('InvitationId')
 export type InvitationId = z.infer<typeof invitationIdSchema>
+
+export const studentProfileRevisionIdSchema = defineIdSchema('StudentProfileRevisionId')
+export type StudentProfileRevisionId = z.infer<typeof studentProfileRevisionIdSchema>
+
+export const studentObservationIdSchema = defineIdSchema('StudentObservationId')
+export type StudentObservationId = z.infer<typeof studentObservationIdSchema>
+
+export const studentConsultationIdSchema = defineIdSchema('StudentConsultationId')
+export type StudentConsultationId = z.infer<typeof studentConsultationIdSchema>

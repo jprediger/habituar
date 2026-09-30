@@ -37,6 +37,7 @@ export const FAILURE_CODES = [
   'assignee-not-eligible',
   'student-account-exists',
   'student-below-account-age',
+  'consultation-in-future',
 ] as const
 
 export const failureSchema = z.object({
@@ -96,6 +97,7 @@ export const FAILURE_ERROR_MAP = {
   'assignee-not-eligible': { status: 422, message: 'assignee is not eligible.', data: failureDataSchema },
   'student-account-exists': { status: 409, message: 'student account already exists.', data: failureDataSchema },
   'student-below-account-age': { status: 422, message: 'student is below account age.', data: failureDataSchema },
+  'consultation-in-future': { status: 422, message: 'consultation cannot be in the future.', data: failureDataSchema },
   invalid_input: {
     status: 422,
     message: 'The request payload is invalid.',

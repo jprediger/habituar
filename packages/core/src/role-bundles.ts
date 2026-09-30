@@ -15,6 +15,8 @@ export const ROLE_BUNDLE_KEYS = [
   'guardian-link',
   'guardian-unlink',
   'assignment-manage',
+  'record-read',
+  'record-write',
 ] as const
 
 export const roleBundleKeySchema = z.enum(ROLE_BUNDLE_KEYS)
@@ -29,7 +31,8 @@ type RoleBundleDefinition = Readonly<{
 /**
  * Matriz fechada ação × ambiente × alcance que um papel personalizado pode receber. O que
  * não aparece aqui não é personalizável: aluno não tem entrada, monitor só consulta com
- * `assigned`, e gestão só existe com `institution`. Bundle clínico entra na etapa 5.
+ * `assigned`, e gestão só existe com `institution`. A ficha é só de profissional: monitor
+ * acompanha o aluno, mas não lê dado sensível.
  */
 export const ROLE_BUNDLE_CATALOG: Readonly<Record<RoleBundleKey, RoleBundleDefinition>> = {
   'team-read': { labelKey: 'roleBundles.teamRead', permissions: ['membership.read'], scopesByEnvironment: { professional: ['institution'] } },
@@ -43,6 +46,8 @@ export const ROLE_BUNDLE_CATALOG: Readonly<Record<RoleBundleKey, RoleBundleDefin
   'guardian-link': { labelKey: 'roleBundles.guardianLink', permissions: ['guardian.link'], scopesByEnvironment: { professional: ['assigned', 'institution'] } },
   'guardian-unlink': { labelKey: 'roleBundles.guardianUnlink', permissions: ['guardian.unlink'], scopesByEnvironment: { professional: ['assigned', 'institution'] } },
   'assignment-manage': { labelKey: 'roleBundles.assignmentManage', permissions: ['assignment.manage'], scopesByEnvironment: { professional: ['institution'] } },
+  'record-read': { labelKey: 'roleBundles.recordRead', permissions: ['record.read'], scopesByEnvironment: { professional: ['assigned', 'institution'] } },
+  'record-write': { labelKey: 'roleBundles.recordWrite', permissions: ['record.write'], scopesByEnvironment: { professional: ['assigned', 'institution'] } },
 }
 
 export const roleBundleSelectionSchema = z.object({

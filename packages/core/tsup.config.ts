@@ -9,6 +9,7 @@ export default defineConfig({
     staff: 'src/staff.ts',
     students: 'src/students.ts',
     'students/contract': 'src/students/contract.ts',
+    'student-records': 'src/student-records.ts',
     'role-bundles': 'src/role-bundles.ts',
     delegation: 'src/delegation.ts',
     'type/assert-never': 'src/type/assert-never.ts',

@@ -779,5 +779,17 @@
     "removed": "Bloco removido da rotina.",
     "conflict": "Outra pessoa mudou a rotina enquanto você editava. A versão atual já está na tela; confira e tente de novo.",
     "writeFailed": "Não foi possível salvar. Tente novamente."
+  },
+  "notifications": {
+  "permissionHint": "Ative as notificações para receber lembretes da sua rotina.",
+  "enableButton": "Ativar notificações",
+  "reminderLeadLabel": "Avisar antes de cada tarefa",
+  "reminderLead": {
+    "off": "Desligado",
+    "minutes10": "10 minutos antes",
+    "minutes30": "30 minutos antes",
+    "hour1": "1 hora antes",
+    "day1": "1 dia antes"
   }
+}
 }

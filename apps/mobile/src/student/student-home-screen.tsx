@@ -1,4 +1,5 @@
 import { assertNever } from '@habituar/core/assert-never'
+import type { StudentId } from '@habituar/core/identity/ids'
 import type { StudentSummary } from '@habituar/core/students'
 import { SPACING } from '@habituar/design-tokens/spacing'
 import type { GuardianConsents } from '@habituar/react-client/react-client'
@@ -17,6 +18,9 @@ import { Page } from '../components/ui/page'
 import { PageHeader } from '../components/ui/page-header'
 import { Text } from '../components/ui/text'
 import { useToast } from '../components/ui/toast'
+import { ReminderSettings } from '../notifications/reminder-settings'
+import { useRoutineReminders } from '../notifications/use-routine-reminders'
+import type { ReminderLeadMinutes } from '../notifications/use-routine-reminders'
 import { InstitutionSwitcher } from '../session/institution-switcher'
 import type { InstitutionSession } from '../session/session-screen'
 import { SignOutButton } from '../session/sign-out-button'
@@ -56,8 +60,9 @@ export function StudentHomeScreen({ session }: Readonly<{ session: InstitutionSe
 function OwnRecordSection({ session, isGuardianToo }: Readonly<{ session: InstitutionSession; isGuardianToo: boolean }>) {
   const { t } = useTranslation()
   const { state } = habituar.useAccessibleStudents(session.membership)
-  // Quem também é responsável recebe junto os cadastros dos filhos: o título não pode dizer "seu".
   const title = t(isGuardianToo ? 'studentHome.self.combinedTitle' : 'studentHome.self.title')
+
+  const ownStudent = !isGuardianToo && state.status === 'ready' && state.students.length === 1 ? state.students[0] : undefined
 
   switch (state.status) {
     case 'loading':
@@ -67,15 +72,30 @@ function OwnRecordSection({ session, isGuardianToo }: Readonly<{ session: Instit
     case 'ready':
       if (state.students.length === 0) return <EmptyState title={t('studentHome.self.emptyTitle')} description={t('studentHome.self.emptyDescription')} />
       return (
-        <ListSection title={title} footer={t('studentHome.self.description')}>
-          {state.students.map((student) => (
-            <ListRow key={student.id} title={displayName(student)} description={t('studentHome.self.birthDateValue', { date: formatCalendarDate(student.birthDate) })} />
-          ))}
-        </ListSection>
+        <>
+          <ListSection title={title} footer={t('studentHome.self.description')}>
+            {state.students.map((student) => (
+              <ListRow key={student.id} title={displayName(student)} description={t('studentHome.self.birthDateValue', { date: formatCalendarDate(student.birthDate) })} />
+            ))}
+          </ListSection>
+          {ownStudent !== undefined && <RoutineReminderSection session={session} studentId={ownStudent.id} />}
+        </>
       )
     default:
       return assertNever(state)
   }
+}
+
+function RoutineReminderSection({ session, studentId }: Readonly<{ session: InstitutionSession; studentId: StudentId }>) {
+  const reminders = useRoutineReminders(session.membership, studentId)
+  return (
+    <ReminderSettings
+      leadMinutes={reminders.leadMinutes}
+      onChangeLeadMinutes={(value: ReminderLeadMinutes) => { void reminders.setLeadMinutes(value) }}
+      permission={reminders.permission}
+      onRequestPermission={() => { void reminders.requestPermission() }}
+    />
+  )
 }
 
 // Ação à espera de confirmação: só uma por vez, e a frase da folha nomeia o estudante.

@@ -170,6 +170,7 @@ export function createHabituarReactClient(
     credentialStorage?: CredentialStorage
     preferenceStorage?: PreferenceStorage
     studentPreferenceStorage?: PreferenceStorage
+    onSessionEnded?: () => Promise<void> | void
   }>,
 ): HabituarReactClient {
   const baseUrl = parseOriginOrThrow(options.origin)
@@ -177,6 +178,7 @@ export function createHabituarReactClient(
   const credentials = options.credentials
   const credentialStorage = options.credentialStorage
   const preferenceStorage = options.preferenceStorage ?? createMemoryPreferenceStorage()
+  const onSessionEnded = options.onSessionEnded ?? (() => undefined)
 
   const link = new OpenAPILink(apiContract, {
     url: baseUrl,
@@ -310,6 +312,7 @@ export function createHabituarReactClient(
         queryClient.removeQueries({ queryKey: queryKeys.institutionScope })
         queryClient.removeQueries({ queryKey: queryKeys.personalScope })
         if (credentialStorage) await credentialStorage.remove()
+        await onSessionEnded()
         setState({ status: 'unauthenticated' })
       }
     }
@@ -387,6 +390,7 @@ export function createHabituarReactClient(
         if (credentialStorage) {
           await credentialStorage.remove()
         }
+        await onSessionEnded()
         setState({ status: 'unauthenticated' })
       } catch (error) {
         if (isUnauthorizedError(error)) {
@@ -399,6 +403,7 @@ export function createHabituarReactClient(
           if (credentialStorage) {
             await credentialStorage.remove()
           }
+          await onSessionEnded()
           setState({ status: 'unauthenticated' })
           return
         }

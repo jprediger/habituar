@@ -12,3 +12,4 @@ coverage/
 .claude
 .vscode
 .plans/
+docker-compose.override.yml

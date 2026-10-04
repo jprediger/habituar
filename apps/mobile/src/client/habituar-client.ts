@@ -1,4 +1,5 @@
 import { createHabituarReactClient } from '@habituar/react-client/react-client'
+import * as Notifications from 'expo-notifications'
 import { sessionCredentialStorage } from './session-credential-storage'
 import { institutionPreferenceStorage } from './institution-preference-storage'
 import { studentPreferenceStorage } from './student-preference-storage'
@@ -31,4 +32,5 @@ export const habituar = createHabituarReactClient({
   credentialStorage: sessionCredentialStorage,
   preferenceStorage: institutionPreferenceStorage,
   studentPreferenceStorage,
+  onSessionEnded: () => Notifications.cancelAllScheduledNotificationsAsync(),
 })

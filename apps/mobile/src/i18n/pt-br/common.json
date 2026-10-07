@@ -190,7 +190,11 @@
     "profile": "Perfil",
     "institutions": "Instituições",
     "back": "Voltar",
-    "students": "Estudantes"
+    "students": "Estudantes",
+    "settings": "Configurações"
+  },
+  "settings": {
+    "title": "Configurações"
   },
   "professional": {
     "eyebrow": "Ambiente profissional",
@@ -783,13 +787,21 @@
   "notifications": {
   "permissionHint": "Ative as notificações para receber lembretes da sua rotina.",
   "enableButton": "Ativar notificações",
-  "reminderLeadLabel": "Avisar antes de cada tarefa",
-  "reminderLead": {
-    "off": "Desligado",
-    "minutes10": "10 minutos antes",
-    "minutes30": "30 minutos antes",
-    "hour1": "1 hora antes",
-    "day1": "1 dia antes"
+  "reminderLeadLabel": "Lembretes de rotina",
+  "noRemindersConfigured": "Nenhum lembrete configurado ainda.",
+  "tapToRemove": "Toque para remover",
+  "removeReminderLabel": "Remover lembrete de {{value}}",
+  "customSectionTitle": "Adicionar outro",
+  "customValuePlaceholder": "Quantidade",
+  "customUnitLabel": "Unidade",
+  "addCustomButton": "Adicionar",
+  "reminderUnit": {
+    "minutes": "{{count}} minuto(s) antes",
+    "hours": "{{count}} hora(s) antes",
+    "days": "{{count}} dia(s) antes",
+    "minutesLabel": "Minutos",
+    "hoursLabel": "Horas",
+    "daysLabel": "Dias"
   }
 }
 }

@@ -1,25 +1,36 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 
-const KEY = 'habituar.routine-reminder-lead-minutes'
+const KEY = 'habituar.routine-reminder-lead-minutes-list'
 
-/** Antecedência em minutos; 0 significa "lembretes desligados". Padrão: 30 minutos antes. */
-export const REMINDER_LEAD_OPTIONS = [0, 10, 30, 60, 1440] as const
-export type ReminderLeadMinutes = (typeof REMINDER_LEAD_OPTIONS)[number]
+// Minuto a minuto até 14 dias
+export const MIN_LEAD_MINUTES = 1
+export const MAX_LEAD_MINUTES = 14 * 24 * 60
 
-const DEFAULT_LEAD_MINUTES: ReminderLeadMinutes = 30
+export const PRESET_LEAD_MINUTES = [10, 30, 60, 1440] as const
 
-function isReminderLeadMinutes(value: number): value is ReminderLeadMinutes {
-  return (REMINDER_LEAD_OPTIONS as readonly number[]).includes(value)
+export function isValidLeadMinutes(value: number): boolean {
+  return Number.isInteger(value) && value >= MIN_LEAD_MINUTES && value <= MAX_LEAD_MINUTES
 }
 
+function parseStoredList(raw: string): readonly number[] {
+  try {
+    const parsed: unknown = JSON.parse(raw)
+    if (!Array.isArray(parsed)) return []
+    return parsed.filter((value): value is number => typeof value === 'number' && isValidLeadMinutes(value))
+  } catch {
+    return []
+  }
+}
+
+/** Lista de antecedências (em minutos) */
 export const reminderPreferenceStorage = {
-  async read(): Promise<ReminderLeadMinutes> {
+  async read(): Promise<readonly number[]> {
     const stored = await AsyncStorage.getItem(KEY)
-    if (stored === null) return DEFAULT_LEAD_MINUTES
-    const parsed = Number(stored)
-    return isReminderLeadMinutes(parsed) ? parsed : DEFAULT_LEAD_MINUTES
+    if (stored === null) return [30]
+    return parseStoredList(stored)
   },
-  async write(value: ReminderLeadMinutes): Promise<void> {
-    await AsyncStorage.setItem(KEY, String(value))
+  async write(values: readonly number[]): Promise<void> {
+    const unique = [...new Set(values)].filter(isValidLeadMinutes).sort((a, b) => a - b)
+    await AsyncStorage.setItem(KEY, JSON.stringify(unique))
   },
 }

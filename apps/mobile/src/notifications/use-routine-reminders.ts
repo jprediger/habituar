@@ -1,45 +1,91 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { MembershipContext } from '@habituar/react-client/react-client'
 import type { StudentId } from '@habituar/core/identity/ids'
 import { habituar } from '../client/habituar-client'
-import { ensureNotificationsConfigured, getNotificationPermissionStatus, requestNotificationPermission } from './notification-setup'
+import {
+  ensureNotificationsConfigured,
+  getNotificationPermissionStatus,
+  openAppNotificationSettings,
+  requestNotificationPermission,
+} from './notification-setup'
 import type { NotificationPermissionStatus } from './notification-setup'
-import { reminderPreferenceStorage, REMINDER_LEAD_OPTIONS } from './reminder-preference-storage'
-import type { ReminderLeadMinutes } from './reminder-preference-storage'
+import { permissionRequestFlag } from './notification-permission-flag-storage'
+import { PRESET_LEAD_MINUTES, isValidLeadMinutes, reminderPreferenceStorage } from './reminder-preference-storage'
 import { syncRoutineReminders } from './routine-reminders'
 
-export { REMINDER_LEAD_OPTIONS }
-export type { ReminderLeadMinutes }
+export { PRESET_LEAD_MINUTES, isValidLeadMinutes }
 
-/**
- * Lê a própria rotina do aluno e mantém os lembretes locais sincronizados com ela..
- */
 export function useRoutineReminders(membership: MembershipContext, studentId: StudentId) {
   const routine = habituar.useStudentRoutine(membership, studentId)
-  const [leadMinutes, setLeadMinutesState] = useState<ReminderLeadMinutes>(30)
+  const [leadMinutesList, setLeadMinutesList] = useState<readonly number[]>([])
   const [permission, setPermission] = useState<NotificationPermissionStatus>('undetermined')
+  const hasInitialized = useRef(false)
 
   useEffect(() => {
+    if (hasInitialized.current) return
+    hasInitialized.current = true
+
     void (async () => {
       await ensureNotificationsConfigured()
-      setPermission(await getNotificationPermissionStatus())
-      setLeadMinutesState(await reminderPreferenceStorage.read())
+      setLeadMinutesList(await reminderPreferenceStorage.read())
+
+      const currentStatus = await getNotificationPermissionStatus()
+      const alreadyAskedOnce = await permissionRequestFlag.wasRequested()
+
+      // Pedido automático só na primeira vez que o app roda
+      if (currentStatus === 'undetermined' && !alreadyAskedOnce) {
+        const result = await requestNotificationPermission()
+        await permissionRequestFlag.markRequested()
+        setPermission(result)
+        return
+      }
+
+      setPermission(currentStatus)
     })()
   }, [])
 
   useEffect(() => {
     if (routine.state.status !== 'ready' || permission !== 'granted') return
-    void syncRoutineReminders(studentId, routine.state.isEmpty ? [] : routine.state.days.flatMap((day) => day.blocks), leadMinutes)
-  }, [routine.state, leadMinutes, permission, studentId])
+    const blocks = routine.state.isEmpty ? [] : routine.state.days.flatMap((day) => day.blocks)
+    void syncRoutineReminders(studentId, blocks, leadMinutesList)
+  }, [routine.state, leadMinutesList, permission, studentId])
 
-  async function setLeadMinutes(value: ReminderLeadMinutes): Promise<void> {
-    setLeadMinutesState(value)
-    await reminderPreferenceStorage.write(value)
+  /** Pedido reaberto sempre que a pessoa tenta mudar algo sem permissão */
+  async function ensurePermissionBeforeChange(): Promise<boolean> {
+    const currentStatus = await getNotificationPermissionStatus()
+    if (currentStatus === 'granted') {
+      setPermission('granted')
+      return true
+    }
+
+    // Negativa persistente: o SO não reexibe o próprio diálogo depois da primeira recusa.
+    if (currentStatus === 'denied') {
+      await openAppNotificationSettings()
+      return false
+    }
+
+    const result = await requestNotificationPermission()
+    setPermission(result)
+    return result === 'granted'
+  }
+
+  async function addLeadMinutes(value: number): Promise<void> {
+    if (!(await ensurePermissionBeforeChange())) return
+    if (!isValidLeadMinutes(value) || leadMinutesList.includes(value)) return
+    const next = [...leadMinutesList, value]
+    setLeadMinutesList(next)
+    await reminderPreferenceStorage.write(next)
+  }
+
+  async function removeLeadMinutes(value: number): Promise<void> {
+    const next = leadMinutesList.filter((entry) => entry !== value)
+    setLeadMinutesList(next)
+    await reminderPreferenceStorage.write(next)
   }
 
   async function requestPermission(): Promise<void> {
-    setPermission(await requestNotificationPermission())
+    await ensurePermissionBeforeChange()
   }
 
-  return { leadMinutes, setLeadMinutes, permission, requestPermission }
+  return { leadMinutesList, addLeadMinutes, removeLeadMinutes, permission, requestPermission }
 }

@@ -1,5 +1,5 @@
 import * as Notifications from 'expo-notifications'
-import { Platform } from 'react-native'
+import { Platform, Linking } from 'react-native'
 
 let hasConfigured = false
 
@@ -34,4 +34,8 @@ export async function getNotificationPermissionStatus(): Promise<NotificationPer
 export async function requestNotificationPermission(): Promise<NotificationPermissionStatus> {
   const { status } = await Notifications.requestPermissionsAsync()
   return status
+}
+
+export async function openAppNotificationSettings(): Promise<void> {
+  await Linking.openSettings()
 }

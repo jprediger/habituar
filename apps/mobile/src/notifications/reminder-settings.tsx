@@ -1,15 +1,19 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Pressable, TextInput, View } from 'react-native'
+import { Pressable, StyleSheet, TextInput, View } from 'react-native'
+import { SPACING } from '@habituar/design-tokens/spacing'
 import { ChoiceList } from '../components/ui/choice-list'
 import { Button } from '../components/ui/button'
+import { Icon } from '../components/ui/icon'
 import { Text } from '../components/ui/text'
+import { useThemeTokens } from '../theme/tokens'
 import { PRESET_LEAD_MINUTES, isValidLeadMinutes } from './use-routine-reminders'
 
 type Unit = 'minutes' | 'hours' | 'days'
 type TFunction = ReturnType<typeof useTranslation>['t']
 
 const UNIT_MULTIPLIER: Record<Unit, number> = { minutes: 1, hours: 60, days: 1440 }
+const TRASH_ICON_SIZE = 20
 
 function formatLeadMinutes(value: number, t: TFunction): string {
   if (value >= 1440 && value % 1440 === 0) return t('notifications.reminderUnit.days', { count: value / 1440 })
@@ -25,6 +29,7 @@ export function ReminderSettings(props: Readonly<{
   onRequestPermission: () => void
 }>) {
   const { t } = useTranslation()
+  const { colors, radius, minimumTouchTarget } = useThemeTokens()
   const [customValue, setCustomValue] = useState('')
   const [customUnit, setCustomUnit] = useState<Unit>('minutes')
 
@@ -40,11 +45,11 @@ export function ReminderSettings(props: Readonly<{
   }
 
   return (
-    <View style={{ gap: 12 }}>
+    <View style={styles.section}>
       <Text weight="medium">{t('notifications.reminderLeadLabel')}</Text>
 
       {props.permission !== 'granted' && (
-        <View style={{ gap: 8 }}>
+        <View style={styles.permissionBlock}>
           <Text tone="muted">{t('notifications.permissionHint')}</Text>
           <Button label={t('notifications.enableButton')} onPress={props.onRequestPermission} />
         </View>
@@ -53,30 +58,38 @@ export function ReminderSettings(props: Readonly<{
       {props.leadMinutesList.length === 0 ? (
         <Text tone="muted">{t('notifications.noRemindersConfigured')}</Text>
       ) : (
-        <View style={{ gap: 4 }}>
-          {props.leadMinutesList.map((value) => (
-            <Pressable
-              key={value}
-              accessibilityRole="button"
-              accessibilityLabel={t('notifications.removeReminderLabel', { value: formatLeadMinutes(value, t) })}
-              onPress={() => { props.onRemoveLeadMinutes(value) }}
-              style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 8 }}
-            >
-              <Text>{formatLeadMinutes(value, t)}</Text>
-              <Text tone="muted">{t('notifications.tapToRemove')}</Text>
-            </Pressable>
-          ))}
+        <View>
+          {props.leadMinutesList.map((value) => {
+            const label = formatLeadMinutes(value, t)
+            return (
+              <View
+                key={value}
+                style={[styles.row, { borderBottomColor: colors.border }]}
+              >
+                <Text>{label}</Text>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={t('notifications.removeReminderLabel', { value: label })}
+                  onPress={() => { props.onRemoveLeadMinutes(value) }}
+                  hitSlop={(minimumTouchTarget - TRASH_ICON_SIZE) / 2}
+                  style={styles.trashButton}
+                >
+                  <Icon name="trash" size={TRASH_ICON_SIZE} color={colors.danger} />
+                </Pressable>
+              </View>
+            )
+          })}
         </View>
       )}
 
       {availablePresets.length > 0 && (
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+        <View style={styles.presets}>
           {availablePresets.map((preset) => (
             <Pressable
               key={preset}
               accessibilityRole="button"
               onPress={() => { props.onAddLeadMinutes(preset) }}
-              style={{ borderWidth: 1, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 6 }}
+              style={[styles.preset, { borderColor: colors.border, borderRadius: radius.button }]}
             >
               <Text>{`+ ${formatLeadMinutes(preset, t)}`}</Text>
             </Pressable>
@@ -84,29 +97,64 @@ export function ReminderSettings(props: Readonly<{
         </View>
       )}
 
-      <View style={{ gap: 8 }}>
+      {/* Área de adicionar: empilhada em coluna, não em linha */}
+      <View style={styles.addBlock}>
         <Text tone="muted">{t('notifications.customSectionTitle')}</Text>
-        <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
-          <TextInput
-            value={customValue}
-            onChangeText={setCustomValue}
-            placeholder={t('notifications.customValuePlaceholder')}
-            keyboardType="numeric"
-            style={{ borderWidth: 1, borderRadius: 8, padding: 8, minWidth: 64 }}
-          />
-          <ChoiceList
-            label={t('notifications.customUnitLabel')}
-            choices={[
-              { value: 'minutes', label: t('notifications.reminderUnit.minutesLabel') },
-              { value: 'hours', label: t('notifications.reminderUnit.hoursLabel') },
-              { value: 'days', label: t('notifications.reminderUnit.daysLabel') },
-            ]}
-            value={customUnit}
-            onChange={(value: string) => { setCustomUnit(value as Unit) }}
-          />
-          <Button label={t('notifications.addCustomButton')} onPress={handleAddCustom} />
-        </View>
+
+        <TextInput
+          value={customValue}
+          onChangeText={setCustomValue}
+          placeholder={t('notifications.customValuePlaceholder')}
+          keyboardType="numeric"
+          placeholderTextColor={colors.textMuted}
+          style={[
+            styles.input,
+            {
+              borderColor: colors.border,
+              borderRadius: radius.field,
+              color: colors.text,
+            },
+          ]}
+        />
+
+        <ChoiceList
+          label={t('notifications.customUnitLabel')}
+          choices={[
+            { value: 'minutes', label: t('notifications.reminderUnit.minutesLabel') },
+            { value: 'hours', label: t('notifications.reminderUnit.hoursLabel') },
+            { value: 'days', label: t('notifications.reminderUnit.daysLabel') },
+          ]}
+          value={customUnit}
+          onChange={(value: string) => { setCustomUnit(value as Unit) }}
+        />
+
+        <Button label={t('notifications.addCustomButton')} onPress={handleAddCustom} />
       </View>
     </View>
   )
 }
+
+const styles = StyleSheet.create({
+  section: { gap: SPACING.md },
+  permissionBlock: { gap: SPACING.sm },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: SPACING.sm,
+    borderBottomWidth: 1,
+  },
+  trashButton: { padding: SPACING.xs },
+  presets: { flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.sm },
+  preset: {
+    borderWidth: 1,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.xs,
+  },
+  addBlock: { gap: SPACING.sm, marginTop: SPACING.sm },
+  input: {
+    borderWidth: 1,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+  },
+})

@@ -21,6 +21,7 @@ import { InstitutionSwitcher } from '../session/institution-switcher'
 import type { InstitutionSession } from '../session/session-screen'
 import { SignOutButton } from '../session/sign-out-button'
 import { Link } from 'expo-router'
+import { useRouter } from 'expo-router'
 
 /**
  * Tela inicial do ambiente de aluno: a única superfície escrita na primeira pessoa. Mostra
@@ -28,6 +29,7 @@ import { Link } from 'expo-router'
  */
 export function StudentHomeScreen({ session }: Readonly<{ session: InstitutionSession }>) {
   const { t } = useTranslation()
+  const router = useRouter()
   const sections = listStudentHomeSections(session.membership)
 
   return (
@@ -47,11 +49,12 @@ export function StudentHomeScreen({ session }: Readonly<{ session: InstitutionSe
       {sections.showsGuardianConsents && <><ListDivider /><GuardianConsentSections /></>}
 
       <View style={styles.footer}>
-        <Link href="/student/settings" asChild>
-          <Pressable accessibilityRole="button">
-            <Text>{t('navigation.settings')}</Text>
-          </Pressable>
-        </Link>
+        <Button
+          variant="outline"
+          icon="gear"
+          label={t('navigation.settings')}
+          onPress={() => { router.push('/student/settings') }}
+        />
         <InstitutionSwitcher />
         <SignOutButton />
       </View>

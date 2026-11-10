@@ -1,6 +1,7 @@
 import { assertNever } from '@habituar/core/assert-never'
 import { readLocalDateTime } from '@habituar/core/calendar'
 import type { StudentId } from '@habituar/core/identity/ids'
+import { readTaskProgress } from '@habituar/react-client/react-client'
 import type { AgendaItem } from '@habituar/react-client/react-client'
 import { useRouter } from 'expo-router'
 import { useState } from 'react'
@@ -72,6 +73,8 @@ function StudentAgenda({ session, studentId }: Readonly<{ session: InstitutionSe
   function describeItem(item: AgendaItem) {
     switch (item.kind) {
       case 'task': {
+        const progress = readTaskProgress(item.entry)
+        if (progress !== 'open') return { title: item.block.title, description: t(`task.progress.${progress}`) }
         const photoCount = item.entry?.photos.length ?? 0
         if (photoCount > 0) return { title: item.block.title, description: t('task.photoCount', { count: photoCount }) }
         if (item.entry?.notes !== undefined && item.entry.notes !== null) return { title: item.block.title, description: t('task.hasNote') }

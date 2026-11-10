@@ -17,8 +17,9 @@ import type { InstitutionSession } from '../session/session-screen'
 import { readCurrentTime } from '../time/current-time'
 
 /**
- * Acompanhamento das tarefas de um estudante pela equipe, semana a semana: o que já tem
- * registro do aluno, o que ficou sem e o que está por vir. Só leitura — o registro é do aluno.
+ * Acompanhamento das tarefas de um estudante pela equipe, semana a semana: o que foi
+ * entregue e avaliado, o que ficou sem entrega e o que está por vir. A equipe não escreve
+ * no registro do aluno; a avaliação abre na tela da tarefa.
  */
 export function StudentTasksScreen({ session, studentId }: Readonly<{ session: InstitutionSession; studentId: StudentId }>) {
   const { t } = useTranslation('agenda')
@@ -72,7 +73,8 @@ function TrackingSummary({ summary }: Readonly<{ summary: TaskTrackingSummary }>
   const { t } = useTranslation('agenda')
   return (
     <ListSection title={t('tracking.summary')} footer={t('tracking.summaryFooter')}>
-      <ListRow title={t('tracking.summaryLabels.recorded')} value={t('tracking.summaryValue', { count: summary.recorded, total: summary.total })} />
+      <ListRow title={t('tracking.summaryLabels.delivered')} value={t('tracking.summaryValue', { count: summary.delivered, total: summary.total })} />
+      <ListRow title={t('tracking.summaryLabels.evaluated')} value={String(summary.evaluated)} />
       <ListRow title={t('tracking.summaryLabels.missing')} value={String(summary.missing)} />
       <ListRow title={t('tracking.summaryLabels.upcoming')} value={String(summary.upcoming)} />
     </ListSection>

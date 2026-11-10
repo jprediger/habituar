@@ -239,7 +239,8 @@
     "routineWrite": "Montar rotina de alunos",
     "appointmentRead": "Ver agenda de atendimentos",
     "appointmentWrite": "Agendar atendimentos",
-    "routineEntryWrite": "Registrar fotos e observações das tarefas"
+    "routineEntryWrite": "Registrar fotos e observações das tarefas",
+    "routineEntryEvaluate": "Avaliar as tarefas entregues pelos alunos"
   },
   "staff": {
     "title": "Gestão",

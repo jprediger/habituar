@@ -1,10 +1,11 @@
 import { assertNever } from '@habituar/core/assert-never'
-import type { LocalDate } from '@habituar/core/calendar'
+import { type LocalDate, readLocalDateTime } from '@habituar/core/calendar'
 import type { RoutineBlockId, StudentId } from '@habituar/core/identity/ids'
-import { ROUTINE_ENTRY_PHOTO_LIMIT, ROUTINE_ENTRY_PHOTO_MAX_BYTES, ROUTINE_ENTRY_PHOTO_MEDIA_TYPES, routineEntryPhotoMediaTypeSchema } from '@habituar/core/routine-entries'
-import type { RoutineEntryPhoto } from '@habituar/core/routine-entries'
+import { ROUTINE_ENTRY_EVALUATION_OUTCOMES, ROUTINE_ENTRY_PHOTO_LIMIT, ROUTINE_ENTRY_PHOTO_MAX_BYTES, ROUTINE_ENTRY_PHOTO_MEDIA_TYPES, routineEntryPhotoMediaTypeSchema } from '@habituar/core/routine-entries'
+import type { RoutineEntry, RoutineEntryPhoto } from '@habituar/core/routine-entries'
 import { SPACING } from '@habituar/design-tokens/spacing'
-import { useRoutineEntryNoteForm } from '@habituar/react-client/agenda-forms'
+import { useRoutineEntryEvaluationForm, useRoutineEntryNoteForm } from '@habituar/react-client/agenda-forms'
+import { isTaskDue, readTaskProgress } from '@habituar/react-client/react-client'
 import type { AgendaWriteResult, PhotoUploadResult, RoutineEntryAccess } from '@habituar/react-client/react-client'
 import * as DocumentPicker from 'expo-document-picker'
 import type { TFunction } from 'i18next'
@@ -14,6 +15,8 @@ import { useTranslation } from 'react-i18next'
 import { Image, Pressable, StyleSheet, View } from 'react-native'
 import { habituar } from '../client/habituar-client'
 import { Button } from '../components/ui/button'
+import { ChoiceList } from '../components/ui/choice-list'
+import { ConfirmationSheet } from '../components/ui/confirmation-sheet'
 import { FormField } from '../components/ui/form-field'
 import { Icon } from '../components/ui/icon'
 import { ListDivider } from '../components/ui/list-divider'
@@ -25,11 +28,13 @@ import { Textarea } from '../components/ui/textarea'
 import { useToast } from '../components/ui/toast'
 import type { InstitutionSession } from '../session/session-screen'
 import { useThemeTokens } from '../theme/tokens'
+import { readCurrentTime } from '../time/current-time'
 import { useAgendaLabels } from './agenda-labels'
 
 /**
- * Tarefa da rotina num dia, aberta da agenda do aluno. O aluno registra como foi — uma
- * observação e até seis fotos —; o responsável e a equipe veem o mesmo, só para leitura.
+ * Tarefa da rotina num dia. O aluno registra como foi — uma observação e até seis fotos —
+ * e marca como entregue; quem tem `routine.entry.evaluate` dá o retorno sobre a tarefa
+ * entregue; o responsável vê tudo só para leitura.
  */
 export function TaskEntryScreen({ session, studentId, blockId, date }: Readonly<{ session: InstitutionSession; studentId: StudentId; blockId: RoutineBlockId; date: LocalDate }>) {
   const { t } = useTranslation('agenda')
@@ -58,6 +63,10 @@ export function TaskEntryScreen({ session, studentId, blockId, date }: Readonly<
                 <TaskNote key={access.state.entry?.version ?? 0} access={access} />
                 <ListDivider />
                 <TaskPhotos session={session} studentId={studentId} access={access} photos={access.state.entry?.photos ?? []} />
+                <ListDivider />
+                <TaskDelivery access={access} entry={access.state.entry} date={date} />
+                <ListDivider />
+                <TaskEvaluation key={`evaluation-${access.state.entry?.evaluation?.version ?? 0}`} access={access} entry={access.state.entry} />
               </View>
             )
           default:
@@ -214,3 +223,126 @@ const styles = StyleSheet.create({
   remove: { position: 'absolute', top: 0, right: 0, alignItems: 'center', justifyContent: 'center' },
   removeBadge: { borderRadius: 999, padding: SPACING.xs },
 })
+
+const DATE_TIME_FORMAT = new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+
+// Instante gravado pela API (UTC), mostrado no fuso de quem lê.
+function formatDateTime(iso: string): string {
+  return DATE_TIME_FORMAT.format(new Date(iso))
+}
+
+function TaskDelivery({ access, entry, date }: Readonly<{ access: RoutineEntryAccess; entry: RoutineEntry | undefined; date: LocalDate }>) {
+  const { t } = useTranslation('agenda')
+  const toast = useToast()
+  const [isBusy, setIsBusy] = useState(false)
+  const [isConfirmingUndo, setIsConfirmingUndo] = useState(false)
+  const [failure, setFailure] = useState<Exclude<AgendaWriteResult, 'saved'> | undefined>(undefined)
+  const progress = readTaskProgress(entry)
+  const isDue = isTaskDue(date, readLocalDateTime(readCurrentTime()).date)
+  const deliveredAt = entry?.deliveredAt ?? null
+
+  async function run(write: () => Promise<AgendaWriteResult>, toastKey: 'taskDelivered' | 'deliveryUndone'): Promise<void> {
+    setFailure(undefined)
+    setIsBusy(true)
+    try {
+      const result = await write()
+      setIsConfirmingUndo(false)
+      if (result === 'saved') toast({ type: 'success', title: t(`toast.${toastKey}.title`), subtitle: t(`toast.${toastKey}.description`) })
+      else setFailure(result)
+    } finally {
+      setIsBusy(false)
+    }
+  }
+
+  const status = deliveredAt !== null
+    ? t('task.delivery.deliveredOn', { date: formatDateTime(deliveredAt) })
+    : access.canWrite && !isDue ? t('task.delivery.notDue') : t('task.delivery.notDelivered')
+  const footer = !access.canWrite
+    ? undefined
+    : progress === 'evaluated' ? t('task.delivery.locked') : progress === 'open' && isDue ? t('task.delivery.hint') : undefined
+
+  return (
+    <ListSection title={t('task.delivery.title')} footer={footer}>
+      <View style={styles.stack}>
+        <Text tone={deliveredAt === null ? 'muted' : 'default'}>{status}</Text>
+        {failure !== undefined && <Text accessibilityRole="alert" accessibilityLiveRegion="polite" tone="danger">{t(failure === 'conflict' ? 'task.delivery.changed' : 'writeFailed')}</Text>}
+        {access.canWrite && progress === 'open' && isDue && (
+          <Button label={isBusy ? t('task.delivery.delivering') : t('task.delivery.deliver')} isBusy={isBusy} onPress={() => { void run(access.deliver, 'taskDelivered') }} />
+        )}
+        {access.canWrite && progress === 'delivered' && (
+          <Button label={t('task.delivery.undo')} variant="outline" onPress={() => { setFailure(undefined); setIsConfirmingUndo(true) }} />
+        )}
+      </View>
+      {isConfirmingUndo && (
+        <ConfirmationSheet
+          title={t('task.delivery.undo')}
+          message={t('task.delivery.undoQuestion')}
+          confirmLabel={t('task.delivery.confirmUndo')}
+          cancelLabel={t('cancel')}
+          confirmVariant="danger"
+          isBusy={isBusy}
+          onConfirm={() => { void run(access.undeliver, 'deliveryUndone') }}
+          onCancel={() => { setIsConfirmingUndo(false) }}
+        />
+      )}
+    </ListSection>
+  )
+}
+
+function TaskEvaluation({ access, entry }: Readonly<{ access: RoutineEntryAccess; entry: RoutineEntry | undefined }>) {
+  const { t } = useTranslation('agenda')
+  const toast = useToast()
+  const form = useRoutineEntryEvaluationForm({ entry, save: access.evaluate })
+  const [failure, setFailure] = useState<Exclude<AgendaWriteResult, 'saved'> | undefined>(undefined)
+  const evaluation = entry?.evaluation ?? null
+  const isDelivered = readTaskProgress(entry) !== 'open'
+
+  if (!access.canEvaluate || !isDelivered) {
+    if (evaluation === null) {
+      return (
+        <ListSection title={t('task.evaluation.title')}>
+          <Text tone="muted">{isDelivered ? t('task.evaluation.none') : t('task.evaluation.waitingDelivery')}</Text>
+        </ListSection>
+      )
+    }
+    return (
+      <ListSection title={t('task.evaluation.title')} footer={t('task.evaluation.evaluatedBy', { name: evaluation.evaluatorName })}>
+        <ListRow title={t('task.evaluation.outcome')} value={t(`task.evaluation.outcomes.${evaluation.outcome}`)} />
+        {evaluation.comment !== null && <ListRow title={t('task.evaluation.comment')} description={evaluation.comment} />}
+      </ListSection>
+    )
+  }
+
+  return (
+    <ListSection title={t('task.evaluation.title')} footer={evaluation === null ? undefined : t('task.evaluation.evaluatedBy', { name: evaluation.evaluatorName })}>
+      <View style={styles.stack}>
+        <ChoiceList
+          label={t('task.evaluation.outcome')}
+          choices={ROUTINE_ENTRY_EVALUATION_OUTCOMES.map(outcome => ({ value: outcome, label: t(`task.evaluation.outcomes.${outcome}`) }))}
+          value={form.outcome}
+          onChange={(outcome) => { setFailure(undefined); form.changeOutcome(outcome) }}
+        />
+        {form.invalidField === 'outcome' && <Text accessibilityRole="alert" accessibilityLiveRegion="polite" tone="danger">{t('task.evaluation.chooseOutcome')}</Text>}
+        <FormField id="task-evaluation-comment" label={t('task.evaluation.comment')} isRequired={false} hint={t('task.evaluation.commentHint')} error={form.invalidField === 'comment' ? t('task.evaluation.invalidComment', { maximum: form.maxLength }) : undefined}>
+          {(control) => <Textarea maxLength={form.maxLength} value={form.comment} onChangeText={form.changeComment} {...control} />}
+        </FormField>
+        {failure !== undefined && <Text accessibilityRole="alert" accessibilityLiveRegion="polite" tone="danger">{t(failure === 'conflict' ? 'conflict' : 'writeFailed')}</Text>}
+        <Button
+          label={form.isSaving ? t('task.evaluation.saving') : t('task.evaluation.save')}
+          isBusy={form.isSaving}
+          onPress={() => {
+            setFailure(undefined)
+            void form.submit().then((result) => {
+              if (result === 'invalid') return
+              if (result !== 'saved') {
+                setFailure(result)
+                return
+              }
+              toast({ type: 'success', title: t('toast.evaluationSaved.title'), subtitle: t('toast.evaluationSaved.description') })
+            })
+          }}
+        />
+      </View>
+    </ListSection>
+  )
+}

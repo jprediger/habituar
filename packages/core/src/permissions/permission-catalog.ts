@@ -19,6 +19,9 @@ export const PERMISSION_CATALOG = [
   'record.write',
   'routine.read',
   'routine.write',
+  'routine.entry.write',
+  'appointment.read',
+  'appointment.write',
 ] as const
 
 export type PermissionKey = (typeof PERMISSION_CATALOG)[number]

@@ -46,3 +46,12 @@ export type StudentConsultationId = z.infer<typeof studentConsultationIdSchema>
 
 export const routineBlockIdSchema = defineIdSchema('RoutineBlockId')
 export type RoutineBlockId = z.infer<typeof routineBlockIdSchema>
+
+export const appointmentIdSchema = defineIdSchema('AppointmentId')
+export type AppointmentId = z.infer<typeof appointmentIdSchema>
+
+export const routineEntryIdSchema = defineIdSchema('RoutineEntryId')
+export type RoutineEntryId = z.infer<typeof routineEntryIdSchema>
+
+export const routineEntryPhotoIdSchema = defineIdSchema('RoutineEntryPhotoId')
+export type RoutineEntryPhotoId = z.infer<typeof routineEntryPhotoIdSchema>

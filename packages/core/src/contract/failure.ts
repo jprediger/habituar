@@ -38,6 +38,10 @@ export const FAILURE_CODES = [
   'student-account-exists',
   'student-below-account-age',
   'consultation-in-future',
+  'occurrence-not-in-series',
+  'occurrence-not-in-routine',
+  'photo-invalid',
+  'photo-limit-reached',
 ] as const
 
 export const failureSchema = z.object({
@@ -98,6 +102,10 @@ export const FAILURE_ERROR_MAP = {
   'student-account-exists': { status: 409, message: 'student account already exists.', data: failureDataSchema },
   'student-below-account-age': { status: 422, message: 'student is below account age.', data: failureDataSchema },
   'consultation-in-future': { status: 422, message: 'consultation cannot be in the future.', data: failureDataSchema },
+  'occurrence-not-in-series': { status: 422, message: 'date is not an occurrence of the appointment.', data: failureDataSchema },
+  'occurrence-not-in-routine': { status: 422, message: 'date is not an occurrence of the routine block.', data: failureDataSchema },
+  'photo-invalid': { status: 422, message: 'photo content is invalid.', data: failureDataSchema },
+  'photo-limit-reached': { status: 409, message: 'photo limit reached.', data: failureDataSchema },
   invalid_input: {
     status: 422,
     message: 'The request payload is invalid.',

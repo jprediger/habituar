@@ -23,6 +23,7 @@ export type StaffManagementContext =
 
 export type StaffCapabilities = Readonly<{
   canReadStudents: boolean
+  canReadAppointments: boolean
   canReadTeam: boolean
   canInvite: boolean
   canRevokeInvitations: boolean
@@ -33,6 +34,7 @@ export type StaffCapabilities = Readonly<{
 
 const PLATFORM_CAPABILITIES: StaffCapabilities = {
   canReadStudents: false,
+  canReadAppointments: false,
   canReadTeam: true,
   canInvite: true,
   canRevokeInvitations: true,
@@ -55,6 +57,7 @@ export function getMembershipCapabilities(permissions: readonly EffectivePermiss
   const canReadTeam = holds('membership.read')
   return {
     canReadStudents: permissions.some((permission) => permission.key === 'student.read'),
+    canReadAppointments: permissions.some((permission) => permission.key === 'appointment.read'),
     canReadTeam,
     canInvite: canReadTeam && holds('membership.invite') && holds('role.assign'),
     canRevokeInvitations: canReadTeam && holds('membership.invite'),
@@ -109,6 +112,9 @@ export const ROLE_BUNDLE_LABEL_KEYS = {
   'record-write': 'roleBundles.recordWrite',
   'routine-read': 'roleBundles.routineRead',
   'routine-write': 'roleBundles.routineWrite',
+  'appointment-read': 'roleBundles.appointmentRead',
+  'appointment-write': 'roleBundles.appointmentWrite',
+  'routine-entry-write': 'roleBundles.routineEntryWrite',
 } as const satisfies Readonly<Record<RoleBundleKey, `roleBundles.${string}`>>
 
 /**

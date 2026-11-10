@@ -39,6 +39,10 @@
     "./routine-forms": {
       "types": "./dist/routine-forms.d.ts",
       "import": "./dist/routine-forms.js"
+    },
+    "./agenda-forms": {
+      "types": "./dist/agenda-forms.d.ts",
+      "import": "./dist/agenda-forms.js"
     }
   },
   "scripts": {

@@ -17,15 +17,15 @@ import type { StaffCapabilities } from './staff-management.js'
  */
 export type NavigationEnvironment = MembershipEnvironment | 'admin'
 
-export type NavigationId = 'home' | 'routine' | 'management' | 'students' | 'profile' | 'institutions'
+export type NavigationId = 'home' | 'agenda' | 'management' | 'students' | 'profile' | 'institutions'
 
 export type NavigationIcon = 'home' | 'calendar' | 'team' | 'students' | 'user' | 'building'
 
 // Caminhos por casca: quem consome uma casca só recebe as rotas dela, então a plataforma
 // que não tem a rota de outra (o app não tem administração geral) não precisa declará-la.
 type ShellNavigationPaths = Readonly<{
-  professional: '/professional' | '/professional/management' | '/professional/students' | '/professional/profile'
-  student: '/student' | '/student/routine'
+  professional: '/professional' | '/professional/agenda' | '/professional/management' | '/professional/students' | '/professional/profile'
+  student: '/student' | '/student/agenda'
   admin: '/admin/institutions'
 }>
 
@@ -42,10 +42,11 @@ type ProfessionalItem = NavigationItem<NavigationPath<'professional'>>
 type ProfessionalNavigationEntry = ProfessionalItem & Readonly<{ isAllowed: (capabilities: StaffCapabilities) => boolean }>
 
 // Só entra destino com conteúdo real: aba "em breve" é ruído para quem navega por leitor
-// de tela. Estudantes e Agenda entram com os módulos que as sustentam. Gestão fica entre
-// Início e Perfil, e só aparece para quem consegue abrir alguma seção dela.
+// de tela. A agenda vem logo depois do Início, porque é o que se consulta todo dia. Gestão
+// fica entre Início e Perfil, e só aparece para quem consegue abrir alguma seção dela.
 const PROFESSIONAL_NAVIGATION: readonly ProfessionalNavigationEntry[] = [
   { id: 'home', labelKey: 'navigation.home', path: '/professional', icon: 'home', isAllowed: () => true },
+  { id: 'agenda', labelKey: 'navigation.agenda', path: '/professional/agenda', icon: 'calendar', isAllowed: (capabilities) => capabilities.canReadAppointments },
   { id: 'management', labelKey: 'navigation.management', path: '/professional/management', icon: 'team', isAllowed: (capabilities) => capabilities.canReadTeam },
   { id: 'students', labelKey: 'navigation.students', path: '/professional/students', icon: 'students', isAllowed: (capabilities) => capabilities.canReadStudents },
   { id: 'profile', labelKey: 'navigation.profile', path: '/professional/profile', icon: 'user', isAllowed: () => true },
@@ -54,7 +55,7 @@ const PROFESSIONAL_NAVIGATION: readonly ProfessionalNavigationEntry[] = [
 const ENVIRONMENT_NAVIGATION: { readonly [Shell in 'student' | 'admin']: readonly NavigationItem<NavigationPath<Shell>>[] } = {
   student: [
     { id: 'home', labelKey: 'navigation.home', path: '/student', icon: 'home' },
-    { id: 'routine', labelKey: 'navigation.routine', path: '/student/routine', icon: 'calendar' },
+    { id: 'agenda', labelKey: 'navigation.agenda', path: '/student/agenda', icon: 'calendar' },
   ],
   admin: [{ id: 'institutions', labelKey: 'navigation.institutions', path: '/admin/institutions', icon: 'building' }],
 }

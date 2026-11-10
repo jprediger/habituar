@@ -18,6 +18,8 @@ import { queryKeys } from './query-keys.js'
 import { toHealthState } from './health-state.js'
 import type { HealthState } from './health-state.js'
 import { createStaffHooks } from './staff-hooks.js'
+import { createAgendaHooks } from './agenda-hooks.js'
+import type { AgendaHooks } from './agenda-hooks.js'
 import { createRoutineHooks } from './routine-hooks.js'
 import type { RoutineHooks } from './routine-hooks.js'
 import { createStudentHomeHooks } from './student-home-hooks.js'
@@ -88,7 +90,7 @@ type AuthContextValue = Readonly<{ state: AuthenticationState; actions: Authenti
 
 type InstitutionSwitcher = Readonly<{ current: MembershipContext | undefined; others: readonly MembershipContext[]; switchTo(institutionId: InstitutionId): Promise<void> }>
 
-export type HabituarReactClient = StaffHooks & StudentHooks & StudentRecordHooks & StudentHomeHooks & RoutineHooks & Readonly<{
+export type HabituarReactClient = StaffHooks & StudentHooks & StudentRecordHooks & StudentHomeHooks & RoutineHooks & AgendaHooks & Readonly<{
   Provider(props: PropsWithChildren): ReactElement
   useHealth(): Readonly<{ state: HealthState; retry(): void }>
   useAuthentication(): AuthContextValue
@@ -595,5 +597,6 @@ export function createHabituarReactClient(
   const studentRecordHooks = createStudentRecordHooks({ apiClient, queryClient })
   const studentHomeHooks = createStudentHomeHooks({ apiClient, queryClient })
   const routineHooks = createRoutineHooks({ apiClient, queryClient })
-  return { Provider, useHealth, useAuthentication, useInstitutionSwitcher, usePlatformInstitutions, usePlatformInstitution, useInvitation, ...staffHooks, ...studentHooks, ...studentRecordHooks, ...studentHomeHooks, ...routineHooks }
+  const agendaHooks = createAgendaHooks({ apiClient, queryClient })
+  return { Provider, useHealth, useAuthentication, useInstitutionSwitcher, usePlatformInstitutions, usePlatformInstitution, useInvitation, ...staffHooks, ...studentHooks, ...studentRecordHooks, ...studentHomeHooks, ...routineHooks, ...agendaHooks }
 }

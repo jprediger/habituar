@@ -1,4 +1,5 @@
-import type { InstitutionId, StudentId } from '@habituar/core/identity/ids'
+import type { LocalDate } from '@habituar/core/calendar'
+import type { InstitutionId, RoutineEntryPhotoId, StudentId } from '@habituar/core/identity/ids'
 
 /**
  * Única fonte das chaves de query do cliente. Todo dado de tenant mora sob
@@ -15,6 +16,14 @@ export const queryKeys = {
   studentHistory: (institutionId: InstitutionId, studentId: StudentId) => ['institution', institutionId, 'students', studentId, 'history'],
   studentConsultations: (institutionId: InstitutionId, studentId: StudentId) => ['institution', institutionId, 'students', studentId, 'consultations'],
   studentRoutine: (institutionId: InstitutionId, studentId: StudentId) => ['institution', institutionId, 'students', studentId, 'routine'],
+  // Intervalo na ponta da chave: o escopo sem ele invalida todas as janelas já vistas.
+  studentRoutineEntriesScope: (institutionId: InstitutionId, studentId: StudentId) => ['institution', institutionId, 'students', studentId, 'routine-entries'],
+  studentRoutineEntries: (institutionId: InstitutionId, studentId: StudentId, from: LocalDate, to: LocalDate) => ['institution', institutionId, 'students', studentId, 'routine-entries', from, to],
+  routineEntryPhoto: (institutionId: InstitutionId, studentId: StudentId, photoId: RoutineEntryPhotoId) => ['institution', institutionId, 'students', studentId, 'routine-entry-photos', photoId],
+  studentAppointmentsScope: (institutionId: InstitutionId, studentId: StudentId) => ['institution', institutionId, 'students', studentId, 'appointments'],
+  studentAppointments: (institutionId: InstitutionId, studentId: StudentId, from: LocalDate, to: LocalDate) => ['institution', institutionId, 'students', studentId, 'appointments', from, to],
+  institutionAgendaScope: (institutionId: InstitutionId) => ['institution', institutionId, 'appointments'],
+  institutionAgenda: (institutionId: InstitutionId, from: LocalDate, to: LocalDate) => ['institution', institutionId, 'appointments', from, to],
   institutionStudents: (institutionId: InstitutionId) => ['institution', institutionId, 'students'],
   platformInstitutions: ['platform', 'institutions'],
   platformInstitution: (institutionId: InstitutionId) => ['platform', 'institution', institutionId],

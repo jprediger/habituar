@@ -23,14 +23,16 @@ import { readCurrentTime } from '../time/current-time.js'
 type OpenTask = Readonly<{ block: RoutineBlock; date: LocalDate }> | undefined
 
 const STATUS_STYLE = {
-  recorded: 'bg-primary/10 text-primary',
+  evaluated: 'bg-primary text-on-primary',
+  delivered: 'bg-primary/10 text-primary',
   missing: 'bg-danger/10 text-danger',
   upcoming: 'bg-surface-muted text-text-muted',
 } as const satisfies Readonly<Record<TrackedTaskStatus, string>>
 
 /**
  * Acompanhamento das tarefas de um estudante pela equipe: por período, cada tarefa da
- * rotina com o que o aluno registrou. Só leitura — o registro é a voz do próprio aluno.
+ * rotina com a entrega e o que o aluno registrou. A equipe não escreve no registro do
+ * aluno; quem pode avaliar dá o retorno pelo diálogo da tarefa entregue.
  */
 export function StudentTasksScreen({ studentId }: Readonly<{ studentId: StudentId }>): ReactElement {
   const { t } = useTranslation('agenda')
@@ -58,7 +60,8 @@ export function StudentTasksScreen({ studentId }: Readonly<{ studentId: StudentI
               <>
                 <section aria-label={t('tracking.summary')} className="flex flex-col gap-sm">
                   <SummaryCards items={[
-                    { label: t('tracking.summaryLabels.recorded'), value: t('tracking.summaryValue', { count: tracking.summary.recorded, total: tracking.summary.total }) },
+                    { label: t('tracking.summaryLabels.delivered'), value: t('tracking.summaryValue', { count: tracking.summary.delivered, total: tracking.summary.total }) },
+                    { label: t('tracking.summaryLabels.evaluated'), value: String(tracking.summary.evaluated) },
                     { label: t('tracking.summaryLabels.missing'), value: String(tracking.summary.missing) },
                     { label: t('tracking.summaryLabels.upcoming'), value: String(tracking.summary.upcoming) },
                   ]} />

@@ -16,12 +16,13 @@ const MONDAY = localDateSchema.parse('2026-11-09')
 const range = rangeOfAgendaView('week', MONDAY)
 const studentId = studentIdSchema.parse('30000000-0000-4000-8000-000000000001')
 const block = routineBlockSchema.parse({ id: 'e1000000-0000-4000-8000-000000000001', weekday: 1, startsAt: '14:00', endsAt: '15:00', title: 'Leitura', kind: 'study', notes: null, version: 1, updatedAt: '2026-09-30T12:00:00.000Z' })
-const entry = routineEntrySchema.parse({ id: 'e2000000-0000-4000-8000-000000000001', routineBlockId: block.id, occursOn: MONDAY, notes: 'Li dois capítulos', photos: [], version: 1, updatedAt: '2026-11-09T18:00:00.000Z' })
+const entry = routineEntrySchema.parse({ id: 'e2000000-0000-4000-8000-000000000001', routineBlockId: block.id, occursOn: MONDAY, notes: 'Li dois capítulos', photos: [], deliveredAt: null, evaluation: null, version: 1, updatedAt: '2026-11-09T18:00:00.000Z' })
 
 let canWrite = true
 const saveNote = vi.fn(() => Promise.resolve('saved' as const))
+const deliver = vi.fn(() => Promise.resolve('saved' as const))
 const agenda: StudentAgenda = { state: { status: 'ready', days: groupAgendaByDay([{ kind: 'task', key: 'task', date: MONDAY, startsAt: '14:00', endsAt: '15:00', block, entry }], range) }, canWriteEntries: true }
-const routineEntry = (): RoutineEntryAccess => ({ state: { status: 'ready', block, entry }, canWrite, saveNote, addPhoto: vi.fn(), removePhoto: vi.fn() })
+const routineEntry = (): RoutineEntryAccess => ({ state: { status: 'ready', block, entry }, canWrite, canEvaluate: false, saveNote, deliver, undeliver: vi.fn(), evaluate: vi.fn(), addPhoto: vi.fn(), removePhoto: vi.fn() })
 const cursor: AgendaCursor = { date: MONDAY, view: 'week', range, select: vi.fn(), changeView: vi.fn(), goToday: vi.fn(), goPrevious: vi.fn(), goNext: vi.fn() }
 const students: AccessibleStudents = {
   state: { status: 'ready', students: [{ id: studentId, fullName: 'Bruno Lima', socialName: null, birthDate: '2014-03-09', ageRange: '11-14', archivedAt: null }], total: 1, page: 1, pageCount: 1 },
@@ -68,5 +69,16 @@ describe('agenda do aluno', () => {
     expect(screen.queryByRole('textbox')).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Adicionar foto' })).not.toBeInTheDocument()
     canWrite = true
+  })
+
+  it('deixa o aluno marcar a tarefa do dia como entregue', async () => {
+    canWrite = true
+    renderScreen()
+    const monday = screen.getByRole('group', { name: /segunda-feira, 9 de novembro/i })
+    await userEvent.click(within(monday).getByRole('button', { name: /Leitura/ }))
+    expect(screen.getByText('A avaliação abre depois que o aluno entregar a tarefa.')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Marcar como entregue' }))
+    expect(deliver).toHaveBeenCalled()
+    expect(await screen.findByText('Tarefa entregue.')).toBeInTheDocument()
   })
 })

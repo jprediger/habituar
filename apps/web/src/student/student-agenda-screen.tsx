@@ -3,6 +3,7 @@ import { assertNever } from '@habituar/core/assert-never'
 import { type LocalDate, minutesOfDay, readLocalDateTime } from '@habituar/core/calendar'
 import type { StudentId } from '@habituar/core/identity/ids'
 import type { RoutineBlock } from '@habituar/core/routines'
+import { readTaskProgress } from '@habituar/react-client/react-client'
 import type { AgendaItem } from '@habituar/react-client/react-client'
 import { CalendarDays } from 'lucide-react'
 import { useId, useState } from 'react'
@@ -83,6 +84,8 @@ function StudentAgenda({ studentId }: Readonly<{ studentId: StudentId }>): React
   function describeItem(item: AgendaItem) {
     switch (item.kind) {
       case 'task': {
+        const progress = readTaskProgress(item.entry)
+        if (progress !== 'open') return { title: item.block.title, detail: t(`task.progress.${progress}`) }
         const photoCount = item.entry?.photos.length ?? 0
         const detail = photoCount > 0 ? t('task.photoCount', { count: photoCount }) : item.entry?.notes !== null && item.entry !== undefined ? t('task.hasNote') : tc(`routine.kinds.${item.block.kind}`)
         return { title: item.block.title, detail }

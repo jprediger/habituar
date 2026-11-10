@@ -148,6 +148,7 @@
     "dateTime": {
       "placeholderDate": "Toque para escolher a data",
       "placeholderDateTime": "Toque para escolher a data e a hora",
+      "placeholderTime": "Toque para escolher a hora",
       "done": "Concluir",
       "clear": "Limpar data"
     },
@@ -184,6 +185,7 @@
     }
   },
   "navigation": {
+    "agenda": "Agenda",
     "routine": "Rotina",
     "home": "Início",
     "management": "Gestão",
@@ -234,7 +236,10 @@
     "recordRead": "Consultar fichas de alunos",
     "recordWrite": "Registrar em fichas de alunos",
     "routineRead": "Consultar rotina de alunos",
-    "routineWrite": "Montar rotina de alunos"
+    "routineWrite": "Montar rotina de alunos",
+    "appointmentRead": "Ver agenda de atendimentos",
+    "appointmentWrite": "Agendar atendimentos",
+    "routineEntryWrite": "Registrar fotos e observações das tarefas"
   },
   "staff": {
     "title": "Gestão",

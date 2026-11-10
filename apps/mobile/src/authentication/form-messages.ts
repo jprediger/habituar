@@ -1,8 +1,6 @@
 import { assertNever } from '@habituar/core/assert-never'
 import type { FieldError } from '@habituar/react-client/form'
-import type { useTranslation } from 'react-i18next'
-
-type TFunction = ReturnType<typeof useTranslation>['t']
+import type { TFunction } from 'i18next'
 
 /** Texto em pt-BR de cada falha de preenchimento; recusa código fora do union. */
 export function getFieldErrorText(error: FieldError, t: TFunction): string {

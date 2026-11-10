@@ -15,7 +15,7 @@ export default function StudentLayout() {
       {() => (
         <Tabs tabBar={() => <EnvironmentTabBar items={navigation} />} screenOptions={{ headerShown: false }}>
           <Tabs.Screen name="index" />
-          <Tabs.Screen name="routine" />
+          <Tabs.Screen name="agenda" />
         </Tabs>
       )}
     </InstitutionSessionScreen>

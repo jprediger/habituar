@@ -1,8 +1,6 @@
 import { assertNever } from '@habituar/core/assert-never'
 import type { AuthenticationFailure } from '@habituar/react-client/react-client'
-import type { useTranslation } from 'react-i18next'
-
-type TFunction = ReturnType<typeof useTranslation>['t']
+import type { TFunction } from 'i18next'
 
 /**
  * Saída oferecida junto de cada falha. Existe porque a falta de permissão

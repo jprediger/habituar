@@ -51,6 +51,10 @@ module.exports = {
     '^@habituar/core/students$': '<rootDir>/../../packages/core/src/students.ts',
     '^@habituar/core/student-records$': '<rootDir>/../../packages/core/src/student-records.ts',
     '^@habituar/core/routines$': '<rootDir>/../../packages/core/src/routines.ts',
+    '^@habituar/core/calendar$': '<rootDir>/../../packages/core/src/calendar.ts',
+    '^@habituar/core/appointments$': '<rootDir>/../../packages/core/src/appointments.ts',
+    '^@habituar/core/routine-entries$': '<rootDir>/../../packages/core/src/routine-entries.ts',
+    '^@habituar/react-client/agenda-forms$': '<rootDir>/../../packages/react-client/src/agenda-forms.ts',
     '^@habituar/react-client/routine-forms$': '<rootDir>/../../packages/react-client/src/routine-forms.ts',
     '^@habituar/react-client/student-record-forms$':
       '<rootDir>/../../packages/react-client/src/student-record-forms.ts',

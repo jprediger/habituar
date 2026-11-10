@@ -4,6 +4,7 @@ import { SPACING } from '@habituar/design-tokens/spacing'
 import { useValidatedForm } from '@habituar/react-client/form'
 import { useRouter } from 'expo-router'
 import { useRef, useState } from 'react'
+import type { TFunction } from 'i18next'
 import { useTranslation } from 'react-i18next'
 import type { TextInput } from 'react-native'
 import { StyleSheet, View } from 'react-native'
@@ -41,7 +42,7 @@ function toRegisterFailure(error: unknown): RegisterFailure {
 
 function getRegisterFailureText(
   failure: RegisterFailure,
-  t: ReturnType<typeof useTranslation>['t'],
+  t: TFunction,
 ): string {
   switch (failure) {
     case 'conflict':

@@ -92,15 +92,15 @@ describe('environment tab bar', () => {
     expect(screen.queryByRole('tab')).toBeNull()
   })
 
-  it('offers the student home and routine', () => {
-    mockRouter.pathname = '/student/routine'
+  it('offers the student home and agenda', () => {
+    mockRouter.pathname = '/student/agenda'
 
     render(<StudentBar />)
 
     const tabs = screen.getAllByRole('tab')
     expect(tabs).toHaveLength(2)
     expect(tabs.indexOf(screen.getByRole('tab', { name: HOME }))).toBe(0)
-    expect(screen.getByRole('tab', { name: 'Rotina' })).toBeSelected()
+    expect(screen.getByRole('tab', { name: 'Agenda' })).toBeSelected()
   })
 
   it('shows management between home and profile only to someone who can read the team', () => {

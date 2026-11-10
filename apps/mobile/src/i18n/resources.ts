@@ -1,3 +1,4 @@
+import agenda from './pt-br/agenda.json'
 import common from './pt-br/common.json'
 
 /**
@@ -6,5 +7,7 @@ import common from './pt-br/common.json'
  * reexportado para `apps/web`.
  */
 export const resources = {
-  'pt-BR': { common },
+  // A agenda tem namespace próprio: somada ao `common`, a união de chaves passaria do
+  // limite de profundidade de tipos do i18next e quebraria o `t()` tipado do app inteiro.
+  'pt-BR': { common, agenda },
 } as const

@@ -9,51 +9,52 @@ import { Text } from './text'
 
 
 /**
- * `date` guarda `2026-09-28`; `datetime` guarda `2026-09-28T14:30`, sem fuso — o mesmo texto
- * que o campo nativo do navegador entrega na web, e o que os hooks de formulário esperam.
+ * `date` guarda `2026-09-28`; `datetime` guarda `2026-09-28T14:30`; `time` guarda `14:30`,
+ * sem fuso — o mesmo texto que o campo nativo do navegador entrega na web, e o que os
+ * hooks de formulário esperam.
  */
-export type DateTimeFieldMode = 'date' | 'datetime'
+export type DateTimeFieldMode = 'date' | 'datetime' | 'time'
+
+// Registro do passado tem teto (`maximumDate`); agenda é futuro e só precisa de onde o
+// seletor abre (`initialDate`). Um dos dois, nunca nenhum: o seletor precisa de um dia.
+type DateTimeFieldBounds =
+  | Readonly<{ maximumDate: Date; initialDate?: undefined }>
+  | Readonly<{ initialDate: Date; maximumDate?: undefined }>
 
 export type DateTimeFieldProps = Readonly<{
   mode: DateTimeFieldMode
   value: string
   onChange: (value: string) => void
-  maximumDate: Date
   accessibilityLabel: string
   accessibilityHint: string | undefined
   hasError: boolean
   isDisabled?: boolean
   onClear?: (() => void) | undefined
-}>
+}> & DateTimeFieldBounds
 
 /**
  * Campo de data, ou de data e hora, pelo seletor nativo de cada sistema. Dono só da escolha e
  * da conversão entre o seletor e o texto do formulário; validar o valor continua sendo do hook.
  */
-export function DateTimeField({
-  mode,
-  value,
-  onChange,
-  maximumDate,
-  accessibilityLabel,
-  accessibilityHint,
-  hasError,
-  isDisabled = false,
-  onClear,
-}: DateTimeFieldProps) {
+export function DateTimeField(props: DateTimeFieldProps) {
+  const { mode, value, onChange, maximumDate, accessibilityLabel, accessibilityHint, hasError, isDisabled = false, onClear } = props
   const { t } = useTranslation()
   const { colors, minimumTouchTarget, radius } = useThemeTokens()
   const scheme = useColorScheme()
   const [isInlineOpen, setIsInlineOpen] = useState(false)
-  const pickerValue = parseFieldValue(value) ?? maximumDate
+  const pickerValue = parseFieldValue(value) ?? (props.initialDate === undefined ? props.maximumDate : props.initialDate)
   const displayValue = value === '' ? undefined : formatFieldValue(value)
-  const placeholder = t(mode === 'date' ? 'form.dateTime.placeholderDate' : 'form.dateTime.placeholderDateTime')
+  const placeholder = t(PLACEHOLDER_KEYS[mode])
 
   function openAndroid(): void {
+    if (mode === 'time') {
+      DateTimePickerAndroid.open({ mode: 'time', value: pickerValue, is24Hour: true, onValueChange: (_event, time) => { onChange(toFieldValue(time, mode)) } })
+      return
+    }
     DateTimePickerAndroid.open({
       mode: 'date',
       value: pickerValue,
-      maximumDate,
+      ...(maximumDate === undefined ? {} : { maximumDate }),
       onValueChange: (_event, date) => {
         if (mode === 'date') {
           onChange(toFieldValue(date, mode))
@@ -111,7 +112,7 @@ export function DateTimeField({
             locale="pt-BR"
             themeVariant={scheme === 'dark' ? 'dark' : 'light'}
             value={pickerValue}
-            maximumDate={maximumDate}
+            {...(maximumDate === undefined ? {} : { maximumDate })}
             onValueChange={(_event, date) => { onChange(toFieldValue(date, mode)) }}
           />
           <Button label={t('form.dateTime.done')} variant="outline" onPress={() => { setIsInlineOpen(false) }} />
@@ -134,11 +135,21 @@ export function DateTimeField({
   )
 }
 
+const PLACEHOLDER_KEYS = {
+  date: 'form.dateTime.placeholderDate',
+  datetime: 'form.dateTime.placeholderDateTime',
+  time: 'form.dateTime.placeholderTime',
+} as const satisfies Readonly<Record<DateTimeFieldMode, `form.dateTime.${string}`>>
+
 const FIELD_VALUE_PATTERN = /^(\d{4})-(\d{2})-(\d{2})(?:T(\d{2}):(\d{2}))?$/
+const TIME_VALUE_PATTERN = /^(\d{2}):(\d{2})$/
 
 // Lido como hora local, igual ao campo do navegador: o instante absoluto só nasce no hook,
 // na saída para a API.
 function parseFieldValue(value: string): Date | undefined {
+  const time = TIME_VALUE_PATTERN.exec(value)
+  // Só a hora importa no modo `time`; o dia fixo é suporte para o seletor, nunca gravado.
+  if (time !== null) return new Date(2000, 0, 1, Number(time[1]), Number(time[2]))
   const match = FIELD_VALUE_PATTERN.exec(value)
   if (match === null) return undefined
   const [, year, month, day, hour, minute] = match
@@ -146,6 +157,7 @@ function parseFieldValue(value: string): Date | undefined {
 }
 
 function toFieldValue(date: Date, mode: DateTimeFieldMode): string {
+  if (mode === 'time') return `${pad(date.getHours())}:${pad(date.getMinutes())}`
   const calendarDate = `${String(date.getFullYear())}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
   return mode === 'date' ? calendarDate : `${calendarDate}T${pad(date.getHours())}:${pad(date.getMinutes())}`
 }
@@ -153,6 +165,7 @@ function toFieldValue(date: Date, mode: DateTimeFieldMode): string {
 // Formatado pelo próprio texto, sem passar por `Date`: data de calendário não tem fuso, e
 // convertê-la deslocaria o dia para quem está a oeste de UTC.
 function formatFieldValue(value: string): string {
+  if (TIME_VALUE_PATTERN.test(value)) return value
   const match = FIELD_VALUE_PATTERN.exec(value)
   if (match === null) return value
   const [, year, month, day, hour, minute] = match

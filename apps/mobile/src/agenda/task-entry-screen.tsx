@@ -1,0 +1,213 @@
+import { assertNever } from '@habituar/core/assert-never'
+import type { LocalDate } from '@habituar/core/calendar'
+import type { RoutineBlockId, StudentId } from '@habituar/core/identity/ids'
+import { ROUTINE_ENTRY_PHOTO_LIMIT, ROUTINE_ENTRY_PHOTO_MAX_BYTES, ROUTINE_ENTRY_PHOTO_MEDIA_TYPES, routineEntryPhotoMediaTypeSchema } from '@habituar/core/routine-entries'
+import type { RoutineEntryPhoto } from '@habituar/core/routine-entries'
+import { SPACING } from '@habituar/design-tokens/spacing'
+import { useRoutineEntryNoteForm } from '@habituar/react-client/agenda-forms'
+import type { AgendaWriteResult, PhotoUploadResult, RoutineEntryAccess } from '@habituar/react-client/react-client'
+import * as DocumentPicker from 'expo-document-picker'
+import type { TFunction } from 'i18next'
+import { readAsStringAsync } from 'expo-file-system/legacy'
+import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { Image, Pressable, StyleSheet, View } from 'react-native'
+import { habituar } from '../client/habituar-client'
+import { Button } from '../components/ui/button'
+import { FormField } from '../components/ui/form-field'
+import { Icon } from '../components/ui/icon'
+import { ListDivider } from '../components/ui/list-divider'
+import { ListRow } from '../components/ui/list-row'
+import { ListSection } from '../components/ui/list-section'
+import { StackPage } from '../components/ui/stack-page'
+import { Text } from '../components/ui/text'
+import { Textarea } from '../components/ui/textarea'
+import { useToast } from '../components/ui/toast'
+import type { InstitutionSession } from '../session/session-screen'
+import { useThemeTokens } from '../theme/tokens'
+import { useAgendaLabels } from './agenda-labels'
+
+/**
+ * Tarefa da rotina num dia, aberta da agenda do aluno. O aluno registra como foi — uma
+ * observação e até seis fotos —; o responsável e a equipe veem o mesmo, só para leitura.
+ */
+export function TaskEntryScreen({ session, studentId, blockId, date }: Readonly<{ session: InstitutionSession; studentId: StudentId; blockId: RoutineBlockId; date: LocalDate }>) {
+  const { t } = useTranslation('agenda')
+  const labels = useAgendaLabels()
+  const access = habituar.useRoutineEntry(session.membership, studentId, blockId, date)
+  const title = access.state.status === 'ready' ? access.state.block.title : t('title')
+
+  return (
+    <StackPage title={title}>
+      {(() => {
+        switch (access.state.status) {
+          case 'loading':
+            return <Text tone="muted" accessibilityLiveRegion="polite">{t('loading')}</Text>
+          case 'failed':
+            return <Text accessibilityRole="alert" tone="danger">{t('failed')}</Text>
+          case 'ready':
+            return (
+              <View style={styles.stack}>
+                <ListSection footer={t(access.canWrite ? 'task.description' : 'task.readOnlyDescription')}>
+                  <ListRow title={labels.formatShortDate(date)} value={t('time', { start: access.state.block.startsAt, end: access.state.block.endsAt })} />
+                </ListSection>
+                <ListDivider />
+                <TaskNote key={access.state.entry?.version ?? 0} access={access} />
+                <ListDivider />
+                <TaskPhotos session={session} studentId={studentId} access={access} photos={access.state.entry?.photos ?? []} />
+              </View>
+            )
+          default:
+            return assertNever(access.state)
+        }
+      })()}
+    </StackPage>
+  )
+}
+
+function TaskNote({ access }: Readonly<{ access: RoutineEntryAccess }>) {
+  const { t } = useTranslation('agenda')
+  const toast = useToast()
+  const entry = access.state.status === 'ready' ? access.state.entry : undefined
+  const form = useRoutineEntryNoteForm({ entry, save: access.saveNote })
+  const [failure, setFailure] = useState<Exclude<AgendaWriteResult, 'saved'> | undefined>(undefined)
+
+  if (!access.canWrite) {
+    return (
+      <ListSection title={t('task.notes')}>
+        <Text tone={entry?.notes === undefined || entry.notes === null ? 'muted' : 'default'}>{entry?.notes ?? t('task.noNotes')}</Text>
+      </ListSection>
+    )
+  }
+
+  return (
+    <ListSection title={t('task.notes')}>
+      <View style={styles.stack}>
+        <FormField id="task-notes" label={t('task.notes')} isRequired={false} hint={t('task.notesHint')} error={form.isInvalid ? t('task.invalidNotes', { maximum: form.maxLength }) : undefined}>
+          {(control) => <Textarea maxLength={form.maxLength} value={form.notes} onChangeText={form.change} {...control} />}
+        </FormField>
+        {failure !== undefined && <Text accessibilityRole="alert" accessibilityLiveRegion="polite" tone="danger">{t(failure === 'conflict' ? 'conflict' : 'writeFailed')}</Text>}
+        <Button
+          label={form.isSaving ? t('task.savingNote') : t('task.saveNote')}
+          isBusy={form.isSaving}
+          onPress={() => {
+            setFailure(undefined)
+            void form.submit().then((result) => {
+              if (result === 'invalid') return
+              if (result !== 'saved') {
+                setFailure(result)
+                return
+              }
+              toast({ type: 'success', title: t('toast.noteSaved.title'), subtitle: t('toast.noteSaved.description') })
+            })
+          }}
+        />
+      </View>
+    </ListSection>
+  )
+}
+
+type PhotoFailure = Exclude<PhotoUploadResult, 'saved'> | 'remove-failed'
+
+function TaskPhotos({ session, studentId, access, photos }: Readonly<{ session: InstitutionSession; studentId: StudentId; access: RoutineEntryAccess; photos: readonly RoutineEntryPhoto[] }>) {
+  const { t } = useTranslation('agenda')
+  const toast = useToast()
+  const [isUploading, setIsUploading] = useState(false)
+  const [failure, setFailure] = useState<PhotoFailure | undefined>(undefined)
+
+  // Galeria e arquivos pelo seletor de documentos que o app já usa no termo: o tipo é
+  // conferido aqui para a mensagem certa, e de novo na API pelo conteúdo real.
+  async function pickPhoto(): Promise<void> {
+    setFailure(undefined)
+    const result = await DocumentPicker.getDocumentAsync({ type: [...ROUTINE_ENTRY_PHOTO_MEDIA_TYPES], copyToCacheDirectory: true })
+    const asset = result.canceled ? undefined : result.assets[0]
+    if (asset === undefined) return
+    const mediaType = routineEntryPhotoMediaTypeSchema.safeParse(asset.mimeType)
+    if (!mediaType.success || (asset.size !== undefined && asset.size > ROUTINE_ENTRY_PHOTO_MAX_BYTES)) {
+      setFailure('invalid')
+      return
+    }
+    setIsUploading(true)
+    try {
+      const outcome = await access.addPhoto({ mediaType: mediaType.data, base64: asset.base64 ?? await readAsStringAsync(asset.uri, { encoding: 'base64' }) })
+      if (outcome === 'saved') toast({ type: 'success', title: t('toast.photoAdded.title'), subtitle: t('toast.photoAdded.description') })
+      else setFailure(outcome)
+    } catch {
+      setFailure('not-saved')
+    } finally {
+      setIsUploading(false)
+    }
+  }
+
+  return (
+    <ListSection title={t('task.photos')}>
+      {photos.length === 0
+        ? <Text tone="muted">{t('task.noPhotos')}</Text>
+        : (
+            <View style={styles.grid}>
+              {photos.map((photo, index) => (
+                <TaskPhoto
+                  key={photo.id}
+                  session={session}
+                  studentId={studentId}
+                  photo={photo}
+                  index={index + 1}
+                  onRemove={access.canWrite
+                    ? () => {
+                        setFailure(undefined)
+                        void access.removePhoto(photo).then((result) => {
+                          if (result === 'saved') toast({ type: 'success', title: t('toast.photoRemoved.title'), subtitle: t('toast.photoRemoved.description') })
+                          else setFailure('remove-failed')
+                        })
+                      }
+                    : undefined}
+                />
+              ))}
+            </View>
+          )}
+      {access.canWrite && photos.length < ROUTINE_ENTRY_PHOTO_LIMIT && (
+        <ListRow icon="image" title={isUploading ? t('task.uploading') : t('task.addPhoto')} onPress={isUploading ? undefined : () => { void pickPhoto() }} />
+      )}
+      {failure !== undefined && <Text accessibilityRole="alert" accessibilityLiveRegion="polite" tone="danger">{photoFailureText(failure, t)}</Text>}
+    </ListSection>
+  )
+}
+
+function photoFailureText(failure: PhotoFailure, t: TFunction<'agenda'>): string {
+  switch (failure) {
+    case 'invalid': return t('task.photoInvalid')
+    case 'limit-reached': return t('task.photoLimit', { maximum: ROUTINE_ENTRY_PHOTO_LIMIT })
+    case 'not-saved': return t('task.photoFailedToSave')
+    case 'remove-failed': return t('writeFailed')
+    default: return assertNever(failure)
+  }
+}
+
+function TaskPhoto({ session, studentId, photo, index, onRemove }: Readonly<{ session: InstitutionSession; studentId: StudentId; photo: RoutineEntryPhoto; index: number; onRemove: (() => void) | undefined }>) {
+  const { t } = useTranslation('agenda')
+  const { colors, radius, minimumTouchTarget } = useThemeTokens()
+  const content = habituar.useRoutineEntryPhoto(session.membership, studentId, photo.id)
+
+  return (
+    <View style={[styles.photo, { borderRadius: radius.field, backgroundColor: colors.surfaceMuted }]}>
+      {content.status === 'ready' && <Image source={{ uri: content.uri }} accessible accessibilityLabel={t('task.photoAlt', { index })} style={[styles.photoImage, { borderRadius: radius.field }]} />}
+      {content.status === 'failed' && <Text size="caption" tone="danger">{t('task.photoFailed')}</Text>}
+      {onRemove !== undefined && (
+        <Pressable accessibilityRole="button" accessibilityLabel={t('task.removePhoto', { index })} onPress={onRemove} style={[styles.remove, { minWidth: minimumTouchTarget, minHeight: minimumTouchTarget }]}>
+          <View style={[styles.removeBadge, { backgroundColor: colors.surface }]}>
+            <Icon name="trash" size={18} color={colors.danger} />
+          </View>
+        </Pressable>
+      )}
+    </View>
+  )
+}
+
+const styles = StyleSheet.create({
+  stack: { gap: SPACING.lg },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.sm },
+  photo: { width: '31%', aspectRatio: 1, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
+  photoImage: { width: '100%', height: '100%' },
+  remove: { position: 'absolute', top: 0, right: 0, alignItems: 'center', justifyContent: 'center' },
+  removeBadge: { borderRadius: 999, padding: SPACING.xs },
+})

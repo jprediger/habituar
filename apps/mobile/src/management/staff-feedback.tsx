@@ -3,6 +3,7 @@ import type { StaffRole } from '@habituar/core/staff'
 import { SPACING } from '@habituar/design-tokens/spacing'
 import type { Pagination, StaffFailure, StaffListState } from '@habituar/react-client/staff-management'
 import type { ReactNode } from 'react'
+import type { TFunction } from 'i18next'
 import { useTranslation } from 'react-i18next'
 import { StyleSheet, View } from 'react-native'
 import { ListSectionSkeleton } from '../components/skeletons/list-section-skeleton'
@@ -12,7 +13,7 @@ import { EmptyState } from '../components/ui/empty-state'
 import { Text } from '../components/ui/text'
 import { useThemeTokens } from '../theme/tokens'
 
-type Translate = ReturnType<typeof useTranslation>['t']
+type Translate = TFunction
 
 /** Texto de uma falha de gestão; o código vem do hook e o texto, do catálogo. */
 export function getStaffFailureText(failure: StaffFailure, t: Translate): string {

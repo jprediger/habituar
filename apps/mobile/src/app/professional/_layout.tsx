@@ -18,6 +18,7 @@ export default function ProfessionalLayout() {
           screenOptions={{ headerShown: false }}
         >
           <Tabs.Screen name="index" />
+          <Tabs.Screen name="agenda" />
           <Tabs.Screen name="management" />
           <Tabs.Screen name="profile" />
           {/* Fora da barra: a ficha abre a partir da lista do Início, e voltar leva a ele. */}

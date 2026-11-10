@@ -75,6 +75,23 @@ export type StudentAgenda = Readonly<{
   canWriteEntries: boolean
 }>
 
+/**
+ * Situação de uma tarefa para quem acompanha: com registro do aluno, sem registro num dia
+ * que já chegou, ou ainda por vir. Registro esvaziado (sem nota nem foto) conta como falta.
+ */
+export type TrackedTaskStatus = 'recorded' | 'missing' | 'upcoming'
+
+export type TrackedTask = Readonly<{ key: string; date: LocalDate; block: RoutineBlock; entry: RoutineEntry | undefined; status: TrackedTaskStatus }>
+
+export type TaskTrackingDay = Readonly<{ date: LocalDate; tasks: readonly TrackedTask[] }>
+
+export type TaskTrackingSummary = Readonly<{ total: number; recorded: number; missing: number; upcoming: number }>
+
+export type TaskTrackingState =
+  | Readonly<{ status: 'loading' }>
+  | Readonly<{ status: 'failed'; failure: AgendaLoadFailure }>
+  | Readonly<{ status: 'ready'; days: readonly TaskTrackingDay[]; summary: TaskTrackingSummary }>
+
 export type RoutineEntryState =
   | Readonly<{ status: 'loading' }>
   | Readonly<{ status: 'failed'; failure: AgendaLoadFailure }>
@@ -98,6 +115,7 @@ export type AgendaHooks = Readonly<{
   useProfessionalAgenda: (membership: MembershipContext, range: LocalDateRange) => ProfessionalAgenda
   useStudentAgenda: (membership: MembershipContext, studentId: StudentId, range: LocalDateRange) => StudentAgenda
   useAppointmentDetail: (membership: MembershipContext, studentId: StudentId, appointmentId: AppointmentId, date: LocalDate) => AppointmentDetail
+  useStudentTaskTracking: (membership: MembershipContext, studentId: StudentId, range: LocalDateRange, today: LocalDate) => TaskTrackingState
   useRoutineEntry: (membership: MembershipContext, studentId: StudentId, blockId: RoutineBlockId, date: LocalDate) => RoutineEntryAccess
   useRoutineEntryPhoto: (membership: MembershipContext, studentId: StudentId, photoId: RoutineEntryPhotoId) => PhotoContentState
 }>
@@ -170,6 +188,33 @@ function taskItems(blocks: readonly RoutineBlock[], entries: readonly RoutineEnt
 /** Agrupa os itens por dia do intervalo, em ordem de horário; dia vazio aparece vazio. */
 export function groupAgendaByDay(items: readonly AgendaItem[], range: LocalDateRange): readonly AgendaDay[] {
   return listRangeDays(range).map(date => ({ date, items: items.filter(item => item.date === date).sort(compareItems) }))
+}
+
+/** Classifica a tarefa de um dia pelo registro do aluno e pela data de hoje do aparelho. */
+export function classifyTrackedTask(entry: RoutineEntry | undefined, date: LocalDate, today: LocalDate): TrackedTaskStatus {
+  if (entry !== undefined && (entry.notes !== null || entry.photos.length > 0)) return 'recorded'
+  // Data local ISO compara em ordem lexical.
+  return date > today ? 'upcoming' : 'missing'
+}
+
+/** Conta as tarefas do intervalo por situação, para o resumo no topo do acompanhamento. */
+export function summarizeTaskTracking(days: readonly TaskTrackingDay[]): TaskTrackingSummary {
+  const tasks = days.flatMap(day => day.tasks)
+  return {
+    total: tasks.length,
+    recorded: tasks.filter(task => task.status === 'recorded').length,
+    missing: tasks.filter(task => task.status === 'missing').length,
+    upcoming: tasks.filter(task => task.status === 'upcoming').length,
+  }
+}
+
+function trackTasks(blocks: readonly RoutineBlock[], entries: readonly RoutineEntry[], range: LocalDateRange, today: LocalDate): readonly TaskTrackingDay[] {
+  return groupAgendaByDay(taskItems(blocks, entries, range), range).map(day => ({
+    date: day.date,
+    tasks: day.items.flatMap(item => item.kind === 'task'
+      ? [{ key: item.key, date: item.date, block: item.block, entry: item.entry, status: classifyTrackedTask(item.entry, item.date, today) }]
+      : []),
+  }))
 }
 
 /**
@@ -293,6 +338,22 @@ export function createAgendaHooks(dependencies: AgendaHookDependencies): AgendaH
     return { state, canWriteEntries: membership.permissions.some(grant => grant.key === 'routine.entry.write') }
   }
 
+  function useStudentTaskTracking(membership: MembershipContext, studentId: StudentId, range: LocalDateRange, today: LocalDate): TaskTrackingState {
+    const institutionId = membership.institution.id
+    const routine = useQuery({ queryKey: queryKeys.studentRoutine(institutionId, studentId), queryFn: () => apiClient.routines.list({ institutionId, studentId }), retry: retryOnlyWithoutServerResponse }, queryClient)
+    const entries = useQuery({
+      queryKey: queryKeys.studentRoutineEntries(institutionId, studentId, range.from, range.to),
+      queryFn: () => apiClient.routineEntries.list({ institutionId, studentId, from: range.from, to: range.to }),
+      retry: retryOnlyWithoutServerResponse,
+    }, queryClient)
+
+    const failed = [routine, entries].find(query => query.isError)
+    if (failed !== undefined) return { status: 'failed', failure: toLoadFailure(failed.error) }
+    if (routine.data === undefined || entries.data === undefined) return { status: 'loading' }
+    const days = trackTasks(routine.data, entries.data, range, today)
+    return { status: 'ready', days, summary: summarizeTaskTracking(days) }
+  }
+
   function useRoutineEntry(membership: MembershipContext, studentId: StudentId, blockId: RoutineBlockId, date: LocalDate): RoutineEntryAccess {
     const institutionId = membership.institution.id
     const routine = useQuery({ queryKey: queryKeys.studentRoutine(institutionId, studentId), queryFn: () => apiClient.routines.list({ institutionId, studentId }), retry: retryOnlyWithoutServerResponse }, queryClient)
@@ -370,5 +431,5 @@ export function createAgendaHooks(dependencies: AgendaHookDependencies): AgendaH
     return { status: 'ready', content: query.data, uri: `data:${query.data.mediaType};base64,${query.data.base64}` }
   }
 
-  return { useAgendaCursor, useProfessionalAgenda, useStudentAgenda, useAppointmentDetail, useRoutineEntry, useRoutineEntryPhoto }
+  return { useAgendaCursor, useProfessionalAgenda, useStudentAgenda, useAppointmentDetail, useStudentTaskTracking, useRoutineEntry, useRoutineEntryPhoto }
 }

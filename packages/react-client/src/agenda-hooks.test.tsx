@@ -8,7 +8,7 @@ import { routineBlockSchema } from '@habituar/core/routines'
 import { act, renderHook, waitFor } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { useAppointmentForm } from './agenda-forms.js'
-import { createHabituarReactClient, rangeOfAgendaView } from './react-client.js'
+import { classifyTrackedTask, createHabituarReactClient, rangeOfAgendaView } from './react-client.js'
 
 const ORIGIN = 'http://api.habituar.test'
 const INSTITUTION_ID = '00000000-0000-4000-8000-000000000001'
@@ -121,5 +121,42 @@ describe('formulário de atendimento', () => {
     act(() => { hook.result.current.change('until', '2026-11-01') })
     await act(async () => { await hook.result.current.submit() })
     expect([...hook.result.current.invalidFields]).toEqual(['until'])
+  })
+})
+
+function professionalMembership() {
+  return membershipContextSchema.parse({
+    institution: { id: INSTITUTION_ID, name: 'Escola' },
+    environment: 'professional',
+    roles: [],
+    permissions: [{ key: 'routine.read', scope: 'assigned' }],
+  })
+}
+
+describe('acompanhamento das tarefas pela equipe', () => {
+  const TUESDAY = localDateSchema.parse('2026-11-10')
+
+  it('separa tarefa registrada, tarefa sem registro e tarefa por vir', () => {
+    const emptied = routineEntrySchema.parse({ ...ENTRY, notes: null, photos: [] })
+    const photoOnly = routineEntrySchema.parse({ ...ENTRY, notes: null, photos: [{ id: 'e5000000-0000-4000-8000-000000000001', mediaType: 'image/jpeg', byteSize: 10, createdAt: '2026-11-09T18:00:00.000Z' }] })
+
+    expect(classifyTrackedTask(ENTRY, MONDAY, TUESDAY)).toBe('recorded')
+    expect(classifyTrackedTask(photoOnly, MONDAY, TUESDAY)).toBe('recorded')
+    expect(classifyTrackedTask(emptied, MONDAY, TUESDAY)).toBe('missing')
+    expect(classifyTrackedTask(undefined, TUESDAY, TUESDAY)).toBe('missing')
+    expect(classifyTrackedTask(undefined, localDateSchema.parse('2026-11-11'), TUESDAY)).toBe('upcoming')
+  })
+
+  it('mostra a semana do aluno com a situação de cada tarefa e o resumo', async () => {
+    const client = createHabituarReactClient({ origin: ORIGIN, fetch: createAgendaApi() })
+    const range = { from: MONDAY, to: localDateSchema.parse('2026-11-23') }
+    const hook = renderHook(() => client.useStudentTaskTracking(professionalMembership(), STUDENT_ID, range, localDateSchema.parse('2026-11-17')), { wrapper: client.Provider })
+
+    await waitFor(() => { expect(hook.result.current.status).toBe('ready') })
+    const state = hook.result.current
+    if (state.status !== 'ready') throw new Error('Expected ready tracking')
+    const tasks = state.days.flatMap(day => day.tasks.map(task => [task.date, task.status]))
+    expect(tasks).toEqual([['2026-11-09', 'recorded'], ['2026-11-16', 'missing'], ['2026-11-23', 'upcoming']])
+    expect(state.summary).toEqual({ total: 3, recorded: 1, missing: 1, upcoming: 1 })
   })
 })

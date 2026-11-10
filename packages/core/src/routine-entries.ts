@@ -42,9 +42,32 @@ export const routineEntryPhotoContentSchema = z.object({
 }).strict().readonly()
 export type RoutineEntryPhotoContent = z.infer<typeof routineEntryPhotoContentSchema>
 
+export const ROUTINE_ENTRY_EVALUATION_COMMENT_MAX_LENGTH = 1000
+
+/** Conceito do retorno da equipe sobre a tarefa entregue: fechado, para o aluno ler sem ambiguidade. */
+export const ROUTINE_ENTRY_EVALUATION_OUTCOMES = ['achieved', 'partial', 'not-achieved'] as const
+export const routineEntryEvaluationOutcomeSchema = z.enum(ROUTINE_ENTRY_EVALUATION_OUTCOMES)
+export type RoutineEntryEvaluationOutcome = z.infer<typeof routineEntryEvaluationOutcomeSchema>
+
+/** Retorno que a equipe dá sobre a tarefa entregue; o comentário é opcional. */
+export const routineEntryEvaluationInputSchema = z.object({
+  outcome: routineEntryEvaluationOutcomeSchema,
+  comment: z.string().trim().min(1).max(ROUTINE_ENTRY_EVALUATION_COMMENT_MAX_LENGTH).nullable(),
+}).strict()
+export type RoutineEntryEvaluationInput = Readonly<z.infer<typeof routineEntryEvaluationInputSchema>>
+
+export const routineEntryEvaluationSchema = z.object({
+  outcome: routineEntryEvaluationOutcomeSchema,
+  comment: z.string().min(1).nullable(),
+  evaluatorName: z.string().min(1),
+  version: z.int().min(1),
+  updatedAt: z.iso.datetime(),
+}).strict().readonly()
+export type RoutineEntryEvaluation = z.infer<typeof routineEntryEvaluationSchema>
+
 /**
  * Registro do aluno sobre uma ocorrência de um bloco da rotina: o bloco diz o que fazer
- * toda semana, o registro guarda como foi naquele dia.
+ * toda semana, o registro guarda como foi naquele dia, se foi entregue e o retorno da equipe.
  */
 export const routineEntrySchema = z.object({
   id: routineEntryIdSchema,
@@ -52,6 +75,8 @@ export const routineEntrySchema = z.object({
   occursOn: localDateSchema,
   notes: z.string().min(1).nullable(),
   photos: z.array(routineEntryPhotoSchema).readonly(),
+  deliveredAt: z.iso.datetime().nullable(),
+  evaluation: routineEntryEvaluationSchema.nullable(),
   version: z.int().min(1),
   updatedAt: z.iso.datetime(),
 }).strict().readonly()

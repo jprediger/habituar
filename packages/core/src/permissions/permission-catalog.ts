@@ -20,6 +20,7 @@ export const PERMISSION_CATALOG = [
   'routine.read',
   'routine.write',
   'routine.entry.write',
+  'routine.entry.evaluate',
   'appointment.read',
   'appointment.write',
 ] as const

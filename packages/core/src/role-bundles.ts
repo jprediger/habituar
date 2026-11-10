@@ -22,6 +22,7 @@ export const ROLE_BUNDLE_KEYS = [
   'appointment-read',
   'appointment-write',
   'routine-entry-write',
+  'routine-entry-evaluate',
 ] as const
 
 export const roleBundleKeySchema = z.enum(ROLE_BUNDLE_KEYS)
@@ -60,6 +61,7 @@ export const ROLE_BUNDLE_CATALOG: Readonly<Record<RoleBundleKey, RoleBundleDefin
   // Registro da tarefa é a voz do próprio aluno: só o papel de sistema dele recebe, e nenhum
   // ambiente personalizável oferece o bundle — a equipe lê, mas não escreve no lugar dele.
   'routine-entry-write': { labelKey: 'roleBundles.routineEntryWrite', permissions: ['routine.entry.write'], scopesByEnvironment: {} },
+  'routine-entry-evaluate': { labelKey: 'roleBundles.routineEntryEvaluate', permissions: ['routine.entry.evaluate'], scopesByEnvironment: { professional: ['assigned', 'institution'] } },
 }
 
 export const roleBundleSelectionSchema = z.object({

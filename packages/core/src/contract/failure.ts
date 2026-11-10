@@ -42,6 +42,8 @@ export const FAILURE_CODES = [
   'occurrence-not-in-routine',
   'photo-invalid',
   'photo-limit-reached',
+  'entry-not-delivered',
+  'entry-already-evaluated',
 ] as const
 
 export const failureSchema = z.object({
@@ -106,6 +108,8 @@ export const FAILURE_ERROR_MAP = {
   'occurrence-not-in-routine': { status: 422, message: 'date is not an occurrence of the routine block.', data: failureDataSchema },
   'photo-invalid': { status: 422, message: 'photo content is invalid.', data: failureDataSchema },
   'photo-limit-reached': { status: 409, message: 'photo limit reached.', data: failureDataSchema },
+  'entry-not-delivered': { status: 409, message: 'task has not been delivered.', data: failureDataSchema },
+  'entry-already-evaluated': { status: 409, message: 'task has already been evaluated.', data: failureDataSchema },
   invalid_input: {
     status: 422,
     message: 'The request payload is invalid.',

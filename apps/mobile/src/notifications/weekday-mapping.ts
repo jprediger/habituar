@@ -10,5 +10,7 @@ export function isoWeekdayToExpoWeekday(isoWeekday: Weekday): number {
 
 /** Dia anterior na numeração ISO, com volta de segunda para domingo. */
 export function previousIsoWeekday(isoWeekday: Weekday): Weekday {
-  return (isoWeekday === 1 ? 7 : isoWeekday - 1) as Weekday
+  return PREVIOUS_ISO_WEEKDAY[isoWeekday]
 }
+
+const PREVIOUS_ISO_WEEKDAY: Readonly<Record<Weekday, Weekday>> = { 1: 7, 2: 1, 3: 2, 4: 3, 5: 4, 6: 5, 7: 6 }

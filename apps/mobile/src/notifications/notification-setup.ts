@@ -8,7 +8,7 @@ export async function ensureNotificationsConfigured(): Promise<void> {
   hasConfigured = true
 
   Notifications.setNotificationHandler({
-    handleNotification: async () => ({
+    handleNotification: () => Promise.resolve({
       shouldShowBanner: true,
       shouldShowList: true,
       shouldPlaySound: false,

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import type { TFunction } from 'i18next'
 import { useTranslation } from 'react-i18next'
 import { Pressable, StyleSheet, TextInput, View } from 'react-native'
 import { SPACING } from '@habituar/design-tokens/spacing'
@@ -10,7 +11,6 @@ import { useThemeTokens } from '../theme/tokens'
 import { PRESET_LEAD_MINUTES, isValidLeadMinutes } from './use-routine-reminders'
 
 type Unit = 'minutes' | 'hours' | 'days'
-type TFunction = ReturnType<typeof useTranslation>['t']
 
 const UNIT_MULTIPLIER: Record<Unit, number> = { minutes: 1, hours: 60, days: 1440 }
 const TRASH_ICON_SIZE = 20
@@ -125,7 +125,7 @@ export function ReminderSettings(props: Readonly<{
             { value: 'days', label: t('notifications.reminderUnit.daysLabel') },
           ]}
           value={customUnit}
-          onChange={(value: string) => { setCustomUnit(value as Unit) }}
+          onChange={(value) => { setCustomUnit(value) }}
         />
 
         <Button label={t('notifications.addCustomButton')} onPress={handleAddCustom} />

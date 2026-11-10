@@ -6,7 +6,7 @@ import { isoWeekdayToExpoWeekday, previousIsoWeekday } from './weekday-mapping'
 const IDENTIFIER_PREFIX = 'routine-reminder:'
 
 function identifierFor(studentId: StudentId, blockId: string, leadMinutes: number): string {
-  return `${IDENTIFIER_PREFIX}${studentId}:${blockId}:${leadMinutes}`
+  return `${IDENTIFIER_PREFIX}${studentId}:${blockId}:${String(leadMinutes)}`
 }
 
 function computeReminderMoment(block: RoutineBlock, leadMinutes: number): Readonly<{ weekday: number; hour: number; minute: number }> {
@@ -61,7 +61,7 @@ export async function syncRoutineReminders(studentId: StudentId, blocks: readonl
 }
 
 function reminderBody(leadMinutes: number): string {
-  if (leadMinutes >= 1440 && leadMinutes % 1440 === 0) return `Começa em ${leadMinutes / 1440} dia(s)`
-  if (leadMinutes >= 60 && leadMinutes % 60 === 0) return `Começa em ${leadMinutes / 60}h`
-  return `Começa em ${leadMinutes} min`
+  if (leadMinutes >= 1440 && leadMinutes % 1440 === 0) return `Começa em ${String(leadMinutes / 1440)} dia(s)`
+  if (leadMinutes >= 60 && leadMinutes % 60 === 0) return `Começa em ${String(leadMinutes / 60)}h`
+  return `Começa em ${String(leadMinutes)} min`
 }

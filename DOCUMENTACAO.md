@@ -126,9 +126,10 @@ a ficha apenas para consulta.
 
 O aluno deve montar a grade semanal, receber tarefas e acompanhar entregas e avaliações.
 A grade semanal já existe: a equipe que acompanha o aluno monta, na ficha, os blocos de
-cada dia (horário, título, tipo e observação), e o aluno e o responsável veem a semana
-na aba Rotina, com o dia de hoje em destaque. Tarefas, entregas, avaliações e o uso sem
-conexão ainda estão previstos.
+cada dia (horário, título, tipo e observação), e o aluno e o responsável veem esses blocos
+como as tarefas de cada dia na aba Agenda. Em desenvolvimento, o aluno registra em cada
+tarefa do dia uma observação e até seis fotos, que o responsável e a equipe consultam sem
+poder alterar. Entregas, avaliações e o uso sem conexão ainda estão previstos.
 
 | Prioridade | Complexidade | Situação | Versão |
 | --- | --- | --- | --- |
@@ -137,10 +138,14 @@ conexão ainda estão previstos.
 ### RF0011 – Agendar atendimentos
 
 Profissionais devem agendar consultas e o aluno deve visualizá-las em sua agenda.
+Em desenvolvimento, o profissional agenda, edita e cancela atendimentos, com repetição
+semanal opcional e cancelamento de uma única ocorrência da série, e consulta a agenda por
+dia, semana ou mês; o aluno e o responsável veem os atendimentos na mesma agenda das
+tarefas. Registrar o atendimento como realizado ainda está previsto.
 
 | Prioridade | Complexidade | Situação | Versão |
 | --- | --- | --- | --- |
-| Alta | Alta | Previsto | Futura |
+| Alta | Alta | Em desenvolvimento | Atual |
 
 ### RF0012 – Registrar métricas
 
@@ -294,11 +299,15 @@ fica em `student_profile_revisions`, uma revisão por gravação, as observaçõ
 `student_observations` e as consultas realizadas em `student_consultations`; as três
 tabelas aceitam somente leitura e inserção, com autoria igual à pessoa autenticada. A
 grade semanal do aluno fica em `routine_blocks`, com versão para recusar edição feita
-sobre dados desatualizados. O banco aplica isolamento por linha para impedir acesso entre instituições.
+sobre dados desatualizados. Em desenvolvimento, e ainda fora do modelo abaixo, os
+atendimentos ficam em `appointments`, com repetição semanal e versão, e as ocorrências
+canceladas de uma série em `appointment_cancelled_occurrences`; a observação de cada
+tarefa do dia fica em `routine_entries` e as fotos, guardadas fora do banco, têm os
+metadados em `routine_entry_photos`. O banco aplica isolamento por linha para impedir acesso entre instituições.
 
 _[Modelo atual do banco de dados disponível no DOCX oficial.]_
 
-Entidades previstas para evolução do produto incluem tarefas, agenda de consultas, métricas, grupos e relatórios. Elas ainda não fazem parte do modelo físico apresentado.
+Entidades previstas para evolução do produto incluem entregas, avaliações, métricas, grupos e relatórios. Elas ainda não fazem parte do modelo físico apresentado.
 
 ## Tecnologias utilizadas
 
@@ -329,7 +338,7 @@ O Habituar utiliza um monorepo com aplicações web, mobile e API, além de paco
 | PostgreSQL | Persistência e isolamento reforçado entre instituições. |
 | Fluxo principal | Web/Mobile → Cliente compartilhado → Contratos → API → Banco de dados. |
 
-A API valida entradas e saídas a partir de contratos compartilhados, nega acesso por padrão e executa operações de banco dentro do contexto de instituição, ator e sessão. O PostgreSQL reforça o isolamento institucional independentemente dos filtros da aplicação.
+A API valida entradas e saídas a partir de contratos compartilhados, nega acesso por padrão e executa operações de banco dentro do contexto de instituição, ator e sessão. O PostgreSQL reforça o isolamento institucional independentemente dos filtros da aplicação. As fotos das tarefas ficam em um armazenamento de arquivos separado do banco, hoje em disco local definido por `FILE_STORAGE_DIRECTORY`, e o banco guarda só os metadados.
 
 ## Backlog do produto
 
@@ -342,8 +351,8 @@ A API valida entradas e saídas a partir de contratos compartilhados, nega acess
 | Instituições e convites | Média | Implementado | Cadastro, convite de uso único e aceite na web |
 | Interfaces de autenticação | Alta | Implementado | Entrada, cadastro e ambientes por perfil na web e no mobile |
 | Fichas e observações | Alta | Implementado | Cadastro do estudante, termo assinado, ficha, histórico e consultas realizadas; auditoria prevista |
-| Rotina, tarefas e foco | Alta | Em desenvolvimento | Grade semanal pronta; tarefas, foco e offline previstos |
-| Agenda e atendimentos | Alta | Previsto | Consultas, anotações e notificações |
+| Rotina, tarefas e foco | Alta | Em desenvolvimento | Grade semanal pronta; registro das tarefas do dia em desenvolvimento; foco e offline previstos |
+| Agenda e atendimentos | Alta | Em desenvolvimento | Agendamento com repetição semanal em desenvolvimento; anotações e notificações previstas |
 | Métricas e grupos | Média | Previsto | Indicadores configuráveis por instituição |
 | Relatórios | Alta | Previsto | Consolidação e exportação de acompanhamento |
 | Conformidade e retenção | Alta | Previsto | Consentimento, auditoria e descarte controlado |

@@ -83,6 +83,14 @@ export function mapFailureToHttpResponse(errors: FailureErrors, failure: Failure
       throw errors['student-below-account-age']()
     case 'consultation-in-future':
       throw errors['consultation-in-future']()
+    case 'occurrence-not-in-series':
+      throw errors['occurrence-not-in-series']()
+    case 'occurrence-not-in-routine':
+      throw errors['occurrence-not-in-routine']()
+    case 'photo-invalid':
+      throw errors['photo-invalid']()
+    case 'photo-limit-reached':
+      throw errors['photo-limit-reached']()
     default:
       return assertNever(failure.code)
   }

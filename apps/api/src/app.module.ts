@@ -17,6 +17,7 @@ import { StaffModule } from './staff/staff.module.js'
 import { StudentsModule } from './students/students.module.js'
 import { StudentRecordsModule } from './student-records/student-records.module.js'
 import { RoutinesModule } from './routines/routines.module.js'
+import { AppointmentsModule } from './appointments/appointments.module.js'
 
 /**
  * Composição raiz: liga cada fatia, na ordem em que a borda precisa vê-las.
@@ -43,6 +44,7 @@ import { RoutinesModule } from './routines/routines.module.js'
     StudentsModule,
     StudentRecordsModule,
     RoutinesModule,
+    AppointmentsModule,
     HealthModule,
     // Último de propósito: o wildcard de 404 só deve capturar o que sobrou.
     ErrorsModule,

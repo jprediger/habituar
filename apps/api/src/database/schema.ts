@@ -1,8 +1,9 @@
 import { MembershipEnvironment } from '@habituar/core/roles'
 import { sql } from 'drizzle-orm'
+import type { AppointmentRecurrence } from '@habituar/core/appointments'
 import type { RoutineKind } from '@habituar/core/routines'
 import type { StudentCondition } from '@habituar/core/student-records'
-import { boolean, check, date, foreignKey, index, integer, pgEnum, pgTable, smallint, text, time, timestamp, unique, uniqueIndex, uuid } from 'drizzle-orm/pg-core'
+import { boolean, check, date, foreignKey, index, integer, pgEnum, pgTable, primaryKey, smallint, text, time, timestamp, unique, uniqueIndex, uuid } from 'drizzle-orm/pg-core'
 
 export const tenantProbe = pgTable('tenant_probe', {
   id: uuid().primaryKey().defaultRandom(),
@@ -389,4 +390,85 @@ export const routineBlocks = pgTable('routine_blocks', {
   check('routine_blocks_time_order', sql`${table.endsAt} > ${table.startsAt}`),
   check('routine_blocks_title_length', sql`char_length(${table.title}) between 1 and 80`),
   check('routine_blocks_notes_length', sql`${table.notes} is null or char_length(${table.notes}) between 1 and 500`),
+])
+
+// Literais repetidos de AppointmentRecurrence['kind'] pelo mesmo motivo de ROUTINE_KIND_VALUES.
+const APPOINTMENT_RECURRENCE_VALUES = ['none', 'weekly'] as const satisfies readonly [AppointmentRecurrence['kind'], ...AppointmentRecurrence['kind'][]]
+export const appointmentRecurrenceEnum = pgEnum('appointment_recurrence', APPOINTMENT_RECURRENCE_VALUES)
+
+// Agenda de atendimentos. Uma linha é uma série: o avulso é a série de uma ocorrência só.
+// Dia e hora ficam no relógio de parede, como na rotina — "toda segunda às 14h" não muda
+// com fuso. Diferente de `student_consultations`, é futuro e editável; o diário registra o
+// que aconteceu, a agenda o que está combinado.
+export const appointments = pgTable('appointments', {
+  id: uuid().primaryKey().defaultRandom(),
+  institutionId: uuid('institution_id').notNull(),
+  studentId: uuid('student_id').notNull(),
+  professionalUserId: uuid('professional_user_id').notNull().references(() => users.id),
+  startsOn: date('starts_on').notNull(),
+  startsAt: time('starts_at').notNull(),
+  durationMinutes: integer('duration_minutes').notNull(),
+  notes: text(),
+  recurrence: appointmentRecurrenceEnum().notNull(),
+  recurrenceUntil: date('recurrence_until'),
+  version: integer().notNull().default(1),
+  createdByUserId: uuid('created_by_user_id').notNull().references(() => users.id),
+  updatedByUserId: uuid('updated_by_user_id').notNull().references(() => users.id),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull(),
+}, (table) => [
+  foreignKey({ columns: [table.studentId, table.institutionId], foreignColumns: [students.id, students.institutionId] }).onDelete('cascade'),
+  index('appointments_student_starts_on').on(table.studentId, table.startsOn),
+  index('appointments_institution_starts_on').on(table.institutionId, table.startsOn),
+  check('appointments_duration', sql`${table.durationMinutes} between 5 and 480`),
+  check('appointments_same_day', sql`extract(epoch from ${table.startsAt}) / 60 + ${table.durationMinutes} <= 1440`),
+  check('appointments_notes_length', sql`${table.notes} is null or char_length(${table.notes}) between 1 and 1000`),
+  check('appointments_recurrence_until', sql`(${table.recurrence} = 'weekly' or ${table.recurrenceUntil} is null) and (${table.recurrenceUntil} is null or ${table.recurrenceUntil} >= ${table.startsOn})`),
+])
+
+// Ocorrência cancelada de uma série. Guardar a exceção, e não cada ocorrência, é o que
+// permite série sem data de término.
+export const appointmentCancelledOccurrences = pgTable('appointment_cancelled_occurrences', {
+  institutionId: uuid('institution_id').notNull(),
+  appointmentId: uuid('appointment_id').notNull().references(() => appointments.id, { onDelete: 'cascade' }),
+  occurrenceDate: date('occurrence_date').notNull(),
+  cancelledByUserId: uuid('cancelled_by_user_id').notNull().references(() => users.id),
+  cancelledAt: timestamp('cancelled_at', { withTimezone: true }).notNull(),
+}, (table) => [primaryKey({ columns: [table.appointmentId, table.occurrenceDate] })])
+
+// Registro do aluno sobre a tarefa de um dia: o bloco da rotina diz o que fazer toda semana,
+// a linha guarda como foi naquela data. Apagar o bloco leva os registros junto.
+export const routineEntries = pgTable('routine_entries', {
+  id: uuid().primaryKey().defaultRandom(),
+  institutionId: uuid('institution_id').notNull(),
+  studentId: uuid('student_id').notNull(),
+  routineBlockId: uuid('routine_block_id').notNull().references(() => routineBlocks.id, { onDelete: 'cascade' }),
+  occursOn: date('occurs_on').notNull(),
+  notes: text(),
+  version: integer().notNull().default(1),
+  createdByUserId: uuid('created_by_user_id').notNull().references(() => users.id),
+  updatedByUserId: uuid('updated_by_user_id').notNull().references(() => users.id),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull(),
+}, (table) => [
+  foreignKey({ columns: [table.studentId, table.institutionId], foreignColumns: [students.id, students.institutionId] }).onDelete('cascade'),
+  unique('routine_entries_block_day').on(table.routineBlockId, table.occursOn),
+  index('routine_entries_student_occurs_on').on(table.studentId, table.occursOn),
+  check('routine_entries_notes_length', sql`${table.notes} is null or char_length(${table.notes}) between 1 and 1000`),
+])
+
+// Só metadados: o conteúdo mora na porta de armazenamento, endereçado por `storage_key`.
+export const routineEntryPhotos = pgTable('routine_entry_photos', {
+  id: uuid().primaryKey().defaultRandom(),
+  institutionId: uuid('institution_id').notNull(),
+  entryId: uuid('entry_id').notNull().references(() => routineEntries.id, { onDelete: 'cascade' }),
+  storageKey: text('storage_key').notNull().unique(),
+  mediaType: text('media_type').notNull(),
+  byteSize: integer('byte_size').notNull(),
+  createdByUserId: uuid('created_by_user_id').notNull().references(() => users.id),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull(),
+}, (table) => [
+  index('routine_entry_photos_entry').on(table.entryId, table.createdAt),
+  check('routine_entry_photos_media_type', sql`${table.mediaType} in ('image/jpeg', 'image/png', 'image/webp')`),
+  check('routine_entry_photos_byte_size', sql`${table.byteSize} between 1 and 2000000`),
 ])

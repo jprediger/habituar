@@ -9,6 +9,8 @@ export const environmentSchema = z.object({
   LOG_LEVEL: z.enum(['trace', 'debug', 'info', 'warn', 'error']).default('info'),
   EMAIL_TRANSPORT: z.enum(['log', 'disabled']).default('disabled'),
   WEB_APP_URL: z.url().default('http://localhost:5173'),
+  // Diretório do adaptador de armazenamento em disco; fica fora do repositório em produção.
+  FILE_STORAGE_DIRECTORY: z.string().min(1).default('storage'),
 }).refine(environment => environment.NODE_ENV !== 'production' || environment.EMAIL_TRANSPORT !== 'log', { message: 'Log email transport is forbidden in production', path: ['EMAIL_TRANSPORT'] })
 
 export type Environment = z.infer<typeof environmentSchema>

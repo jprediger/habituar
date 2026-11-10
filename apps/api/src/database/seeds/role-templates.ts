@@ -18,8 +18,8 @@ type Grant = readonly [PermissionKey, PermissionScope]
 // Concessão inicial de cada ambiente. O tipo fecha as duas pontas: chave fora do catálogo
 // e alcance inexistente são erro de compilação, não `false` silencioso em produção.
 const TEMPLATE_GRANTS: Readonly<Record<typeof ROLE_TEMPLATES[number]['name'], readonly Grant[]>> = {
-  student: [['student.read', 'own'], ['routine.read', 'own']],
-  guardian: [['student.read', 'own'], ['routine.read', 'own']],
+  student: [['student.read', 'own'], ['routine.read', 'own'], ['routine.entry.write', 'own'], ['appointment.read', 'own']],
+  guardian: [['student.read', 'own'], ['routine.read', 'own'], ['appointment.read', 'own']],
   'care-assigned': [
     ['student.read', 'assigned'],
     ['student.update', 'assigned'],
@@ -29,8 +29,10 @@ const TEMPLATE_GRANTS: Readonly<Record<typeof ROLE_TEMPLATES[number]['name'], re
     ['record.write', 'assigned'],
     ['routine.read', 'assigned'],
     ['routine.write', 'assigned'],
+    ['appointment.read', 'assigned'],
+    ['appointment.write', 'assigned'],
   ],
-  'care-institution': [['student.read', 'institution'], ['student.update', 'institution'], ['student.create', 'institution'], ['guardian.link', 'institution'], ['guardian.unlink', 'institution'], ['assignment.manage', 'institution'], ['record.read', 'institution'], ['record.write', 'institution'], ['routine.read', 'institution'], ['routine.write', 'institution']],
+  'care-institution': [['student.read', 'institution'], ['student.update', 'institution'], ['student.create', 'institution'], ['guardian.link', 'institution'], ['guardian.unlink', 'institution'], ['assignment.manage', 'institution'], ['record.read', 'institution'], ['record.write', 'institution'], ['routine.read', 'institution'], ['routine.write', 'institution'], ['appointment.read', 'institution'], ['appointment.write', 'institution']],
   monitoring: [['student.read', 'assigned']],
   'team-management': [
     ['student.read', 'institution'],

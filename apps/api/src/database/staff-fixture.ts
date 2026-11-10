@@ -6,6 +6,9 @@ import { ConfigService } from '@nestjs/config'
 import { NestFactory } from '@nestjs/core'
 import cookieParser from 'cookie-parser'
 import { and, eq } from 'drizzle-orm'
+import { mkdtemp } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { Pool } from 'pg'
 import { vi } from 'vitest'
 import { Database } from './database.js'
@@ -40,6 +43,7 @@ export class StaffHarness {
     vi.stubEnv('DATABASE_URL', applicationUrl)
     vi.stubEnv('WEB_APP_URL', 'http://localhost:3000')
     vi.stubEnv('EMAIL_TRANSPORT', 'disabled')
+    vi.stubEnv('FILE_STORAGE_DIRECTORY', await mkdtemp(join(tmpdir(), 'habituar-storage-')))
     const { AppModule } = await import('../app.module.js')
     const app = await NestFactory.create(AppModule, { logger: false })
     app.use(cookieParser())

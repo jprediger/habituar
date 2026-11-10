@@ -1,6 +1,7 @@
 import { MembershipEnvironment } from '@habituar/core/roles'
 import { sql } from 'drizzle-orm'
 import type { AppointmentRecurrence } from '@habituar/core/appointments'
+import type { RoutineEntryEvaluationOutcome } from '@habituar/core/routine-entries'
 import type { RoutineKind } from '@habituar/core/routines'
 import type { StudentCondition } from '@habituar/core/student-records'
 import { boolean, check, date, foreignKey, index, integer, pgEnum, pgTable, primaryKey, smallint, text, time, timestamp, unique, uniqueIndex, uuid } from 'drizzle-orm/pg-core'
@@ -445,6 +446,9 @@ export const routineEntries = pgTable('routine_entries', {
   routineBlockId: uuid('routine_block_id').notNull().references(() => routineBlocks.id, { onDelete: 'cascade' }),
   occursOn: date('occurs_on').notNull(),
   notes: text(),
+  // Entrega é um estado do registro, não um evento à parte: desfazer volta para nulo.
+  deliveredAt: timestamp('delivered_at', { withTimezone: true }),
+  deliveredByUserId: uuid('delivered_by_user_id').references(() => users.id),
   version: integer().notNull().default(1),
   createdByUserId: uuid('created_by_user_id').notNull().references(() => users.id),
   updatedByUserId: uuid('updated_by_user_id').notNull().references(() => users.id),
@@ -455,6 +459,7 @@ export const routineEntries = pgTable('routine_entries', {
   unique('routine_entries_block_day').on(table.routineBlockId, table.occursOn),
   index('routine_entries_student_occurs_on').on(table.studentId, table.occursOn),
   check('routine_entries_notes_length', sql`${table.notes} is null or char_length(${table.notes}) between 1 and 1000`),
+  check('routine_entries_delivery', sql`(${table.deliveredAt} is null) = (${table.deliveredByUserId} is null)`),
 ])
 
 // Só metadados: o conteúdo mora na porta de armazenamento, endereçado por `storage_key`.
@@ -471,4 +476,24 @@ export const routineEntryPhotos = pgTable('routine_entry_photos', {
   index('routine_entry_photos_entry').on(table.entryId, table.createdAt),
   check('routine_entry_photos_media_type', sql`${table.mediaType} in ('image/jpeg', 'image/png', 'image/webp')`),
   check('routine_entry_photos_byte_size', sql`${table.byteSize} between 1 and 2000000`),
+])
+
+// Literais repetidos de ROUTINE_ENTRY_EVALUATION_OUTCOMES pelo mesmo motivo de ROUTINE_KIND_VALUES.
+const ROUTINE_ENTRY_EVALUATION_OUTCOME_VALUES = ['achieved', 'partial', 'not-achieved'] as const satisfies readonly [RoutineEntryEvaluationOutcome, ...RoutineEntryEvaluationOutcome[]]
+export const routineEntryEvaluationOutcomeEnum = pgEnum('routine_entry_evaluation_outcome', ROUTINE_ENTRY_EVALUATION_OUTCOME_VALUES)
+
+// Retorno da equipe sobre a tarefa entregue. Tabela própria, com versão própria: o aluno
+// seguir escrevendo no registro não deve invalidar a avaliação de quem acompanha.
+export const routineEntryEvaluations = pgTable('routine_entry_evaluations', {
+  id: uuid().primaryKey().defaultRandom(),
+  institutionId: uuid('institution_id').notNull(),
+  entryId: uuid('entry_id').notNull().unique().references(() => routineEntries.id, { onDelete: 'cascade' }),
+  outcome: routineEntryEvaluationOutcomeEnum().notNull(),
+  comment: text(),
+  version: integer().notNull().default(1),
+  evaluatedByUserId: uuid('evaluated_by_user_id').notNull().references(() => users.id),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull(),
+}, (table) => [
+  check('routine_entry_evaluations_comment_length', sql`${table.comment} is null or char_length(${table.comment}) between 1 and 1000`),
 ])

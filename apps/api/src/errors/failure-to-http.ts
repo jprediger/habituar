@@ -91,6 +91,10 @@ export function mapFailureToHttpResponse(errors: FailureErrors, failure: Failure
       throw errors['photo-invalid']()
     case 'photo-limit-reached':
       throw errors['photo-limit-reached']()
+    case 'entry-not-delivered':
+      throw errors['entry-not-delivered']()
+    case 'entry-already-evaluated':
+      throw errors['entry-already-evaluated']()
     default:
       return assertNever(failure.code)
   }

@@ -1,10 +1,11 @@
 import { Injectable } from '@nestjs/common'
-import { and, asc, count, eq, gte, inArray, lte } from 'drizzle-orm'
+import { and, asc, count, eq, getTableColumns, gte, inArray, lte } from 'drizzle-orm'
 import { DatabaseTransaction } from '../database/database.js'
-import { routineBlocks, routineEntries, routineEntryPhotos } from '../database/schema.js'
+import { routineBlocks, routineEntries, routineEntryEvaluations, routineEntryPhotos, users } from '../database/schema.js'
 
 export type RoutineEntryRow = Readonly<typeof routineEntries.$inferSelect>
 export type RoutineEntryPhotoRow = Readonly<typeof routineEntryPhotos.$inferSelect>
+export type RoutineEntryEvaluationRow = Readonly<typeof routineEntryEvaluations.$inferSelect & { evaluatorName: string }>
 export type RoutineEntryBlockRow = Readonly<{ id: string; weekday: number }>
 type OccurrenceTarget = Readonly<{ studentId: string; blockId: string; occursOn: string }>
 type DayRange = Readonly<{ from: string; to: string }>
@@ -45,6 +46,42 @@ export class RoutineEntriesRepository {
       .where(and(eq(routineEntries.studentId, target.studentId), eq(routineEntries.routineBlockId, target.blockId), eq(routineEntries.occursOn, target.occursOn), eq(routineEntries.version, target.expectedVersion)))
       .returning()
     return row
+  }
+
+  /** Marca ou desfaz a entrega se a versão ainda for a que a pessoa viu; `undefined` é versão velha. */
+  async updateEntryDelivery(transaction: DatabaseTransaction, target: OccurrenceTarget & Readonly<{ expectedVersion: number }>, values: Readonly<{ deliveredAt: Date | null; deliveredByUserId: string | null; updatedByUserId: string; updatedAt: Date }>): Promise<RoutineEntryRow | undefined> {
+    const [row] = await transaction.update(routineEntries)
+      .set({ ...values, version: target.expectedVersion + 1 })
+      .where(and(eq(routineEntries.studentId, target.studentId), eq(routineEntries.routineBlockId, target.blockId), eq(routineEntries.occursOn, target.occursOn), eq(routineEntries.version, target.expectedVersion)))
+      .returning()
+    return row
+  }
+
+  listEvaluations(transaction: DatabaseTransaction, entryIds: readonly string[]): Promise<RoutineEntryEvaluationRow[]> {
+    if (entryIds.length === 0) return Promise.resolve([])
+    return transaction.select({ ...getTableColumns(routineEntryEvaluations), evaluatorName: users.name }).from(routineEntryEvaluations)
+      .innerJoin(users, eq(users.id, routineEntryEvaluations.evaluatedByUserId))
+      .where(inArray(routineEntryEvaluations.entryId, [...entryIds]))
+  }
+
+  async hasEvaluation(transaction: DatabaseTransaction, entryId: string): Promise<boolean> {
+    const [row] = await transaction.select({ id: routineEntryEvaluations.id }).from(routineEntryEvaluations).where(eq(routineEntryEvaluations.entryId, entryId))
+    return row !== undefined
+  }
+
+  /** Cria a avaliação; `false` quando outra pessoa avaliou antes. */
+  async insertEvaluation(transaction: DatabaseTransaction, values: typeof routineEntryEvaluations.$inferInsert): Promise<boolean> {
+    const rows = await transaction.insert(routineEntryEvaluations).values(values).onConflictDoNothing().returning({ id: routineEntryEvaluations.id })
+    return rows.length > 0
+  }
+
+  /** Corrige a avaliação se a versão ainda for a que a pessoa viu; `false` é versão velha ou avaliação inexistente. */
+  async updateEvaluation(transaction: DatabaseTransaction, target: Readonly<{ entryId: string; expectedVersion: number }>, values: Readonly<{ outcome: typeof routineEntryEvaluations.$inferInsert['outcome']; comment: string | null; evaluatedByUserId: string; updatedAt: Date }>): Promise<boolean> {
+    const rows = await transaction.update(routineEntryEvaluations)
+      .set({ ...values, version: target.expectedVersion + 1 })
+      .where(and(eq(routineEntryEvaluations.entryId, target.entryId), eq(routineEntryEvaluations.version, target.expectedVersion)))
+      .returning({ id: routineEntryEvaluations.id })
+    return rows.length > 0
   }
 
   listPhotos(transaction: DatabaseTransaction, entryIds: readonly string[]): Promise<RoutineEntryPhotoRow[]> {

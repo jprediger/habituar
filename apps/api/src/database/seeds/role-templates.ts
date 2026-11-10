@@ -29,10 +29,11 @@ const TEMPLATE_GRANTS: Readonly<Record<typeof ROLE_TEMPLATES[number]['name'], re
     ['record.write', 'assigned'],
     ['routine.read', 'assigned'],
     ['routine.write', 'assigned'],
+    ['routine.entry.evaluate', 'assigned'],
     ['appointment.read', 'assigned'],
     ['appointment.write', 'assigned'],
   ],
-  'care-institution': [['student.read', 'institution'], ['student.update', 'institution'], ['student.create', 'institution'], ['guardian.link', 'institution'], ['guardian.unlink', 'institution'], ['assignment.manage', 'institution'], ['record.read', 'institution'], ['record.write', 'institution'], ['routine.read', 'institution'], ['routine.write', 'institution'], ['appointment.read', 'institution'], ['appointment.write', 'institution']],
+  'care-institution': [['student.read', 'institution'], ['student.update', 'institution'], ['student.create', 'institution'], ['guardian.link', 'institution'], ['guardian.unlink', 'institution'], ['assignment.manage', 'institution'], ['record.read', 'institution'], ['record.write', 'institution'], ['routine.read', 'institution'], ['routine.write', 'institution'], ['routine.entry.evaluate', 'institution'], ['appointment.read', 'institution'], ['appointment.write', 'institution']],
   monitoring: [['student.read', 'assigned']],
   'team-management': [
     ['student.read', 'institution'],

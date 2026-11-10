@@ -127,4 +127,56 @@ describe('registros do aluno sobre as tarefas da rotina', () => {
     expect((await harness.call(studentAccount, 'PUT', `${occurrencePath(day)}/note`, { notes: 'Segunda', expectedVersion: first.version })).status).toBe(200)
     expect((await harness.call(studentAccount, 'PUT', `${occurrencePath(day)}/note`, { notes: 'Atrasada', expectedVersion: first.version })).status).toBe(409)
   })
+
+  it('deixa o aluno entregar e desfazer a entrega, e recusa que equipe ou responsável entreguem por ele', async () => {
+    const day = '2026-11-30'
+    expect((await harness.call(careAssigned, 'PUT', `${occurrencePath(day)}/delivery`, { expectedVersion: null })).status).toBe(403)
+    expect((await harness.call(guardian, 'PUT', `${occurrencePath(day)}/delivery`, { expectedVersion: null })).status).toBe(403)
+
+    const delivered = routineEntrySchema.parse((await harness.call(studentAccount, 'PUT', `${occurrencePath(day)}/delivery`, { expectedVersion: null })).body)
+    expect(delivered.deliveredAt).not.toBeNull()
+    expect(delivered.evaluation).toBeNull()
+
+    const undone = await harness.call(studentAccount, 'DELETE', `${occurrencePath(day)}/delivery`, { expectedVersion: delivered.version })
+    expect(undone.status).toBe(200)
+    expect(routineEntrySchema.parse(undone.body).deliveredAt).toBeNull()
+  })
+
+  it('deixa a equipe avaliar a tarefa entregue e o aluno e o responsável lerem o retorno', async () => {
+    const day = '2026-12-07'
+    const note = routineEntrySchema.parse((await harness.call(studentAccount, 'PUT', `${occurrencePath(day)}/note`, { notes: 'Terminei', expectedVersion: null })).body)
+    expect((await harness.call(careAssigned, 'PUT', `${occurrencePath(day)}/evaluation`, { outcome: 'achieved', comment: null, expectedVersion: null })).status).toBe(409)
+
+    await harness.call(studentAccount, 'PUT', `${occurrencePath(day)}/delivery`, { expectedVersion: note.version })
+    const evaluated = await harness.call(careAssigned, 'PUT', `${occurrencePath(day)}/evaluation`, { outcome: 'partial', comment: 'Faltou revisar.', expectedVersion: null })
+    expect(evaluated.status).toBe(200)
+    expect(routineEntrySchema.parse(evaluated.body).evaluation).toMatchObject({ outcome: 'partial', comment: 'Faltou revisar.', version: 1 })
+
+    for (const reader of [studentAccount, guardian]) {
+      const listed = z.array(routineEntrySchema).parse((await harness.call(reader, 'GET', `${routinePath()}/entries?from=${day}&to=${day}`)).body)
+      expect(listed[0]?.evaluation?.outcome).toBe('partial')
+    }
+  })
+
+  it('recusa avaliação de quem não acompanha com essa permissão', async () => {
+    const day = '2026-12-14'
+    await harness.call(studentAccount, 'PUT', `${occurrencePath(day)}/delivery`, { expectedVersion: null })
+    const evaluation = { outcome: 'achieved', comment: null, expectedVersion: null }
+    expect((await harness.call(studentAccount, 'PUT', `${occurrencePath(day)}/evaluation`, evaluation)).status).toBe(403)
+    expect((await harness.call(guardian, 'PUT', `${occurrencePath(day)}/evaluation`, evaluation)).status).toBe(403)
+    const monitor = await harness.createAccount('entries-monitor@example.test')
+    await harness.addMember(institution.id, monitor.userId, 'monitor', [institution.templates.monitoring])
+    expect((await harness.call(monitor, 'PUT', `${occurrencePath(day)}/evaluation`, evaluation)).status).toBe(403)
+  })
+
+  it('não deixa desfazer a entrega depois da avaliação e recusa avaliação sobre versão velha', async () => {
+    const day = '2026-12-21'
+    const delivered = routineEntrySchema.parse((await harness.call(studentAccount, 'PUT', `${occurrencePath(day)}/delivery`, { expectedVersion: null })).body)
+    const first = routineEntrySchema.parse((await harness.call(careAssigned, 'PUT', `${occurrencePath(day)}/evaluation`, { outcome: 'not-achieved', comment: null, expectedVersion: null })).body)
+    expect((await harness.call(studentAccount, 'DELETE', `${occurrencePath(day)}/delivery`, { expectedVersion: delivered.version })).status).toBe(409)
+
+    expect((await harness.call(careAssigned, 'PUT', `${occurrencePath(day)}/evaluation`, { outcome: 'achieved', comment: 'Refez.', expectedVersion: first.evaluation?.version ?? 0 })).status).toBe(200)
+    expect((await harness.call(careAssigned, 'PUT', `${occurrencePath(day)}/evaluation`, { outcome: 'partial', comment: null, expectedVersion: first.evaluation?.version ?? 0 })).status).toBe(409)
+    expect((await harness.call(careAssigned, 'PUT', `${occurrencePath(day)}/evaluation`, { outcome: 'partial', comment: null, expectedVersion: null })).status).toBe(409)
+  })
 })

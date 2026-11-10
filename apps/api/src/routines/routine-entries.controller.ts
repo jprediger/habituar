@@ -8,7 +8,8 @@ import { RoutineEntriesService } from './routine-entries.service.js'
 
 /**
  * Expõe os registros do aluno sobre as tarefas: leitura com `routine.read`, para quem já
- * vê a rotina; escrita com `routine.entry.write`, que só o próprio aluno recebe.
+ * vê a rotina; escrita e entrega com `routine.entry.write`, que só o próprio aluno recebe;
+ * avaliação com `routine.entry.evaluate`, da equipe que acompanha.
  */
 @Controller()
 export class RoutineEntriesController {
@@ -43,6 +44,42 @@ export class RoutineEntriesController {
       if (request.actor === undefined) throw errors.unauthenticated()
       const target = { institutionId: input.institutionId, studentId: input.studentId, blockId: input.routineBlockId, occursOn: input.occursOn }
       const outcome = await this.entries.addPhoto(request.actor, target, input.photo)
+      if (outcome.status === 'failure') return mapFailureToHttpResponse(errors, outcome.failure)
+      return outcome.value
+    })
+  }
+
+  @RequirePermission('routine.entry.write')
+  @Implement(apiContract.routineEntries.deliver)
+  handleDeliver(@Req() request: AuthenticatedRequest) {
+    return implement(apiContract.routineEntries.deliver).handler(async ({ input, errors }) => {
+      if (request.actor === undefined) throw errors.unauthenticated()
+      const target = { institutionId: input.institutionId, studentId: input.studentId, blockId: input.routineBlockId, occursOn: input.occursOn }
+      const outcome = await this.entries.deliver(request.actor, target, input.expectedVersion)
+      if (outcome.status === 'failure') return mapFailureToHttpResponse(errors, outcome.failure)
+      return outcome.value
+    })
+  }
+
+  @RequirePermission('routine.entry.write')
+  @Implement(apiContract.routineEntries.undeliver)
+  handleUndeliver(@Req() request: AuthenticatedRequest) {
+    return implement(apiContract.routineEntries.undeliver).handler(async ({ input, errors }) => {
+      if (request.actor === undefined) throw errors.unauthenticated()
+      const target = { institutionId: input.institutionId, studentId: input.studentId, blockId: input.routineBlockId, occursOn: input.occursOn }
+      const outcome = await this.entries.undeliver(request.actor, target, input.expectedVersion)
+      if (outcome.status === 'failure') return mapFailureToHttpResponse(errors, outcome.failure)
+      return outcome.value
+    })
+  }
+
+  @RequirePermission('routine.entry.evaluate')
+  @Implement(apiContract.routineEntries.evaluate)
+  handleEvaluate(@Req() request: AuthenticatedRequest) {
+    return implement(apiContract.routineEntries.evaluate).handler(async ({ input, errors }) => {
+      if (request.actor === undefined) throw errors.unauthenticated()
+      const target = { institutionId: input.institutionId, studentId: input.studentId, blockId: input.routineBlockId, occursOn: input.occursOn }
+      const outcome = await this.entries.evaluate(request.actor, target, { outcome: input.outcome, comment: input.comment }, input.expectedVersion)
       if (outcome.status === 'failure') return mapFailureToHttpResponse(errors, outcome.failure)
       return outcome.value
     })

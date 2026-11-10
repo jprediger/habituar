@@ -31,7 +31,7 @@ type EditorTarget =
   | Readonly<{ mode: 'remove'; block: RoutineBlock }>
 
 /**
- * Grade semanal dentro da ficha, no app. Com `routine.write`, tocar num bloco abre a
+ * Grade semanal da tela de rotina do aluno, no app. Com `routine.write`, tocar num bloco abre a
  * edição, cada dia oferece adicionar e a remoção pede confirmação; sem, é só leitura.
  */
 export function StudentRoutineEditor({ session, studentId }: Readonly<{ session: InstitutionSession; studentId: StudentId }>) {

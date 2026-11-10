@@ -139,7 +139,37 @@
     "photoLimit": "Esta tarefa já tem o máximo de {{maximum}} fotos.",
     "photoFailedToSave": "Não foi possível enviar a foto. Confira a conexão e tente novamente.",
     "photoCount": "Fotos: {{count}}",
-    "hasNote": "Com observação"
+    "hasNote": "Com observação",
+    "kind": "Tipo",
+    "guidance": "Orientação da equipe"
+  },
+  "tracking": {
+    "open": "Acompanhar tarefas",
+    "openDescription": "Registros, observações e fotos do aluno, dia a dia",
+    "openHint": "Abre o registro do aluno nesta tarefa",
+    "title": "Tarefas do aluno",
+    "description": "O que o aluno registrou em cada tarefa da rotina, semana a semana. Só para leitura.",
+    "loading": "Carregando as tarefas...",
+    "failed": "Não foi possível carregar as tarefas. Confira a conexão e tente novamente.",
+    "forbidden": "Seu papel não inclui as tarefas deste aluno.",
+    "summary": "Resumo da semana",
+    "summaryFooter": "Tarefa de hoje ou de dia anterior sem observação nem foto conta como sem registro.",
+    "summaryValue": "{{count}} de {{total}}",
+    "summaryLabels": {
+      "recorded": "Registradas",
+      "missing": "Sem registro",
+      "upcoming": "Por vir"
+    },
+    "status": {
+      "recorded": "Registrada",
+      "missing": "Sem registro",
+      "upcoming": "Por vir"
+    },
+    "rowDescription": "{{time}} · {{status}}",
+    "noteAndPhotos": "Observação e {{count}} foto(s)",
+    "emptyDay": "Nenhuma tarefa neste dia",
+    "emptyWeekTitle": "Nenhuma tarefa nesta semana",
+    "emptyWeekDescription": "Quando a rotina do aluno tiver blocos, as tarefas aparecem aqui para acompanhar."
   },
   "toast": {
     "appointmentSaved": {

@@ -1,7 +1,7 @@
 import { studentIdSchema } from '@habituar/core/identity/ids'
 import { Redirect, useLocalSearchParams } from 'expo-router'
-import { StudentRecordScreen } from '../../../professional/student-record-screen'
-import { InstitutionSessionScreen } from '../../../session/session-screen'
+import { StudentRecordScreen } from '../../../../professional/student-record-screen'
+import { InstitutionSessionScreen } from '../../../../session/session-screen'
 
 /** Ficha de um estudante; o parâmetro do deep link passa por parse antes de chegar à tela. */
 export default function StudentRecordRoute() {

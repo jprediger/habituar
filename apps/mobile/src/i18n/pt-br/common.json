@@ -725,6 +725,8 @@
   },
   "routine": {
     "title": "Rotina semanal",
+    "open": "Organizar rotina",
+    "openDescription": "Blocos da semana do aluno, de segunda a domingo",
     "studentTitle": "Rotina de {{name}}",
     "description": "A semana do aluno, de segunda a domingo.",
     "readOnlyHint": "Quem monta a rotina é a equipe que acompanha o aluno.",

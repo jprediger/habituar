@@ -7,6 +7,7 @@ import { SPACING } from '@habituar/design-tokens/spacing'
 import type { StudentConsultationsState, StudentHistoryState, StudentRecordAccess } from '@habituar/react-client/react-client'
 import { useConsultationForm, useObservationForm, useStudentProfileForm } from '@habituar/react-client/student-record-forms'
 import type { ConsultationField, StudentProfileForm, StudentProfileTextField } from '@habituar/react-client/student-record-forms'
+import { useRouter } from 'expo-router'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { StyleSheet, View } from 'react-native'
@@ -27,7 +28,6 @@ import { Textarea } from '../components/ui/textarea'
 import { useToast } from '../components/ui/toast'
 import type { InstitutionSession } from '../session/session-screen'
 import { readCurrentTime } from '../time/current-time'
-import { StudentRoutineEditor } from './student-routine-editor'
 
 /**
  * Ficha do estudante no ambiente profissional: cadastro para consulta, dados de apoio,
@@ -50,14 +50,16 @@ export function StudentRecordScreen({ session, studentId }: Readonly<{ session: 
         </StackPage>
       )
     case 'ready':
-      return <StudentRecordView session={session} student={access.record.student} record={access.record.record} access={access} />
+      return <StudentRecordView student={access.record.student} record={access.record.record} access={access} />
     default:
       return assertNever(access.record)
   }
 }
 
-function StudentRecordView({ session, student, record, access }: Readonly<{ session: InstitutionSession; student: StudentDetail; record: StudentRecord; access: StudentRecordAccess }>) {
+function StudentRecordView({ student, record, access }: Readonly<{ student: StudentDetail; record: StudentRecord; access: StudentRecordAccess }>) {
   const { t } = useTranslation()
+  const { t: tAgenda } = useTranslation('agenda')
+  const router = useRouter()
   const toast = useToast()
   const form = useStudentProfileForm({ profile: record.profile, save: access.recordProfile })
 
@@ -80,8 +82,17 @@ function StudentRecordView({ session, student, record, access }: Readonly<{ sess
         : <StudentProfileSummary profile={record.profile} canWrite={access.canWrite} onEdit={form.startEditing} />}
       <ListDivider />
 
-      <ListSection title={t('routine.title')} footer={t('routine.description')}>
-        <StudentRoutineEditor session={session} studentId={student.id} />
+      <ListSection title={t('routine.title')}>
+        <ListRow
+          title={t('routine.open')}
+          description={t('routine.openDescription')}
+          onPress={() => { router.push({ pathname: '/professional/students/[student-id]/routine', params: { 'student-id': student.id } }) }}
+        />
+        <ListRow
+          title={tAgenda('tracking.open')}
+          description={tAgenda('tracking.openDescription')}
+          onPress={() => { router.push({ pathname: '/professional/students/[student-id]/tasks', params: { 'student-id': student.id } }) }}
+        />
       </ListSection>
       <ListDivider />
 

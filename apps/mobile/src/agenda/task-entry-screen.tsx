@@ -33,6 +33,7 @@ import { useAgendaLabels } from './agenda-labels'
  */
 export function TaskEntryScreen({ session, studentId, blockId, date }: Readonly<{ session: InstitutionSession; studentId: StudentId; blockId: RoutineBlockId; date: LocalDate }>) {
   const { t } = useTranslation('agenda')
+  const { t: tc } = useTranslation()
   const labels = useAgendaLabels()
   const access = habituar.useRoutineEntry(session.membership, studentId, blockId, date)
   const title = access.state.status === 'ready' ? access.state.block.title : t('title')
@@ -50,6 +51,8 @@ export function TaskEntryScreen({ session, studentId, blockId, date }: Readonly<
               <View style={styles.stack}>
                 <ListSection footer={t(access.canWrite ? 'task.description' : 'task.readOnlyDescription')}>
                   <ListRow title={labels.formatShortDate(date)} value={t('time', { start: access.state.block.startsAt, end: access.state.block.endsAt })} />
+                  <ListRow title={t('task.kind')} value={tc(`routine.kinds.${access.state.block.kind}`)} />
+                  {access.state.block.notes !== null && <ListRow title={t('task.guidance')} description={access.state.block.notes} />}
                 </ListSection>
                 <ListDivider />
                 <TaskNote key={access.state.entry?.version ?? 0} access={access} />

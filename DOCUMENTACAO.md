@@ -129,11 +129,15 @@ A grade semanal já existe: a equipe que acompanha o aluno monta os blocos de ca
 (horário, título, tipo e observação), e o aluno e o responsável veem esses blocos como as
 tarefas de cada dia na aba Agenda. Em desenvolvimento, o aluno registra em cada tarefa do
 dia uma observação e até seis fotos, que o responsável e a equipe consultam sem poder
-alterar. Na ficha do aluno, a equipe abre em telas próprias a organização da rotina e o
-acompanhamento das tarefas. No acompanhamento, período a período, cada tarefa aparece
-como registrada, sem registro ou por vir, com um resumo de quantas foram registradas, e
-abrir a tarefa mostra a orientação da equipe e o registro do aluno.
-Entregas, avaliações e o uso sem conexão ainda estão previstos.
+alterar. O aluno marca a tarefa do dia como entregue, levando junto a observação e as
+fotos, e pode desfazer a entrega enquanto ela não for avaliada. A equipe que acompanha
+avalia a tarefa entregue com um conceito (alcançado, parcial ou não alcançado) e um
+comentário opcional, que o aluno e o responsável leem. Na ficha do aluno, a equipe abre
+em telas próprias a organização da rotina e o acompanhamento das tarefas. No
+acompanhamento, período a período, cada tarefa aparece como avaliada, entregue, não
+entregue ou por vir, com um resumo de quantas foram entregues e avaliadas, e abrir a
+tarefa mostra a orientação da equipe, o registro do aluno e a avaliação.
+O modo foco e o uso sem conexão ainda estão previstos.
 
 | Prioridade | Complexidade | Situação | Versão |
 | --- | --- | --- | --- |
@@ -305,13 +309,14 @@ tabelas aceitam somente leitura e inserção, com autoria igual à pessoa autent
 grade semanal do aluno fica em `routine_blocks`, com versão para recusar edição feita
 sobre dados desatualizados. Em desenvolvimento, e ainda fora do modelo abaixo, os
 atendimentos ficam em `appointments`, com repetição semanal e versão, e as ocorrências
-canceladas de uma série em `appointment_cancelled_occurrences`; a observação de cada
-tarefa do dia fica em `routine_entries` e as fotos, guardadas fora do banco, têm os
-metadados em `routine_entry_photos`. O banco aplica isolamento por linha para impedir acesso entre instituições.
+canceladas de uma série em `appointment_cancelled_occurrences`; a observação e a entrega de cada
+tarefa do dia ficam em `routine_entries` e as fotos, guardadas fora do banco, têm os
+metadados em `routine_entry_photos`, e a avaliação da equipe sobre a tarefa entregue fica
+em `routine_entry_evaluations`, com versão própria. O banco aplica isolamento por linha para impedir acesso entre instituições.
 
 _[Modelo atual do banco de dados disponível no DOCX oficial.]_
 
-Entidades previstas para evolução do produto incluem entregas, avaliações, métricas, grupos e relatórios. Elas ainda não fazem parte do modelo físico apresentado.
+Entidades previstas para evolução do produto incluem métricas, grupos e relatórios. Elas ainda não fazem parte do modelo físico apresentado.
 
 ## Tecnologias utilizadas
 
@@ -355,7 +360,7 @@ A API valida entradas e saídas a partir de contratos compartilhados, nega acess
 | Instituições e convites | Média | Implementado | Cadastro, convite de uso único e aceite na web |
 | Interfaces de autenticação | Alta | Implementado | Entrada, cadastro e ambientes por perfil na web e no mobile |
 | Fichas e observações | Alta | Implementado | Cadastro do estudante, termo assinado, ficha, histórico e consultas realizadas; auditoria prevista |
-| Rotina, tarefas e foco | Alta | Em desenvolvimento | Grade semanal pronta; registro das tarefas do dia em desenvolvimento; foco e offline previstos |
+| Rotina, tarefas e foco | Alta | Em desenvolvimento | Grade semanal pronta; registro, entrega e avaliação das tarefas do dia em desenvolvimento; foco e offline previstos |
 | Agenda e atendimentos | Alta | Em desenvolvimento | Agendamento com repetição semanal em desenvolvimento; anotações e notificações previstas |
 | Métricas e grupos | Média | Previsto | Indicadores configuráveis por instituição |
 | Relatórios | Alta | Previsto | Consolidação e exportação de acompanhamento |

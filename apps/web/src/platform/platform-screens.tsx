@@ -7,6 +7,7 @@ import type { InstitutionTextField } from '@habituar/react-client/platform-forms
 import { Link, useNavigate } from '@tanstack/react-router'
 import { useId, useState } from 'react'
 import type { KeyboardEvent, ReactElement } from 'react'
+import type { TFunction } from 'i18next'
 import { useTranslation } from 'react-i18next'
 import { habituar } from '../client/habituar-client.js'
 import { Button } from '../components/ui/button.js'
@@ -122,6 +123,6 @@ function DetailTabPanel({ tab, institutionId, context, institutionName }: Readon
   }
 }
 
-function getDetailTabLabel(tab: DetailTab, t: ReturnType<typeof useTranslation>['t']): string {
+function getDetailTabLabel(tab: DetailTab, t: TFunction): string {
   return tab === 'data' ? t('platform.institutions.data') : t(`staff.sections.${tab}`)
 }

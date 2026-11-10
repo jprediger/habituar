@@ -1,16 +1,15 @@
-import { CalendarDays } from 'lucide-react'
 import type { ReactElement } from 'react'
 import { useTranslation } from 'react-i18next'
-import { EmptyState } from '../components/ui/empty-state.js'
 import { PageHeader } from '../components/ui/page-header.js'
 import { Section } from '../components/ui/section.js'
 import { SummaryCards } from '../components/ui/summary-cards.js'
 import { useInstitutionSession } from '../session/institution-session.js'
 import { StudentList } from './student-list.js'
+import { UpcomingAppointments } from './upcoming-appointments.js'
 
 /**
- * Início do profissional: quem, onde e com que papel, e os alunos cuja ficha a pessoa
- * alcança. Reserva, com estado vazio honesto, o lugar dos atendimentos até a agenda existir.
+ * Início do profissional: quem, onde e com que papel, os alunos cuja ficha a pessoa alcança
+ * e, para quem lê a agenda, os próximos atendimentos.
  */
 export function ProfessionalHomeScreen(): ReactElement {
   const { t } = useTranslation()
@@ -37,13 +36,11 @@ export function ProfessionalHomeScreen(): ReactElement {
         <Section title={t('professional.home.studentsTitle')}>
           <StudentList />
         </Section>
-        <Section title={t('professional.home.appointmentsTitle')}>
-          <EmptyState
-            icon={CalendarDays}
-            title={t('professional.home.appointmentsEmptyTitle')}
-            description={t('professional.home.appointmentsEmptyDescription')}
-          />
-        </Section>
+        {session.membership.permissions.some((permission) => permission.key === 'appointment.read') && (
+          <Section title={t('professional.home.appointmentsTitle')}>
+            <UpcomingAppointments />
+          </Section>
+        )}
       </div>
     </div>
   )

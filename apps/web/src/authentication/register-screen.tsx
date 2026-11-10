@@ -3,6 +3,7 @@ import { registerInputSchema } from '@habituar/core/auth/schema'
 import { Link, Navigate } from '@tanstack/react-router'
 import type { ReactElement } from 'react'
 import { useState } from 'react'
+import type { TFunction } from 'i18next'
 import { useTranslation } from 'react-i18next'
 import authenticationHeroUrl from '../assets/authentication-hero.jpg'
 import { CenteredPage } from '../components/ui/centered-page.js'
@@ -38,7 +39,7 @@ function toRegisterFailure(error: unknown): RegisterFailure {
 
 function getRegisterFailureText(
   failure: RegisterFailure,
-  t: ReturnType<typeof useTranslation>['t'],
+  t: TFunction,
 ): string {
   switch (failure) {
     case 'conflict':

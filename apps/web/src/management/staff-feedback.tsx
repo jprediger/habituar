@@ -3,11 +3,12 @@ import type { Pagination, StaffFailure, StaffListState } from '@habituar/react-c
 import type { StaffRole } from '@habituar/core/staff'
 import { SearchX, UsersRound } from 'lucide-react'
 import type { ReactElement, ReactNode } from 'react'
+import type { TFunction } from 'i18next'
 import { useTranslation } from 'react-i18next'
 import { Button } from '../components/ui/button.js'
 import { EmptyState } from '../components/ui/empty-state.js'
 
-type Translate = ReturnType<typeof useTranslation>['t']
+type Translate = TFunction
 
 /** Texto de uma falha de gestão; o código vem do hook e o texto, do catálogo. */
 export function getStaffFailureText(failure: StaffFailure, t: Translate): string {

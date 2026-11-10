@@ -4,6 +4,7 @@ import type { ActiveSession } from '@habituar/react-client/react-client'
 import { Link } from '@tanstack/react-router'
 import { LogOut, UserRound } from 'lucide-react'
 import type { ReactElement } from 'react'
+import type { TFunction } from 'i18next'
 import { useTranslation } from 'react-i18next'
 import {
   DropdownMenu,
@@ -87,7 +88,7 @@ export function AccountMenu({
 
 // A sessão do administrador geral não tem vínculo: a segunda linha diz o alcance dela em
 // vez de ficar vazia ou inventar uma instituição.
-function getSessionScopeText(session: ActiveSession, t: ReturnType<typeof useTranslation>['t']): string {
+function getSessionScopeText(session: ActiveSession, t: TFunction): string {
   switch (session.kind) {
     case 'institution':
       return session.membership.institution.name

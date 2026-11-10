@@ -5,6 +5,7 @@ import { Link, useLocation } from '@tanstack/react-router'
 import type { LucideIcon } from 'lucide-react'
 import { Building2, CalendarDays, GraduationCap, House, UserRound, UsersRound } from 'lucide-react'
 import type { ReactElement } from 'react'
+import type { TFunction } from 'i18next'
 import { useTranslation } from 'react-i18next'
 import { BrandMark } from './brand-mark.js'
 import {
@@ -76,7 +77,7 @@ export function AppSidebar({
 
 function getEnvironmentEyebrowText(
   environment: NavigationEnvironment,
-  t: ReturnType<typeof useTranslation>['t'],
+  t: TFunction,
 ): string {
   switch (environment) {
     case 'professional':

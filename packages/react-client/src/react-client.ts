@@ -23,7 +23,7 @@ export type {
   StudentRecordState,
 } from './student-record-hooks.js'
 export type { RoutineLoadFailure, RoutineState, RoutineWriteResult, StudentRoutine } from './routine-hooks.js'
-export { classifyTrackedTask, groupAgendaByDay, rangeOfAgendaView, summarizeTaskTracking } from './agenda-hooks.js'
+export { classifyTrackedTask, groupAgendaByDay, isTaskDue, rangeOfAgendaView, readTaskProgress, summarizeTaskTracking } from './agenda-hooks.js'
 export type {
   AgendaCursor,
   AgendaDay,
@@ -40,6 +40,7 @@ export type {
   RoutineEntryAccess,
   RoutineEntryState,
   StudentAgenda,
+  TaskProgress,
   TaskTrackingDay,
   TaskTrackingState,
   TaskTrackingSummary,

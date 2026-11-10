@@ -8,8 +8,8 @@ import type { Appointment, AppointmentInput } from '@habituar/core/appointments'
 import type { LocalDate } from '@habituar/core/calendar'
 import { studentIdSchema } from '@habituar/core/identity/ids'
 import type { StudentId } from '@habituar/core/identity/ids'
-import { ROUTINE_ENTRY_NOTES_MAX_LENGTH, routineEntryNoteInputSchema } from '@habituar/core/routine-entries'
-import type { RoutineEntry } from '@habituar/core/routine-entries'
+import { ROUTINE_ENTRY_EVALUATION_COMMENT_MAX_LENGTH, ROUTINE_ENTRY_NOTES_MAX_LENGTH, routineEntryEvaluationInputSchema, routineEntryNoteInputSchema } from '@habituar/core/routine-entries'
+import type { RoutineEntry, RoutineEntryEvaluationInput, RoutineEntryEvaluationOutcome } from '@habituar/core/routine-entries'
 import { useState } from 'react'
 import type { AgendaWriteResult } from './agenda-hooks.js'
 
@@ -143,6 +143,51 @@ export function useRoutineEntryNoteForm(
       setIsSaving(true)
       try {
         return await options.save(parsed.data.notes)
+      } finally {
+        setIsSaving(false)
+      }
+    },
+    isSaving,
+  }
+}
+
+export type RoutineEntryEvaluationForm = Readonly<{
+  outcome: RoutineEntryEvaluationOutcome | undefined
+  changeOutcome: (outcome: RoutineEntryEvaluationOutcome) => void
+  comment: string
+  changeComment: (comment: string) => void
+  invalidField: 'outcome' | 'comment' | undefined
+  maxLength: number
+  submit: () => Promise<AgendaWriteResult | 'invalid'>
+  isSaving: boolean
+}>
+
+/** Retorno da equipe sobre a tarefa entregue: o conceito é obrigatório, o comentário não. */
+export function useRoutineEntryEvaluationForm(
+  options: Readonly<{ entry: RoutineEntry | undefined; save: (input: RoutineEntryEvaluationInput) => Promise<AgendaWriteResult> }>,
+): RoutineEntryEvaluationForm {
+  const [outcome, setOutcome] = useState<RoutineEntryEvaluationOutcome | undefined>(options.entry?.evaluation?.outcome)
+  const [comment, setComment] = useState(options.entry?.evaluation?.comment ?? '')
+  const [invalidField, setInvalidField] = useState<'outcome' | 'comment' | undefined>(undefined)
+  const [isSaving, setIsSaving] = useState(false)
+
+  return {
+    outcome,
+    changeOutcome: setOutcome,
+    comment,
+    changeComment: setComment,
+    invalidField,
+    maxLength: ROUTINE_ENTRY_EVALUATION_COMMENT_MAX_LENGTH,
+    submit: async () => {
+      const parsed = routineEntryEvaluationInputSchema.safeParse({ outcome, comment: comment.trim() === '' ? null : comment })
+      if (!parsed.success) {
+        setInvalidField(parsed.error.issues.some(issue => issue.path[0] === 'outcome') ? 'outcome' : 'comment')
+        return 'invalid'
+      }
+      setInvalidField(undefined)
+      setIsSaving(true)
+      try {
+        return await options.save(parsed.data)
       } finally {
         setIsSaving(false)
       }

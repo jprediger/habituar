@@ -2,7 +2,7 @@ import { type Appointment, type AppointmentInput, type AppointmentOccurrence, ex
 import type { MembershipContext } from '@habituar/core/auth/context'
 import { addDays, addMonths, type LocalDate, type LocalDateRange, listRangeDays, listWeekDays, monthGridRange, weekdayOfLocalDate } from '@habituar/core/calendar'
 import type { AppointmentId, RoutineBlockId, RoutineEntryPhotoId, StudentId } from '@habituar/core/identity/ids'
-import type { RoutineEntry, RoutineEntryPhoto, RoutineEntryPhotoContent, RoutineEntryPhotoInput } from '@habituar/core/routine-entries'
+import type { RoutineEntry, RoutineEntryEvaluationInput, RoutineEntryPhoto, RoutineEntryPhotoContent, RoutineEntryPhotoInput } from '@habituar/core/routine-entries'
 import type { RoutineBlock } from '@habituar/core/routines'
 import type { QueryClient } from '@tanstack/react-query'
 import { useQuery } from '@tanstack/react-query'
@@ -75,17 +75,21 @@ export type StudentAgenda = Readonly<{
   canWriteEntries: boolean
 }>
 
+/** Andamento da tarefa do dia pelo registro: avaliada pela equipe, entregue pelo aluno, ou em aberto. */
+export type TaskProgress = 'evaluated' | 'delivered' | 'open'
+
 /**
- * Situação de uma tarefa para quem acompanha: com registro do aluno, sem registro num dia
- * que já chegou, ou ainda por vir. Registro esvaziado (sem nota nem foto) conta como falta.
+ * Situação de uma tarefa para quem acompanha: avaliada, entregue, não entregue num dia que
+ * já chegou, ou ainda por vir. Observação e fotos sem entrega não contam como entrega.
  */
-export type TrackedTaskStatus = 'recorded' | 'missing' | 'upcoming'
+export type TrackedTaskStatus = 'evaluated' | 'delivered' | 'missing' | 'upcoming'
 
 export type TrackedTask = Readonly<{ key: string; date: LocalDate; block: RoutineBlock; entry: RoutineEntry | undefined; status: TrackedTaskStatus }>
 
 export type TaskTrackingDay = Readonly<{ date: LocalDate; tasks: readonly TrackedTask[] }>
 
-export type TaskTrackingSummary = Readonly<{ total: number; recorded: number; missing: number; upcoming: number }>
+/** `delivered` inclui as avaliadas: toda tarefa avaliada foi entregue antes. */
+export type TaskTrackingSummary = Readonly<{ total: number; delivered: number; evaluated: number; missing: number; upcoming: number }>
 
 export type TaskTrackingState =
   | Readonly<{ status: 'loading' }>
@@ -100,7 +104,11 @@ export type RoutineEntryState =
 export type RoutineEntryAccess = Readonly<{
   state: RoutineEntryState
   canWrite: boolean
+  canEvaluate: boolean
   saveNote: (notes: string | null) => Promise<AgendaWriteResult>
+  deliver: () => Promise<AgendaWriteResult>
+  undeliver: () => Promise<AgendaWriteResult>
+  evaluate: (input: RoutineEntryEvaluationInput) => Promise<AgendaWriteResult>
   addPhoto: (photo: RoutineEntryPhotoInput) => Promise<PhotoUploadResult>
   removePhoto: (photo: RoutineEntryPhoto) => Promise<AgendaWriteResult>
 }>
@@ -190,11 +198,24 @@ export function groupAgendaByDay(items: readonly AgendaItem[], range: LocalDateR
   return listRangeDays(range).map(date => ({ date, items: items.filter(item => item.date === date).sort(compareItems) }))
 }
 
-/** Classifica a tarefa de um dia pelo registro do aluno e pela data de hoje do aparelho. */
-export function classifyTrackedTask(entry: RoutineEntry | undefined, date: LocalDate, today: LocalDate): TrackedTaskStatus {
-  if (entry !== undefined && (entry.notes !== null || entry.photos.length > 0)) return 'recorded'
+/** Lê o andamento da tarefa a partir do registro; sem registro, a tarefa está em aberto. */
+export function readTaskProgress(entry: RoutineEntry | undefined): TaskProgress {
+  if (entry?.evaluation !== null && entry?.evaluation !== undefined) return 'evaluated'
+  if (entry?.deliveredAt !== null && entry?.deliveredAt !== undefined) return 'delivered'
+  return 'open'
+}
+
+/** Diz se o aluno já pode entregar a tarefa daquele dia: hoje ou dias anteriores, nunca adiantado. */
+export function isTaskDue(date: LocalDate, today: LocalDate): boolean {
   // Data local ISO compara em ordem lexical.
-  return date > today ? 'upcoming' : 'missing'
+  return date <= today
+}
+
+/** Classifica a tarefa de um dia pela entrega, pela avaliação e pela data de hoje do aparelho. */
+export function classifyTrackedTask(entry: RoutineEntry | undefined, date: LocalDate, today: LocalDate): TrackedTaskStatus {
+  const progress = readTaskProgress(entry)
+  if (progress !== 'open') return progress
+  return isTaskDue(date, today) ? 'missing' : 'upcoming'
 }
 
 /** Conta as tarefas do intervalo por situação, para o resumo no topo do acompanhamento. */
@@ -202,7 +223,8 @@ export function summarizeTaskTracking(days: readonly TaskTrackingDay[]): TaskTra
   const tasks = days.flatMap(day => day.tasks)
   return {
     total: tasks.length,
-    recorded: tasks.filter(task => task.status === 'recorded').length,
+    delivered: tasks.filter(task => task.status === 'delivered' || task.status === 'evaluated').length,
+    evaluated: tasks.filter(task => task.status === 'evaluated').length,
     missing: tasks.filter(task => task.status === 'missing').length,
     upcoming: tasks.filter(task => task.status === 'upcoming').length,
   }
@@ -403,6 +425,34 @@ export function createAgendaHooks(dependencies: AgendaHookDependencies): AgendaH
       return 'saved'
     }
 
+    // Conflito e recusa de regra (já avaliada, ainda não entregue) recarregam: a tela passa a
+    // mostrar o estado atual em vez de insistir numa ação que não vale mais.
+    async function runEntryWrite(write: () => Promise<unknown>): Promise<AgendaWriteResult> {
+      try {
+        await write()
+      } catch (error) {
+        const code = readFailureCode(error)
+        if (code !== 'conflict' && code !== 'entry-already-evaluated' && code !== 'entry-not-delivered') return 'not-saved'
+        await refresh()
+        return 'conflict'
+      }
+      await refresh()
+      return 'saved'
+    }
+
+    function deliver(): Promise<AgendaWriteResult> {
+      return runEntryWrite(() => apiClient.routineEntries.deliver({ institutionId, studentId, routineBlockId: blockId, occursOn: date, expectedVersion: entry?.version ?? null }))
+    }
+
+    function undeliver(): Promise<AgendaWriteResult> {
+      if (entry === undefined) return Promise.resolve('not-saved')
+      return runEntryWrite(() => apiClient.routineEntries.undeliver({ institutionId, studentId, routineBlockId: blockId, occursOn: date, expectedVersion: entry.version }))
+    }
+
+    function evaluate(input: RoutineEntryEvaluationInput): Promise<AgendaWriteResult> {
+      return runEntryWrite(() => apiClient.routineEntries.evaluate({ institutionId, studentId, routineBlockId: blockId, occursOn: date, ...input, expectedVersion: entry?.evaluation?.version ?? null }))
+    }
+
     async function removePhoto(photo: RoutineEntryPhoto): Promise<AgendaWriteResult> {
       try {
         await apiClient.routineEntries.removePhoto({ institutionId, studentId, photoId: photo.id })
@@ -414,7 +464,17 @@ export function createAgendaHooks(dependencies: AgendaHookDependencies): AgendaH
       return 'saved'
     }
 
-    return { state, canWrite: membership.permissions.some(grant => grant.key === 'routine.entry.write'), saveNote, addPhoto, removePhoto }
+    return {
+      state,
+      canWrite: membership.permissions.some(grant => grant.key === 'routine.entry.write'),
+      canEvaluate: membership.permissions.some(grant => grant.key === 'routine.entry.evaluate'),
+      saveNote,
+      deliver,
+      undeliver,
+      evaluate,
+      addPhoto,
+      removePhoto,
+    }
   }
 
   function useRoutineEntryPhoto(membership: MembershipContext, studentId: StudentId, photoId: RoutineEntryPhotoId): PhotoContentState {

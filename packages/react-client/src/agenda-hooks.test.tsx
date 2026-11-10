@@ -16,7 +16,7 @@ const STUDENT_ID = studentIdSchema.parse('30000000-0000-4000-8000-000000000001')
 const STUDENT_PATH = `/v1/institutions/${INSTITUTION_ID}/students/${STUDENT_ID}`
 const MONDAY = localDateSchema.parse('2026-11-09')
 const BLOCK = routineBlockSchema.parse({ id: 'e1000000-0000-4000-8000-000000000001', weekday: 1, startsAt: '14:00', endsAt: '15:00', title: 'Leitura', kind: 'study', notes: null, version: 1, updatedAt: '2026-09-30T12:00:00.000Z' })
-const ENTRY = routineEntrySchema.parse({ id: 'e2000000-0000-4000-8000-000000000001', routineBlockId: BLOCK.id, occursOn: MONDAY, notes: 'Li dois capítulos', photos: [], version: 1, updatedAt: '2026-11-09T18:00:00.000Z' })
+const ENTRY = routineEntrySchema.parse({ id: 'e2000000-0000-4000-8000-000000000001', routineBlockId: BLOCK.id, occursOn: MONDAY, notes: 'Li dois capítulos', photos: [], deliveredAt: '2026-11-09T18:00:00.000Z', evaluation: null, version: 1, updatedAt: '2026-11-09T18:00:00.000Z' })
 const APPOINTMENT = appointmentSchema.parse({
   id: 'e3000000-0000-4000-8000-000000000001', studentId: STUDENT_ID, studentName: 'Ana', professionalUserId: 'e4000000-0000-4000-8000-000000000001', professionalName: 'Paula',
   startsOn: '2026-11-09', startsAt: '09:00', durationMinutes: 50, notes: null, recurrence: { kind: 'weekly', until: null }, cancelledOccurrences: ['2026-11-11'], version: 1, updatedAt: '2026-11-01T12:00:00.000Z',
@@ -31,7 +31,7 @@ function studentMembership() {
   })
 }
 
-function createAgendaApi(onSaveNote: (body: unknown) => void = () => undefined) {
+function createAgendaApi(onSaveNote: (body: unknown) => void = () => undefined, onEvaluate: (body: unknown) => void = () => undefined) {
   const fetch: typeof globalThis.fetch = async (input, init) => {
     const request = new Request(input, init)
     const path = new URL(request.url).pathname
@@ -42,6 +42,10 @@ function createAgendaApi(onSaveNote: (body: unknown) => void = () => undefined) 
     if (request.method === 'PUT' && path === `${STUDENT_PATH}/routine/${BLOCK.id}/entries/${MONDAY}/note`) {
       onSaveNote(await request.json())
       return json({ ...ENTRY, notes: 'Atualizado', version: 2 })
+    }
+    if (request.method === 'PUT' && path === `${STUDENT_PATH}/routine/${BLOCK.id}/entries/${MONDAY}/evaluation`) {
+      onEvaluate(await request.json())
+      return json({ ...ENTRY, evaluation: { outcome: 'partial', comment: null, evaluatorName: 'Manoel', version: 1, updatedAt: '2026-11-10T12:00:00.000Z' } })
     }
     return json({ defined: true, code: 'not_found', status: 404, message: 'Not found' }, 404)
   }
@@ -129,20 +133,20 @@ function professionalMembership() {
     institution: { id: INSTITUTION_ID, name: 'Escola' },
     environment: 'professional',
     roles: [],
-    permissions: [{ key: 'routine.read', scope: 'assigned' }],
+    permissions: [{ key: 'routine.read', scope: 'assigned' }, { key: 'routine.entry.evaluate', scope: 'assigned' }],
   })
 }
 
 describe('acompanhamento das tarefas pela equipe', () => {
   const TUESDAY = localDateSchema.parse('2026-11-10')
 
-  it('separa tarefa registrada, tarefa sem registro e tarefa por vir', () => {
-    const emptied = routineEntrySchema.parse({ ...ENTRY, notes: null, photos: [] })
-    const photoOnly = routineEntrySchema.parse({ ...ENTRY, notes: null, photos: [{ id: 'e5000000-0000-4000-8000-000000000001', mediaType: 'image/jpeg', byteSize: 10, createdAt: '2026-11-09T18:00:00.000Z' }] })
+  it('separa tarefa avaliada, entregue, não entregue e por vir', () => {
+    const notDelivered = routineEntrySchema.parse({ ...ENTRY, deliveredAt: null, photos: [{ id: 'e5000000-0000-4000-8000-000000000001', mediaType: 'image/jpeg', byteSize: 10, createdAt: '2026-11-09T18:00:00.000Z' }] })
+    const evaluated = routineEntrySchema.parse({ ...ENTRY, evaluation: { outcome: 'achieved', comment: null, evaluatorName: 'Manoel', version: 1, updatedAt: '2026-11-10T12:00:00.000Z' } })
 
-    expect(classifyTrackedTask(ENTRY, MONDAY, TUESDAY)).toBe('recorded')
-    expect(classifyTrackedTask(photoOnly, MONDAY, TUESDAY)).toBe('recorded')
-    expect(classifyTrackedTask(emptied, MONDAY, TUESDAY)).toBe('missing')
+    expect(classifyTrackedTask(ENTRY, MONDAY, TUESDAY)).toBe('delivered')
+    expect(classifyTrackedTask(evaluated, MONDAY, TUESDAY)).toBe('evaluated')
+    expect(classifyTrackedTask(notDelivered, MONDAY, TUESDAY)).toBe('missing')
     expect(classifyTrackedTask(undefined, TUESDAY, TUESDAY)).toBe('missing')
     expect(classifyTrackedTask(undefined, localDateSchema.parse('2026-11-11'), TUESDAY)).toBe('upcoming')
   })
@@ -156,7 +160,21 @@ describe('acompanhamento das tarefas pela equipe', () => {
     const state = hook.result.current
     if (state.status !== 'ready') throw new Error('Expected ready tracking')
     const tasks = state.days.flatMap(day => day.tasks.map(task => [task.date, task.status]))
-    expect(tasks).toEqual([['2026-11-09', 'recorded'], ['2026-11-16', 'missing'], ['2026-11-23', 'upcoming']])
-    expect(state.summary).toEqual({ total: 3, recorded: 1, missing: 1, upcoming: 1 })
+    expect(tasks).toEqual([['2026-11-09', 'delivered'], ['2026-11-16', 'missing'], ['2026-11-23', 'upcoming']])
+    expect(state.summary).toEqual({ total: 3, delivered: 1, evaluated: 0, missing: 1, upcoming: 1 })
+  })
+
+  it('avalia a tarefa entregue criando a avaliação quando ainda não existe', async () => {
+    const sent = vi.fn()
+    const client = createHabituarReactClient({ origin: ORIGIN, fetch: createAgendaApi(undefined, sent) })
+    const hook = renderHook(() => client.useRoutineEntry(professionalMembership(), STUDENT_ID, routineBlockIdSchema.parse(BLOCK.id), MONDAY), { wrapper: client.Provider })
+
+    await waitFor(() => { expect(hook.result.current.state.status).toBe('ready') })
+    expect(hook.result.current.canEvaluate).toBe(true)
+    expect(hook.result.current.canWrite).toBe(false)
+    let outcome: unknown
+    await act(async () => { outcome = await hook.result.current.evaluate({ outcome: 'partial', comment: null }) })
+    expect(outcome).toBe('saved')
+    expect(sent).toHaveBeenCalledWith({ outcome: 'partial', comment: null, expectedVersion: null })
   })
 })

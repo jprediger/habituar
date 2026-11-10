@@ -125,11 +125,15 @@ a ficha apenas para consulta.
 ### RF0010 – Organizar rotina e tarefas
 
 O aluno deve montar a grade semanal, receber tarefas e acompanhar entregas e avaliações.
-A grade semanal já existe: a equipe que acompanha o aluno monta, na ficha, os blocos de
-cada dia (horário, título, tipo e observação), e o aluno e o responsável veem esses blocos
-como as tarefas de cada dia na aba Agenda. Em desenvolvimento, o aluno registra em cada
-tarefa do dia uma observação e até seis fotos, que o responsável e a equipe consultam sem
-poder alterar. Entregas, avaliações e o uso sem conexão ainda estão previstos.
+A grade semanal já existe: a equipe que acompanha o aluno monta os blocos de cada dia
+(horário, título, tipo e observação), e o aluno e o responsável veem esses blocos como as
+tarefas de cada dia na aba Agenda. Em desenvolvimento, o aluno registra em cada tarefa do
+dia uma observação e até seis fotos, que o responsável e a equipe consultam sem poder
+alterar. Na ficha do aluno, a equipe abre em telas próprias a organização da rotina e o
+acompanhamento das tarefas. No acompanhamento, período a período, cada tarefa aparece
+como registrada, sem registro ou por vir, com um resumo de quantas foram registradas, e
+abrir a tarefa mostra a orientação da equipe e o registro do aluno.
+Entregas, avaliações e o uso sem conexão ainda estão previstos.
 
 | Prioridade | Complexidade | Situação | Versão |
 | --- | --- | --- | --- |

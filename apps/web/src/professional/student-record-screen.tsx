@@ -7,7 +7,7 @@ import type { StudentConsultationsState, StudentHistoryState, StudentRecordAcces
 import { useConsultationForm, useObservationForm, useStudentProfileForm } from '@habituar/react-client/student-record-forms'
 import type { ConsultationField, StudentProfileForm, StudentProfileTextField } from '@habituar/react-client/student-record-forms'
 import { Link } from '@tanstack/react-router'
-import { Archive, FileText, History, LockKeyhole, Stethoscope } from 'lucide-react'
+import { Archive, CalendarRange, FileText, History, ListChecks, LockKeyhole, Stethoscope } from 'lucide-react'
 import { useId, useState } from 'react'
 import type { ReactElement } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -21,7 +21,6 @@ import { PageHeader } from '../components/ui/page-header.js'
 import { Section } from '../components/ui/section.js'
 import { Textarea } from '../components/ui/textarea.js'
 import { useInstitutionSession } from '../session/institution-session.js'
-import { StudentRoutineEditor } from './student-routine-editor.js'
 
 /**
  * Ficha do estudante no ambiente profissional: cadastro para consulta, dados de apoio,
@@ -55,6 +54,7 @@ export function StudentRecordScreen({ studentId }: Readonly<{ studentId: Student
 
 function StudentRecordView({ student, record, access, back }: Readonly<{ student: StudentDetail; record: StudentRecord; access: StudentRecordAccess; back: ReactElement }>): ReactElement {
   const { t } = useTranslation()
+  const { t: tAgenda } = useTranslation('agenda')
   const form = useStudentProfileForm({ profile: record.profile, save: access.recordProfile })
 
   return (
@@ -74,7 +74,24 @@ function StudentRecordView({ student, record, access, back }: Readonly<{ student
       </Section>
 
       <Section title={t('routine.title')} description={t('routine.description')}>
-        <StudentRoutineEditor studentId={student.id} />
+        <div className="flex flex-wrap items-center gap-sm">
+          <Button asChild variant="outline">
+            <Link to="/professional/students/$studentId/routine" params={{ studentId: student.id }}>
+              <CalendarRange aria-hidden className="size-4" />
+              {t('routine.open')}
+            </Link>
+          </Button>
+          <p className="text-body text-text-muted">{t('routine.openDescription')}</p>
+        </div>
+        <div className="flex flex-wrap items-center gap-sm">
+          <Button asChild variant="outline">
+            <Link to="/professional/students/$studentId/tasks" params={{ studentId: student.id }}>
+              <ListChecks aria-hidden className="size-4" />
+              {tAgenda('tracking.open')}
+            </Link>
+          </Button>
+          <p className="text-body text-text-muted">{tAgenda('tracking.openDescription')}</p>
+        </div>
       </Section>
 
       <Section title={t('students.consultations.title')} description={t('students.consultations.description')}>

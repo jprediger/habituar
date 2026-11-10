@@ -38,6 +38,8 @@ import { Route as ProfessionalManagementTeamRouteImport } from './routes/profess
 import { Route as ProfessionalStudentsIndexRouteImport } from './routes/professional/students/index'
 import { Route as ProfessionalStudentsStudentIdRouteImport } from './routes/professional/students/$studentId'
 import { Route as ProfessionalStudentsNewRouteImport } from './routes/professional/students/new'
+import { Route as ProfessionalStudentsStudentIdRoutineRouteImport } from './routes/professional/students/$studentId_.routine'
+import { Route as ProfessionalStudentsStudentIdTasksRouteImport } from './routes/professional/students/$studentId_.tasks'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -191,6 +193,18 @@ const ProfessionalStudentsNewRoute = ProfessionalStudentsNewRouteImport.update({
   path: '/new',
   getParentRoute: () => ProfessionalStudentsRoute,
 } as any)
+const ProfessionalStudentsStudentIdRoutineRoute =
+  ProfessionalStudentsStudentIdRoutineRouteImport.update({
+    id: '/$studentId_/routine',
+    path: '/$studentId/routine',
+    getParentRoute: () => ProfessionalStudentsRoute,
+  } as any)
+const ProfessionalStudentsStudentIdTasksRoute =
+  ProfessionalStudentsStudentIdTasksRouteImport.update({
+    id: '/$studentId_/tasks',
+    path: '/$studentId/tasks',
+    getParentRoute: () => ProfessionalStudentsRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -222,6 +236,8 @@ export interface FileRoutesByFullPath {
   '/admin/institutions/': typeof AdminInstitutionsIndexRoute
   '/professional/management/': typeof ProfessionalManagementIndexRoute
   '/professional/students/': typeof ProfessionalStudentsIndexRoute
+  '/professional/students/$studentId/routine': typeof ProfessionalStudentsStudentIdRoutineRoute
+  '/professional/students/$studentId/tasks': typeof ProfessionalStudentsStudentIdTasksRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -248,6 +264,8 @@ export interface FileRoutesByTo {
   '/admin/institutions': typeof AdminInstitutionsIndexRoute
   '/professional/management': typeof ProfessionalManagementIndexRoute
   '/professional/students': typeof ProfessionalStudentsIndexRoute
+  '/professional/students/$studentId/routine': typeof ProfessionalStudentsStudentIdRoutineRoute
+  '/professional/students/$studentId/tasks': typeof ProfessionalStudentsStudentIdTasksRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -280,6 +298,8 @@ export interface FileRoutesById {
   '/admin/institutions/': typeof AdminInstitutionsIndexRoute
   '/professional/management/': typeof ProfessionalManagementIndexRoute
   '/professional/students/': typeof ProfessionalStudentsIndexRoute
+  '/professional/students/$studentId_/routine': typeof ProfessionalStudentsStudentIdRoutineRoute
+  '/professional/students/$studentId_/tasks': typeof ProfessionalStudentsStudentIdTasksRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -313,6 +333,8 @@ export interface FileRouteTypes {
     | '/admin/institutions/'
     | '/professional/management/'
     | '/professional/students/'
+    | '/professional/students/$studentId/routine'
+    | '/professional/students/$studentId/tasks'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -339,6 +361,8 @@ export interface FileRouteTypes {
     | '/admin/institutions'
     | '/professional/management'
     | '/professional/students'
+    | '/professional/students/$studentId/routine'
+    | '/professional/students/$studentId/tasks'
   id:
     | '__root__'
     | '/'
@@ -370,6 +394,8 @@ export interface FileRouteTypes {
     | '/admin/institutions/'
     | '/professional/management/'
     | '/professional/students/'
+    | '/professional/students/$studentId_/routine'
+    | '/professional/students/$studentId_/tasks'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -591,6 +617,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProfessionalStudentsNewRouteImport
       parentRoute: typeof ProfessionalStudentsRoute
     }
+    '/professional/students/$studentId_/routine': {
+      id: '/professional/students/$studentId_/routine'
+      path: '/$studentId/routine'
+      fullPath: '/professional/students/$studentId/routine'
+      preLoaderRoute: typeof ProfessionalStudentsStudentIdRoutineRouteImport
+      parentRoute: typeof ProfessionalStudentsRoute
+    }
+    '/professional/students/$studentId_/tasks': {
+      id: '/professional/students/$studentId_/tasks'
+      path: '/$studentId/tasks'
+      fullPath: '/professional/students/$studentId/tasks'
+      preLoaderRoute: typeof ProfessionalStudentsStudentIdTasksRouteImport
+      parentRoute: typeof ProfessionalStudentsRoute
+    }
   }
 }
 
@@ -635,12 +675,18 @@ interface ProfessionalStudentsRouteChildren {
   ProfessionalStudentsStudentIdRoute: typeof ProfessionalStudentsStudentIdRoute
   ProfessionalStudentsNewRoute: typeof ProfessionalStudentsNewRoute
   ProfessionalStudentsIndexRoute: typeof ProfessionalStudentsIndexRoute
+  ProfessionalStudentsStudentIdRoutineRoute: typeof ProfessionalStudentsStudentIdRoutineRoute
+  ProfessionalStudentsStudentIdTasksRoute: typeof ProfessionalStudentsStudentIdTasksRoute
 }
 
 const ProfessionalStudentsRouteChildren: ProfessionalStudentsRouteChildren = {
   ProfessionalStudentsStudentIdRoute: ProfessionalStudentsStudentIdRoute,
   ProfessionalStudentsNewRoute: ProfessionalStudentsNewRoute,
   ProfessionalStudentsIndexRoute: ProfessionalStudentsIndexRoute,
+  ProfessionalStudentsStudentIdRoutineRoute:
+    ProfessionalStudentsStudentIdRoutineRoute,
+  ProfessionalStudentsStudentIdTasksRoute:
+    ProfessionalStudentsStudentIdTasksRoute,
 }
 
 const ProfessionalStudentsRouteWithChildren =

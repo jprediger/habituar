@@ -64,7 +64,6 @@ const client = vi.hoisted((): { access: StudentRecordAccess | undefined } => ({ 
 vi.mock('../client/habituar-client.js', () => ({
   habituar: {
     useStudentRecord: () => client.access,
-    useStudentRoutine: () => ({ state: { status: 'ready', days: [], isEmpty: true }, canEdit: false, add: vi.fn(), update: vi.fn(), remove: vi.fn() }),
   },
 }))
 
@@ -110,6 +109,14 @@ describe('ficha do estudante', () => {
     expect(screen.getByText('Concentrou-se melhor com pausas curtas.')).toBeInTheDocument()
     expect(screen.getByText('Atualizou: Turma ou série, Condições acompanhadas.')).toBeInTheDocument()
     await expectNoSeriousA11yViolations(container)
+  })
+
+  it('leva a organização da rotina e o acompanhamento das tarefas para páginas próprias', async () => {
+    renderScreen()
+
+    expect(await screen.findByRole('link', { name: 'Organizar rotina' })).toHaveAttribute('href', `/professional/students/${studentId}/routine`)
+    expect(screen.getByRole('link', { name: 'Acompanhar tarefas' })).toHaveAttribute('href', `/professional/students/${studentId}/tasks`)
+    expect(screen.queryByRole('button', { name: /Adicionar bloco/ })).not.toBeInTheDocument()
   })
 
   it('só registra a observação depois da confirmação que avisa que ela é definitiva', async () => {

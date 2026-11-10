@@ -28,7 +28,7 @@ type EditorTarget =
 type Feedback = Readonly<{ result: RoutineWriteResult; kind: 'saved' | 'removed' }> | undefined
 
 /**
- * Grade semanal dentro da ficha, para quem acompanha o aluno. Com `routine.write`,
+ * Grade semanal da tela de rotina do aluno, para quem o acompanha. Com `routine.write`,
  * oferece adicionar, editar e remover blocos; sem, é a mesma grade só para leitura.
  */
 export function StudentRoutineEditor({ studentId }: Readonly<{ studentId: StudentId }>): ReactElement {

@@ -1,5 +1,5 @@
 import type { MembershipContext } from '@habituar/core/auth/context'
-import type { StudentId } from '@habituar/core/identity/ids'
+import type { InstitutionId, StudentId } from '@habituar/core/identity/ids'
 import type {
   ConsultationInput,
   ObservationInput,
@@ -58,14 +58,33 @@ export type StudentConsultationsState =
   | Readonly<{ status: 'failed' }>
   | Readonly<{ status: 'ready'; consultations: readonly StudentConsultation[] }>
 
+// `canWrite` em todas as seções é dica de interface, não autorização: a API confere
+// `record.write` de novo em cada envio. Aluno arquivado fica só para leitura, como a API exige.
+
+/** Entrada da ficha: cadastro e dados de apoio, sem as listas que só a própria seção mostra. */
+export type StudentRecordOverview = Readonly<{
+  record: StudentRecordState
+  canWrite: boolean
+  recordProfile: (input: StudentProfileInput) => Promise<void>
+}>
+
+export type StudentConsultationsAccess = Readonly<{
+  consultations: StudentConsultationsState
+  canWrite: boolean
+  recordConsultation: (input: ConsultationInput) => Promise<void>
+}>
+
+export type StudentHistoryAccess = Readonly<{
+  history: StudentHistoryState
+  canWrite: boolean
+  addObservation: (input: ObservationInput) => Promise<void>
+}>
+
+/** A ficha inteira de uma vez, para a tela que mostra todas as seções juntas. */
 export type StudentRecordAccess = Readonly<{
   record: StudentRecordState
   history: StudentHistoryState
   consultations: StudentConsultationsState
-  /**
-   * Dica de interface, não autorização: a API confere `record.write` de novo em cada envio.
-   * Aluno arquivado fica só para leitura, como a API exige.
-   */
   canWrite: boolean
   recordProfile: (input: StudentProfileInput) => Promise<void>
   addObservation: (input: ObservationInput) => Promise<void>
@@ -75,6 +94,9 @@ export type StudentRecordAccess = Readonly<{
 export type StudentRecordHooks = Readonly<{
   useAccessibleStudents: (membership: MembershipContext) => AccessibleStudents
   useStudentRecord: (membership: MembershipContext, studentId: StudentId) => StudentRecordAccess
+  useStudentRecordOverview: (membership: MembershipContext, studentId: StudentId) => StudentRecordOverview
+  useStudentConsultations: (membership: MembershipContext, studentId: StudentId) => StudentConsultationsAccess
+  useStudentHistory: (membership: MembershipContext, studentId: StudentId) => StudentHistoryAccess
 }>
 
 type StudentRecordHookDependencies = Readonly<{ apiClient: ApiClient; queryClient: QueryClient }>
@@ -98,7 +120,8 @@ function holds(membership: MembershipContext, permission: 'record.read' | 'recor
 /**
  * Dono do estado de servidor da lista de alunos e da ficha. O cadastro (nome, nascimento,
  * responsáveis) vem da fatia de alunos; os dados de apoio, observações e consultas, da
- * ficha — a tela recebe os dois juntos e não precisa saber de onde cada um veio.
+ * ficha — a tela recebe os dois juntos e não precisa saber de onde cada um veio. Cada
+ * seção da ficha tem o próprio hook, para quem a mostra em tela separada buscar só o dela.
  */
 export function createStudentRecordHooks(dependencies: StudentRecordHookDependencies): StudentRecordHooks {
   const { apiClient, queryClient } = dependencies
@@ -144,16 +167,22 @@ export function createStudentRecordHooks(dependencies: StudentRecordHookDependen
     }
   }
 
-  function useStudentRecord(membership: MembershipContext, studentId: StudentId): StudentRecordAccess {
+  // Cada seção da ficha lê o cadastro só para saber se o aluno está arquivado; a chave é a
+  // mesma da entrada, então abrir uma seção depois dela não repete a busca.
+  function useStudentDetail(institutionId: InstitutionId, studentId: StudentId) {
+    return useQuery({ queryKey: queryKeys.studentDetail(institutionId, studentId), queryFn: () => apiClient.students.get({ institutionId, studentId }), retry: retryOnlyWithoutServerResponse }, queryClient)
+  }
+
+  function canWriteRecord(membership: MembershipContext, student: StudentDetail | undefined): boolean {
+    return holds(membership, 'record.write') && student?.archivedAt === null
+  }
+
+  function useStudentRecordOverview(membership: MembershipContext, studentId: StudentId): StudentRecordOverview {
     const institutionId = membership.institution.id
-    const detailKey = queryKeys.studentDetail(institutionId, studentId)
     const recordKey = queryKeys.studentRecord(institutionId, studentId)
     const historyKey = queryKeys.studentHistory(institutionId, studentId)
-    const consultationsKey = queryKeys.studentConsultations(institutionId, studentId)
-    const detail = useQuery({ queryKey: detailKey, queryFn: () => apiClient.students.get({ institutionId, studentId }), retry: retryOnlyWithoutServerResponse }, queryClient)
+    const detail = useStudentDetail(institutionId, studentId)
     const record = useQuery({ queryKey: recordKey, queryFn: () => apiClient.studentRecords.get({ institutionId, studentId }), retry: retryOnlyWithoutServerResponse }, queryClient)
-    const history = useQuery({ queryKey: historyKey, queryFn: () => apiClient.studentRecords.listHistory({ institutionId, studentId }), retry: retryOnlyWithoutServerResponse }, queryClient)
-    const consultations = useQuery({ queryKey: consultationsKey, queryFn: () => apiClient.studentRecords.listConsultations({ institutionId, studentId }), retry: retryOnlyWithoutServerResponse }, queryClient)
 
     const recordState: StudentRecordState = detail.isError
       ? { status: 'failed', failure: toStudentLoadFailure(detail.error) }
@@ -175,18 +204,20 @@ export function createStudentRecordHooks(dependencies: StudentRecordHookDependen
       await queryClient.invalidateQueries({ queryKey: historyKey })
     }
 
+    return { record: recordState, canWrite: canWriteRecord(membership, detail.data), recordProfile }
+  }
+
+  function useStudentConsultations(membership: MembershipContext, studentId: StudentId): StudentConsultationsAccess {
+    const institutionId = membership.institution.id
+    const consultationsKey = queryKeys.studentConsultations(institutionId, studentId)
+    const detail = useStudentDetail(institutionId, studentId)
+    const consultations = useQuery({ queryKey: consultationsKey, queryFn: () => apiClient.studentRecords.listConsultations({ institutionId, studentId }), retry: retryOnlyWithoutServerResponse }, queryClient)
+
     return {
-      record: recordState,
-      history: history.isPending ? { status: 'loading' } : history.isError ? { status: 'failed' } : { status: 'ready', entries: history.data },
       consultations: consultations.isPending
         ? { status: 'loading' }
         : consultations.isError ? { status: 'failed' } : { status: 'ready', consultations: consultations.data },
-      canWrite: holds(membership, 'record.write') && detail.data?.archivedAt === null,
-      recordProfile,
-      addObservation: async (input) => {
-        await apiClient.studentRecords.addObservation({ ...input, institutionId, studentId })
-        await queryClient.invalidateQueries({ queryKey: historyKey })
-      },
+      canWrite: canWriteRecord(membership, detail.data),
       recordConsultation: async (input) => {
         await apiClient.studentRecords.recordConsultation({ ...input, institutionId, studentId })
         await queryClient.invalidateQueries({ queryKey: consultationsKey })
@@ -194,5 +225,36 @@ export function createStudentRecordHooks(dependencies: StudentRecordHookDependen
     }
   }
 
-  return { useAccessibleStudents, useStudentRecord }
+  function useStudentHistory(membership: MembershipContext, studentId: StudentId): StudentHistoryAccess {
+    const institutionId = membership.institution.id
+    const historyKey = queryKeys.studentHistory(institutionId, studentId)
+    const detail = useStudentDetail(institutionId, studentId)
+    const history = useQuery({ queryKey: historyKey, queryFn: () => apiClient.studentRecords.listHistory({ institutionId, studentId }), retry: retryOnlyWithoutServerResponse }, queryClient)
+
+    return {
+      history: history.isPending ? { status: 'loading' } : history.isError ? { status: 'failed' } : { status: 'ready', entries: history.data },
+      canWrite: canWriteRecord(membership, detail.data),
+      addObservation: async (input) => {
+        await apiClient.studentRecords.addObservation({ ...input, institutionId, studentId })
+        await queryClient.invalidateQueries({ queryKey: historyKey })
+      },
+    }
+  }
+
+  function useStudentRecord(membership: MembershipContext, studentId: StudentId): StudentRecordAccess {
+    const overview = useStudentRecordOverview(membership, studentId)
+    const consultations = useStudentConsultations(membership, studentId)
+    const history = useStudentHistory(membership, studentId)
+    return {
+      record: overview.record,
+      history: history.history,
+      consultations: consultations.consultations,
+      canWrite: overview.canWrite,
+      recordProfile: overview.recordProfile,
+      addObservation: history.addObservation,
+      recordConsultation: consultations.recordConsultation,
+    }
+  }
+
+  return { useAccessibleStudents, useStudentRecord, useStudentRecordOverview, useStudentConsultations, useStudentHistory }
 }

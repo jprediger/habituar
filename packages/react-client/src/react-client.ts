@@ -17,11 +17,14 @@ export type {
 export type { ConnectionState, OfflineOptions, OfflineStorage, RoutineEntryWriteResult } from './offline-sync.js'
 export type {
   AccessibleStudents,
+  StudentConsultationsAccess,
   StudentConsultationsState,
+  StudentHistoryAccess,
   StudentHistoryState,
   StudentListState,
   StudentLoadFailure,
   StudentRecordAccess,
+  StudentRecordOverview,
   StudentRecordState,
 } from './student-record-hooks.js'
 export type { RoutineLoadFailure, RoutineState, RoutineWriteResult, StudentRoutine } from './routine-hooks.js'

@@ -64,10 +64,7 @@ function currentRevisionId(profile: StudentProfileState): StudentProfileRevision
  */
 export type StudentProfileFormFailure = 'invalid' | 'conflict' | 'server'
 
-export type StudentProfileForm = Readonly<{
-  isEditing: boolean
-  startEditing: () => void
-  cancel: () => void
+export type StudentProfileEditor = Readonly<{
   values: StudentProfileDraft
   change: (field: StudentProfileTextField, value: string) => void
   setCondition: (condition: StudentCondition, isSelected: boolean) => void
@@ -76,6 +73,33 @@ export type StudentProfileForm = Readonly<{
   isSaving: boolean
   failure: StudentProfileFormFailure | undefined
 }>
+
+export type StudentProfileForm = StudentProfileEditor & Readonly<{
+  isEditing: boolean
+  startEditing: () => void
+  cancel: () => void
+}>
+
+function parseProfileDraft(values: StudentProfileDraft, basedOnRevisionId: StudentProfileRevisionId | null) {
+  return studentProfileInputSchema.safeParse({
+    schoolGrade: blankToNull(values.schoolGrade),
+    conditions: values.conditions,
+    supportNeeds: blankToNull(values.supportNeeds),
+    basedOnRevisionId,
+  })
+}
+
+function listInvalidProfileFields(issues: readonly Readonly<{ path: readonly PropertyKey[] }>[]): ReadonlySet<StudentProfileField> {
+  return new Set(issues.flatMap((issue) => {
+    const field = studentProfileFieldSchema.safeParse(issue.path[0])
+    return field.success ? [field.data] : []
+  }))
+}
+
+function changeCondition(values: StudentProfileDraft, condition: StudentCondition, isSelected: boolean): StudentProfileDraft {
+  const others = values.conditions.filter((entry) => entry !== condition)
+  return { ...values, conditions: isSelected ? [...others, condition] : others }
+}
 
 /**
  * Edição da ficha validada pelo schema do contrato antes do envio. Guarda a revisão que a
@@ -107,24 +131,13 @@ export function useStudentProfileForm(
     cancel: stopEditing,
     values,
     change: (field, value) => { setDraft({ ...values, [field]: value }) },
-    setCondition: (condition, isSelected) => {
-      const others = values.conditions.filter((entry) => entry !== condition)
-      setDraft({ ...values, conditions: isSelected ? [...others, condition] : others })
-    },
+    setCondition: (condition, isSelected) => { setDraft(changeCondition(values, condition, isSelected)) },
     invalidFields,
     submit: async () => {
-      const parsed = studentProfileInputSchema.safeParse({
-        schoolGrade: blankToNull(values.schoolGrade),
-        conditions: values.conditions,
-        supportNeeds: blankToNull(values.supportNeeds),
-        // Depois de um conflito avisado, salvar de novo é a decisão de substituir a atual.
-        basedOnRevisionId: failure === 'conflict' ? currentRevisionId(options.profile) : basedOnRevisionId,
-      })
+      // Depois de um conflito avisado, salvar de novo é a decisão de substituir a atual.
+      const parsed = parseProfileDraft(values, failure === 'conflict' ? currentRevisionId(options.profile) : basedOnRevisionId)
       if (!parsed.success) {
-        setInvalidFields(new Set(parsed.error.issues.flatMap((issue) => {
-          const field = studentProfileFieldSchema.safeParse(issue.path[0])
-          return field.success ? [field.data] : []
-        })))
+        setInvalidFields(listInvalidProfileFields(parsed.error.issues))
         setFailure('invalid')
         return 'not-saved'
       }
@@ -134,6 +147,50 @@ export function useStudentProfileForm(
       try {
         await options.save(parsed.data)
         stopEditing()
+        return 'saved'
+      } catch (error) {
+        setFailure(readFailureCode(error) === 'conflict' ? 'conflict' : 'server')
+        return 'not-saved'
+      } finally {
+        setIsSaving(false)
+      }
+    },
+    isSaving,
+    failure,
+  }
+}
+
+/**
+ * Edição da ficha para a tela que existe só para editar: abre já com o rascunho da revisão
+ * em tela e guarda essa revisão como ponto de partida. Atualização da ficha por trás não
+ * troca nem uma nem outra — quem decide substituir é a pessoa, depois do aviso de conflito.
+ */
+export function useStudentProfileEditor(
+  options: Readonly<{ profile: StudentProfileState; save: (input: StudentProfileInput) => Promise<void> }>,
+): StudentProfileEditor {
+  const [values, setValues] = useState<StudentProfileDraft>(() => options.profile.status === 'filled' ? toDraft(options.profile.revision) : EMPTY_DRAFT)
+  const [basedOnRevisionId] = useState(() => currentRevisionId(options.profile))
+  const [invalidFields, setInvalidFields] = useState<ReadonlySet<StudentProfileField>>(new Set())
+  const [isSaving, setIsSaving] = useState(false)
+  const [failure, setFailure] = useState<StudentProfileFormFailure | undefined>(undefined)
+
+  return {
+    values,
+    change: (field, value) => { setValues({ ...values, [field]: value }) },
+    setCondition: (condition, isSelected) => { setValues(changeCondition(values, condition, isSelected)) },
+    invalidFields,
+    submit: async () => {
+      const parsed = parseProfileDraft(values, failure === 'conflict' ? currentRevisionId(options.profile) : basedOnRevisionId)
+      if (!parsed.success) {
+        setInvalidFields(listInvalidProfileFields(parsed.error.issues))
+        setFailure('invalid')
+        return 'not-saved'
+      }
+      setInvalidFields(new Set())
+      setIsSaving(true)
+      setFailure(undefined)
+      try {
+        await options.save(parsed.data)
         return 'saved'
       } catch (error) {
         setFailure(readFailureCode(error) === 'conflict' ? 'conflict' : 'server')

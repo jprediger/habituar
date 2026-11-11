@@ -3,17 +3,17 @@ import { studentProfileRevisionIdSchema, userIdSchema } from '@habituar/core/ide
 import type { ConsultationInput, ObservationInput, StudentProfileInput, StudentProfileState } from '@habituar/core/student-records'
 import { act, renderHook } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
-import { useConsultationForm, useObservationForm, useStudentProfileForm } from './student-record-forms.js'
+import { useConsultationForm, useObservationForm, useStudentProfileEditor, useStudentProfileForm } from './student-record-forms.js'
 
 const firstRevisionId = studentProfileRevisionIdSchema.parse('d1000000-0000-4000-8000-000000000001')
 const latestRevisionId = studentProfileRevisionIdSchema.parse('d1000000-0000-4000-8000-000000000002')
 
-function filledProfile(id = firstRevisionId): StudentProfileState {
+function filledProfile(id = firstRevisionId, schoolGrade = '5º ano'): StudentProfileState {
   return {
     status: 'filled',
     revision: {
       id,
-      schoolGrade: '5º ano',
+      schoolGrade,
       conditions: ['adhd'],
       supportNeeds: null,
       recordedAt: '2026-09-01T12:00:00.000Z',
@@ -65,6 +65,50 @@ describe('edição da ficha', () => {
     expect(result.current.failure).toBe('conflict')
     expect(result.current.isEditing).toBe(true)
     expect(result.current.values.conditions).toEqual(['adhd', 'autism'])
+
+    save.mockImplementation(() => Promise.resolve())
+    rerender({ profile: filledProfile(latestRevisionId) })
+    await act(() => result.current.submit())
+
+    expect(save).toHaveBeenLastCalledWith(expect.objectContaining({ basedOnRevisionId: latestRevisionId, conditions: ['adhd', 'autism'] }))
+  })
+})
+
+describe('tela de edição da ficha', () => {
+  it('abre já editando, a partir da revisão em tela', async () => {
+    const save = vi.fn<(input: StudentProfileInput) => Promise<void>>(() => Promise.resolve())
+    const { result } = renderHook(() => useStudentProfileEditor({ profile: filledProfile(), save }))
+
+    expect(result.current.values.schoolGrade).toBe('5º ano')
+    act(() => { result.current.change('supportNeeds', 'Pausas curtas.') })
+    expect(await act(() => result.current.submit())).toBe('saved')
+
+    expect(save).toHaveBeenCalledWith({ schoolGrade: '5º ano', conditions: ['adhd'], supportNeeds: 'Pausas curtas.', basedOnRevisionId: firstRevisionId })
+  })
+
+  it('não troca o rascunho nem a revisão de partida quando a ficha muda por trás', async () => {
+    const save = vi.fn<(input: StudentProfileInput) => Promise<void>>(() => Promise.resolve())
+    const { result, rerender } = renderHook(({ profile }) => useStudentProfileEditor({ profile, save }), {
+      initialProps: { profile: filledProfile() },
+    })
+
+    act(() => { result.current.change('schoolGrade', '6º ano') })
+    rerender({ profile: filledProfile(latestRevisionId, '7º ano') })
+    await act(() => result.current.submit())
+
+    expect(result.current.values.schoolGrade).toBe('6º ano')
+    expect(save).toHaveBeenCalledWith(expect.objectContaining({ schoolGrade: '6º ano', basedOnRevisionId: firstRevisionId }))
+  })
+
+  it('guarda o rascunho num conflito e, no envio seguinte, substitui a revisão atual', async () => {
+    const save = vi.fn<(input: StudentProfileInput) => Promise<void>>(() => Promise.reject(conflictError()))
+    const { result, rerender } = renderHook(({ profile }) => useStudentProfileEditor({ profile, save }), {
+      initialProps: { profile: filledProfile() },
+    })
+
+    act(() => { result.current.setCondition('autism', true) })
+    expect(await act(() => result.current.submit())).toBe('not-saved')
+    expect(result.current.failure).toBe('conflict')
 
     save.mockImplementation(() => Promise.resolve())
     rerender({ profile: filledProfile(latestRevisionId) })

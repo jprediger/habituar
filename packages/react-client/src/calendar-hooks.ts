@@ -106,7 +106,8 @@ export type CalendarHooks = Readonly<{
 type CalendarViewState =
   | Readonly<{ view: 'month' }>
   | Readonly<{ view: 'schedule' }>
-  | Readonly<{ view: 'day'; enteredFrom: 'month' | 'menu' }>
+  | Readonly<{ view: 'day'; enteredFrom: 'month'; monthDate: LocalDate }>
+  | Readonly<{ view: 'day'; enteredFrom: 'menu' }>
 
 function viewStateOf(view: CalendarView): CalendarViewState {
   switch (view) {
@@ -236,9 +237,13 @@ export function createCalendarHooks(dependencies: CalendarHookDependencies): Cal
       date,
       range: rangeOfCalendarView(view, date),
       changeView: (next) => { setViewState(viewStateOf(next)) },
-      openDay: (next) => { setDate(next); setViewState({ view: 'day', enteredFrom: 'month' }) },
+      openDay: (next) => { setDate(next); setViewState({ view: 'day', enteredFrom: 'month', monthDate: date }) },
       canReturnToMonth,
-      returnToMonth: () => { if (canReturnToMonth) setViewState({ view: 'month' }) },
+      returnToMonth: () => {
+        if (viewState.view !== 'day' || viewState.enteredFrom !== 'month') return
+        setDate(viewState.monthDate)
+        setViewState({ view: 'month' })
+      },
       goToday: () => { setDate(today) },
       goPrevious: () => { setDate(shiftCalendarDate(view, date, -1)) },
       goNext: () => { setDate(shiftCalendarDate(view, date, 1)) },

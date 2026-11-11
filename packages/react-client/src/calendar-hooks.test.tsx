@@ -118,7 +118,7 @@ describe('navegação da agenda', () => {
     expect(hook.result.current.range).toEqual({ from: '2026-11-21', to: '2026-12-18' })
   })
 
-  it('volta ao mês do dia em foco só quando o dia foi aberto pelo mês', () => {
+  it('volta ao mês de origem só quando o dia foi aberto pelo mês', () => {
     const client = createHabituarReactClient({ origin: ORIGIN, fetch: createApi() })
     const hook = renderHook(() => client.useCalendarNavigation(TODAY))
 
@@ -126,12 +126,23 @@ describe('navegação da agenda', () => {
     expect(hook.result.current.canReturnToMonth).toBe(true)
     act(() => { hook.result.current.returnToMonth() })
     expect(hook.result.current.view).toBe('month')
-    expect(hook.result.current.date).toBe('2026-12-20')
+    expect(hook.result.current.date).toBe(TODAY)
 
     act(() => { hook.result.current.changeView('day') })
     expect(hook.result.current.canReturnToMonth).toBe(false)
     act(() => { hook.result.current.returnToMonth() })
     expect(hook.result.current.view).toBe('day')
+  })
+
+  it('volta ao mês visível ao abrir um dia da semana anterior', () => {
+    const client = createHabituarReactClient({ origin: ORIGIN, fetch: createApi() })
+    const hook = renderHook(() => client.useCalendarNavigation(TODAY))
+
+    act(() => { hook.result.current.openDay(localDateSchema.parse('2026-10-31')) })
+    expect(hook.result.current.view).toBe('day')
+    act(() => { hook.result.current.returnToMonth() })
+    expect(hook.result.current.view).toBe('month')
+    expect(hook.result.current.date).toBe(TODAY)
   })
 })
 

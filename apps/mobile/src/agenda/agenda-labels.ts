@@ -81,7 +81,9 @@ export function useAgendaLabels() {
   function entryTitle(entry: CalendarEntry): string {
     switch (entry.kind) {
       case 'task': return entry.task.title
-      case 'appointment': return t('appointmentWithProfessional', { name: entry.occurrence.appointment.professionalName })
+      case 'appointment': return entry.participant === 'student'
+        ? t('appointmentWithStudent', { name: entry.occurrence.appointment.studentName })
+        : t('appointmentWithProfessional', { name: entry.occurrence.appointment.professionalName })
       default: return assertNever(entry)
     }
   }

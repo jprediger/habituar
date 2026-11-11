@@ -157,7 +157,7 @@ registrada — listada aqui, com o motivo —, nunca preferência de quem implem
 
 **Exceções documentadas:**
 
-- **Agenda** (aba Agenda do aluno e agenda do aluno na ficha): o conteúdo é tempo, então as
+- **Agenda** (abas Agenda do aluno e do profissional e agenda do aluno na ficha): o conteúdo é tempo, então as
   visões **Mês** (grade de dias) e **Dia** (grade de horas com faixa de dia inteiro) não são
   lista; a **Programação** continua lista e é a visão de referência para leitor de tela. A
   troca de visão e o filtro "Mostrar" ficam num menu aberto pelo título do período. Criar é

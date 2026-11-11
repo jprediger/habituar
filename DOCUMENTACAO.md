@@ -151,7 +151,8 @@ foco ainda está previsto.
 Profissionais devem agendar consultas e o aluno deve visualizá-las em sua agenda.
 O profissional agenda, edita e cancela atendimentos, com repetição
 semanal opcional e cancelamento de uma única ocorrência da série, e consulta a agenda por
-dia, semana ou mês; o aluno e o responsável veem os atendimentos na mesma agenda das
+dia, semana ou mês na web e por mês, dia ou programação no mobile, com as mesmas visões
+da agenda do aluno e botão flutuante para criar atendimentos; o aluno e o responsável veem os atendimentos na mesma agenda das
 tarefas. Registrar o atendimento como realizado ainda está previsto.
 
 | Prioridade | Complexidade | Situação | Versão |

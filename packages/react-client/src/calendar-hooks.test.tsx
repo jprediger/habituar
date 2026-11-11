@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { appointmentSchema } from '@habituar/core/appointments'
 import { membershipContextSchema } from '@habituar/core/auth/context'
 import { localDateSchema } from '@habituar/core/calendar'
 import { studentIdSchema } from '@habituar/core/identity/ids'
@@ -219,5 +220,55 @@ describe('formulário de tarefa', () => {
     expect(listTaskRemovalScopes(STAFF_TASK, localDateSchema.parse('2026-11-10'), TODAY)).toEqual(['this-occurrence'])
     expect(listTaskRemovalScopes(STAFF_TASK, TODAY, TODAY)).toEqual(['this-occurrence', 'from-this-occurrence'])
     expect(listTaskRemovalScopes(STUDENT_TASK, localDateSchema.parse('2026-11-10'), TODAY)).toEqual(['this-occurrence'])
+  })
+})
+
+
+describe('agenda profissional com as visões compartilhadas', () => {
+  const appointment = appointmentSchema.parse({
+    id: 'e3000000-0000-4000-8000-000000000001', studentId: STUDENT_ID, studentName: 'Ana', professionalUserId: 'e4000000-0000-4000-8000-000000000001', professionalName: 'Paula',
+    startsOn: '2026-11-09', startsAt: '09:00', durationMinutes: 50, notes: null, recurrence: { kind: 'weekly', until: null }, cancelledOccurrences: ['2026-11-16'], version: 1, updatedAt: '2026-11-01T12:00:00.000Z',
+  })
+  const range = { from: localDateSchema.parse('2026-11-09'), to: localDateSchema.parse('2026-11-23') }
+  const filter = { 'student-task': true, 'staff-task': true, consultation: true }
+
+  it('busca o intervalo institucional, expande a série e identifica o aluno do atendimento', async () => {
+    const requests: URL[] = []
+    const fetch: typeof globalThis.fetch = (input, init) => {
+      requests.push(new URL(new Request(input, init).url))
+      return Promise.resolve(new Response(JSON.stringify([appointment]), { headers: { 'content-type': 'application/json' } }))
+    }
+    const client = createHabituarReactClient({ origin: ORIGIN, fetch })
+    const hook = renderHook(() => client.useProfessionalCalendar(membership(['appointment.read']), range, filter), { wrapper: client.Provider })
+    await waitFor(() => { expect(hook.result.current.state.status).toBe('ready') })
+    expect(requests.map(url => url.pathname)).toEqual([`/v1/institutions/${INSTITUTION_ID}/appointments`])
+    expect(requests[0]?.searchParams.get('from')).toBe(range.from)
+    expect(requests[0]?.searchParams.get('to')).toBe(range.to)
+    const { state } = hook.result.current
+    if (state.status !== 'ready') throw new Error('Expected a ready calendar')
+    expect(state.days).toHaveLength(15)
+    expect(state.days.flatMap(day => day.entries.map(entry => [entry.date, entry.kind === 'appointment' ? entry.participant : undefined]))).toEqual([
+      ['2026-11-09', 'student'], ['2026-11-23', 'student'],
+    ])
+    expect(hook.result.current.canSchedule).toBe(false)
+  })
+
+  it('oculta consultas sem buscar dados e mantém a permissão de criar', () => {
+    const fetch = vi.fn<typeof globalThis.fetch>()
+    const client = createHabituarReactClient({ origin: ORIGIN, fetch })
+    const hook = renderHook(() => client.useProfessionalCalendar(membership(['appointment.read', 'appointment.write']), range, { ...filter, consultation: false }), { wrapper: client.Provider })
+    expect(fetch).not.toHaveBeenCalled()
+    const { state } = hook.result.current
+    if (state.status !== 'ready') throw new Error('Expected a ready calendar')
+    expect(state.days).toHaveLength(15)
+    expect(state.days.every(day => day.entries.length === 0)).toBe(true)
+    expect(hook.result.current.canSchedule).toBe(true)
+  })
+
+  it('expõe a recusa da API como erro em vez de uma agenda vazia', async () => {
+    const fetch: typeof globalThis.fetch = () => Promise.resolve(new Response(JSON.stringify({ defined: true, code: 'forbidden', status: 403, message: 'Forbidden' }), { status: 403, headers: { 'content-type': 'application/json' } }))
+    const client = createHabituarReactClient({ origin: ORIGIN, fetch })
+    const hook = renderHook(() => client.useProfessionalCalendar(membership(['appointment.read']), range, filter), { wrapper: client.Provider })
+    await waitFor(() => { expect(hook.result.current.state).toEqual({ status: 'failed', failure: 'forbidden' }) })
   })
 })

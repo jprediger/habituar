@@ -48,7 +48,7 @@ type TimedScheduleTime = Extract<ScheduleTime, { kind: 'timed' }>
  */
 export type CalendarEntry =
   | Readonly<{ kind: 'task'; key: string; type: Exclude<CalendarEntryType, 'consultation'>; task: Task; occurrence: TaskOccurrence | undefined; originalDate: LocalDate; date: LocalDate; time: ScheduleTime; status: TaskEntryStatus }>
-  | Readonly<{ kind: 'appointment'; key: string; type: 'consultation'; date: LocalDate; time: TimedScheduleTime; occurrence: AppointmentOccurrence }>
+  | Readonly<{ kind: 'appointment'; key: string; type: 'consultation'; participant: 'student' | 'professional'; date: LocalDate; time: TimedScheduleTime; occurrence: AppointmentOccurrence }>
 
 export type CalendarDay = Readonly<{ date: LocalDate; entries: readonly CalendarEntry[] }>
 
@@ -99,6 +99,7 @@ export type CalendarHooks = Readonly<{
   useCalendarNavigation: (today: LocalDate) => CalendarNavigation
   useCalendarFilter: () => CalendarFilterAccess
   useStudentCalendar: (membership: MembershipContext, studentId: StudentId, range: LocalDateRange, filter: CalendarFilter, today: LocalDate) => StudentCalendar
+  useProfessionalCalendar: (membership: MembershipContext, range: LocalDateRange, filter: CalendarFilter) => Readonly<{ state: CalendarState; canSchedule: boolean }>
   useTaskSeries: (membership: MembershipContext, studentId: StudentId) => TaskSeriesWrites
 }>
 
@@ -183,11 +184,12 @@ function taskEntries(agenda: TaskAgenda, range: LocalDateRange, today: LocalDate
   })
 }
 
-function appointmentEntries(appointments: readonly Appointment[], range: LocalDateRange): CalendarEntry[] {
+function appointmentEntries(appointments: readonly Appointment[], range: LocalDateRange, participant: 'student' | 'professional'): CalendarEntry[] {
   return appointments.flatMap(appointment => expandAppointmentOccurrences(appointment, range)).map(occurrence => ({
     kind: 'appointment' as const,
     key: `appointment:${occurrence.appointment.id}:${occurrence.date}`,
     type: 'consultation' as const,
+    participant,
     date: occurrence.date,
     time: { kind: 'timed' as const, startsAt: occurrence.startsAt, endsAt: occurrence.endsAt },
     occurrence,
@@ -294,7 +296,7 @@ export function createCalendarHooks(dependencies: CalendarHookDependencies): Cal
 
     const pending = useSyncExternalStore(dependencies.offline.subscribe, dependencies.offline.getState).pending
     const days = useMemo(() => tasks.data === undefined ? [] : groupCalendarByDay(
-      [...taskEntries(overlayTaskAgenda(tasks.data, pending.filter(change => change.institutionId === institutionId && change.studentId === studentId)), { from: range.from, to: range.to }, today), ...(readsAppointments ? appointmentEntries(appointments.data ?? [], { from: range.from, to: range.to }) : [])].filter(entry => filter[entry.type]),
+      [...taskEntries(overlayTaskAgenda(tasks.data, pending.filter(change => change.institutionId === institutionId && change.studentId === studentId)), { from: range.from, to: range.to }, today), ...(readsAppointments ? appointmentEntries(appointments.data ?? [], { from: range.from, to: range.to }, 'professional') : [])].filter(entry => filter[entry.type]),
       { from: range.from, to: range.to },
     ), [tasks.data, appointments.data, readsAppointments, range.from, range.to, filter, today, pending, institutionId, studentId])
 
@@ -309,6 +311,27 @@ export function createCalendarHooks(dependencies: CalendarHookDependencies): Cal
           }
 
     return { state, creatableOrigins: (['student', 'staff'] as const).filter(origin => canWriteTaskSeries(membership, origin)) }
+  }
+
+  function useProfessionalCalendar(membership: MembershipContext, range: LocalDateRange, filter: CalendarFilter) {
+    const institutionId = membership.institution.id
+    const query = useQuery({
+      queryKey: queryKeys.institutionAgenda(institutionId, range.from, range.to),
+      queryFn: () => apiClient.appointments.listForInstitution({ institutionId, from: range.from, to: range.to }),
+      retry: retryOnlyWithoutServerResponse,
+      enabled: filter.consultation,
+    }, queryClient)
+    const days = useMemo(() => groupCalendarByDay(
+      filter.consultation ? appointmentEntries(query.data ?? [], range, 'student') : [], range,
+    ), [query.data, filter.consultation, range])
+    const state: CalendarState = !filter.consultation
+      ? { status: 'ready', days }
+      : query.isError
+        ? { status: 'failed', failure: toLoadFailure(query.error) }
+        : query.data === undefined
+          ? { status: 'loading' }
+          : { status: 'ready', days }
+    return { state, canSchedule: membership.permissions.some(grant => grant.key === 'appointment.write') }
   }
 
   function useTaskSeries(membership: MembershipContext, studentId: StudentId): TaskSeriesWrites {
@@ -342,7 +365,7 @@ export function createCalendarHooks(dependencies: CalendarHookDependencies): Cal
     }
   }
 
-  return { useCalendarNavigation, useCalendarFilter, useStudentCalendar, useTaskSeries }
+  return { useCalendarNavigation, useCalendarFilter, useStudentCalendar, useProfessionalCalendar, useTaskSeries }
 }
 
 function parseJson(text: string): unknown {

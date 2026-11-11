@@ -116,7 +116,7 @@ falharia num checkout limpo:
 
 ```bash
 pnpm turbo run dev --filter @habituar/web      # vite em http://localhost:5173
-pnpm turbo run dev --filter @habituar/mobile   # metro, para abrir no Expo Go
+pnpm turbo run dev --filter @habituar/mobile   # metro, para o build de desenvolvimento
 ```
 
 ### Web
@@ -139,9 +139,27 @@ cp apps/mobile/.env.example apps/mobile/.env   # o .env não é versionado
 |---|---|
 | Emulador Android | `http://10.0.2.2:8080` — `localhost` resolveria para o próprio emulador |
 | Aparelho na mesma rede | `http://<IP-LAN>:8080` |
+| Aparelho pelo adb (USB ou Wi-Fi) | `http://localhost:8080`, depois de `adb reverse tcp:8080 tcp:8080` |
 
 A variável não tem valor padrão: ausente, ou contendo `/v1`, o app falha antes do primeiro
-render em vez de errar a URL silenciosamente em runtime.
+render em vez de errar a URL silenciosamente em runtime. Ela entra no bundle quando o
+Metro sobe, então trocar o `.env` pede reiniciar o Metro com `--clear`.
+
+O app roda num build de desenvolvimento (`expo-dev-client`), não no Expo Go. O Expo Go
+traz um nativo fixo: ignora os plugins do `app.json` — identidade do pacote, `scheme` de
+deep link, splash, barra de navegação, configuração de notificações — e só acompanha o
+SDK mais recente. Testar lembrete de rotina nele não diz nada sobre o app real.
+
+O build nativo é compilado e instalado no aparelho ou emulador visível ao `adb`:
+
+```bash
+pnpm turbo run build --filter @habituar/mobile^...   # pacotes compartilhados no dist
+pnpm --filter @habituar/mobile android:build          # compila, instala e sobe o Metro
+```
+
+Ele só precisa ser refeito quando muda algo nativo: dependência com código nativo, plugin
+ou configuração nativa no `app.json`, versão do SDK. Fora disso, basta subir o Metro com
+`pnpm turbo run dev --filter @habituar/mobile` e abrir o app já instalado.
 
 ```bash
 pnpm --filter @habituar/mobile expo:doctor   # alinhamento com o SDK, rodado também no CI

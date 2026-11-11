@@ -52,6 +52,8 @@ export type {
   TrackedTask,
   TrackedTaskStatus,
 } from './agenda-hooks.js'
+export { groupStudentHistory } from './student-history-timeline.js'
+export type { StudentHistoryMoment, StudentHistoryPeriod, StudentHistoryPeriodGroup } from './student-history-timeline.js'
 export { listStudentHomeSections } from './student-home-hooks.js'
 export type { GuardianConsents, OwnConsentsState, PendingConsentsState, StudentHomeSections } from './student-home-hooks.js'
 export { createMemoryCredentialStorage } from './credential-storage.js'

@@ -828,5 +828,42 @@
     "leadMinutes": "{{count}} min",
     "leadHours": "{{count}}h",
     "leadDays": "{{count}} dia(s)"
+  },
+  "notificationSettings": {
+    "description": "Lembretes de consultas e permissão do aparelho",
+    "loading": "Verificando permissão…",
+    "retry": "Tentar novamente"
+  },
+  "studentProfile": {
+    "account": "Minha conta",
+    "name": "Nome",
+    "email": "E-mail",
+    "institution": "Instituição",
+    "preferences": "Preferências",
+    "notifications": "Notificações",
+    "unavailable": "Lembretes disponíveis para um único aluno vinculado.",
+    "off": "Desativadas",
+    "before": "{{count}} minutos antes",
+    "reminders": "Lembretes de tarefas",
+    "lead": "Avisar antes",
+    "minutes": "{{count}} minutos",
+    "minutes_one": "{{count}} minuto",
+    "reminderHelp": "Receba um lembrete antes das suas tarefas com horário definido. Tarefas de dia inteiro não geram lembretes.",
+    "devicePermission": "Permissão do aparelho",
+    "permission": {
+      "granted": "Notificações autorizadas",
+      "denied": "Abrir configurações do aparelho",
+      "undetermined": "Permitir notificações"
+    },
+    "permissionHelp": "Autorize as notificações para receber lembretes. A permissão é controlada nas configurações deste aparelho.",
+    "failed": "Não foi possível concluir. Tente novamente.",
+    "logoutQuestion": "Deseja sair da sua conta neste aparelho?"
+  },
+  "appointmentNotifications": {
+    "label": "Lembretes de consultas",
+    "help": "Receba um aviso antes das consultas atribuídas a você. Alterações são atualizadas ao sincronizar o aplicativo.",
+    "unavailable": "Lembretes de consultas disponíveis para quem tem acesso à agenda de atendimentos.",
+    "title": "Consulta agendada",
+    "startsIn": "Você tem uma consulta em {{lead}}."
   }
 }

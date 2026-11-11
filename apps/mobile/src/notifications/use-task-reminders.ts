@@ -3,6 +3,7 @@ import type { StudentId } from '@habituar/core/identity/ids'
 import type { MembershipContext } from '@habituar/react-client/react-client'
 import type { TFunction } from 'i18next'
 import { useEffect, useRef, useState } from 'react'
+import { AppState } from 'react-native'
 import { useTranslation } from 'react-i18next'
 import { habituar } from '../client/habituar-client'
 import { readCurrentTime } from '../time/current-time'
@@ -13,7 +14,6 @@ import {
   requestNotificationPermission,
 } from './notification-setup'
 import type { NotificationPermissionStatus } from './notification-setup'
-import { permissionRequestFlag } from './notification-permission-flag-storage'
 import { isValidLeadMinutes, reminderPreferenceStorage } from './reminder-preference-storage'
 import { planTaskReminders, REMINDER_WINDOW_DAYS, syncTaskReminders } from './task-reminders'
 
@@ -30,39 +30,35 @@ export function useTaskReminders(membership: MembershipContext, studentId: Stude
   const calendar = habituar.useStudentCalendar(membership, studentId, { from: now.date, to: addDays(now.date, REMINDER_WINDOW_DAYS - 1) }, TASKS_ONLY, now.date)
   const [leadMinutesList, setLeadMinutesList] = useState<readonly number[]>([])
   const [permission, setPermission] = useState<NotificationPermissionStatus>('undetermined')
-  const hasInitialized = useRef(false)
+  const stopped = useRef(false)
+  const [revision, setRevision] = useState(0)
+  const [hasLoaded, setHasLoaded] = useState(false)
+  const [error, setError] = useState(false)
 
   useEffect(() => {
-    if (hasInitialized.current) return
-    hasInitialized.current = true
-
-    void (async () => {
-      await ensureNotificationsConfigured()
-      setLeadMinutesList(await reminderPreferenceStorage.read())
-
-      const currentStatus = await getNotificationPermissionStatus()
-      const alreadyAskedOnce = await permissionRequestFlag.wasRequested()
-
-      // Pedido automático só na primeira vez que o app roda.
-      if (currentStatus === 'undetermined' && !alreadyAskedOnce) {
-        const result = await requestNotificationPermission()
-        await permissionRequestFlag.markRequested()
-        setPermission(result)
-        return
-      }
-
-      setPermission(currentStatus)
-    })()
-  }, [])
+    stopped.current = false
+    let active = true
+    async function refresh() {
+      try {
+        await ensureNotificationsConfigured()
+        const leads = await reminderPreferenceStorage.read(studentId)
+        const status = await getNotificationPermissionStatus()
+        if (active) { setLeadMinutesList(leads); setPermission(status); setHasLoaded(true) }
+      } catch { if (active) setError(true) }
+    }
+    void refresh()
+    const subscription = AppState.addEventListener('change', state => { if (state === 'active') void refresh() })
+    return () => { active = false; subscription.remove() }
+  }, [studentId])
 
   useEffect(() => {
-    if (calendar.state.status !== 'ready' || permission !== 'granted') return
+    if (stopped.current || !hasLoaded || calendar.state.status !== 'ready') return
     const current = readLocalDateTime(readCurrentTime())
-    const plan = planTaskReminders(studentId, calendar.state.days.flatMap(day => day.entries), leadMinutesList, current)
-    void syncTaskReminders(studentId, plan, leadMinutes => t('notifications.startsIn', { lead: describeLead(leadMinutes, t) }))
-  }, [calendar.state, leadMinutesList, permission, studentId, t])
+    const plan = permission !== 'granted' ? [] : planTaskReminders(studentId, calendar.state.days.flatMap(day => day.entries), leadMinutesList, current)
+    void syncTaskReminders(studentId, plan, leadMinutes => t('notifications.startsIn', { lead: describeLead(leadMinutes, t) })).catch(() => { setError(true) })
+  }, [revision, calendar.state, hasLoaded, leadMinutesList, permission, studentId, t])
 
-  /** Pedido reaberto sempre que a pessoa tenta mudar algo sem permissão. */
+  /** Pedido explícito após a explicação na tela de notificações. */
   async function ensurePermissionBeforeChange(): Promise<boolean> {
     const currentStatus = await getNotificationPermissionStatus()
     if (currentStatus === 'granted') {
@@ -81,25 +77,39 @@ export function useTaskReminders(membership: MembershipContext, studentId: Stude
     return result === 'granted'
   }
 
-  async function addLeadMinutes(value: number): Promise<void> {
-    if (!(await ensurePermissionBeforeChange())) return
-    if (!isValidLeadMinutes(value) || leadMinutesList.includes(value)) return
-    const next = [...leadMinutesList, value]
-    setLeadMinutesList(next)
-    await reminderPreferenceStorage.write(next)
-  }
-
-  async function removeLeadMinutes(value: number): Promise<void> {
-    const next = leadMinutesList.filter((entry) => entry !== value)
-    setLeadMinutesList(next)
-    await reminderPreferenceStorage.write(next)
+  async function selectLeadMinutes(value: number | undefined): Promise<void> {
+    if (value !== undefined && !isValidLeadMinutes(value)) return
+    const next = value === undefined ? [] : [value]
+    try {
+      await reminderPreferenceStorage.write(next, studentId)
+      setLeadMinutesList(next)
+      setError(false)
+    } catch { setError(true) }
   }
 
   async function requestPermission(): Promise<void> {
-    await ensurePermissionBeforeChange()
+    try {
+      if (await getNotificationPermissionStatus() === 'granted') await openAppNotificationSettings()
+      else await ensurePermissionBeforeChange()
+    } catch { setError(true) }
   }
 
-  return { leadMinutesList, addLeadMinutes, removeLeadMinutes, permission, requestPermission }
+  function resume(): void {
+    stopped.current = false
+    setRevision(value => value + 1)
+  }
+
+  async function stop(): Promise<void> {
+    stopped.current = true
+    await syncTaskReminders(studentId, [], () => '')
+  }
+
+  useEffect(() => () => {
+    stopped.current = true
+    void syncTaskReminders(studentId, [], () => '').catch(() => undefined)
+  }, [studentId])
+
+  return { leadMinutesList, selectLeadMinutes, permission, requestPermission, hasLoaded, error, stop, resume }
 }
 
 function describeLead(leadMinutes: number, t: TFunction): string {

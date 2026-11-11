@@ -85,13 +85,13 @@ beforeEach(() => {
 })
 
 describe('student home', () => {
-  it('shows the student their institution and their own registration', () => {
+  it('keeps account details out of the student home', () => {
     renderScreen(sessionWithRole('student'))
 
     expect(screen.getByRole('header', { name: 'Seu ambiente de aluno' })).toBeOnTheScreen()
-    expect(screen.getByText('Escola Aurora')).toBeOnTheScreen()
-    expect(screen.getByText('Seu cadastro')).toBeOnTheScreen()
-    expect(screen.getByText('Bruno Lima')).toBeOnTheScreen()
+    expect(screen.queryByText('Escola Aurora')).toBeNull()
+    expect(screen.queryByText('Seu cadastro')).toBeNull()
+    expect(screen.queryByText('Bruno Lima')).toBeNull()
     expect(screen.queryByText('Consentimentos para confirmar')).toBeNull()
   })
 
@@ -102,12 +102,9 @@ describe('student home', () => {
     expect(screen.getByRole('button', { name: /Leitura, Tarefa da equipe, .*14:00 às 15:00, Pendente/ })).toBeOnTheScreen()
   })
 
-  it('keeps a way out of the session', () => {
+  it('keeps account actions out of the home screen', () => {
     renderScreen(sessionWithRole('student'))
-
-    fireEvent.press(screen.getByRole('button', { name: 'Sair' }))
-
-    expect(mockClient.authentication.actions.logout).toHaveBeenCalledTimes(1)
+    expect(screen.queryByRole('button', { name: 'Sair' })).toBeNull()
   })
 
   it('confirms a guardian consent only after the confirmation sheet, then confirms it in passing', async () => {

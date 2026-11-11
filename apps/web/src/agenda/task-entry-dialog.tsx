@@ -5,7 +5,7 @@ import { TASK_EVALUATION_OUTCOMES, TASK_PHOTO_LIMIT, TASK_PHOTO_MEDIA_TYPES, tas
 import type { Task, TaskOccurrence, TaskPhoto as TaskPhotoValue } from '@habituar/core/tasks'
 import { useTaskEvaluationForm, useTaskNoteForm } from '@habituar/react-client/agenda-forms'
 import { isTaskDue, readTaskProgress } from '@habituar/react-client/react-client'
-import type { AgendaWriteResult, PhotoUploadResult, RoutineEntryWriteResult, TaskOccurrenceAccess } from '@habituar/react-client/react-client'
+import type { PhotoUploadResult, RoutineEntryWriteResult, TaskOccurrenceAccess } from '@habituar/react-client/react-client'
 import { ImagePlus, Trash2 } from 'lucide-react'
 import { useId, useRef, useState } from 'react'
 import type { ReactElement } from 'react'

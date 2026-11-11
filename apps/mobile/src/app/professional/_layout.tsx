@@ -1,3 +1,4 @@
+import { ProfessionalRemindersProvider } from '../../notifications/professional-reminders-provider'
 import { Tabs } from 'expo-router'
 import { InstitutionSessionScreen } from '../../session/session-screen'
 import { ProfessionalTabBar } from '../../shell/professional-tab-bar'
@@ -11,19 +12,21 @@ export default function ProfessionalLayout() {
   return (
     <InstitutionSessionScreen>
       {(session) => (
-        <Tabs
-          // A barra é nossa, não a do navegador: itens, ordem e item ativo vêm do hook
-          // compartilhado, e a padrão decidiria rótulo e ícone pela configuração de rota.
-          tabBar={() => <ProfessionalTabBar session={session} />}
-          screenOptions={{ headerShown: false }}
-        >
-          <Tabs.Screen name="index" />
-          <Tabs.Screen name="agenda" />
-          <Tabs.Screen name="management" />
-          <Tabs.Screen name="profile" />
-          {/* Fora da barra: a ficha abre a partir da lista do Início, e voltar leva a ele. */}
-          <Tabs.Screen name="students/[student-id]" />
-        </Tabs>
+        <ProfessionalRemindersProvider session={session}>
+          <Tabs
+            // A barra é nossa, não a do navegador: itens, ordem e item ativo vêm do hook
+            // compartilhado, e a padrão decidiria rótulo e ícone pela configuração de rota.
+            tabBar={() => <ProfessionalTabBar session={session} />}
+            screenOptions={{ headerShown: false }}
+          >
+            <Tabs.Screen name="index" />
+            <Tabs.Screen name="agenda" />
+            <Tabs.Screen name="management" />
+            <Tabs.Screen name="profile" />
+            {/* Fora da barra: a ficha abre a partir da lista do Início, e voltar leva a ele. */}
+            <Tabs.Screen name="students/[student-id]" />
+          </Tabs>
+        </ProfessionalRemindersProvider>
       )}
     </InstitutionSessionScreen>
   )

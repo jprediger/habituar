@@ -1,3 +1,4 @@
+import i18n from '../i18n/i18n'
 import * as Notifications from 'expo-notifications'
 import { Platform, Linking } from 'react-native'
 
@@ -17,6 +18,7 @@ export async function ensureNotificationsConfigured(): Promise<void> {
   })
 
   if (Platform.OS === 'android') {
+    await Notifications.setNotificationChannelAsync('appointment-reminders', { name: i18n.t('appointmentNotifications.label'), importance: Notifications.AndroidImportance.DEFAULT })
     await Notifications.setNotificationChannelAsync('routine-reminders', {
       name: 'Lembretes de rotina',
       importance: Notifications.AndroidImportance.DEFAULT,

@@ -22,7 +22,7 @@ const MINIMUM_TABS = 2
  * navegação, então esta barra nunca decide sozinha o que a pessoa pode abrir.
  * A administração geral não tem casca no app, só o aviso de que ela acontece na web.
  */
-type MobileNavigationPath = Exclude<NavigationPath<'professional' | 'student'>, '/professional/students'>
+type MobileNavigationPath = Exclude<NavigationPath<'professional' | 'student'>, '/professional/students'> | '/student/profile'
 
 export function EnvironmentTabBar({ items }: Readonly<{ items: readonly NavigationItem<MobileNavigationPath>[] }>) {
   const { t } = useTranslation()

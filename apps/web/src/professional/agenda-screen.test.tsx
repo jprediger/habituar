@@ -25,6 +25,7 @@ let canSchedule = true
 const agenda = (): ProfessionalAgenda => ({
   state: { status: 'ready', days: groupAgendaByDay(items, range) },
   canSchedule,
+  reload: vi.fn(() => Promise.resolve()),
   create: vi.fn(), update: vi.fn(), remove: vi.fn(), cancelOccurrence,
 })
 const cursor: AgendaCursor = { date: MONDAY, view: 'week', range, select: vi.fn(), changeView: vi.fn(), goToday: vi.fn(), goPrevious: vi.fn(), goNext: vi.fn() }

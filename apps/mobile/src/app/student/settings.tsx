@@ -1,6 +1,6 @@
-import { InstitutionSessionScreen } from '../../session/session-screen'
-import { StudentSettingsScreen } from '../../student/student-settings-screen'
+import { Redirect } from 'expo-router'
 
+/** Preserva o destino antigo, mantendo notificações dentro da pilha de Perfil. */
 export default function StudentSettingsRoute() {
-  return <InstitutionSessionScreen>{(session) => <StudentSettingsScreen session={session} />}</InstitutionSessionScreen>
+  return <Redirect href="/student/profile/notifications" />
 }

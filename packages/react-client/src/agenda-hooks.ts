@@ -7,7 +7,7 @@ import { taskAgendaSchema, canCompleteOn } from '@habituar/core/tasks'
 import type { Task, TaskAgenda, TaskEvaluationInput, TaskOccurrence, TaskPhoto, TaskPhotoContent, TaskPhotoInput } from '@habituar/core/tasks'
 import type { QueryClient } from '@tanstack/react-query'
 import { useQuery } from '@tanstack/react-query'
-import { useState, useSyncExternalStore } from 'react'
+import { useCallback, useState, useSyncExternalStore } from 'react'
 import type { ApiClient } from './api-client.js'
 import { entryKeyOf, overlayPendingChange, overlayTaskAgenda } from './offline-sync.js'
 import type { OfflineSync, PendingEntryChange, RoutineEntryWriteResult } from './offline-sync.js'
@@ -55,6 +55,7 @@ export type AgendaCursor = Readonly<{
 
 export type ProfessionalAgenda = Readonly<{
   state: AgendaState
+  reload: () => Promise<void>
   /** Dica de interface, não autorização: a API confere `appointment.write` de novo em cada envio. */
   canSchedule: boolean
   create: (studentId: StudentId, input: AppointmentInput) => Promise<AgendaWriteResult>
@@ -342,6 +343,8 @@ export function createAgendaHooks(dependencies: AgendaHookDependencies): AgendaH
       retry: retryOnlyWithoutServerResponse,
     }, queryClient)
 
+    const reload = useCallback(async () => { await query.refetch({ throwOnError: true }) }, [query.refetch])
+
     const state: AgendaState = query.isPending
       ? { status: 'loading' }
       : query.isError
@@ -350,6 +353,7 @@ export function createAgendaHooks(dependencies: AgendaHookDependencies): AgendaH
 
     return {
       state,
+      reload,
       canSchedule: membership.permissions.some(grant => grant.key === 'appointment.write'),
       create: (studentId, input) => writeAppointment(institutionId, studentId, () => apiClient.appointments.create({ institutionId, studentId, appointment: input })),
       ...appointmentWrites(institutionId),

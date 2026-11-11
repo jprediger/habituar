@@ -1,15 +1,15 @@
 import { useTranslation } from 'react-i18next'
 import { Page } from '../components/ui/page'
 import { PageHeader } from '../components/ui/page-header'
-import { ChoiceList } from '../components/ui/choice-list'
 import { ListDivider } from '../components/ui/list-divider'
 import { ListRow } from '../components/ui/list-row'
 import { ListSection } from '../components/ui/list-section'
 import type { InstitutionSession } from '../session/session-screen'
 import { SignOutButton } from '../session/sign-out-button'
 import { InstitutionSwitcher } from '../session/institution-switcher'
-import { useThemePreference } from '../theme/app-theme-preference'
-import { THEME_PREFERENCES } from '../theme/theme-preference'
+import { ProfileThemeSettings } from '../theme/profile-theme-settings'
+import { useProfessionalReminders } from '../notifications/professional-reminders-provider'
+import { useRouter } from 'expo-router'
 
 /**
  * Perfil do profissional: a conta, o vínculo ativo, a aparência e a saída da sessão. Não oferece
@@ -17,7 +17,8 @@ import { THEME_PREFERENCES } from '../theme/theme-preference'
  */
 export function ProfessionalProfileScreen({ session }: Readonly<{ session: InstitutionSession }>) {
   const { t } = useTranslation()
-  const themePreference = useThemePreference()
+  const router = useRouter()
+  const reminders = useProfessionalReminders()
 
   return (
     <Page>
@@ -40,22 +41,15 @@ export function ProfessionalProfileScreen({ session }: Readonly<{ session: Insti
       </ListSection>
 
       <ListDivider />
-      <ListSection title={t('professional.profile.appearanceSection')}>
-        <ChoiceList
-          label={t('professional.profile.themeLabel')}
-          choices={THEME_PREFERENCES.map((preference) => ({
-            value: preference,
-            label: t(`professional.profile.theme.${preference}`),
-          }))}
-          // A tela só monta depois de a raiz esperar a preferência; `loading` aqui seria
-          // leitura antes da hora, e o sistema é o que o app já está mostrando nesse caso.
-          value={themePreference.state.status === 'ready' ? themePreference.state.preference : 'system'}
-          onChange={themePreference.select}
-        />
+      <ListSection title={t('studentProfile.preferences')}>
+        <ListRow icon="gear" title={t('studentProfile.notifications')} description={t('notificationSettings.description')} onPress={() => { router.push('/professional/profile/notifications') }} />
       </ListSection>
 
       <ListDivider />
-      <SignOutButton />
+      <ProfileThemeSettings />
+
+      <ListDivider />
+      <SignOutButton beforeSignOut={reminders?.stop} onFailure={reminders?.resume} />
     </Page>
   )
 }

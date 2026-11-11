@@ -31,7 +31,7 @@ type ShellNavigationPaths = Readonly<{
 
 export type NavigationPath<Shell extends keyof ShellNavigationPaths = keyof ShellNavigationPaths> = ShellNavigationPaths[Shell]
 
-export type NavigationItem<Path extends NavigationPath = NavigationPath> = Readonly<{
+export type NavigationItem<Path extends string = NavigationPath> = Readonly<{
   id: NavigationId
   labelKey: `navigation.${NavigationId}`
   path: Path
@@ -81,7 +81,7 @@ export function useProfessionalNavigation(
  * Qual destino está ativo para um caminho, pelo segmento mais específico que o contém.
  * Recusa prefixo solto: `/professionalx` não pertence ao ambiente.
  */
-export function findActiveNavigationItem<Item extends NavigationItem>(
+export function findActiveNavigationItem<Item extends NavigationItem<string>>(
   items: readonly Item[],
   pathname: string,
 ): Item | undefined {
@@ -100,7 +100,7 @@ export function findActiveNavigationItem<Item extends NavigationItem>(
  * próprios caminhos — um destino é ancestral de outro quando o contém como segmento —,
  * então destino novo entra na trilha certa sem declarar pai à mão.
  */
-export function listNavigationBreadcrumbs<Item extends NavigationItem>(
+export function listNavigationBreadcrumbs<Item extends NavigationItem<string>>(
   items: readonly Item[],
   pathname: string,
 ): readonly Item[] {

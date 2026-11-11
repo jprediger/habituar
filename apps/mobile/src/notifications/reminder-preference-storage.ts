@@ -6,7 +6,7 @@ const KEY = 'habituar.routine-reminder-lead-minutes-list'
 export const MIN_LEAD_MINUTES = 1
 export const MAX_LEAD_MINUTES = 14 * 24 * 60
 
-export const PRESET_LEAD_MINUTES = [10, 30, 60, 1440] as const
+export const PRESET_LEAD_MINUTES = [10, 15, 30, 60] as const
 
 export function isValidLeadMinutes(value: number): boolean {
   return Number.isInteger(value) && value >= MIN_LEAD_MINUTES && value <= MAX_LEAD_MINUTES
@@ -16,7 +16,10 @@ function parseStoredList(raw: string): readonly number[] {
   try {
     const parsed: unknown = JSON.parse(raw)
     if (!Array.isArray(parsed)) return []
-    return parsed.filter((value): value is number => typeof value === 'number' && isValidLeadMinutes(value))
+    const valid = parsed.filter((value): value is number => typeof value === 'number' && isValidLeadMinutes(value))
+    if (valid.length === 0) return []
+    // Preferências antigas podiam ter vários horários ou dias; a nova tela oferece um só.
+    return [valid.find(value => PRESET_LEAD_MINUTES.some(preset => preset === value)) ?? 30]
   } catch {
     return []
   }
@@ -24,13 +27,22 @@ function parseStoredList(raw: string): readonly number[] {
 
 /** Lista de antecedências (em minutos) */
 export const reminderPreferenceStorage = {
-  async read(): Promise<readonly number[]> {
-    const stored = await AsyncStorage.getItem(KEY)
+  async read(scope?: string): Promise<readonly number[]> {
+    const stored = await AsyncStorage.getItem(scope === undefined ? KEY : `${KEY}:${scope}`)
+    if (stored === null && scope !== undefined) {
+      const legacy = await AsyncStorage.getItem(KEY)
+      if (legacy !== null) {
+        const values = parseStoredList(legacy)
+        await AsyncStorage.setItem(`${KEY}:${scope}`, JSON.stringify(values))
+        await AsyncStorage.removeItem(KEY)
+        return values
+      }
+    }
     if (stored === null) return [30]
     return parseStoredList(stored)
   },
-  async write(values: readonly number[]): Promise<void> {
+  async write(values: readonly number[], scope?: string): Promise<void> {
     const unique = [...new Set(values)].filter(isValidLeadMinutes).sort((a, b) => a - b)
-    await AsyncStorage.setItem(KEY, JSON.stringify(unique))
+    await AsyncStorage.setItem(scope === undefined ? KEY : `${KEY}:${scope}`, JSON.stringify(unique))
   },
 }

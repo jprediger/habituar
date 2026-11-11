@@ -46,7 +46,7 @@ export function planTaskReminders(studentId: StudentId, entries: readonly Calend
 }
 
 /** Troca os lembretes agendados deste aluno pelo plano novo; o resto do aparelho fica como está. */
-export async function syncTaskReminders(studentId: StudentId, reminders: readonly PlannedReminder[], describeLead: (leadMinutes: number) => string): Promise<void> {
+async function replaceTaskReminders(studentId: StudentId, reminders: readonly PlannedReminder[], describeLead: (leadMinutes: number) => string): Promise<void> {
   const scheduled = await Notifications.getAllScheduledNotificationsAsync()
   // Prefixo antigo da rotina sai junto: o lembrete semanal de antes repetiria para sempre.
   const own = scheduled.map(entry => entry.identifier).filter(identifier => identifier.startsWith(`${IDENTIFIER_PREFIX}${studentId}:`) || identifier.startsWith(`routine-reminder:${studentId}:`))
@@ -60,4 +60,12 @@ export async function syncTaskReminders(studentId: StudentId, reminders: readonl
       trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: new Date(year, month - 1, day, hour, minute), channelId: 'routine-reminders' },
     })
   }))
+}
+
+// Mudanças de preferência e saída da sessão não podem intercalar cancelamento e agendamento.
+let pendingSync: Promise<void> = Promise.resolve()
+export function syncTaskReminders(studentId: StudentId, reminders: readonly PlannedReminder[], describeLead: (leadMinutes: number) => string): Promise<void> {
+  const next = pendingSync.catch(() => undefined).then(() => replaceTaskReminders(studentId, reminders, describeLead))
+  pendingSync = next
+  return next
 }

@@ -19,10 +19,7 @@ import { Page } from '../components/ui/page'
 import { PageHeader } from '../components/ui/page-header'
 import { Text } from '../components/ui/text'
 import { useToast } from '../components/ui/toast'
-import { InstitutionSwitcher } from '../session/institution-switcher'
 import type { InstitutionSession } from '../session/session-screen'
-import { SignOutButton } from '../session/sign-out-button'
-import { useRouter } from 'expo-router'
 import { readLocalDateTime } from '@habituar/core/calendar'
 import type { StudentId } from '@habituar/core/identity/ids'
 import { useAgendaLabels } from '../agenda/agenda-labels'
@@ -31,11 +28,10 @@ import { readCurrentTime } from '../time/current-time'
 
 /**
  * Tela inicial do ambiente de aluno: a única superfície escrita na primeira pessoa. Mostra
- * ao aluno o próprio cadastro e ao responsável os consentimentos que confirma ou revoga.
+ * as tarefas do dia e ao responsável os consentimentos que confirma ou revoga.
  */
 export function StudentHomeScreen({ session }: Readonly<{ session: InstitutionSession }>) {
   const { t } = useTranslation()
-  const router = useRouter()
   const sections = listStudentHomeSections(session.membership)
 
   return (
@@ -43,54 +39,12 @@ export function StudentHomeScreen({ session }: Readonly<{ session: InstitutionSe
       <PageHeader eyebrow={t('navigation.home')} title={t('home.student-home.title')} />
       <Text tone="muted">{t('home.student-home.description')}</Text>
 
-      <ListSection title={t('home.membershipTitle')}>
-        <ListRow title={t('home.institutionLabel')} value={session.membership.institution.name} />
-        <ListRow
-          title={t('home.roleLabel')}
-          value={session.membership.roles.map((role) => role.templateKey === null ? role.name : t(`roles.${role.templateKey}`)).join(', ')}
-        />
-      </ListSection>
-
-      {sections.showsOwnRecord && <><ListDivider /><OwnRecordSection session={session} isGuardianToo={sections.isGuardianToo} /></>}
       {sections.showsOwnRecord && <OwnTodayTasks session={session} />}
       {sections.showsGuardianConsents && <><ListDivider /><GuardianConsentSections /></>}
 
-      <View style={styles.footer}>
-        <Button
-          variant="outline"
-          icon="gear"
-          label={t('navigation.settings')}
-          onPress={() => { router.push('/student/settings') }}
-        />
-        <InstitutionSwitcher />
-        <SignOutButton />
-      </View>
+
     </Page>
   )
-}
-
-function OwnRecordSection({ session, isGuardianToo }: Readonly<{ session: InstitutionSession; isGuardianToo: boolean }>) {
-  const { t } = useTranslation()
-  const { state } = habituar.useAccessibleStudents(session.membership)
-  const title = t(isGuardianToo ? 'studentHome.self.combinedTitle' : 'studentHome.self.title')
-
-  switch (state.status) {
-    case 'loading':
-      return <Skeleton><ListSectionSkeleton hasTitle rows={1} /></Skeleton>
-    case 'failed':
-      return <Text accessibilityRole="alert" tone="danger">{t('studentHome.self.failed')}</Text>
-    case 'ready':
-      if (state.students.length === 0) return <EmptyState title={t('studentHome.self.emptyTitle')} description={t('studentHome.self.emptyDescription')} />
-      return (
-        <ListSection title={title} footer={t('studentHome.self.description')}>
-          {state.students.map((student) => (
-            <ListRow key={student.id} title={displayName(student)} description={t('studentHome.self.birthDateValue', { date: formatCalendarDate(student.birthDate) })} />
-          ))}
-        </ListSection>
-      )
-    default:
-      return assertNever(state)
-  }
 }
 
 const TASKS_ONLY = { 'student-task': true, 'staff-task': true, consultation: false } as const
@@ -257,13 +211,6 @@ function formatDateTime(iso: string): string {
   return DATE_TIME_FORMAT.format(new Date(iso))
 }
 
-// Data de calendário sem fuso: passar por `Date` a deslocaria um dia a oeste de UTC.
-function formatCalendarDate(isoDate: string): string {
-  const [year, month, day] = isoDate.split('-')
-  return `${day ?? ''}/${month ?? ''}/${year ?? ''}`
-}
-
 const styles = StyleSheet.create({
   stack: { gap: SPACING.lg },
-  footer: { gap: SPACING.sm },
 })

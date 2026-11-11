@@ -25,6 +25,8 @@ import { createAgendaHooks } from './agenda-hooks.js'
 import type { AgendaHooks } from './agenda-hooks.js'
 import { createCalendarHooks } from './calendar-hooks.js'
 import type { CalendarHooks } from './calendar-hooks.js'
+import { createHomeMetricsHooks } from './home-metrics.js'
+import type { HomeMetricsHooks } from './home-metrics.js'
 import { createRoutineHooks } from './routine-hooks.js'
 import type { RoutineHooks } from './routine-hooks.js'
 import { createStudentHomeHooks } from './student-home-hooks.js'
@@ -101,7 +103,7 @@ type InstitutionSwitcher = Readonly<{ current: MembershipContext | undefined; ot
  */
 export type OfflineStatus = Readonly<{ connection: ConnectionState; pendingChanges: number; discardedChanges: number; syncNow(): Promise<void>; dismissDiscarded(): void }>
 
-export type HabituarReactClient = StaffHooks & StudentHooks & StudentRecordHooks & StudentHomeHooks & RoutineHooks & AgendaHooks & CalendarHooks & Readonly<{
+export type HabituarReactClient = StaffHooks & StudentHooks & StudentRecordHooks & StudentHomeHooks & RoutineHooks & AgendaHooks & CalendarHooks & HomeMetricsHooks & Readonly<{
   Provider(props: PropsWithChildren): ReactElement
   useHealth(): Readonly<{ state: HealthState; retry(): void }>
   useAuthentication(): AuthContextValue
@@ -646,5 +648,5 @@ export function createHabituarReactClient(
   const routineHooks = createRoutineHooks({ apiClient, queryClient })
   const agendaHooks = createAgendaHooks({ apiClient, queryClient, offline })
   const calendarHooks = createCalendarHooks({ apiClient, queryClient, offline, filterStorage: options.calendarFilterStorage ?? createMemoryPreferenceStorage() })
-  return { Provider, useHealth, useAuthentication, useInstitutionSwitcher, useOfflineStatus, usePlatformInstitutions, usePlatformInstitution, useInvitation, ...staffHooks, ...studentHooks, ...studentRecordHooks, ...studentHomeHooks, ...routineHooks, ...agendaHooks, ...calendarHooks }
+  return { Provider, useHealth, useAuthentication, useInstitutionSwitcher, useOfflineStatus, usePlatformInstitutions, usePlatformInstitution, useInvitation, ...staffHooks, ...studentHooks, ...studentRecordHooks, ...studentHomeHooks, ...routineHooks, ...agendaHooks, ...calendarHooks, ...createHomeMetricsHooks({ agendaHooks }) }
 }

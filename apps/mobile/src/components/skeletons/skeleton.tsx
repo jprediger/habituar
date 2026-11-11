@@ -3,6 +3,7 @@ import type { PropsWithChildren } from 'react'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Animated, Easing, StyleSheet } from 'react-native'
+import type { StyleProp, ViewStyle } from 'react-native'
 import { useReduceMotion } from '../ui/use-reduce-motion'
 
 // Resposta rápida não pisca esqueleto: abaixo disso, a troca de tela já parece imediata e
@@ -17,9 +18,9 @@ const PULSE_MIN_OPACITY = 0.45
  * só forma e se agrupam num único elemento acessível; quem ouve a tela recebe "Carregando"
  * uma vez, não uma lista de retângulos.
  */
-export function Skeleton({ children }: PropsWithChildren) {
+export function Skeleton({ children, style, delayMs = SKELETON_DELAY_MS }: PropsWithChildren<{ style?: StyleProp<ViewStyle>; delayMs?: number }>) {
   const { t } = useTranslation()
-  const isVisible = useDelayedVisibility()
+  const isVisible = useDelayedVisibility(delayMs)
   const opacity = usePulse(isVisible)
 
   if (!isVisible) return null
@@ -29,19 +30,19 @@ export function Skeleton({ children }: PropsWithChildren) {
       accessibilityRole="progressbar"
       accessibilityLabel={t('skeleton.loading')}
       accessibilityLiveRegion="polite"
-      style={[styles.container, { opacity }]}
+      style={[styles.container, style, { opacity }]}
     >
       {children}
     </Animated.View>
   )
 }
 
-function useDelayedVisibility(): boolean {
-  const [isVisible, setIsVisible] = useState(false)
+function useDelayedVisibility(delayMs: number): boolean {
+  const [isVisible, setIsVisible] = useState(delayMs === 0)
   useEffect(() => {
-    const timer = setTimeout(() => { setIsVisible(true) }, SKELETON_DELAY_MS)
+    const timer = setTimeout(() => { setIsVisible(true) }, delayMs)
     return () => { clearTimeout(timer) }
-  }, [])
+  }, [delayMs])
   return isVisible
 }
 

@@ -48,11 +48,7 @@ export function AgendaTitleMenu({ navigation, filter, types, today, viewer }: Re
 
   return (
     <View style={styles.bar}>
-      {canReturnToMonth && (
-        <Pressable accessibilityRole="button" accessibilityLabel={t('calendar.backToMonth')} onPress={returnToMonth} hitSlop={SPACING.sm} style={[styles.arrow, { minWidth: minimumTouchTarget, minHeight: minimumTouchTarget }]}>
-          <Icon name="arrow-left" size={24} color={colors.text} />
-        </Pressable>
-      )}
+
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={t('calendar.menuLabel', { title: spokenTitle, view: t(`calendar.views.${navigation.view}`) })}

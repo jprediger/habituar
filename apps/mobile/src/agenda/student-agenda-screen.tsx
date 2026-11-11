@@ -9,6 +9,7 @@ import { StyleSheet, View } from 'react-native'
 import { habituar } from '../client/habituar-client'
 import { OfflineNotice } from './offline-notice'
 import { AgendaFab } from '../components/agenda-fab'
+import { AgendaPageSkeleton } from '../components/agenda-view-skeleton'
 import { ChoiceList } from '../components/ui/choice-list'
 import { EmptyState } from '../components/ui/empty-state'
 import { FixedPage } from '../components/ui/fixed-page'
@@ -37,14 +38,14 @@ export function StudentAgendaScreen({ session }: Readonly<{ session: Institution
 
   return (
     <View style={styles.root}>
-      <FixedPage>
+      <FixedPage fallback={<AgendaPageSkeleton date={readLocalDateTime(readCurrentTime()).date} />}>
         <OfflineNotice />
         {/* O título do período faz as vezes de cabeçalho visível; o leitor de tela ainda ouve o nome da tela como título. */}
         <View accessible accessibilityRole="header" accessibilityLabel={t('title')} style={styles.screenReaderHeading} />
         {(() => {
           switch (state.status) {
             case 'loading':
-              return <Text tone="muted" accessibilityLiveRegion="polite">{t('loading')}</Text>
+              return <AgendaPageSkeleton date={readLocalDateTime(readCurrentTime()).date} />
             case 'failed':
               return <Text accessibilityRole="alert" tone="danger">{t('failed')}</Text>
             case 'ready':

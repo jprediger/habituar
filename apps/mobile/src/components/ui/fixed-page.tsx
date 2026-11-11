@@ -1,5 +1,5 @@
 import { SPACING } from '@habituar/design-tokens/spacing'
-import type { PropsWithChildren } from 'react'
+import type { PropsWithChildren, ReactNode } from 'react'
 import { StyleSheet, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { PageSkeleton } from '../skeletons/page-skeleton'
@@ -11,13 +11,13 @@ import { DeferredMount } from './deferred-mount'
  * altura da tela. Existe para telas que são donas da própria rolagem, como a agenda —
  * dentro de uma rolagem sem limite elas cresceriam até o fim e nunca rolariam.
  */
-export function FixedPage({ children }: PropsWithChildren) {
+export function FixedPage({ children, fallback = <PageSkeleton /> }: PropsWithChildren<{ fallback?: ReactNode }>) {
   const { colors } = useThemeTokens()
 
   return (
     <SafeAreaView edges={['top', 'left', 'right']} style={[styles.safeArea, { backgroundColor: colors.surface }]}>
       <View style={styles.content}>
-        <DeferredMount fallback={<PageSkeleton />}>{children}</DeferredMount>
+        <DeferredMount fallback={fallback}>{children}</DeferredMount>
       </View>
     </SafeAreaView>
   )

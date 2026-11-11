@@ -7,6 +7,12 @@ describe('skeleton', () => {
   beforeEach(() => { jest.useFakeTimers() })
   afterEach(() => { jest.useRealTimers() })
 
+  it('can show immediately when it replaces calendar content', () => {
+    render(<Skeleton delayMs={0}><ListSectionSkeleton rows={3} /></Skeleton>)
+
+    expect(screen.getByRole('progressbar')).toBeOnTheScreen()
+  })
+
   it('stays hidden while loading is fast, so a quick response does not flash placeholders', () => {
     render(<Skeleton><ListSectionSkeleton rows={3} /></Skeleton>)
 

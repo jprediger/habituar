@@ -5,6 +5,9 @@ import { useTranslation } from 'react-i18next'
 import { habituar } from '../client/habituar-client'
 import { AgendaDayList } from '../components/agenda-day-list'
 import { AgendaWeekStrip } from '../components/agenda-week-strip'
+import { ListSectionSkeleton } from '../components/skeletons/list-section-skeleton'
+import { Skeleton } from '../components/skeletons/skeleton'
+import { SkeletonBlock } from '../components/skeletons/skeleton-block'
 import { ListRow } from '../components/ui/list-row'
 import { Page } from '../components/ui/page'
 import { PageHeader } from '../components/ui/page-header'
@@ -33,7 +36,7 @@ export function ProfessionalAgendaScreen({ session }: Readonly<{ session: Instit
       {(() => {
         switch (agenda.state.status) {
           case 'loading':
-            return <Text tone="muted" accessibilityLiveRegion="polite">{t('loading')}</Text>
+            return <Skeleton><SkeletonBlock height={64} /><ListSectionSkeleton rows={3} hasTitle /></Skeleton>
           case 'failed':
             return <Text accessibilityRole="alert" tone="danger">{t(agenda.state.failure === 'forbidden' ? 'forbidden' : 'failed')}</Text>
           case 'ready': {

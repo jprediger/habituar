@@ -22,6 +22,8 @@ describe('agenda month grid', () => {
     const onOpenDay = jest.fn()
     render(<AgendaMonthGrid days={days} month={TODAY} today={TODAY} onOpenDay={onOpenDay} />)
 
+    fireEvent(screen.getByTestId('agenda-month-weeks', { includeHiddenElements: true }), 'layout', { nativeEvent: { layout: { height: 600 } } })
+
     fireEvent.press(screen.getByRole('button', { name: /terça-feira, 10 de novembro de 2026, 1 itens: Leitura, Tarefa da equipe, .*14:00 às 15:00, Em falta/i }))
 
     expect(onOpenDay).toHaveBeenCalledWith(MISSED)
@@ -31,6 +33,8 @@ describe('agenda month grid', () => {
     const onOpenDay = jest.fn()
     render(<AgendaMonthGrid days={days} month={TODAY} today={TODAY} onOpenDay={onOpenDay} />)
 
+    fireEvent(screen.getByTestId('agenda-month-weeks', { includeHiddenElements: true }), 'layout', { nativeEvent: { layout: { height: 600 } } })
+
     fireEvent.press(screen.getByRole('button', { name: /quarta-feira, 11 de novembro de 2026/i }))
 
     expect(onOpenDay).toHaveBeenCalledTimes(1)
@@ -38,9 +42,14 @@ describe('agenda month grid', () => {
   })
 
   it('counts what does not fit in the cell instead of clipping it', () => {
-    const busy = days.map(day => day.date === MISSED ? { ...day, entries: Array.from({ length: 5 }, (_, index) => ({ ...MISSED_ENTRY, key: `leitura-${String(index)}` })) } : day)
+    const busy = days.map(day => day.date === MISSED ? { ...day, entries: Array.from({ length: 8 }, (_, index) => ({ ...MISSED_ENTRY, key: `leitura-${String(index)}` })) } : day)
     render(<AgendaMonthGrid days={busy} month={TODAY} today={TODAY} onOpenDay={jest.fn()} />)
 
+    expect(screen.queryByRole('button', { name: /terça-feira, 10 de novembro/i })).not.toBeOnTheScreen()
+    expect(screen.getByRole('progressbar')).toBeOnTheScreen()
+    fireEvent(screen.getByTestId('agenda-month-weeks', { includeHiddenElements: true }), 'layout', { nativeEvent: { layout: { height: 600 } } })
+
+    expect(screen.queryByRole('progressbar')).not.toBeOnTheScreen()
     expect(screen.getByText('+4')).toBeOnTheScreen()
   })
 })

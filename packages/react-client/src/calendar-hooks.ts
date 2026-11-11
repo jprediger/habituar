@@ -6,9 +6,9 @@ import type { StudentId } from '@habituar/core/identity/ids'
 import { expandOccurrences } from '@habituar/core/schedule'
 import type { ScheduleTime } from '@habituar/core/schedule'
 import type { Task, TaskAgenda, TaskChange, TaskInput, TaskOccurrence, TaskOrigin, TaskRemoval } from '@habituar/core/tasks'
-import { keepPreviousData, useQuery } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import type { QueryClient } from '@tanstack/react-query'
-import { useState, useSyncExternalStore } from 'react'
+import { useMemo, useState, useSyncExternalStore } from 'react'
 import { z } from 'zod'
 import type { ApiClient } from './api-client.js'
 import type { PreferenceStorage } from './preference-storage.js'
@@ -281,8 +281,6 @@ export function createCalendarHooks(dependencies: CalendarHookDependencies): Cal
     const tasks = useQuery({
       queryKey: queryKeys.studentTasks(institutionId, studentId, range.from, range.to),
       queryFn: () => apiClient.tasks.list({ institutionId, studentId, from: range.from, to: range.to }),
-      // Trocar de dia ou período mantém a visão anterior até o novo intervalo chegar, sem piscar o carregando.
-      placeholderData: keepPreviousData,
       retry: retryOnlyWithoutServerResponse,
     }, queryClient)
     // Atendimento é complemento: sem `appointment.read`, ou com consultas escondidas, nem é buscado.
@@ -290,12 +288,16 @@ export function createCalendarHooks(dependencies: CalendarHookDependencies): Cal
     const appointments = useQuery({
       queryKey: queryKeys.studentAppointments(institutionId, studentId, range.from, range.to),
       queryFn: () => apiClient.appointments.listForStudent({ institutionId, studentId, from: range.from, to: range.to }),
-      placeholderData: keepPreviousData,
       retry: retryOnlyWithoutServerResponse,
       enabled: readsAppointments,
     }, queryClient)
 
-    const pending = useSyncExternalStore(dependencies.offline.subscribe, dependencies.offline.getState).pending.filter(change => change.institutionId === institutionId && change.studentId === studentId)
+    const pending = useSyncExternalStore(dependencies.offline.subscribe, dependencies.offline.getState).pending
+    const days = useMemo(() => tasks.data === undefined ? [] : groupCalendarByDay(
+      [...taskEntries(overlayTaskAgenda(tasks.data, pending.filter(change => change.institutionId === institutionId && change.studentId === studentId)), { from: range.from, to: range.to }, today), ...(readsAppointments ? appointmentEntries(appointments.data ?? [], { from: range.from, to: range.to }) : [])].filter(entry => filter[entry.type]),
+      { from: range.from, to: range.to },
+    ), [tasks.data, appointments.data, readsAppointments, range.from, range.to, filter, today, pending, institutionId, studentId])
+
     const failed = [tasks, ...(readsAppointments ? [appointments] : [])].find(isBlockingFailure)
     const state: CalendarState = failed !== undefined
       ? { status: 'failed', failure: toLoadFailure(failed.error) }
@@ -303,10 +305,7 @@ export function createCalendarHooks(dependencies: CalendarHookDependencies): Cal
         ? { status: 'loading' }
         : {
             status: 'ready',
-            days: groupCalendarByDay(
-              [...taskEntries(overlayTaskAgenda(tasks.data, pending), range, today), ...(readsAppointments ? appointmentEntries(appointments.data ?? [], range) : [])].filter(entry => filter[entry.type]),
-              range,
-            ),
+            days,
           }
 
     return { state, creatableOrigins: (['student', 'staff'] as const).filter(origin => canWriteTaskSeries(membership, origin)) }

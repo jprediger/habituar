@@ -9,9 +9,8 @@ import { entryColor } from '../agenda/entry-color'
 import { useThemeTokens } from '../theme/tokens'
 import { FAB_CLEARANCE } from './agenda-fab'
 import { Text } from './ui/text'
+import { AgendaViewSkeleton } from './agenda-view-skeleton'
 
-// Antes de medir a grade não se sabe quantos itens cabem; dois cabem em qualquer tela.
-const UNMEASURED_FIT = 2
 // Linhas que a semana garante abaixo do número do dia — quatro itens e o "+n". Se as seis
 // semanas não cabem com isso, a grade rola em vez de esmagar o dia.
 const MINIMUM_FIT = 5
@@ -37,7 +36,7 @@ export function AgendaMonthGrid({ days, month, today, onOpenDay }: Readonly<{ da
   const chipHeight = lineHeight.micro.tight + CHIP_PADDING_VERTICAL * 2
   const minimumWeekHeight = CELL_PADDING * 2 + rowHeight + MINIMUM_FIT * (chipHeight + CHIP_GAP)
   const fit = weeksHeight === undefined || weeks.length === 0
-    ? UNMEASURED_FIT
+    ? MINIMUM_FIT
     : Math.max(0, Math.floor((Math.max(minimumWeekHeight, weeksHeight / weeks.length) - CELL_PADDING * 2 - rowHeight) / (chipHeight + CHIP_GAP)))
 
   function describeDay(day: CalendarDay): string {
@@ -48,12 +47,14 @@ export function AgendaMonthGrid({ days, month, today, onOpenDay }: Readonly<{ da
 
   return (
     <View style={styles.grid}>
+      {weeksHeight === undefined && <View style={[StyleSheet.absoluteFill, styles.loading]}><AgendaViewSkeleton view="month" date={month} /></View>}
+      <View style={[styles.measuredGrid, { opacity: weeksHeight === undefined ? 0 : 1 }]} accessibilityElementsHidden={weeksHeight === undefined} importantForAccessibility={weeksHeight === undefined ? "no-hide-descendants" : "auto"} pointerEvents={weeksHeight === undefined ? "none" : "auto"}>
       <View style={styles.week} importantForAccessibility="no-hide-descendants" accessibilityElementsHidden>
         {WEEKDAYS.map(weekday => <View key={weekday} style={styles.weekday}><Text size="caption" tone="muted" isCentered>{labels.shortWeekday(weekday)}</Text></View>)}
       </View>
       {/* Rola só quando as semanas não cabem acima da altura mínima; senão dividem a altura medida. */}
-      <ScrollView style={styles.weeks} contentContainerStyle={styles.weeksContent} onLayout={(event) => { setWeeksHeight(event.nativeEvent.layout.height - FAB_CLEARANCE) }}>
-      {weeks.map(week => (
+      <ScrollView testID="agenda-month-weeks" style={styles.weeks} contentContainerStyle={styles.weeksContent} onLayout={(event) => { if (event.nativeEvent.layout.height > 0) setWeeksHeight(event.nativeEvent.layout.height - FAB_CLEARANCE) }}>
+      {weeksHeight !== undefined && weeks.map(week => (
         <View key={week[0]?.date} style={[styles.week, styles.weekRow, { minHeight: minimumWeekHeight }]}>
           {week.map(day => {
             const parts = readLocalDateParts(day.date)
@@ -80,6 +81,7 @@ export function AgendaMonthGrid({ days, month, today, onOpenDay }: Readonly<{ da
         </View>
       ))}
       </ScrollView>
+      </View>
     </View>
   )
 }
@@ -100,6 +102,9 @@ function MonthChip({ entry, height }: Readonly<{ entry: CalendarEntry; height: n
 
 const styles = StyleSheet.create({
   grid: { flex: 1, marginHorizontal: -SPACING.lg },
+  // A grade já expande a largura; o skeleton aplica essa mesma expansão por conta própria.
+  loading: { marginHorizontal: SPACING.lg },
+  measuredGrid: { flex: 1 },
   weeks: { flex: 1 },
   weeksContent: { flexGrow: 1, paddingBottom: FAB_CLEARANCE },
   week: { flexDirection: 'row' },

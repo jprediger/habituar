@@ -3,6 +3,7 @@ import { type LocalDate, minutesOfDay, readLocalDateTime } from '@habituar/core/
 import type { StudentId } from '@habituar/core/identity/ids'
 import { SPACING } from '@habituar/design-tokens/spacing'
 import type { CalendarEntry, CalendarEntryType } from '@habituar/react-client/react-client'
+import { useDeferredValue, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ScrollView, StyleSheet, View } from 'react-native'
 import { habituar } from '../client/habituar-client'
@@ -12,7 +13,10 @@ import { AgendaDayTimeline } from '../components/agenda-day-timeline'
 import { AgendaMonthGrid } from '../components/agenda-month-grid'
 import { AgendaScheduleList } from '../components/agenda-schedule-list'
 import { AgendaTitleMenu } from '../components/agenda-title-menu'
+import { AgendaViewSkeleton } from '../components/agenda-view-skeleton'
+import { AgendaViewTransition } from '../components/agenda-view-transition'
 import { Text } from '../components/ui/text'
+import { DeferredMount } from '../components/ui/deferred-mount'
 import type { InstitutionSession } from '../session/session-screen'
 import { readCurrentTime } from '../time/current-time'
 
@@ -32,15 +36,17 @@ export function StudentCalendar({ session, studentId, types, viewer, onOpenEntry
   const now = readLocalDateTime(readCurrentTime())
   const navigation = habituar.useCalendarNavigation(now.date)
   const filter = habituar.useCalendarFilter()
-  const calendar = habituar.useStudentCalendar(session.membership, studentId, navigation.range, filter.filter, now.date)
+  const requestedRange = useMemo(() => ({ from: navigation.range.from, to: navigation.range.to }), [navigation.range.from, navigation.range.to])
+  const range = useDeferredValue(requestedRange)
+  const calendar = habituar.useStudentCalendar(session.membership, studentId, range, filter.filter, now.date)
+  const isLoading = range !== requestedRange || calendar.state.status === 'loading'
 
   return (
     <View style={styles.stack}>
       <AgendaTitleMenu navigation={navigation} filter={filter} types={types} today={now.date} viewer={viewer} />
+      {isLoading ? <AgendaViewSkeleton view={navigation.view} date={navigation.date} /> : <AgendaViewTransition contentKey={`${navigation.view}:${navigation.date}:${calendar.state.status}`}>
       {(() => {
         switch (calendar.state.status) {
-          case 'loading':
-            return <Text tone="muted" accessibilityLiveRegion="polite">{t('loading')}</Text>
           case 'failed':
             return <Text accessibilityRole="alert" tone="danger">{t(calendar.state.failure === 'forbidden' ? 'forbidden' : 'failed')}</Text>
           case 'ready':
@@ -49,6 +55,7 @@ export function StudentCalendar({ session, studentId, types, viewer, onOpenEntry
             return assertNever(calendar.state)
         }
       })()}
+      </AgendaViewTransition>}
     </View>
   )
 }
@@ -66,7 +73,11 @@ function CalendarView({ view, days, date, today, nowMinute, onOpenDay, onOpenEnt
     case 'month':
       return <AgendaMonthGrid days={days} month={date} today={today} onOpenDay={onOpenDay} />
     case 'day':
-      return <AgendaDayTimeline key={date} day={days.find(day => day.date === date) ?? { date, entries: [] }} nowMinute={date === today ? nowMinute : undefined} onOpenEntry={onOpenEntry} />
+      return (
+        <DeferredMount key={date} fallback={<AgendaViewSkeleton view="day" date={date} />}>
+          <AgendaDayTimeline day={days.find(day => day.date === date) ?? { date, entries: [] }} nowMinute={date === today ? nowMinute : undefined} onOpenEntry={onOpenEntry} />
+        </DeferredMount>
+      )
     case 'schedule':
       return (
         <ScrollView style={styles.view} contentContainerStyle={styles.scheduleContent}>

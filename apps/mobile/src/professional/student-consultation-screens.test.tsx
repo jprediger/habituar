@@ -81,9 +81,27 @@ describe('student consultations', () => {
     expect(within(card).getByText('Registrada por Ana Souza')).toBeOnTheScreen()
   })
 
-  it('says that a recorded consultation is final, so nobody looks for an edit that does not exist', () => {
+  it('warns above the consultations that a recorded one is final, so nobody looks for an edit that does not exist', () => {
     renderList()
-    expect(screen.getByText(/não pode ser editada nem apagada/)).toBeOnTheScreen()
+
+    // A ordem da árvore é a ordem de leitura: o aviso vem antes do primeiro cartão.
+    const [first] = screen.getAllByText(/não pode ser editada nem apagada|Montamos juntos/)
+    expect(first).toHaveTextContent('Consulta registrada não pode ser editada nem apagada.')
+    expect(screen.queryByText(/do mais recente para o mais antigo/)).toBeNull()
+  })
+
+  it('warns that a consultation is final even before the first one is recorded', () => {
+    renderList(createConsultationsAccess({ consultations: { status: 'ready', consultations: [] } }))
+
+    expect(screen.getByText('Nenhuma consulta registrada')).toBeOnTheScreen()
+    expect(screen.getByText('Consulta registrada não pode ser editada nem apagada.')).toBeOnTheScreen()
+  })
+
+  it('holds the warning back while there is no list to warn about', () => {
+    renderList(createConsultationsAccess({ consultations: { status: 'failed' } }))
+
+    expect(screen.getByRole('alert')).toHaveTextContent(/Não foi possível carregar as consultas/)
+    expect(screen.queryByText(/não pode ser editada nem apagada/)).toBeNull()
   })
 
   it('records a new consultation from the bar action, on its own screen', () => {

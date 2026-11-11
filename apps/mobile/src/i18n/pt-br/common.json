@@ -547,7 +547,7 @@
     },
     "consultations": {
       "title": "Consultas",
-      "description": "Atendimentos que já aconteceram, do mais recente para o mais antigo. Depois de registrada, a consulta não pode ser editada nem apagada; para corrigir, registre uma observação na ficha.",
+      "finalNotice": "Consulta registrada não pode ser editada nem apagada.",
       "open": "Registrar consulta",
       "submit": "Revisar e registrar",
       "confirmTitle": "Confirmar registro da consulta",

@@ -17,6 +17,7 @@ import { ConfirmationSheet } from '../components/ui/confirmation-sheet'
 import { DateTimeField } from '../components/ui/date-time-field'
 import { EmptyState } from '../components/ui/empty-state'
 import { FormField } from '../components/ui/form-field'
+import { InlineNotice } from '../components/ui/inline-notice'
 import { Input } from '../components/ui/input'
 import { ListDivider } from '../components/ui/list-divider'
 import { ListSection } from '../components/ui/list-section'
@@ -42,9 +43,7 @@ export function StudentConsultationsScreen({ session, studentId }: Readonly<{ se
         ? { icon: 'plus', label: t('students.consultations.open'), onPress: () => { router.push({ pathname: '/professional/students/[student-id]/consultations/new', params: { 'student-id': studentId } }) } }
         : undefined}
     >
-      <ListSection footer={t('students.consultations.description')}>
-        <ConsultationList consultations={access.consultations} />
-      </ListSection>
+      <ConsultationList consultations={access.consultations} />
     </StackPage>
   )
 }
@@ -58,13 +57,19 @@ function ConsultationList({ consultations }: Readonly<{ consultations: StudentCo
     case 'failed':
       return <Text accessibilityRole="alert" tone="danger">{t('students.consultations.failed')}</Text>
     case 'ready':
-      if (consultations.consultations.length === 0) {
-        return <EmptyState title={t('students.consultations.emptyTitle')} description={t('students.consultations.emptyDescription')} />
-      }
+      // O aviso fala do registro, então só aparece quando há lista, mesmo vazia: no
+      // carregamento e na falha ele disputaria atenção com o que a pessoa precisa ver.
       return (
-        <View accessibilityRole="list" style={styles.cards}>
-          {consultations.consultations.map((consultation) => <ConsultationCard key={consultation.id} consultation={consultation} />)}
-        </View>
+        <>
+          <InlineNotice message={t('students.consultations.finalNotice')} />
+          {consultations.consultations.length === 0
+            ? <EmptyState title={t('students.consultations.emptyTitle')} description={t('students.consultations.emptyDescription')} />
+            : (
+              <View accessibilityRole="list" style={styles.cards}>
+                {consultations.consultations.map((consultation) => <ConsultationCard key={consultation.id} consultation={consultation} />)}
+              </View>
+            )}
+        </>
       )
     default:
       return assertNever(consultations)

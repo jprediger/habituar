@@ -14,12 +14,15 @@ export default defineConfig({
     'student-record-forms': 'src/student-record-forms.ts',
     'routine-forms': 'src/routine-forms.ts',
     'agenda-forms': 'src/agenda-forms.ts',
+    'task-forms': 'src/task-forms.ts',
   },
   // Formato único: o monorepo inteiro é ESM, então não existe condição `require` a servir.
   format: ['esm'],
   dts: true,
   splitting: true,
   sourcemap: true,
-  clean: true,
+  // Sem limpar a pasta: o Metro do app lê `dist` enquanto roda, e apagá-la no meio do build
+  // deixa o bundler sem o módulo até reiniciar com cache limpo. Limpeza é o script `clean`.
+  clean: false,
   target: 'es2022',
 })

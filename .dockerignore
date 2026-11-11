@@ -1,0 +1,29 @@
+**/node_modules
+**/dist
+**/.turbo
+**/.expo
+**/coverage
+**/*.tsbuildinfo
+**/.env
+**/.env.*
+.git
+.github
+.husky
+.claude
+.codex
+.agents
+.plans
+plans
+research
+docs
+src
+*.docx
+*.md
+apps/api/storage
+
+# Mobile e web ficam de fora; só o manifesto entra, porque o lockfile do workspace os
+# referencia e o install congelado confere todos os importadores.
+apps/mobile/*
+!apps/mobile/package.json
+apps/web/*
+!apps/web/package.json

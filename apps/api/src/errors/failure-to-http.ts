@@ -85,16 +85,20 @@ export function mapFailureToHttpResponse(errors: FailureErrors, failure: Failure
       throw errors['consultation-in-future']()
     case 'occurrence-not-in-series':
       throw errors['occurrence-not-in-series']()
-    case 'occurrence-not-in-routine':
-      throw errors['occurrence-not-in-routine']()
+    case 'occurrence-in-future':
+      throw errors['occurrence-in-future']()
+    case 'occurrence-in-past':
+      throw errors['occurrence-in-past']()
+    case 'occurrence-has-record':
+      throw errors['occurrence-has-record']()
     case 'photo-invalid':
       throw errors['photo-invalid']()
     case 'photo-limit-reached':
       throw errors['photo-limit-reached']()
-    case 'entry-not-delivered':
-      throw errors['entry-not-delivered']()
-    case 'entry-already-evaluated':
-      throw errors['entry-already-evaluated']()
+    case 'occurrence-not-completed':
+      throw errors['occurrence-not-completed']()
+    case 'occurrence-already-evaluated':
+      throw errors['occurrence-already-evaluated']()
     default:
       return assertNever(failure.code)
   }

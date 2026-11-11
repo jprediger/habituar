@@ -1,5 +1,7 @@
+import { localDateSchema } from '@habituar/core/calendar'
 import { consentIdSchema, studentIdSchema } from '@habituar/core/identity/ids'
-import type { AccessibleStudents, AuthenticationState, GuardianConsents } from '@habituar/react-client/react-client'
+import { taskSchema } from '@habituar/core/tasks'
+import type { AccessibleStudents, AuthenticationState, GuardianConsents, StudentCalendar } from '@habituar/react-client/react-client'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react-native'
 import type { ReactNode } from 'react'
 import { AccessibilityInfo } from 'react-native'
@@ -14,14 +16,25 @@ const consentId = consentIdSchema.parse('40000000-0000-4000-8000-000000000001')
 const bruno = { id: studentId, fullName: 'Bruno Lima', socialName: null, birthDate: '2014-03-09', ageRange: '11-14', archivedAt: null } as const
 const confirmation = { id: consentId, kind: 'guardian-confirmation', termVersion: '2026-01', guardianId: null, signedOn: null, recordedAt: '2026-09-30T12:00:00.000Z', revokedAt: null } as const
 
+const today = localDateSchema.parse('2026-11-11')
+const reading = taskSchema.parse({
+  id: 'e1000000-0000-4000-8000-000000000001', studentId, origin: 'staff', title: 'Leitura', kind: null, notes: null,
+  schedule: { startsOn: today, time: { kind: 'timed', startsAt: '14:00', endsAt: '15:00' }, recurrence: { kind: 'none' } }, version: 1, updatedAt: '2026-11-01T12:00:00.000Z',
+})
+
 const mockClient: {
   authentication: { state: AuthenticationState; actions: Record<string, jest.Mock> }
   students: AccessibleStudents | undefined
   consents: GuardianConsents | undefined
+  calendar: StudentCalendar
 } = {
   authentication: { state: { status: 'unauthenticated' }, actions: { logout: jest.fn() } },
   students: undefined,
   consents: undefined,
+  calendar: {
+    state: { status: 'ready', days: [{ date: today, entries: [{ kind: 'task', key: 'leitura', type: 'staff-task', task: reading, occurrence: undefined, originalDate: today, date: today, time: reading.schedule.time, status: 'pending' }] }] },
+    creatableOrigins: [],
+  },
 }
 
 jest.mock('../client/habituar-client', () => ({
@@ -30,6 +43,7 @@ jest.mock('../client/habituar-client', () => ({
     useInstitutionSwitcher: () => ({ current: undefined, others: [], switchTo: jest.fn() }),
     useAccessibleStudents: () => mockClient.students,
     useGuardianConsents: () => mockClient.consents,
+    useStudentCalendar: () => mockClient.calendar,
   },
 }))
 
@@ -79,6 +93,13 @@ describe('student home', () => {
     expect(screen.getByText('Seu cadastro')).toBeOnTheScreen()
     expect(screen.getByText('Bruno Lima')).toBeOnTheScreen()
     expect(screen.queryByText('Consentimentos para confirmar')).toBeNull()
+  })
+
+  it('lists the tasks of the day for the student to open', () => {
+    renderScreen(sessionWithRole('student'))
+
+    expect(screen.getByRole('header', { name: 'Hoje' })).toBeOnTheScreen()
+    expect(screen.getByRole('button', { name: /Leitura, Tarefa da equipe, .*14:00 às 15:00, Pendente/ })).toBeOnTheScreen()
   })
 
   it('keeps a way out of the session', () => {

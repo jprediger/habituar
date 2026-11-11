@@ -1,7 +1,10 @@
-/** Guarda somente a última instituição; não armazena credenciais nem concede acesso. */
+/**
+ * Uma preferência do aparelho em texto (última instituição, último aluno, filtro da agenda);
+ * cada uso tem a própria instância. Não armazena credenciais nem concede acesso.
+ */
 export type PreferenceStorage = Readonly<{
   read(): Promise<string | undefined>
-  write(institutionId: string): Promise<void>
+  write(value: string): Promise<void>
   remove(): Promise<void>
 }>
 

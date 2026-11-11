@@ -151,6 +151,21 @@
 
 ### Layout no mobile
 
+Os itens abaixo são **recomendações de consistência**, não proibições: valem por padrão, e
+uma tela pode fugir de um deles quando o conteúdo pede outra forma. A exceção é decisão
+registrada — listada aqui, com o motivo —, nunca preferência de quem implementa a tela.
+
+**Exceções documentadas:**
+
+- **Agenda** (aba Agenda do aluno e agenda do aluno na ficha): o conteúdo é tempo, então as
+  visões **Mês** (grade de dias) e **Dia** (grade de horas com faixa de dia inteiro) não são
+  lista; a **Programação** continua lista e é a visão de referência para leitor de tela. A
+  troca de visão e o filtro "Mostrar" ficam num menu aberto pelo título do período. Criar é
+  um **botão flutuante** (FAB) no canto inferior, não ícone na barra: com um tipo só cria
+  direto, com mais abre um menu de tipos; quem só lê a agenda não vê o botão. Detalhe e
+  formulário da agenda seguem as regras abaixo (`StackPage`, tópicos com `ListSection`,
+  `ChoiceList` e `SwitchRow`).
+
 - **Lista, não cartão.** Informação e navegação aparecem em `ListRow` agrupadas por
   `ListSection`: linhas sem borda nem superfície, título discreto por grupo e separação
   pelo espaço da página. `Card` e `SummaryCard` só quando não houver alternativa em lista.

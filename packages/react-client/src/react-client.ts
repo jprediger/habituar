@@ -27,7 +27,7 @@ export type {
   StudentRecordOverview,
   StudentRecordState,
 } from './student-record-hooks.js'
-export type { RoutineLoadFailure, RoutineState, RoutineWriteResult, StudentRoutine } from './routine-hooks.js'
+export type { RoutineBlock, RoutineDay, RoutineLoadFailure, RoutineState, RoutineWriteResult, StudentRoutine } from './routine-hooks.js'
 export { classifyTrackedTask, groupAgendaByDay, isTaskDue, rangeOfAgendaView, readTaskProgress, summarizeTaskTracking } from './agenda-hooks.js'
 export type {
   AgendaCursor,
@@ -42,9 +42,9 @@ export type {
   PhotoContentState,
   PhotoUploadResult,
   ProfessionalAgenda,
-  RoutineEntryAccess,
-  RoutineEntryState,
   StudentAgenda,
+  TaskOccurrenceAccess,
+  TaskOccurrenceState,
   TaskProgress,
   TaskTrackingDay,
   TaskTrackingState,
@@ -52,6 +52,22 @@ export type {
   TrackedTask,
   TrackedTaskStatus,
 } from './agenda-hooks.js'
+export { CALENDAR_ENTRY_TYPES, CALENDAR_VIEWS, canWriteTaskSeries, classifyTaskEntry, groupCalendarByDay, rangeOfCalendarView } from './calendar-hooks.js'
+export type {
+  CalendarDay,
+  CalendarEntry,
+  CalendarEntryType,
+  CalendarFilter,
+  CalendarFilterAccess,
+  CalendarLoadFailure,
+  CalendarNavigation,
+  CalendarState,
+  CalendarView,
+  StudentCalendar,
+  TaskEntryStatus,
+  TaskSeriesWriteResult,
+  TaskSeriesWrites,
+} from './calendar-hooks.js'
 export { groupStudentHistory } from './student-history-timeline.js'
 export type { StudentHistoryMoment, StudentHistoryPeriod, StudentHistoryPeriodGroup } from './student-history-timeline.js'
 export { listStudentHomeSections } from './student-home-hooks.js'

@@ -1,6 +1,7 @@
+import { listWeekDays, localDateSchema, weekdayOfLocalDate } from '@habituar/core/calendar'
 import { studentIdSchema } from '@habituar/core/identity/ids'
-import { groupRoutineByWeekday, routineBlockSchema } from '@habituar/core/routines'
-import type { StudentRoutine } from '@habituar/react-client/react-client'
+import { taskSchema } from '@habituar/core/tasks'
+import type { RoutineBlock, RoutineDay, StudentRoutine } from '@habituar/react-client/react-client'
 import { RouterProvider, createMemoryHistory, createRootRoute, createRoute, createRouter } from '@tanstack/react-router'
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
@@ -10,9 +11,17 @@ import { createInstitutionSession } from '../session/institution-session-fixture
 import { StudentRoutineScreen } from './student-routine-screen.js'
 
 const studentId = studentIdSchema.parse('30000000-0000-4000-8000-000000000001')
-const block = routineBlockSchema.parse({ id: 'e1000000-0000-4000-8000-000000000001', weekday: 1, startsAt: '08:00', endsAt: '09:00', title: 'Aulas', kind: 'class', notes: null, version: 1, updatedAt: '2026-09-30T12:00:00.000Z' })
+// Quarta-feira fixa: a semana mostrada vai de 2026-09-28 a 2026-10-04.
+const TODAY = localDateSchema.parse('2026-09-30')
+const task = taskSchema.parse({
+  id: 'e1000000-0000-4000-8000-000000000001', studentId, origin: 'staff', title: 'Aulas', kind: 'class', notes: null,
+  schedule: { startsOn: '2026-09-07', time: { kind: 'timed', startsAt: '08:00', endsAt: '09:00' }, recurrence: { kind: 'weekly', weekdays: [1], until: null } },
+  version: 1, updatedAt: '2026-09-30T12:00:00.000Z',
+})
+const block: RoutineBlock = { key: `${task.id}:2026-09-28`, task, date: localDateSchema.parse('2026-09-28'), originalDate: localDateSchema.parse('2026-09-28'), weekday: 1, startsAt: '08:00', endsAt: '09:00', title: 'Aulas', kind: 'class', notes: null }
+const days: readonly RoutineDay[] = listWeekDays(TODAY).map(date => ({ weekday: weekdayOfLocalDate(date), date, blocks: date === block.date ? [block] : [] }))
 const routine: StudentRoutine = {
-  state: { status: 'ready', days: groupRoutineByWeekday([block]), isEmpty: false },
+  state: { status: 'ready', days, isEmpty: false },
   canEdit: true,
   add: vi.fn(), update: vi.fn(), remove: vi.fn(),
 }

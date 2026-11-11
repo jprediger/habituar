@@ -31,6 +31,12 @@ export const SEMANTIC_COLOR_LIGHT = {
   // pesaria mais que a mensagem. A borda de `divider` é quem a separa do conteúdo.
   toast: COLOR.gray100,
   onToast: COLOR.gray900,
+  // Cor do item na agenda pela origem (tarefa do aluno, tarefa da equipe, consulta). A cor
+  // nunca é o único sinal: o rótulo acessível e o detalhe dizem o tipo por extenso.
+  eventStudentTask: COLOR.blue700,
+  eventStaffTask: COLOR.green700,
+  eventConsultation: COLOR.purple700,
+  onEvent: COLOR.white,
 } as const
 
 export type ColorRole = keyof typeof SEMANTIC_COLOR_LIGHT
@@ -57,4 +63,8 @@ export const SEMANTIC_COLOR_DARK = {
   focusRing: COLOR.green400,
   toast: COLOR.gray800,
   onToast: COLOR.gray50,
+  eventStudentTask: COLOR.blue400,
+  eventStaffTask: COLOR.green400,
+  eventConsultation: COLOR.purple400,
+  onEvent: COLOR.gray900,
 } as const satisfies Record<ColorRole, string>

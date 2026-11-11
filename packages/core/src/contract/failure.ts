@@ -39,11 +39,13 @@ export const FAILURE_CODES = [
   'student-below-account-age',
   'consultation-in-future',
   'occurrence-not-in-series',
-  'occurrence-not-in-routine',
+  'occurrence-in-future',
+  'occurrence-in-past',
+  'occurrence-has-record',
   'photo-invalid',
   'photo-limit-reached',
-  'entry-not-delivered',
-  'entry-already-evaluated',
+  'occurrence-not-completed',
+  'occurrence-already-evaluated',
 ] as const
 
 export const failureSchema = z.object({
@@ -104,12 +106,15 @@ export const FAILURE_ERROR_MAP = {
   'student-account-exists': { status: 409, message: 'student account already exists.', data: failureDataSchema },
   'student-below-account-age': { status: 422, message: 'student is below account age.', data: failureDataSchema },
   'consultation-in-future': { status: 422, message: 'consultation cannot be in the future.', data: failureDataSchema },
-  'occurrence-not-in-series': { status: 422, message: 'date is not an occurrence of the appointment.', data: failureDataSchema },
-  'occurrence-not-in-routine': { status: 422, message: 'date is not an occurrence of the routine block.', data: failureDataSchema },
+  'occurrence-not-in-series': { status: 422, message: 'date is not an occurrence of the series.', data: failureDataSchema },
+  'occurrence-in-future': { status: 422, message: 'occurrence has not happened yet.', data: failureDataSchema },
+  // Divisão de série e exclusão "desta em diante" nunca começam antes de hoje.
+  'occurrence-in-past': { status: 422, message: 'occurrence is in the past.', data: failureDataSchema },
+  'occurrence-has-record': { status: 409, message: 'occurrence has a record.', data: failureDataSchema },
   'photo-invalid': { status: 422, message: 'photo content is invalid.', data: failureDataSchema },
   'photo-limit-reached': { status: 409, message: 'photo limit reached.', data: failureDataSchema },
-  'entry-not-delivered': { status: 409, message: 'task has not been delivered.', data: failureDataSchema },
-  'entry-already-evaluated': { status: 409, message: 'task has already been evaluated.', data: failureDataSchema },
+  'occurrence-not-completed': { status: 409, message: 'occurrence has not been completed.', data: failureDataSchema },
+  'occurrence-already-evaluated': { status: 409, message: 'occurrence has already been evaluated.', data: failureDataSchema },
   invalid_input: {
     status: 422,
     message: 'The request payload is invalid.',

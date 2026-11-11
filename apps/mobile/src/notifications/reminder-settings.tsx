@@ -8,7 +8,7 @@ import { Button } from '../components/ui/button'
 import { Icon } from '../components/ui/icon'
 import { Text } from '../components/ui/text'
 import { useThemeTokens } from '../theme/tokens'
-import { PRESET_LEAD_MINUTES, isValidLeadMinutes } from './use-routine-reminders'
+import { PRESET_LEAD_MINUTES, isValidLeadMinutes } from './reminder-preference-storage'
 
 type Unit = 'minutes' | 'hours' | 'days'
 

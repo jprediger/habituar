@@ -1,5 +1,4 @@
 import { z } from 'zod'
-import type { Weekday } from './routines.js'
 
 /**
  * Dia do calendário sem hora nem fuso. A agenda vive no relógio de parede de quem a usa,
@@ -9,6 +8,11 @@ const MILLISECONDS_PER_DAY = 86_400_000
 
 export const localDateSchema = z.iso.date().brand<'LocalDate'>()
 export type LocalDate = z.infer<typeof localDateSchema>
+
+/** Segunda é 1 e domingo é 7 (ISO 8601): a semana escolar começa na segunda. */
+export const WEEKDAYS = [1, 2, 3, 4, 5, 6, 7] as const
+export const weekdaySchema = z.literal(WEEKDAYS)
+export type Weekday = z.infer<typeof weekdaySchema>
 
 /** Intervalo fechado de dias, com `from` antes ou igual a `to`. */
 export const localDateRangeSchema = z.object({ from: localDateSchema, to: localDateSchema }).strict()
@@ -49,7 +53,7 @@ export function daysBetween(from: LocalDate, to: LocalDate): number {
   return toEpochDay(to) - toEpochDay(from)
 }
 
-/** Dia da semana na numeração da rotina (segunda é 1). */
+/** Dia da semana na numeração ISO (segunda é 1). */
 export function weekdayOfLocalDate(date: LocalDate): Weekday {
   return WEEKDAY_BY_UTC_DAY[new Date(toEpochDay(date) * MILLISECONDS_PER_DAY).getUTCDay()] ?? 1
 }
@@ -119,6 +123,22 @@ export function minutesOfDay(time: string): number {
 export function timeFromMinutes(minutes: number): string {
   const clamped = Math.min(Math.max(minutes, 0), 23 * 60 + 59)
   return `${String(Math.floor(clamped / 60)).padStart(2, '0')}:${String(clamped % 60).padStart(2, '0')}`
+}
+
+/** Dia da semana de um instante no fuso de quem o lê. */
+export function weekdayOf(instant: Date): Weekday {
+  return weekdayOfLocalDate(readLocalDateTime(instant).date)
+}
+
+/**
+ * Dia do calendário de um instante num fuso IANA. É o "hoje" de quem decide no servidor:
+ * o relógio do processo não sabe em que dia a instituição está.
+ */
+export function localDateInTimeZone(instant: Date, timeZone: string): LocalDate {
+  // `en-CA` formata como AAAA-MM-DD; as partes evitam depender do separador da localidade.
+  const parts = new Intl.DateTimeFormat('en-CA', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(instant)
+  const part = (type: Intl.DateTimeFormatPartTypes): string => parts.find(candidate => candidate.type === type)?.value ?? ''
+  return localDateSchema.parse(`${part('year')}-${part('month')}-${part('day')}`)
 }
 
 /** Dia e hora locais de um instante no fuso de quem o lê; é o "hoje" da agenda. */

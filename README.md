@@ -168,6 +168,59 @@ pnpm --filter @habituar/mobile expo:doctor   # alinhamento com o SDK, rodado tam
 iOS continua suportado pela estrutura Expo, mas o passe de VoiceOver ainda não aconteceu —
 é bloqueante antes da primeira distribuição iOS.
 
+## Ambiente live
+
+Ambiente de desenvolvimento alcançável de qualquer rede: a API roda em contêiner com banco
+próprio, e um túnel ngrok a publica em HTTPS. O `compose.live.yml` é um projeto separado
+(`habituar-live`) e convive com o `docker-compose.yml` de desenvolvimento sem disputar
+porta, volume ou dados.
+
+O túnel usa o domínio estático gratuito da conta ngrok, não um endereço aleatório. A origem
+da API fica gravada no APK, e uma URL que muda a cada restart obrigaria a refazer o app.
+
+```bash
+cp .env.live.example .env.live   # preencher domínio, authtoken e as duas senhas
+docker compose -f compose.live.yml --env-file .env.live up -d --build
+```
+
+O `up` aplica as migrações, roda os seeds de admin e de dados de exemplo (idempotentes, a
+cada subida) e só então libera a API e o túnel. A API sobe com `NODE_ENV=development`,
+porque o seed de exemplo recusa produção. Por isso `DEV_SEED_PASSWORD` é obrigatória: o
+ambiente é público, e a senha do `.env.example` está no repositório. Ela vale para o
+`admin@habituar.dev` e para todos os usuários de exemplo.
+
+| Endereço | O quê |
+|---|---|
+| `https://<NGROK_DOMAIN>/v1/health` | API pelo túnel, de qualquer rede |
+| `http://127.0.0.1:8090/v1/health` | A mesma API direto no host (`API_HOST_PORT`) |
+| `http://127.0.0.1:4040` | Inspetor do ngrok; só no loopback porque mostra corpo de requisição |
+
+O Postgres não publica porta no host. Para inspecionar, use
+`docker compose -f compose.live.yml exec postgres psql -U postgres habituar`. Para zerar o
+ambiente, `down -v` no mesmo arquivo apaga banco e arquivos enviados.
+
+### APK apontando para o ambiente live
+
+```bash
+EXPO_PUBLIC_API_ORIGIN=https://<NGROK_DOMAIN> pnpm --filter @habituar/mobile android:apk:live
+```
+
+Gera um APK release com o JavaScript embutido: não precisa de Metro nem do computador na
+mesma rede. A origem é exigida no shell, não lida do `apps/mobile/.env`, que aponta para o
+emulador ou para a rede local. Ao final, o script confere que a origem entrou no bundle e
+imprime o caminho do APK (`android/app/build/outputs/apk/release/app-release.apk`). Ele pode
+ser instalado com `adb install -r` ou enviado ao aparelho como arquivo.
+
+A build compila o nativo só para `arm64-v8a` (todo aparelho físico atual) com 2 workers e
+prioridade baixa, porque a build completa em paralelo congela a máquina. Se sobrar fôlego,
+`GRADLE_WORKERS=4` acelera. O APK não roda em emulador x86.
+
+O APK live usa `com.jprediger.habituar`. A build de desenvolvimento usa
+`com.jprediger.habituar.dev` e aparece como **Habituar Dev**. As duas podem ficar
+instaladas no mesmo aparelho. A instalação de desenvolvimento antiga, que ainda usa
+`com.jprediger.habituar`, continua separada; após conferir a nova build, você pode
+removê-la pelo Android.
+
 ## Fronteiras já impostas
 
 O pacote compartilhado não aceita dependências de framework, UI ou aplicações. As

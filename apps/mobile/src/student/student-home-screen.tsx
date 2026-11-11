@@ -23,6 +23,11 @@ import { InstitutionSwitcher } from '../session/institution-switcher'
 import type { InstitutionSession } from '../session/session-screen'
 import { SignOutButton } from '../session/sign-out-button'
 import { useRouter } from 'expo-router'
+import { readLocalDateTime } from '@habituar/core/calendar'
+import type { StudentId } from '@habituar/core/identity/ids'
+import { useAgendaLabels } from '../agenda/agenda-labels'
+import { useAgendaRoutes } from '../agenda/agenda-routes'
+import { readCurrentTime } from '../time/current-time'
 
 /**
  * Tela inicial do ambiente de aluno: a única superfície escrita na primeira pessoa. Mostra
@@ -47,6 +52,7 @@ export function StudentHomeScreen({ session }: Readonly<{ session: InstitutionSe
       </ListSection>
 
       {sections.showsOwnRecord && <><ListDivider /><OwnRecordSection session={session} isGuardianToo={sections.isGuardianToo} /></>}
+      {sections.showsOwnRecord && <OwnTodayTasks session={session} />}
       {sections.showsGuardianConsents && <><ListDivider /><GuardianConsentSections /></>}
 
       <View style={styles.footer}>
@@ -85,6 +91,51 @@ function OwnRecordSection({ session, isGuardianToo }: Readonly<{ session: Instit
     default:
       return assertNever(state)
   }
+}
+
+const TASKS_ONLY = { 'student-task': true, 'staff-task': true, consultation: false } as const
+
+// As tarefas de hoje são o atalho que o aluno mais usa; a agenda inteira continua na aba.
+function TodayTasksSection({ session, studentId }: Readonly<{ session: InstitutionSession; studentId: StudentId }>) {
+  const { t } = useTranslation('agenda')
+  const labels = useAgendaLabels()
+  const routes = useAgendaRoutes('student')
+  const today = readLocalDateTime(readCurrentTime()).date
+  const calendar = habituar.useStudentCalendar(session.membership, studentId, { from: today, to: today }, TASKS_ONLY, today)
+
+  switch (calendar.state.status) {
+    case 'loading':
+      return <Skeleton><ListSectionSkeleton hasTitle rows={1} /></Skeleton>
+    case 'failed':
+      return <Text accessibilityRole="alert" tone="danger">{t('failed')}</Text>
+    case 'ready': {
+      const entries = calendar.state.days.flatMap(day => day.entries)
+      return (
+        <ListSection title={t('calendar.todayTitle')}>
+          {entries.length === 0 && <ListRow title={t('emptyDay')} />}
+          {entries.map(entry => (
+            <ListRow
+              key={entry.key}
+              title={labels.entryTitle(entry)}
+              description={[labels.formatTime(entry.time), ...(entry.kind === 'task' ? [labels.entryStatus(entry.status)] : [])].join(' · ')}
+              accessibilityLabel={labels.describeEntry(entry)}
+              onPress={() => { routes.openEntry(studentId, entry) }}
+            />
+          ))}
+        </ListSection>
+      )
+    }
+    default:
+      return assertNever(calendar.state)
+  }
+}
+
+function OwnTodayTasks({ session }: Readonly<{ session: InstitutionSession }>) {
+  const { state } = habituar.useAccessibleStudents(session.membership)
+  // Responsável que também é aluno vê vários cadastros: aí a agenda da aba escolhe de quem é o dia.
+  const own = state.status === 'ready' && state.students.length === 1 ? state.students[0] : undefined
+  if (own === undefined) return null
+  return <><ListDivider /><TodayTasksSection session={session} studentId={own.id} /></>
 }
 
 // Ação à espera de confirmação: só uma por vez, e a frase da folha nomeia o estudante.

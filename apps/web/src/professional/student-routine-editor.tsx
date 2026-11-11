@@ -1,8 +1,8 @@
 import { assertNever } from '@habituar/core/assert-never'
 import type { StudentId } from '@habituar/core/identity/ids'
-import { ROUTINE_KINDS, WEEKDAYS, weekdayOf } from '@habituar/core/routines'
-import type { RoutineBlock, Weekday } from '@habituar/core/routines'
-import type { RoutineWriteResult, StudentRoutine } from '@habituar/react-client/react-client'
+import { readLocalDateTime, WEEKDAYS, type Weekday, weekdayOf } from '@habituar/core/calendar'
+import { TASK_KINDS } from '@habituar/core/tasks'
+import type { RoutineBlock, RoutineWriteResult, StudentRoutine } from '@habituar/react-client/react-client'
 import { WEEKDAY_LABEL_KEYS, useRoutineBlockForm } from '@habituar/react-client/routine-forms'
 import type { RoutineBlockField } from '@habituar/react-client/routine-forms'
 import { useId, useState } from 'react'
@@ -34,7 +34,7 @@ type Feedback = Readonly<{ result: RoutineWriteResult; kind: 'saved' | 'removed'
 export function StudentRoutineEditor({ studentId }: Readonly<{ studentId: StudentId }>): ReactElement {
   const { t } = useTranslation()
   const session = useInstitutionSession()
-  const routine = habituar.useStudentRoutine(session.membership, studentId)
+  const routine = habituar.useStudentRoutine(session.membership, studentId, readLocalDateTime(readCurrentTime()).date)
   const [target, setTarget] = useState<EditorTarget>({ mode: 'idle' })
   const [feedback, setFeedback] = useState<Feedback>(undefined)
 
@@ -71,7 +71,7 @@ export function StudentRoutineEditor({ studentId }: Readonly<{ studentId: Studen
               : undefined}
           />
           {target.mode === 'create' && <RoutineBlockEditor key={`create-${String(target.weekday)}`} weekday={target.weekday} save={routine.add} onDone={(result) => { finish(result, 'saved') }} onCancel={() => { setTarget({ mode: 'idle' }) }} />}
-          {target.mode === 'edit' && <RoutineBlockEditor key={`edit-${target.block.id}`} block={target.block} weekday={target.block.weekday} save={(input) => routine.update(target.block, input)} onDone={(result) => { finish(result, 'saved') }} onCancel={() => { setTarget({ mode: 'idle' }) }} />}
+          {target.mode === 'edit' && <RoutineBlockEditor key={`edit-${target.block.key}`} block={target.block} weekday={target.block.weekday} save={(input) => routine.update(target.block, input)} onDone={(result) => { finish(result, 'saved') }} onCancel={() => { setTarget({ mode: 'idle' }) }} />}
           {target.mode === 'remove' && <RemoveConfirmation block={target.block} routine={routine} onDone={(result) => { finish(result, 'removed') }} onCancel={() => { setTarget({ mode: 'idle' }) }} />}
           {feedback !== undefined && <FeedbackMessage feedback={feedback} />}
         </div>
@@ -118,7 +118,7 @@ function RoutineBlockEditor({
   onCancel,
 }: Readonly<{ block?: RoutineBlock; weekday: Weekday; save: StudentRoutine['add']; onDone: (result: RoutineWriteResult) => void; onCancel: () => void }>): ReactElement {
   const { t } = useTranslation()
-  const form = useRoutineBlockForm({ block, weekday, save })
+  const form = useRoutineBlockForm({ block, weekday, today: readLocalDateTime(readCurrentTime()).date, save })
   const id = useId()
   const errorFor = (field: RoutineBlockField) => form.invalidFields.has(field)
     ? t(`routine.invalid.${field}`, { maximum: field === 'notes' ? form.notesMaxLength : form.titleMaxLength })
@@ -144,8 +144,8 @@ function RoutineBlockEditor({
         </FormField>
         <FormField id={`${id}-kind`} label={t('routine.fields.kind')} isRequired requiredMarkLabel={t('form.requiredMark')} error={errorFor('kind')}>
           {(control) => (
-            <select {...control} className="min-h-tap-target rounded-field border border-border bg-surface px-sm text-body text-text" value={form.values.kind} onChange={(event) => { form.change('kind', ROUTINE_KINDS.find((kind) => kind === event.target.value) ?? form.values.kind) }}>
-              {ROUTINE_KINDS.map((kind) => <option key={kind} value={kind}>{t(`routine.kinds.${kind}`)}</option>)}
+            <select {...control} className="min-h-tap-target rounded-field border border-border bg-surface px-sm text-body text-text" value={form.values.kind} onChange={(event) => { form.change('kind', TASK_KINDS.find((kind) => kind === event.target.value) ?? form.values.kind) }}>
+              {TASK_KINDS.map((kind) => <option key={kind} value={kind}>{t(`routine.kinds.${kind}`)}</option>)}
             </select>
           )}
         </FormField>

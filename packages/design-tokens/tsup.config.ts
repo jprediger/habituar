@@ -19,6 +19,8 @@ export default defineConfig({
   dts: true,
   splitting: true,
   sourcemap: true,
-  clean: true,
+  // Sem limpar a pasta: o Metro do app lê `dist` enquanto roda, e apagá-la no meio do build
+  // deixa o bundler sem o módulo até reiniciar com cache limpo. Limpeza é o script `clean`.
+  clean: false,
   target: 'es2022',
 })

@@ -63,6 +63,13 @@ export const CONTRAST_PAIRS = [
   // esse par no mínimo de componente gráfico, alerta e informação se distinguem só pelo texto.
   { name: 'ícone sobre selo de alerta do aviso', foreground: 'surface', background: 'warning', usage: 'ui-component' },
   { name: 'ícone sobre selo informativo do aviso', foreground: 'surface', background: 'info', usage: 'ui-component' },
+  // Texto do item da agenda sobre a cor da origem, e a própria cor sobre o fundo da grade.
+  { name: 'texto sobre tarefa do aluno', foreground: 'onEvent', background: 'eventStudentTask', usage: 'body-text' },
+  { name: 'texto sobre tarefa da equipe', foreground: 'onEvent', background: 'eventStaffTask', usage: 'body-text' },
+  { name: 'texto sobre consulta', foreground: 'onEvent', background: 'eventConsultation', usage: 'body-text' },
+  { name: 'tarefa do aluno sobre superfície', foreground: 'eventStudentTask', background: 'surface', usage: 'ui-component' },
+  { name: 'tarefa da equipe sobre superfície', foreground: 'eventStaffTask', background: 'surface', usage: 'ui-component' },
+  { name: 'consulta sobre superfície', foreground: 'eventConsultation', background: 'surface', usage: 'ui-component' },
   {
     name: 'borda de campo sobre superfície',
     foreground: 'border',

@@ -1,6 +1,6 @@
 /**
- * Entrypoint dos formulários da agenda: atendimento da equipe e observação do aluno sobre
- * a tarefa do dia. Dono do rascunho, da validação pelo schema do contrato e do desfecho do
+ * Entrypoint dos formulários da agenda: atendimento da equipe, observação do aluno sobre
+ * a ocorrência da tarefa e avaliação da equipe. Dono do rascunho, da validação pelo schema do contrato e do desfecho do
  * envio. Não conhece navegação nem visual.
  */
 import { APPOINTMENT_NOTES_MAX_LENGTH, appointmentInputSchema } from '@habituar/core/appointments'
@@ -8,8 +8,8 @@ import type { Appointment, AppointmentInput } from '@habituar/core/appointments'
 import type { LocalDate } from '@habituar/core/calendar'
 import { studentIdSchema } from '@habituar/core/identity/ids'
 import type { StudentId } from '@habituar/core/identity/ids'
-import { ROUTINE_ENTRY_EVALUATION_COMMENT_MAX_LENGTH, ROUTINE_ENTRY_NOTES_MAX_LENGTH, routineEntryEvaluationInputSchema, routineEntryNoteInputSchema } from '@habituar/core/routine-entries'
-import type { RoutineEntry, RoutineEntryEvaluationInput, RoutineEntryEvaluationOutcome } from '@habituar/core/routine-entries'
+import { TASK_EVALUATION_COMMENT_MAX_LENGTH, TASK_OCCURRENCE_NOTES_MAX_LENGTH, taskEvaluationInputSchema, taskOccurrenceNoteInputSchema } from '@habituar/core/tasks'
+import type { TaskEvaluationInput, TaskEvaluationOutcome, TaskOccurrence } from '@habituar/core/tasks'
 import { useState } from 'react'
 import type { AgendaWriteResult } from './agenda-hooks.js'
 import type { RoutineEntryWriteResult } from './offline-sync.js'
@@ -112,7 +112,7 @@ export function useAppointmentForm(
   }
 }
 
-export type RoutineEntryNoteForm = Readonly<{
+export type TaskNoteForm = Readonly<{
   notes: string
   change: (notes: string) => void
   isInvalid: boolean
@@ -121,11 +121,11 @@ export type RoutineEntryNoteForm = Readonly<{
   isSaving: boolean
 }>
 
-/** Observação do aluno sobre a tarefa do dia; texto em branco apaga a que existia. */
-export function useRoutineEntryNoteForm(
-  options: Readonly<{ entry: RoutineEntry | undefined; save: (notes: string | null) => Promise<RoutineEntryWriteResult> }>,
-): RoutineEntryNoteForm {
-  const [notes, setNotes] = useState(options.entry?.notes ?? '')
+/** Observação do aluno sobre a ocorrência da tarefa; texto em branco apaga a que existia. */
+export function useTaskNoteForm(
+  options: Readonly<{ occurrence: TaskOccurrence | undefined; save: (notes: string | null) => Promise<RoutineEntryWriteResult> }>,
+): TaskNoteForm {
+  const [notes, setNotes] = useState(options.occurrence?.notes ?? '')
   const [isInvalid, setIsInvalid] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
 
@@ -133,9 +133,9 @@ export function useRoutineEntryNoteForm(
     notes,
     change: setNotes,
     isInvalid,
-    maxLength: ROUTINE_ENTRY_NOTES_MAX_LENGTH,
+    maxLength: TASK_OCCURRENCE_NOTES_MAX_LENGTH,
     submit: async () => {
-      const parsed = routineEntryNoteInputSchema.safeParse({ notes: notes.trim() === '' ? null : notes })
+      const parsed = taskOccurrenceNoteInputSchema.safeParse({ notes: notes.trim() === '' ? null : notes })
       if (!parsed.success) {
         setIsInvalid(true)
         return 'invalid'
@@ -152,9 +152,9 @@ export function useRoutineEntryNoteForm(
   }
 }
 
-export type RoutineEntryEvaluationForm = Readonly<{
-  outcome: RoutineEntryEvaluationOutcome | undefined
-  changeOutcome: (outcome: RoutineEntryEvaluationOutcome) => void
+export type TaskEvaluationForm = Readonly<{
+  outcome: TaskEvaluationOutcome | undefined
+  changeOutcome: (outcome: TaskEvaluationOutcome) => void
   comment: string
   changeComment: (comment: string) => void
   invalidField: 'outcome' | 'comment' | undefined
@@ -163,12 +163,12 @@ export type RoutineEntryEvaluationForm = Readonly<{
   isSaving: boolean
 }>
 
-/** Retorno da equipe sobre a tarefa entregue: o conceito é obrigatório, o comentário não. */
-export function useRoutineEntryEvaluationForm(
-  options: Readonly<{ entry: RoutineEntry | undefined; save: (input: RoutineEntryEvaluationInput) => Promise<AgendaWriteResult> }>,
-): RoutineEntryEvaluationForm {
-  const [outcome, setOutcome] = useState<RoutineEntryEvaluationOutcome | undefined>(options.entry?.evaluation?.outcome)
-  const [comment, setComment] = useState(options.entry?.evaluation?.comment ?? '')
+/** Retorno da equipe sobre a ocorrência concluída: o conceito é obrigatório, o comentário não. */
+export function useTaskEvaluationForm(
+  options: Readonly<{ occurrence: TaskOccurrence | undefined; save: (input: TaskEvaluationInput) => Promise<AgendaWriteResult> }>,
+): TaskEvaluationForm {
+  const [outcome, setOutcome] = useState<TaskEvaluationOutcome | undefined>(options.occurrence?.evaluation?.outcome)
+  const [comment, setComment] = useState(options.occurrence?.evaluation?.comment ?? '')
   const [invalidField, setInvalidField] = useState<'outcome' | 'comment' | undefined>(undefined)
   const [isSaving, setIsSaving] = useState(false)
 
@@ -178,9 +178,9 @@ export function useRoutineEntryEvaluationForm(
     comment,
     changeComment: setComment,
     invalidField,
-    maxLength: ROUTINE_ENTRY_EVALUATION_COMMENT_MAX_LENGTH,
+    maxLength: TASK_EVALUATION_COMMENT_MAX_LENGTH,
     submit: async () => {
-      const parsed = routineEntryEvaluationInputSchema.safeParse({ outcome, comment: comment.trim() === '' ? null : comment })
+      const parsed = taskEvaluationInputSchema.safeParse({ outcome, comment: comment.trim() === '' ? null : comment })
       if (!parsed.success) {
         setInvalidField(parsed.error.issues.some(issue => issue.path[0] === 'outcome') ? 'outcome' : 'comment')
         return 'invalid'

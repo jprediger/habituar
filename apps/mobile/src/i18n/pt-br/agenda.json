@@ -2,7 +2,7 @@
   "title": "Agenda",
   "openAgenda": "Abrir agenda",
   "professionalDescription": "Os atendimentos combinados com os alunos que você acompanha.",
-  "studentDescription": "As tarefas da rotina e os atendimentos, dia a dia.",
+  "studentDescription": "As tarefas do aluno e da equipe e os atendimentos, no mês, no dia ou em programação.",
   "loading": "Carregando a agenda...",
   "failed": "Não foi possível carregar a agenda. Confira a conexão e tente novamente.",
   "forbidden": "Seu papel não inclui esta agenda.",
@@ -63,7 +63,7 @@
   "hour": "{{hour}}h",
   "appointment": "Atendimento",
   "appointmentWithStudent": "Atendimento com {{name}}",
-  "appointmentWithProfessional": "Atendimento com {{name}}",
+  "appointmentWithProfessional": "Consulta com {{name}}",
   "weekly": "Toda semana",
   "weeklyUntil": "Toda semana até {{date}}",
   "new": "Novo atendimento",
@@ -116,8 +116,8 @@
   "confirmRemove": "Sim, excluir",
   "noStudentsToSchedule": "Nenhum aluno disponível para agendar.",
   "task": {
-    "description": "Registre como foi esta tarefa no dia e marque como entregue quando terminar.",
-    "readOnlyDescription": "O que o aluno registrou e entregou nesta tarefa no dia.",
+    "description": "Registre como foi esta tarefa no dia e marque como concluída quando terminar.",
+    "readOnlyDescription": "O que o aluno registrou e concluiu nesta tarefa no dia.",
     "notes": "Observação",
     "notesHint": "Como foi a tarefa?",
     "saveNote": "Salvar observação",
@@ -143,20 +143,20 @@
     "kind": "Tipo",
     "guidance": "Orientação da equipe",
     "delivery": {
-      "title": "Entrega",
-      "hint": "Marque como entregue quando terminar. A observação e as fotos vão junto.",
-      "deliver": "Marcar como entregue",
-      "delivering": "Entregando...",
-      "undo": "Desfazer entrega",
+      "title": "Conclusão",
+      "hint": "Marque como concluída quando terminar. A observação e as fotos vão junto.",
+      "deliver": "Marcar como concluída",
+      "delivering": "Concluindo...",
+      "undo": "Desfazer conclusão",
       "undoing": "Desfazendo...",
-      "undoQuestion": "Desfazer a entrega desta tarefa? Ela volta a contar como não entregue.",
+      "undoQuestion": "Desfazer a conclusão desta tarefa? Ela volta a contar como não concluída.",
       "confirmUndo": "Sim, desfazer",
-      "deliveredOn": "Entregue em {{date}}",
-      "notDelivered": "Ainda não entregue.",
-      "notDue": "A entrega abre no dia da tarefa.",
-      "delivered": "Tarefa entregue.",
-      "undone": "Entrega desfeita.",
-      "locked": "A equipe já avaliou esta tarefa, então a entrega não pode mais ser desfeita.",
+      "deliveredOn": "Concluída em {{date}}",
+      "notDelivered": "Ainda não concluída.",
+      "notDue": "A conclusão abre no dia da tarefa.",
+      "delivered": "Tarefa concluída.",
+      "undone": "Conclusão desfeita.",
+      "locked": "A equipe já avaliou esta tarefa, então a conclusão não pode mais ser desfeita.",
       "changed": "A tarefa mudou enquanto você via. Ela foi atualizada; confira e tente de novo.",
       "deliveredOffline": "Entregue no aparelho em {{date}}. Enviamos quando a conexão voltar."
     },
@@ -169,7 +169,7 @@
       "saving": "Salvando...",
       "saved": "Avaliação salva.",
       "none": "Ainda sem avaliação.",
-      "waitingDelivery": "A avaliação abre depois que o aluno entregar a tarefa.",
+      "waitingDelivery": "A avaliação abre depois que o aluno concluir a tarefa.",
       "evaluatedBy": "Avaliada por {{name}}",
       "chooseOutcome": "Escolha o conceito.",
       "invalidComment": "Use até {{maximum}} caracteres.",
@@ -180,11 +180,178 @@
       }
     },
     "progress": {
-      "delivered": "Entregue",
-      "evaluated": "Avaliada"
+      "completed": "Concluída",
+      "evaluated": "Avaliada",
+      "delivered": "Entregue"
     },
+    "allDay": "Dia inteiro",
     "pendingSync": "Aguardando envio",
     "photosNeedConnection": "Fotos precisam de conexão. A observação e a entrega podem ser feitas agora."
+  },
+  "toast": {
+    "appointmentSaved": {
+      "title": "Atendimento salvo",
+      "description": "O aluno já vê na agenda dele."
+    },
+    "appointmentRemoved": {
+      "title": "Atendimento excluído",
+      "description": "Ele saiu da agenda."
+    },
+    "occurrenceCancelled": {
+      "title": "Dia cancelado",
+      "description": "Os outros dias continuam na agenda."
+    },
+    "noteSaved": {
+      "title": "Observação salva",
+      "description": "A equipe já vê o seu registro."
+    },
+    "photoAdded": {
+      "title": "Foto adicionada",
+      "description": "Ela aparece no registro da tarefa."
+    },
+    "photoRemoved": {
+      "title": "Foto removida",
+      "description": "Ela saiu do registro da tarefa."
+    },
+    "taskDelivered": {
+      "title": "Tarefa concluída",
+      "description": "A equipe já vê a conclusão."
+    },
+    "deliveryUndone": {
+      "title": "Conclusão desfeita",
+      "description": "A tarefa volta a contar como não concluída."
+    },
+    "evaluationSaved": {
+      "title": "Avaliação salva",
+      "description": "O aluno já vê o retorno."
+    },
+    "taskSaved": {
+      "title": "Tarefa salva",
+      "description": "Ela já aparece na agenda."
+    },
+    "taskRemoved": {
+      "title": "Tarefa excluída",
+      "description": "Ela saiu da agenda."
+    },
+    "savedOffline": {
+      "title": "Salvo no aparelho",
+      "description": "Enviamos quando a conexão voltar."
+    }
+  },
+  "calendar": {
+    "backToMonth": "Voltar para o mês",
+    "recordDescription": "Tarefas do aluno e da equipe, com conclusões, registros e avaliações.",
+    "views": {
+      "month": "Mês",
+      "day": "Dia",
+      "schedule": "Programação"
+    },
+    "viewTitle": "Visão",
+    "showTitle": "Mostrar",
+    "menuLabel": "{{title}}, visão {{view}}. Abre a escolha de visão e o filtro",
+    "previous": {
+      "month": "Mês anterior",
+      "day": "Dia anterior",
+      "schedule": "Semanas anteriores"
+    },
+    "next": {
+      "month": "Próximo mês",
+      "day": "Próximo dia",
+      "schedule": "Próximas semanas"
+    },
+    "types": {
+      "student-task": "Tarefa do aluno",
+      "staff-task": "Tarefa da equipe",
+      "consultation": "Consulta"
+    },
+    "status": {
+      "evaluated": "Avaliada",
+      "completed": "Concluída",
+      "missing": "Em falta",
+      "pending": "Pendente"
+    },
+    "cell": "{{date}}, {{count}} itens: {{items}}",
+    "cellEmpty": "{{date}}, nada na agenda",
+    "openDayHint": "Abre o dia na grade de horas",
+    "emptyScheduleTitle": "Nada na programação",
+    "emptyScheduleDescription": "Quando houver tarefas ou atendimentos neste período, eles aparecem aqui.",
+    "create": "Criar",
+    "closeMenu": "Fechar o menu de criar",
+    "newTask": "Nova tarefa",
+    "editTask": "Editar tarefa",
+    "saveTask": "Salvar tarefa",
+    "origin": "Origem",
+    "removeTitle": "Excluir",
+    "removeTask": "Excluir tarefa",
+    "removeSingleQuestion": "Excluir esta tarefa?",
+    "removeRecurringQuestion": "Esta tarefa se repete. O que excluir?",
+    "changeRecurringQuestion": "Esta tarefa se repete. Aplicar a mudança a quê?",
+    "scope": {
+      "this-occurrence": "Só esta",
+      "from-this-occurrence": "Desta em diante"
+    },
+    "sections": {
+      "what": "O quê",
+      "when": "Quando",
+      "repeat": "Repetição"
+    },
+    "fields": {
+      "title": "Título",
+      "notes": "Orientação",
+      "startsAt": "Início",
+      "endsAt": "Fim"
+    },
+    "repeat": {
+      "none": "Não se repete",
+      "daily": "Todo dia",
+      "weekly": "Toda semana, nos dias escolhidos"
+    },
+    "invalid": {
+      "title": "Escreva um título com até {{maximum}} caracteres.",
+      "kind": "Escolha o tipo.",
+      "notes": "Use até {{maximum}} caracteres.",
+      "date": "Informe a data.",
+      "startsAt": "Informe o horário de início.",
+      "endsAt": "O fim precisa ser depois do início, no mesmo dia.",
+      "weekdays": "Escolha ao menos um dia da semana.",
+      "until": "O término precisa ser depois da primeira data."
+    },
+    "writeFailure": {
+      "conflict": "Outra pessoa mudou esta tarefa. A agenda foi atualizada; confira e tente de novo.",
+      "in-past": "Datas passadas não mudam daqui em diante. Para um dia que já passou, só dá para remarcar aquele dia.",
+      "has-record": "Este dia já tem registro do aluno e não pode ser cancelado.",
+      "not-saved": "Não foi possível salvar. Confira a conexão e tente novamente.",
+      "no-scope": "Este dia já passou: só é possível mudar a data e o horário dele."
+    },
+    "todayTitle": "Hoje",
+    "filters": {
+      "self": {
+        "student-task": "Minhas tarefas",
+        "staff-task": "Tarefas da equipe",
+        "consultation": "Consultas"
+      },
+      "other": {
+        "student-task": "Tarefas do aluno",
+        "staff-task": "Tarefas da equipe",
+        "consultation": "Consultas"
+      }
+    },
+    "dayTitleShort": "{{weekday}}., {{day}} de {{month}}.",
+    "monthsShort": {
+      "1": "jan",
+      "2": "fev",
+      "3": "mar",
+      "4": "abr",
+      "5": "mai",
+      "6": "jun",
+      "7": "jul",
+      "8": "ago",
+      "9": "set",
+      "10": "out",
+      "11": "nov",
+      "12": "dez"
+    },
+    "monthTitleOtherYear": "{{month}} de {{year}}"
   },
   "tracking": {
     "open": "Acompanhar tarefas",
@@ -215,48 +382,6 @@
     "emptyDay": "Nenhuma tarefa neste dia",
     "emptyWeekTitle": "Nenhuma tarefa nesta semana",
     "emptyWeekDescription": "Quando a rotina do aluno tiver blocos, as tarefas aparecem aqui para acompanhar."
-  },
-  "toast": {
-    "appointmentSaved": {
-      "title": "Atendimento salvo",
-      "description": "O aluno já vê na agenda dele."
-    },
-    "appointmentRemoved": {
-      "title": "Atendimento excluído",
-      "description": "Ele saiu da agenda."
-    },
-    "occurrenceCancelled": {
-      "title": "Dia cancelado",
-      "description": "Os outros dias continuam na agenda."
-    },
-    "noteSaved": {
-      "title": "Observação salva",
-      "description": "A equipe já vê o seu registro."
-    },
-    "photoAdded": {
-      "title": "Foto adicionada",
-      "description": "Ela aparece no registro da tarefa."
-    },
-    "photoRemoved": {
-      "title": "Foto removida",
-      "description": "Ela saiu do registro da tarefa."
-    },
-    "taskDelivered": {
-      "title": "Tarefa entregue",
-      "description": "A equipe já vê a entrega."
-    },
-    "deliveryUndone": {
-      "title": "Entrega desfeita",
-      "description": "A tarefa volta a contar como não entregue."
-    },
-    "evaluationSaved": {
-      "title": "Avaliação salva",
-      "description": "O aluno já vê o retorno."
-    },
-    "savedOffline": {
-      "title": "Salvo no aparelho",
-      "description": "Enviamos quando a conexão voltar."
-    }
   },
   "offline": {
     "title": "Sem conexão",

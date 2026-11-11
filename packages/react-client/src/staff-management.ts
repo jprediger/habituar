@@ -110,12 +110,13 @@ export const ROLE_BUNDLE_LABEL_KEYS = {
   'assignment-manage': 'roleBundles.assignmentManage',
   'record-read': 'roleBundles.recordRead',
   'record-write': 'roleBundles.recordWrite',
-  'routine-read': 'roleBundles.routineRead',
-  'routine-write': 'roleBundles.routineWrite',
+  'task-read': 'roleBundles.taskRead',
+  'task-write': 'roleBundles.taskWrite',
+  'task-own-write': 'roleBundles.taskOwnWrite',
+  'task-complete': 'roleBundles.taskComplete',
+  'task-evaluate': 'roleBundles.taskEvaluate',
   'appointment-read': 'roleBundles.appointmentRead',
   'appointment-write': 'roleBundles.appointmentWrite',
-  'routine-entry-write': 'roleBundles.routineEntryWrite',
-  'routine-entry-evaluate': 'roleBundles.routineEntryEvaluate',
 } as const satisfies Readonly<Record<RoleBundleKey, `roleBundles.${string}`>>
 
 /**

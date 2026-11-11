@@ -2,7 +2,7 @@ import type { AppointmentOccurrence } from '@habituar/core/appointments'
 import { assertNever } from '@habituar/core/assert-never'
 import { type LocalDate, minutesOfDay, readLocalDateTime } from '@habituar/core/calendar'
 import type { StudentId } from '@habituar/core/identity/ids'
-import type { RoutineBlock } from '@habituar/core/routines'
+import type { Task } from '@habituar/core/tasks'
 import { readTaskProgress } from '@habituar/react-client/react-client'
 import type { AgendaItem } from '@habituar/react-client/react-client'
 import { CalendarDays } from 'lucide-react'
@@ -22,13 +22,13 @@ import { readCurrentTime } from '../time/current-time.js'
 
 type Target =
   | Readonly<{ mode: 'idle' }>
-  | Readonly<{ mode: 'task'; block: RoutineBlock; date: LocalDate }>
+  | Readonly<{ mode: 'task'; task: Task; originalDate: LocalDate }>
   | Readonly<{ mode: 'appointment'; occurrence: AppointmentOccurrence }>
 
 /**
- * Agenda do ambiente de aluno, no estilo do Google Agenda: as tarefas da rotina e os
- * atendimentos marcados pela equipe. O aluno abre a tarefa do dia para registrar
- * observação e fotos; o responsável vê o mesmo, só para leitura.
+ * Agenda do ambiente de aluno, no estilo do Google Agenda: as tarefas, da equipe e do
+ * próprio aluno, e os atendimentos marcados pela equipe. O aluno abre a ocorrência para
+ * registrar observação e fotos e concluir; o responsável vê o mesmo, só para leitura.
  */
 export function StudentAgendaScreen(): ReactElement {
   const { t } = useTranslation('agenda')
@@ -84,11 +84,12 @@ function StudentAgenda({ studentId }: Readonly<{ studentId: StudentId }>): React
   function describeItem(item: AgendaItem) {
     switch (item.kind) {
       case 'task': {
-        const progress = readTaskProgress(item.entry)
-        if (progress !== 'open') return { title: item.block.title, detail: t(`task.progress.${progress}`) }
-        const photoCount = item.entry?.photos.length ?? 0
-        const detail = photoCount > 0 ? t('task.photoCount', { count: photoCount }) : item.entry?.notes !== null && item.entry !== undefined ? t('task.hasNote') : tc(`routine.kinds.${item.block.kind}`)
-        return { title: item.block.title, detail }
+        const progress = readTaskProgress(item.occurrence)
+        if (progress !== 'open') return { title: item.task.title, detail: t(`task.progress.${progress}`) }
+        const photoCount = item.occurrence?.photos.length ?? 0
+        const kindLabel = item.task.kind === null ? tc('routine.noKind') : tc(`routine.kinds.${item.task.kind}`)
+        const detail = photoCount > 0 ? t('task.photoCount', { count: photoCount }) : item.occurrence?.notes !== null && item.occurrence !== undefined ? t('task.hasNote') : kindLabel
+        return { title: item.task.title, detail }
       }
       case 'appointment':
         return { title: t('appointment'), detail: item.occurrence.appointment.professionalName }
@@ -111,9 +112,9 @@ function StudentAgenda({ studentId }: Readonly<{ studentId: StudentId }>): React
             today={now.date}
             nowMinute={minutesOfDay(now.time)}
             describeItem={describeItem}
-            onItemSelect={(item) => { setTarget(item.kind === 'task' ? { mode: 'task', block: item.block, date: item.date } : { mode: 'appointment', occurrence: item.occurrence }) }}
+            onItemSelect={(item) => { setTarget(item.kind === 'task' ? { mode: 'task', task: item.task, originalDate: item.originalDate } : { mode: 'appointment', occurrence: item.occurrence }) }}
           />
-          {target.mode === 'task' && <TaskEntryDialog studentId={studentId} block={target.block} date={target.date} onClose={() => { setTarget({ mode: 'idle' }) }} />}
+          {target.mode === 'task' && <TaskEntryDialog studentId={studentId} task={target.task} originalDate={target.originalDate} onClose={() => { setTarget({ mode: 'idle' }) }} />}
           {target.mode === 'appointment' && <AppointmentDialog occurrence={target.occurrence} onClose={() => { setTarget({ mode: 'idle' }) }} />}
         </>
       )

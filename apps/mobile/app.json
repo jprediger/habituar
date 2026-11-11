@@ -22,6 +22,7 @@
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
+      "./plugins/with-dev-android-app",
       "expo-router",
       "expo-notifications",
       [

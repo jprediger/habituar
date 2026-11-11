@@ -3,11 +3,11 @@ import { authenticationContextSchema } from '@habituar/core/auth/context'
 import type { AuthenticationContext } from '@habituar/core/auth/context'
 import { localDateSchema } from '@habituar/core/calendar'
 import type { LocalDate } from '@habituar/core/calendar'
-import { institutionIdSchema, routineBlockIdSchema, routineEntryIdSchema, studentIdSchema } from '@habituar/core/identity/ids'
-import type { InstitutionId, RoutineBlockId, StudentId } from '@habituar/core/identity/ids'
-import { routineEntrySchema } from '@habituar/core/routine-entries'
-import type { RoutineEntry } from '@habituar/core/routine-entries'
-import { routineBlockSchema } from '@habituar/core/routines'
+import { institutionIdSchema, taskIdSchema, studentIdSchema } from '@habituar/core/identity/ids'
+import type { InstitutionId, TaskId, StudentId } from '@habituar/core/identity/ids'
+import type { TaskOccurrence } from '@habituar/core/tasks'
+import type { TaskAgenda } from '@habituar/core/tasks'
+import { taskAgendaSchema } from '@habituar/core/tasks'
 import { studentPageSchema } from '@habituar/core/students'
 import type { QueryClient } from '@tanstack/react-query'
 import { z } from 'zod'
@@ -30,7 +30,7 @@ export type ConnectionState = 'online' | 'offline'
 /** Desfecho de uma escrita do aluno que pode esperar a conexão: `queued` ficou guardada no aparelho. */
 export type RoutineEntryWriteResult = 'saved' | 'queued' | 'conflict' | 'not-saved'
 
-export type EntryTarget = Readonly<{ institutionId: InstitutionId; studentId: StudentId; routineBlockId: RoutineBlockId; occursOn: LocalDate }>
+export type EntryTarget = Readonly<{ institutionId: InstitutionId; studentId: StudentId; taskId: TaskId; originalDate: LocalDate }>
 
 export type EntryWrite = Readonly<{ kind: 'note'; notes: string | null }> | Readonly<{ kind: 'deliver' }> | Readonly<{ kind: 'undeliver' }>
 
@@ -44,8 +44,8 @@ const deliveryChangeSchema = z.discriminatedUnion('kind', [
 const pendingEntryChangeSchema = z.object({
   institutionId: institutionIdSchema,
   studentId: studentIdSchema,
-  routineBlockId: routineBlockIdSchema,
-  occursOn: localDateSchema,
+  taskId: taskIdSchema,
+  originalDate: localDateSchema,
   baseVersion: z.int().min(1).nullable(),
   baseNotes: z.string().nullable(),
   isBaseDelivered: z.boolean(),
@@ -65,8 +65,7 @@ export type OfflineSession = Readonly<{ institutionId: InstitutionId; context: A
 // Só o que a agenda do aluno desenha: rotina, registros, atendimentos e a primeira página de
 // alunos acessíveis. Ficha, histórico e fotos não saem do servidor para o disco.
 const persistedQuerySchema = z.union([
-  z.object({ key: z.tuple([z.literal('institution'), institutionIdSchema, z.literal('students'), studentIdSchema, z.literal('routine')]), data: z.array(routineBlockSchema).readonly() }).strict(),
-  z.object({ key: z.tuple([z.literal('institution'), institutionIdSchema, z.literal('students'), studentIdSchema, z.literal('routine-entries'), localDateSchema, localDateSchema]), data: z.array(routineEntrySchema).readonly() }).strict(),
+  z.object({ key: z.tuple([z.literal('institution'), institutionIdSchema, z.literal('students'), studentIdSchema, z.literal('tasks'), localDateSchema, localDateSchema]), data: taskAgendaSchema }).strict(),
   z.object({ key: z.tuple([z.literal('institution'), institutionIdSchema, z.literal('students'), studentIdSchema, z.literal('appointments'), localDateSchema, localDateSchema]), data: z.array(appointmentSchema).readonly() }).strict(),
   z.object({ key: z.tuple([z.literal('institution'), institutionIdSchema, z.literal('students'), z.object({ search: z.literal(''), page: z.literal(1) }).strict()]), data: studentPageSchema }).strict(),
 ])
@@ -84,26 +83,25 @@ const snapshotSchema = z.object({
 export const OFFLINE_GC_TIME_MS = 7 * 24 * 60 * 60 * 1000
 const RETRY_INTERVAL_MS = 30_000
 const PERSIST_DELAY_MS = 500
-const PLACEHOLDER_ENTRY_ID = routineEntryIdSchema.parse('00000000-0000-0000-0000-000000000000')
 
 /** Identifica a ocorrência (bloco × dia) de um aluno numa instituição. */
 export function entryKeyOf(target: EntryTarget): string {
-  return `${target.institutionId}:${target.studentId}:${target.routineBlockId}:${target.occursOn}`
+  return `${target.institutionId}:${target.studentId}:${target.taskId}:${target.originalDate}`
 }
 
 /**
  * Junta uma escrita nova à mudança que já espera envio para o mesmo registro. A observação
  * vale a última; entregar e desfazer se anulam. Sem diferença para o servidor, a mudança some.
  */
-export function coalesceEntryChange(existing: PendingEntryChange | undefined, target: EntryTarget, base: RoutineEntry | undefined, write: EntryWrite, at: string): PendingEntryChange | undefined {
+export function coalesceEntryChange(existing: PendingEntryChange | undefined, target: EntryTarget, base: TaskOccurrence | undefined, write: EntryWrite, at: string): PendingEntryChange | undefined {
   const start: PendingEntryChange = existing ?? {
     institutionId: target.institutionId,
     studentId: target.studentId,
-    routineBlockId: target.routineBlockId,
-    occursOn: target.occursOn,
+    taskId: target.taskId,
+    originalDate: target.originalDate,
     baseVersion: base?.version ?? null,
     baseNotes: base?.notes ?? null,
-    isBaseDelivered: (base?.deliveredAt ?? null) !== null,
+    isBaseDelivered: (base?.completedAt ?? null) !== null,
     notes: null,
     delivery: null,
     changedAt: at,
@@ -119,17 +117,17 @@ export function coalesceEntryChange(existing: PendingEntryChange | undefined, ta
 }
 
 /** Registro como o aluno o vê enquanto a mudança espera: o servidor, com a mudança por cima. */
-export function overlayPendingChange(entry: RoutineEntry | undefined, change: PendingEntryChange): RoutineEntry {
-  const deliveredAt = change.delivery === null
-    ? entry?.deliveredAt ?? null
-    : change.delivery.kind === 'deliver' ? entry?.deliveredAt ?? change.delivery.at : null
+export function overlayPendingChange(entry: TaskOccurrence | undefined, change: PendingEntryChange): TaskOccurrence {
+  const completedAt = change.delivery === null
+    ? entry?.completedAt ?? null
+    : change.delivery.kind === 'deliver' ? entry?.completedAt ?? change.delivery.at : null
   return {
-    id: entry?.id ?? PLACEHOLDER_ENTRY_ID,
-    routineBlockId: change.routineBlockId,
-    occursOn: change.occursOn,
+    exception: entry?.exception ?? { kind: 'none' },
+    taskId: change.taskId,
+    originalDate: change.originalDate,
     notes: change.notes === null ? entry?.notes ?? null : change.notes.value,
     photos: entry?.photos ?? [],
-    deliveredAt,
+    completedAt,
     evaluation: entry?.evaluation ?? null,
     version: entry?.version ?? 1,
     updatedAt: entry?.updatedAt ?? change.changedAt,
@@ -150,7 +148,7 @@ export type OfflineSync = Readonly<{
   clear: () => Promise<void>
   markOnline: () => void
   markOffline: () => void
-  record: (target: EntryTarget, base: RoutineEntry | undefined, write: EntryWrite) => Promise<RoutineEntryWriteResult>
+  record: (target: EntryTarget, base: TaskOccurrence | undefined, write: EntryWrite) => Promise<RoutineEntryWriteResult>
   flush: () => Promise<void>
   dismissDiscarded: () => void
 }>
@@ -291,22 +289,22 @@ export function createOfflineSync(dependencies: OfflineSyncDependencies): Offlin
     await persistNow()
   }
 
-  function writeEntryToCache(entry: RoutineEntry, change: PendingEntryChange): void {
-    for (const [key, data] of queryClient.getQueriesData<readonly RoutineEntry[]>({ queryKey: queryKeys.studentRoutineEntriesScope(change.institutionId, change.studentId) })) {
-      if (data === undefined || !isWithin(entry.occursOn, key[5], key[6])) continue
-      const others = data.filter(candidate => !(candidate.routineBlockId === entry.routineBlockId && candidate.occursOn === entry.occursOn))
-      queryClient.setQueryData<readonly RoutineEntry[]>(key, [...others, entry])
+  function writeEntryToCache(entry: TaskOccurrence, change: PendingEntryChange): void {
+    for (const [key, data] of queryClient.getQueriesData<TaskAgenda>({ queryKey: queryKeys.studentTasksScope(change.institutionId, change.studentId) })) {
+      if (data === undefined || !isWithin(entry.originalDate, key[5], key[6])) continue
+      const others = data.occurrences.filter(candidate => !(candidate.taskId === entry.taskId && candidate.originalDate === entry.originalDate))
+      queryClient.setQueryData<TaskAgenda>(key, { ...data, occurrences: [...others, entry] })
     }
   }
 
-  async function readLatest(change: PendingEntryChange): Promise<RoutineEntry | undefined> {
-    const entries = await apiClient.routineEntries.list({ institutionId: change.institutionId, studentId: change.studentId, from: change.occursOn, to: change.occursOn })
-    return entries.find(entry => entry.routineBlockId === change.routineBlockId && entry.occursOn === change.occursOn)
+  async function readLatest(change: PendingEntryChange): Promise<TaskOccurrence | undefined> {
+    const entries = await apiClient.tasks.list({ institutionId: change.institutionId, studentId: change.studentId, from: change.originalDate, to: change.originalDate })
+    return entries.occurrences.find(entry => entry.taskId === change.taskId && entry.originalDate === change.originalDate)
   }
 
   // Última escrita vence (D13): o único outro escritor do registro é o próprio aluno em outro
   // aparelho, então a versão mais nova é relida e o envio repete uma vez sobre ela.
-  async function sendOverLatest(change: PendingEntryChange, send: (version: number | null) => Promise<RoutineEntry | undefined>, isApplied: (latest: RoutineEntry | undefined) => boolean): Promise<RoutineEntry | undefined> {
+  async function sendOverLatest(change: PendingEntryChange, send: (version: number | null) => Promise<TaskOccurrence | undefined>, isApplied: (latest: TaskOccurrence | undefined) => boolean): Promise<TaskOccurrence | undefined> {
     try {
       return await send(change.baseVersion)
     } catch (error) {
@@ -319,12 +317,12 @@ export function createOfflineSync(dependencies: OfflineSyncDependencies): Offlin
 
   // O passo enviado sai da fila já — se a rede cair no passo seguinte, ele não vai de novo —,
   // mas sobre a fila atual: o aluno pode ter mudado o mesmo registro enquanto o envio corria.
-  async function settleStep(key: string, sent: PendingEntryChange, step: 'notes' | 'delivery', entry: RoutineEntry | undefined): Promise<PendingEntryChange | undefined> {
+  async function settleStep(key: string, sent: PendingEntryChange, step: 'notes' | 'delivery', entry: TaskOccurrence | undefined): Promise<PendingEntryChange | undefined> {
     const current = state.pending.find(candidate => entryKeyOf(candidate) === key)
     if (current === undefined) return undefined
     const notes = step === 'notes' && current.notes?.value === sent.notes?.value ? null : current.notes
     const delivery = step === 'delivery' && current.delivery?.kind === sent.delivery?.kind ? null : current.delivery
-    const base = entry === undefined ? {} : { baseVersion: entry.version, baseNotes: entry.notes, isBaseDelivered: entry.deliveredAt !== null }
+    const base = entry === undefined ? {} : { baseVersion: entry.version, baseNotes: entry.notes, isBaseDelivered: entry.completedAt !== null }
     const next = notes === null && delivery === null ? undefined : { ...current, ...base, notes, delivery }
     await replacePending(key, next)
     return next
@@ -332,20 +330,20 @@ export function createOfflineSync(dependencies: OfflineSyncDependencies): Offlin
 
   async function syncChange(original: PendingEntryChange): Promise<RoutineEntryWriteResult> {
     const key = entryKeyOf(original)
-    const path = { institutionId: original.institutionId, studentId: original.studentId, routineBlockId: original.routineBlockId, occursOn: original.occursOn }
+    const path = { institutionId: original.institutionId, studentId: original.studentId, taskId: original.taskId, originalDate: original.originalDate }
     let change: PendingEntryChange | undefined = original
     try {
       const notes = change.notes
       if (notes !== null) {
-        const entry = await sendOverLatest(change, version => apiClient.routineEntries.saveNote({ ...path, notes: notes.value, expectedVersion: version }), latest => (latest?.notes ?? null) === notes.value)
+        const entry = await sendOverLatest(change, version => apiClient.tasks.saveNote({ ...path, notes: notes.value, expectedVersion: version }), latest => (latest?.notes ?? null) === notes.value)
         if (entry !== undefined) writeEntryToCache(entry, original)
         change = await settleStep(key, change, 'notes', entry)
       }
       const delivery = change?.delivery ?? null
       if (change !== undefined && delivery !== null) {
         const entry = delivery.kind === 'deliver'
-          ? await sendOverLatest(change, version => apiClient.routineEntries.deliver({ ...path, expectedVersion: version }), latest => (latest?.deliveredAt ?? null) !== null)
-          : await sendOverLatest(change, version => version === null ? Promise.resolve(undefined) : apiClient.routineEntries.undeliver({ ...path, expectedVersion: version }), latest => (latest?.deliveredAt ?? null) === null)
+          ? await sendOverLatest(change, version => apiClient.tasks.complete({ ...path, expectedVersion: version }), latest => (latest?.completedAt ?? null) !== null)
+          : await sendOverLatest(change, version => version === null ? Promise.resolve(undefined) : apiClient.tasks.uncomplete({ ...path, expectedVersion: version }), latest => (latest?.completedAt ?? null) === null)
         if (entry !== undefined) writeEntryToCache(entry, original)
         await settleStep(key, change, 'delivery', entry)
       }
@@ -374,7 +372,7 @@ export function createOfflineSync(dependencies: OfflineSyncDependencies): Offlin
     if (reached.length === 0) return outcomes
     if (reached.length === outcomes.size) markOnline()
     const students = new Map(reached.map(change => [`${change.institutionId}:${change.studentId}`, change]))
-    await Promise.all([...students.values()].map(change => queryClient.invalidateQueries({ queryKey: queryKeys.studentRoutineEntriesScope(change.institutionId, change.studentId) })))
+    await Promise.all([...students.values()].map(change => queryClient.invalidateQueries({ queryKey: queryKeys.studentTasksScope(change.institutionId, change.studentId) })))
     return outcomes
   }
 
@@ -446,4 +444,16 @@ export function createOfflineSync(dependencies: OfflineSyncDependencies): Offlin
       if (state.discarded > 0) setState({ ...state, discarded: 0 })
     },
   }
+}
+
+/** Mantém as mudanças locais visíveis quando a agenda é relida antes da sincronização. */
+export function overlayTaskAgenda(agenda: TaskAgenda, pending: readonly PendingEntryChange[]): TaskAgenda {
+  const occurrences = [...agenda.occurrences]
+  for (const change of pending) {
+    const index = occurrences.findIndex(entry => entry.taskId === change.taskId && entry.originalDate === change.originalDate)
+    const entry = overlayPendingChange(index < 0 ? undefined : occurrences[index], change)
+    if (index < 0) occurrences.push(entry)
+    else occurrences[index] = entry
+  }
+  return { ...agenda, occurrences }
 }

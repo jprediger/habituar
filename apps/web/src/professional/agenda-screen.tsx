@@ -81,7 +81,7 @@ export function ProfessionalAgendaScreen(): ReactElement {
                 nowMinute={minutesOfDay(now.time)}
                 describeItem={item => item.kind === 'appointment'
                   ? { title: item.occurrence.appointment.studentName, detail: t('appointment') }
-                  : { title: item.block.title, detail: tc(`routine.kinds.${item.block.kind}`) }}
+                  : { title: item.task.title, detail: item.task.kind === null ? tc('routine.noKind') : tc(`routine.kinds.${item.task.kind}`) }}
                 onItemSelect={selectItem}
                 onSlotSelect={agenda.canSchedule ? (date, time) => { open({ mode: 'create', date, time }) } : undefined}
               />

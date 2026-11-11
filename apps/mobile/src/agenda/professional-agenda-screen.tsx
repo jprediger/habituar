@@ -46,7 +46,7 @@ export function ProfessionalAgendaScreen({ session }: Readonly<{ session: Instit
                   day={day}
                   describeItem={item => item.kind === 'appointment'
                     ? { title: item.occurrence.appointment.studentName, description: labels.formatRecurrence(item.occurrence.appointment) ?? t('appointment') }
-                    : { title: item.block.title, description: tc(`routine.kinds.${item.block.kind}`) }}
+                    : { title: item.task.title, description: item.task.kind === null ? tc('routine.noKind') : tc(`routine.kinds.${item.task.kind}`) }}
                   onItemPress={(item) => {
                     if (item.kind !== 'appointment') return
                     router.push({ pathname: '/professional/agenda/appointment/[appointment-id]', params: { 'appointment-id': item.occurrence.appointment.id, student: item.occurrence.appointment.studentId, date: item.date } })

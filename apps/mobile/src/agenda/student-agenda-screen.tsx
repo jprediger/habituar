@@ -1,124 +1,80 @@
 import { assertNever } from '@habituar/core/assert-never'
 import { readLocalDateTime } from '@habituar/core/calendar'
 import type { StudentId } from '@habituar/core/identity/ids'
-import { readTaskProgress } from '@habituar/react-client/react-client'
-import type { AgendaItem } from '@habituar/react-client/react-client'
-import { useRouter } from 'expo-router'
+import { canWriteTaskSeries } from '@habituar/react-client/react-client'
+import type { CalendarEntryType } from '@habituar/react-client/react-client'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { StyleSheet, View } from 'react-native'
 import { habituar } from '../client/habituar-client'
-import { AgendaDayList } from '../components/agenda-day-list'
-import { AgendaWeekStrip } from '../components/agenda-week-strip'
 import { OfflineNotice } from './offline-notice'
+import { AgendaFab } from '../components/agenda-fab'
 import { ChoiceList } from '../components/ui/choice-list'
 import { EmptyState } from '../components/ui/empty-state'
-import { Page } from '../components/ui/page'
-import { PageHeader } from '../components/ui/page-header'
+import { FixedPage } from '../components/ui/fixed-page'
 import { Text } from '../components/ui/text'
 import type { InstitutionSession } from '../session/session-screen'
 import { readCurrentTime } from '../time/current-time'
+import { useAgendaRoutes } from './agenda-routes'
+import { StudentCalendar } from './student-calendar'
+
+const STUDENT_AGENDA_TYPES: readonly CalendarEntryType[] = ['student-task', 'staff-task', 'consultation']
 
 /**
- * Aba Agenda do ambiente de aluno: as tarefas da rotina e os atendimentos de cada dia. O
- * aluno abre a tarefa para registrar observação e fotos; o responsável escolhe de qual
- * estudante é a agenda e vê o mesmo, só para leitura.
+ * Aba Agenda do ambiente de aluno: as tarefas do aluno e da equipe e os atendimentos, no
+ * mês, no dia ou em programação. O aluno cria as próprias tarefas pelo botão flutuante; o
+ * responsável escolhe de qual estudante é a agenda e só lê, sem botão de criar.
  */
 export function StudentAgendaScreen({ session }: Readonly<{ session: InstitutionSession }>) {
   const { t } = useTranslation('agenda')
-  const { t: tc } = useTranslation()
+  const routes = useAgendaRoutes('student')
   const { state } = habituar.useAccessibleStudents(session.membership)
   const [selectedId, setSelectedId] = useState<StudentId | undefined>(undefined)
+  const student = state.status === 'ready' ? state.students.find(candidate => candidate.id === selectedId) ?? state.students[0] : undefined
+  // Só o próprio aluno escreve tarefa de origem aluno: é a permissão, e não o papel, que
+  // separa "minhas tarefas" de "tarefas do aluno" para o responsável.
+  const canCreate = canWriteTaskSeries(session.membership, 'student')
 
   return (
-    <Page>
-      <PageHeader eyebrow={tc('navigation.agenda')} title={t('title')} />
-      <OfflineNotice />
-      {(() => {
-        switch (state.status) {
-          case 'loading':
-            return <Text tone="muted" accessibilityLiveRegion="polite">{t('loading')}</Text>
-          case 'failed':
-            return <Text accessibilityRole="alert" tone="danger">{t('failed')}</Text>
-          case 'ready': {
-            const student = state.students.find(candidate => candidate.id === selectedId) ?? state.students[0]
-            if (student === undefined) return <EmptyState title={t('noStudentsTitle')} description={t('noStudentsDescription')} />
-            return (
-              <>
-                {state.students.length > 1 && (
-                  <ChoiceList
-                    label={t('studentPicker')}
-                    choices={state.students.map(candidate => ({ value: candidate.id, label: candidate.socialName ?? candidate.fullName }))}
-                    value={student.id}
-                    onChange={(value) => { setSelectedId(state.students.find(candidate => candidate.id === value)?.id) }}
-                  />
-                )}
-                <StudentAgenda key={student.id} session={session} studentId={student.id} />
-              </>
-            )
+    <View style={styles.root}>
+      <FixedPage>
+        <OfflineNotice />
+        {/* O título do período faz as vezes de cabeçalho visível; o leitor de tela ainda ouve o nome da tela como título. */}
+        <View accessible accessibilityRole="header" accessibilityLabel={t('title')} style={styles.screenReaderHeading} />
+        {(() => {
+          switch (state.status) {
+            case 'loading':
+              return <Text tone="muted" accessibilityLiveRegion="polite">{t('loading')}</Text>
+            case 'failed':
+              return <Text accessibilityRole="alert" tone="danger">{t('failed')}</Text>
+            case 'ready':
+              if (student === undefined) return <EmptyState title={t('noStudentsTitle')} description={t('noStudentsDescription')} />
+              return (
+                <>
+                  {state.students.length > 1 && (
+                    <ChoiceList
+                      label={t('studentPicker')}
+                      choices={state.students.map(candidate => ({ value: candidate.id, label: candidate.socialName ?? candidate.fullName }))}
+                      value={student.id}
+                      onChange={(value) => { setSelectedId(state.students.find(candidate => candidate.id === value)?.id) }}
+                    />
+                  )}
+                  <StudentCalendar key={student.id} session={session} studentId={student.id} types={STUDENT_AGENDA_TYPES} viewer={canCreate ? 'self' : 'other'} onOpenEntry={(entry) => { routes.openEntry(student.id, entry) }} />
+                </>
+              )
+            default:
+              return assertNever(state)
           }
-          default:
-            return assertNever(state)
-        }
-      })()}
-    </Page>
+        })()}
+      </FixedPage>
+      {student !== undefined && canCreate && (
+        <AgendaFab actions={[{ key: 'task', label: t('calendar.newTask'), icon: 'list-checks', onPress: () => { routes.newTask(student.id, readLocalDateTime(readCurrentTime()).date) } }]} />
+      )}
+    </View>
   )
 }
 
-function StudentAgenda({ session, studentId }: Readonly<{ session: InstitutionSession; studentId: StudentId }>) {
-  const { t } = useTranslation('agenda')
-  const { t: tc } = useTranslation()
-  const router = useRouter()
-  const now = readLocalDateTime(readCurrentTime())
-  const cursor = habituar.useAgendaCursor(now.date, 'week')
-  const agenda = habituar.useStudentAgenda(session.membership, studentId, cursor.range)
-
-  function describeItem(item: AgendaItem) {
-    switch (item.kind) {
-      case 'task': {
-        if (item.isPendingSync) return { title: item.block.title, description: t('task.pendingSync') }
-        const progress = readTaskProgress(item.entry)
-        if (progress !== 'open') return { title: item.block.title, description: t(`task.progress.${progress}`) }
-        const photoCount = item.entry?.photos.length ?? 0
-        if (photoCount > 0) return { title: item.block.title, description: t('task.photoCount', { count: photoCount }) }
-        if (item.entry?.notes !== undefined && item.entry.notes !== null) return { title: item.block.title, description: t('task.hasNote') }
-        return { title: item.block.title, description: tc(`routine.kinds.${item.block.kind}`) }
-      }
-      case 'appointment':
-        return { title: t('appointment'), description: item.occurrence.appointment.professionalName }
-      default:
-        return assertNever(item)
-    }
-  }
-
-  function openItem(item: AgendaItem): void {
-    switch (item.kind) {
-      case 'task':
-        router.push({ pathname: '/student/agenda/task/[routine-block-id]', params: { 'routine-block-id': item.block.id, student: studentId, date: item.date } })
-        return
-      case 'appointment':
-        router.push({ pathname: '/student/agenda/appointment/[appointment-id]', params: { 'appointment-id': item.occurrence.appointment.id, student: studentId, date: item.date } })
-        return
-      default:
-        assertNever(item)
-    }
-  }
-
-  switch (agenda.state.status) {
-    case 'loading':
-      return <Text tone="muted" accessibilityLiveRegion="polite">{t('loading')}</Text>
-    case 'failed':
-      return <Text accessibilityRole="alert" tone="danger">{t(agenda.state.failure === 'forbidden' ? 'forbidden' : 'failed')}</Text>
-    case 'ready': {
-      const busyDates = new Set(agenda.state.days.filter(day => day.items.length > 0).map(day => day.date))
-      const day = agenda.state.days.find(candidate => candidate.date === cursor.date) ?? { date: cursor.date, items: [] }
-      return (
-        <>
-          <AgendaWeekStrip cursor={cursor} today={now.date} busyDates={busyDates} />
-          <AgendaDayList day={day} describeItem={describeItem} onItemPress={openItem} />
-        </>
-      )
-    }
-    default:
-      return assertNever(agenda.state)
-  }
-}
+const styles = StyleSheet.create({
+  root: { flex: 1 },
+  screenReaderHeading: { position: 'absolute', width: 1, height: 1, overflow: 'hidden' },
+})

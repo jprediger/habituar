@@ -44,14 +44,11 @@ export type StudentObservationId = z.infer<typeof studentObservationIdSchema>
 export const studentConsultationIdSchema = defineIdSchema('StudentConsultationId')
 export type StudentConsultationId = z.infer<typeof studentConsultationIdSchema>
 
-export const routineBlockIdSchema = defineIdSchema('RoutineBlockId')
-export type RoutineBlockId = z.infer<typeof routineBlockIdSchema>
-
 export const appointmentIdSchema = defineIdSchema('AppointmentId')
 export type AppointmentId = z.infer<typeof appointmentIdSchema>
 
-export const routineEntryIdSchema = defineIdSchema('RoutineEntryId')
-export type RoutineEntryId = z.infer<typeof routineEntryIdSchema>
+export const taskIdSchema = defineIdSchema('TaskId')
+export type TaskId = z.infer<typeof taskIdSchema>
 
-export const routineEntryPhotoIdSchema = defineIdSchema('RoutineEntryPhotoId')
-export type RoutineEntryPhotoId = z.infer<typeof routineEntryPhotoIdSchema>
+export const taskPhotoIdSchema = defineIdSchema('TaskPhotoId')
+export type TaskPhotoId = z.infer<typeof taskPhotoIdSchema>

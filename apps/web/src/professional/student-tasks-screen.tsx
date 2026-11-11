@@ -1,7 +1,7 @@
 import { assertNever } from '@habituar/core/assert-never'
 import { type LocalDate, readLocalDateTime } from '@habituar/core/calendar'
 import type { StudentId } from '@habituar/core/identity/ids'
-import type { RoutineBlock } from '@habituar/core/routines'
+import type { Task } from '@habituar/core/tasks'
 import type { TaskTrackingDay, TrackedTask, TrackedTaskStatus } from '@habituar/react-client/react-client'
 import { Link } from '@tanstack/react-router'
 import { CalendarDays, Camera, ChevronRight, MessageSquareText } from 'lucide-react'
@@ -20,19 +20,19 @@ import { cn } from '../lib/utils.js'
 import { useInstitutionSession } from '../session/institution-session.js'
 import { readCurrentTime } from '../time/current-time.js'
 
-type OpenTask = Readonly<{ block: RoutineBlock; date: LocalDate }> | undefined
+type OpenTask = Readonly<{ task: Task; originalDate: LocalDate }> | undefined
 
 const STATUS_STYLE = {
   evaluated: 'bg-primary text-on-primary',
-  delivered: 'bg-primary/10 text-primary',
+  completed: 'bg-primary/10 text-primary',
   missing: 'bg-danger/10 text-danger',
   upcoming: 'bg-surface-muted text-text-muted',
 } as const satisfies Readonly<Record<TrackedTaskStatus, string>>
 
 /**
- * Acompanhamento das tarefas de um estudante pela equipe: por período, cada tarefa da
- * rotina com a entrega e o que o aluno registrou. A equipe não escreve no registro do
- * aluno; quem pode avaliar dá o retorno pelo diálogo da tarefa entregue.
+ * Acompanhamento das tarefas de um estudante pela equipe: por período, cada ocorrência
+ * com a conclusão e o que o aluno registrou. A equipe não escreve no registro do aluno;
+ * quem pode avaliar dá o retorno pelo diálogo da ocorrência concluída de tarefa da equipe.
  */
 export function StudentTasksScreen({ studentId }: Readonly<{ studentId: StudentId }>): ReactElement {
   const { t } = useTranslation('agenda')
@@ -60,7 +60,7 @@ export function StudentTasksScreen({ studentId }: Readonly<{ studentId: StudentI
               <>
                 <section aria-label={t('tracking.summary')} className="flex flex-col gap-sm">
                   <SummaryCards items={[
-                    { label: t('tracking.summaryLabels.delivered'), value: t('tracking.summaryValue', { count: tracking.summary.delivered, total: tracking.summary.total }) },
+                    { label: t('tracking.summaryLabels.completed'), value: t('tracking.summaryValue', { count: tracking.summary.completed, total: tracking.summary.total }) },
                     { label: t('tracking.summaryLabels.evaluated'), value: String(tracking.summary.evaluated) },
                     { label: t('tracking.summaryLabels.missing'), value: String(tracking.summary.missing) },
                     { label: t('tracking.summaryLabels.upcoming'), value: String(tracking.summary.upcoming) },
@@ -68,7 +68,7 @@ export function StudentTasksScreen({ studentId }: Readonly<{ studentId: StudentI
                   <p className="text-caption text-text-muted">{t('tracking.summaryFooter')}</p>
                 </section>
                 {tracking.days.filter(day => day.tasks.length > 0).map(day => (
-                  <TrackingDay key={day.date} day={day} onTaskSelect={(task) => { setOpenTask({ block: task.block, date: task.date }) }} />
+                  <TrackingDay key={day.date} day={day} onTaskSelect={(task) => { setOpenTask({ task: task.task, originalDate: task.originalDate }) }} />
                 ))}
               </>
             )
@@ -76,7 +76,7 @@ export function StudentTasksScreen({ studentId }: Readonly<{ studentId: StudentI
             return assertNever(tracking)
         }
       })()}
-      {openTask !== undefined && <TaskEntryDialog studentId={studentId} block={openTask.block} date={openTask.date} onClose={() => { setOpenTask(undefined) }} />}
+      {openTask !== undefined && <TaskEntryDialog studentId={studentId} task={openTask.task} originalDate={openTask.originalDate} onClose={() => { setOpenTask(undefined) }} />}
     </div>
   )
 }
@@ -90,13 +90,13 @@ function TrackingDay({ day, onTaskSelect }: Readonly<{ day: TaskTrackingDay; onT
       <h3 className="text-body font-medium text-text">{labels.formatLongDate(day.date)}</h3>
       <ul className="flex flex-col">
         {day.tasks.map(task => {
-          const photoCount = task.entry?.photos.length ?? 0
-          const hasNote = task.entry?.notes !== undefined && task.entry.notes !== null
+          const photoCount = task.occurrence?.photos.length ?? 0
+          const hasNote = task.occurrence?.notes !== undefined && task.occurrence.notes !== null
           return (
             <li key={task.key}>
               <button type="button" className={cn(LIST_ITEM_INTERACTION, 'flex min-h-tap-target w-full items-center gap-md px-sm py-sm text-left')} onClick={() => { onTaskSelect(task) }}>
-                <span className="w-28 shrink-0 text-body text-text-muted">{t('time', { start: task.block.startsAt, end: task.block.endsAt })}</span>
-                <span className="min-w-0 flex-1 truncate text-body text-text">{task.block.title}</span>
+                <span className="w-28 shrink-0 text-body text-text-muted">{task.time.kind === 'timed' ? t('time', { start: task.startsAt, end: task.endsAt }) : t('task.allDay')}</span>
+                <span className="min-w-0 flex-1 truncate text-body text-text">{task.task.title}</span>
                 {hasNote && <MessageSquareText role="img" aria-label={t('task.hasNote')} className="size-4 shrink-0 text-text-muted" />}
                 {photoCount > 0 && (
                   <span className="flex shrink-0 items-center gap-xs text-caption text-text-muted">

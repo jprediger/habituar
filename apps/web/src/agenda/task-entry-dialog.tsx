@@ -1,12 +1,11 @@
 import { assertNever } from '@habituar/core/assert-never'
 import { type LocalDate, readLocalDateTime } from '@habituar/core/calendar'
 import type { StudentId } from '@habituar/core/identity/ids'
-import { ROUTINE_ENTRY_EVALUATION_OUTCOMES, ROUTINE_ENTRY_PHOTO_LIMIT, ROUTINE_ENTRY_PHOTO_MEDIA_TYPES, routineEntryPhotoMediaTypeSchema } from '@habituar/core/routine-entries'
-import type { RoutineEntry, RoutineEntryPhoto } from '@habituar/core/routine-entries'
-import type { RoutineBlock } from '@habituar/core/routines'
-import { useRoutineEntryEvaluationForm, useRoutineEntryNoteForm } from '@habituar/react-client/agenda-forms'
+import { TASK_EVALUATION_OUTCOMES, TASK_PHOTO_LIMIT, TASK_PHOTO_MEDIA_TYPES, taskPhotoMediaTypeSchema } from '@habituar/core/tasks'
+import type { Task, TaskOccurrence, TaskPhoto as TaskPhotoValue } from '@habituar/core/tasks'
+import { useTaskEvaluationForm, useTaskNoteForm } from '@habituar/react-client/agenda-forms'
 import { isTaskDue, readTaskProgress } from '@habituar/react-client/react-client'
-import type { PhotoUploadResult, RoutineEntryAccess, RoutineEntryWriteResult } from '@habituar/react-client/react-client'
+import type { AgendaWriteResult, PhotoUploadResult, RoutineEntryWriteResult, TaskOccurrenceAccess } from '@habituar/react-client/react-client'
 import { ImagePlus, Trash2 } from 'lucide-react'
 import { useId, useRef, useState } from 'react'
 import type { ReactElement } from 'react'
@@ -20,9 +19,8 @@ import { FormField } from '../components/ui/form-field.js'
 import { Textarea } from '../components/ui/textarea.js'
 import { readCurrentTime } from '../time/current-time.js'
 
-// `queued` só acontece no app, que guarda a escrita sem conexão; o tipo é o mesmo nos dois.
 type NoteFeedback = RoutineEntryWriteResult | undefined
-type DeliveryFeedback = 'delivered' | 'undone' | 'queued' | 'conflict' | 'not-saved' | undefined
+type CompletionFeedback = 'queued' | 'completed' | 'undone' | 'conflict' | 'not-saved' | undefined
 
 const DATE_TIME_FORMAT = new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short' })
 
@@ -33,19 +31,20 @@ function formatDateTime(iso: string): string {
 type PhotoFeedback = PhotoUploadResult | 'removed' | 'remove-failed' | undefined
 
 /**
- * Registro do aluno numa tarefa do dia — observação, fotos e entrega — e o retorno da
- * equipe. Quem tem `routine.entry.write` escreve e entrega; quem tem
- * `routine.entry.evaluate` avalia a tarefa entregue; os demais só leem.
+ * Registro do aluno numa ocorrência de tarefa — observação, fotos e conclusão — e o
+ * retorno da equipe. Quem tem `task.complete` escreve e conclui; quem tem `task.evaluate`
+ * avalia a ocorrência concluída de tarefa da equipe; os demais só leem.
  */
-export function TaskEntryDialog({ studentId, block, date, onClose }: Readonly<{ studentId: StudentId; block: RoutineBlock; date: LocalDate; onClose: () => void }>): ReactElement {
+export function TaskEntryDialog({ studentId, task, originalDate, onClose }: Readonly<{ studentId: StudentId; task: Task; originalDate: LocalDate; onClose: () => void }>): ReactElement {
   const { t } = useTranslation('agenda')
   const { t: tc } = useTranslation()
   const session = useInstitutionSession()
   const labels = useAgendaLabels()
-  const entry = habituar.useRoutineEntry(session.membership, studentId, block.id, date)
+  const entry = habituar.useTaskOccurrence(session.membership, studentId, task.id, originalDate)
+  const when = entry.state.status === 'ready' ? entry.state : { date: originalDate, time: task.schedule.time }
 
   return (
-    <Dialog isOpen onClose={onClose} title={block.title} description={`${labels.formatLongDate(date)} · ${t('time', { start: block.startsAt, end: block.endsAt })}`}>
+    <Dialog isOpen onClose={onClose} title={task.title} description={`${labels.formatLongDate(when.date)} · ${when.time.kind === 'timed' ? t('time', { start: when.time.startsAt, end: when.time.endsAt }) : t('task.allDay')}`}>
       {(() => {
         switch (entry.state.status) {
           case 'loading':
@@ -58,18 +57,18 @@ export function TaskEntryDialog({ studentId, block, date, onClose }: Readonly<{ 
                 <p className="text-body text-text-muted">{t(entry.canWrite ? 'task.description' : 'task.readOnlyDescription')}</p>
                 <dl className="grid gap-sm text-body sm:grid-cols-[auto_1fr]">
                   <dt className="text-text-muted">{t('task.kind')}</dt>
-                  <dd className="text-text">{tc(`routine.kinds.${block.kind}`)}</dd>
-                  {block.notes !== null && (
+                  <dd className="text-text">{task.kind === null ? tc('routine.noKind') : tc(`routine.kinds.${task.kind}`)}</dd>
+                  {task.notes !== null && (
                     <>
                       <dt className="text-text-muted">{t('task.guidance')}</dt>
-                      <dd className="whitespace-pre-line break-words text-text">{block.notes}</dd>
+                      <dd className="whitespace-pre-line break-words text-text">{task.notes}</dd>
                     </>
                   )}
                 </dl>
-                <TaskNote key={entry.state.entry?.version ?? 0} access={entry} />
-                <TaskPhotos studentId={studentId} access={entry} photos={entry.state.entry?.photos ?? []} />
-                <TaskDelivery access={entry} entry={entry.state.entry} date={date} />
-                <TaskEvaluation key={`evaluation-${String(entry.state.entry?.evaluation?.version ?? 0)}`} access={entry} entry={entry.state.entry} />
+                <TaskNote key={entry.state.occurrence?.version ?? 0} access={entry} />
+                <TaskPhotos studentId={studentId} access={entry} photos={entry.state.occurrence?.photos ?? []} />
+                <TaskCompletion access={entry} occurrence={entry.state.occurrence} date={entry.state.date} />
+                <TaskEvaluation key={`evaluation-${String(entry.state.occurrence?.evaluation?.version ?? 0)}`} access={entry} occurrence={entry.state.occurrence} />
               </>
             )
           default:
@@ -81,12 +80,12 @@ export function TaskEntryDialog({ studentId, block, date, onClose }: Readonly<{ 
   )
 }
 
-function TaskNote({ access }: Readonly<{ access: RoutineEntryAccess }>): ReactElement {
+function TaskNote({ access }: Readonly<{ access: TaskOccurrenceAccess }>): ReactElement {
   const { t } = useTranslation('agenda')
   const { t: tc } = useTranslation()
   const id = useId()
-  const entry = access.state.status === 'ready' ? access.state.entry : undefined
-  const form = useRoutineEntryNoteForm({ entry, save: access.saveNote })
+  const entry = access.state.status === 'ready' ? access.state.occurrence : undefined
+  const form = useTaskNoteForm({ occurrence: entry, save: access.saveNote })
   const [feedback, setFeedback] = useState<NoteFeedback>(undefined)
 
   if (!access.canWrite) {
@@ -131,14 +130,14 @@ function readFileAsBase64(file: File): Promise<string> {
   })
 }
 
-function TaskPhotos({ studentId, access, photos }: Readonly<{ studentId: StudentId; access: RoutineEntryAccess; photos: readonly RoutineEntryPhoto[] }>): ReactElement {
+function TaskPhotos({ studentId, access, photos }: Readonly<{ studentId: StudentId; access: TaskOccurrenceAccess; photos: readonly TaskPhotoValue[] }>): ReactElement {
   const { t } = useTranslation('agenda')
   const input = useRef<HTMLInputElement>(null)
   const [isUploading, setIsUploading] = useState(false)
   const [feedback, setFeedback] = useState<PhotoFeedback>(undefined)
 
   async function upload(file: File): Promise<void> {
-    const mediaType = routineEntryPhotoMediaTypeSchema.safeParse(file.type)
+    const mediaType = taskPhotoMediaTypeSchema.safeParse(file.type)
     if (!mediaType.success) {
       setFeedback('invalid')
       return
@@ -177,12 +176,12 @@ function TaskPhotos({ studentId, access, photos }: Readonly<{ studentId: Student
               ))}
             </ul>
           )}
-      {access.canWrite && photos.length < ROUTINE_ENTRY_PHOTO_LIMIT && (
+      {access.canWrite && photos.length < TASK_PHOTO_LIMIT && (
         <div>
           <input
             ref={input}
             type="file"
-            accept={ROUTINE_ENTRY_PHOTO_MEDIA_TYPES.join(',')}
+            accept={TASK_PHOTO_MEDIA_TYPES.join(',')}
             className="sr-only"
             tabIndex={-1}
             aria-hidden
@@ -213,7 +212,7 @@ function PhotoFeedbackMessage({ feedback }: Readonly<{ feedback: NonNullable<Pho
     case 'invalid':
       return <p role="alert" className="text-body text-danger">{t('task.photoInvalid')}</p>
     case 'limit-reached':
-      return <p role="alert" className="text-body text-danger">{t('task.photoLimit', { maximum: ROUTINE_ENTRY_PHOTO_LIMIT })}</p>
+      return <p role="alert" className="text-body text-danger">{t('task.photoLimit', { maximum: TASK_PHOTO_LIMIT })}</p>
     case 'not-saved':
       return <p role="alert" className="text-body text-danger">{t('task.photoFailedToSave')}</p>
     case 'remove-failed':
@@ -223,10 +222,10 @@ function PhotoFeedbackMessage({ feedback }: Readonly<{ feedback: NonNullable<Pho
   }
 }
 
-function TaskPhoto({ studentId, photo, index }: Readonly<{ studentId: StudentId; photo: RoutineEntryPhoto; index: number }>): ReactElement {
+function TaskPhoto({ studentId, photo, index }: Readonly<{ studentId: StudentId; photo: TaskPhotoValue; index: number }>): ReactElement {
   const { t } = useTranslation('agenda')
   const session = useInstitutionSession()
-  const content = habituar.useRoutineEntryPhoto(session.membership, studentId, photo.id)
+  const content = habituar.useTaskPhoto(session.membership, studentId, photo.id)
 
   switch (content.status) {
     case 'loading':
@@ -240,15 +239,15 @@ function TaskPhoto({ studentId, photo, index }: Readonly<{ studentId: StudentId;
   }
 }
 
-function TaskDelivery({ access, entry, date }: Readonly<{ access: RoutineEntryAccess; entry: RoutineEntry | undefined; date: LocalDate }>): ReactElement {
+function TaskCompletion({ access, occurrence, date }: Readonly<{ access: TaskOccurrenceAccess; occurrence: TaskOccurrence | undefined; date: LocalDate }>): ReactElement {
   const { t } = useTranslation('agenda')
   const [isBusy, setIsBusy] = useState(false)
   const [isConfirmingUndo, setIsConfirmingUndo] = useState(false)
-  const [feedback, setFeedback] = useState<DeliveryFeedback>(undefined)
-  const progress = readTaskProgress(entry)
+  const [feedback, setFeedback] = useState<CompletionFeedback>(undefined)
+  const progress = readTaskProgress(occurrence)
   const isDue = isTaskDue(date, readLocalDateTime(readCurrentTime()).date)
 
-  async function run(write: () => Promise<RoutineEntryWriteResult>, success: 'delivered' | 'undone'): Promise<void> {
+  async function run(write: () => Promise<RoutineEntryWriteResult>, success: 'completed' | 'undone'): Promise<void> {
     setIsBusy(true)
     try {
       const result = await write()
@@ -262,22 +261,22 @@ function TaskDelivery({ access, entry, date }: Readonly<{ access: RoutineEntryAc
   return (
     <section className="flex flex-col gap-sm">
       <h3 className="text-body font-medium text-text">{t('task.delivery.title')}</h3>
-      {entry?.deliveredAt !== null && entry?.deliveredAt !== undefined
-        ? <p className="text-body text-text">{t('task.delivery.deliveredOn', { date: formatDateTime(entry.deliveredAt) })}</p>
+      {occurrence?.completedAt !== null && occurrence?.completedAt !== undefined
+        ? <p className="text-body text-text">{t('task.delivery.deliveredOn', { date: formatDateTime(occurrence.completedAt) })}</p>
         : <p className="text-body text-text-muted">{access.canWrite && !isDue ? t('task.delivery.notDue') : t('task.delivery.notDelivered')}</p>}
       {access.canWrite && progress === 'open' && isDue && (
         <div className="flex flex-col gap-xs">
           <p className="text-caption text-text-muted">{t('task.delivery.hint')}</p>
-          <div><Button type="button" disabled={isBusy} onClick={() => { void run(access.deliver, 'delivered') }}>{isBusy ? t('task.delivery.delivering') : t('task.delivery.deliver')}</Button></div>
+          <div><Button type="button" disabled={isBusy} onClick={() => { void run(access.complete, 'completed') }}>{isBusy ? t('task.delivery.delivering') : t('task.delivery.deliver')}</Button></div>
         </div>
       )}
-      {access.canWrite && progress === 'delivered' && (
+      {access.canWrite && progress === 'completed' && (
         isConfirmingUndo
           ? (
               <div role="group" aria-label={t('task.delivery.undo')} className="flex flex-col gap-sm rounded-field bg-surface-muted p-sm">
                 <p className="text-body text-text">{t('task.delivery.undoQuestion')}</p>
                 <div className="flex flex-wrap gap-sm">
-                  <Button type="button" variant="destructive" disabled={isBusy} onClick={() => { void run(access.undeliver, 'undone') }}>{isBusy ? t('task.delivery.undoing') : t('task.delivery.confirmUndo')}</Button>
+                  <Button type="button" variant="destructive" disabled={isBusy} onClick={() => { void run(access.uncomplete, 'undone') }}>{isBusy ? t('task.delivery.undoing') : t('task.delivery.confirmUndo')}</Button>
                   <Button type="button" variant="ghost" disabled={isBusy} onClick={() => { setIsConfirmingUndo(false) }}>{t('cancel')}</Button>
                 </div>
               </div>
@@ -285,7 +284,7 @@ function TaskDelivery({ access, entry, date }: Readonly<{ access: RoutineEntryAc
           : <div><Button type="button" variant="outline" onClick={() => { setFeedback(undefined); setIsConfirmingUndo(true) }}>{t('task.delivery.undo')}</Button></div>
       )}
       {access.canWrite && progress === 'evaluated' && <p className="text-caption text-text-muted">{t('task.delivery.locked')}</p>}
-      {feedback === 'delivered' && <p role="status" className="text-body text-text">{t('task.delivery.delivered')}</p>}
+      {feedback === 'completed' && <p role="status" className="text-body text-text">{t('task.delivery.delivered')}</p>}
       {feedback === 'undone' && <p role="status" className="text-body text-text">{t('task.delivery.undone')}</p>}
       {feedback === 'queued' && <p role="status" className="text-body text-text">{t('task.savedOffline')}</p>}
       {feedback === 'conflict' && <p role="alert" className="text-body text-danger">{t('task.delivery.changed')}</p>}
@@ -294,14 +293,14 @@ function TaskDelivery({ access, entry, date }: Readonly<{ access: RoutineEntryAc
   )
 }
 
-function TaskEvaluation({ access, entry }: Readonly<{ access: RoutineEntryAccess; entry: RoutineEntry | undefined }>): ReactElement {
+function TaskEvaluation({ access, occurrence }: Readonly<{ access: TaskOccurrenceAccess; occurrence: TaskOccurrence | undefined }>): ReactElement {
   const { t } = useTranslation('agenda')
   const { t: tc } = useTranslation()
   const id = useId()
-  const form = useRoutineEntryEvaluationForm({ entry, save: access.evaluate })
+  const form = useTaskEvaluationForm({ occurrence, save: access.evaluate })
   const [feedback, setFeedback] = useState<NoteFeedback>(undefined)
-  const evaluation = entry?.evaluation ?? null
-  const isDelivered = readTaskProgress(entry) !== 'open'
+  const evaluation = occurrence?.evaluation ?? null
+  const isDelivered = readTaskProgress(occurrence) !== 'open'
 
   if (!access.canEvaluate || !isDelivered) {
     return (
@@ -334,7 +333,7 @@ function TaskEvaluation({ access, entry }: Readonly<{ access: RoutineEntryAccess
       <fieldset className="flex flex-col gap-xs" aria-describedby={form.invalidField === 'outcome' ? `${id}-outcome-error` : undefined}>
         <legend className="text-body text-text">{t('task.evaluation.outcome')}</legend>
         <div className="flex flex-wrap gap-md">
-          {ROUTINE_ENTRY_EVALUATION_OUTCOMES.map(outcome => (
+          {TASK_EVALUATION_OUTCOMES.map(outcome => (
             <label key={outcome} className="flex min-h-tap-target items-center gap-xs">
               <input type="radio" name={`${id}-outcome`} className="size-5" checked={form.outcome === outcome} onChange={() => { setFeedback(undefined); form.changeOutcome(outcome) }} />
               <span className="text-body">{t(`task.evaluation.outcomes.${outcome}`)}</span>

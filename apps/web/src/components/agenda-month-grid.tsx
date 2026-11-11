@@ -1,5 +1,4 @@
-import { buildMonthGrid, type LocalDate, readLocalDateParts } from '@habituar/core/calendar'
-import { WEEKDAYS } from '@habituar/core/routines'
+import { buildMonthGrid, type LocalDate, readLocalDateParts, WEEKDAYS } from '@habituar/core/calendar'
 import type { AgendaDay, AgendaItem } from '@habituar/react-client/react-client'
 import type { ReactElement } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -59,7 +58,7 @@ export function AgendaMonthGrid({
                   onClick={() => { onItemSelect(item) }}
                   className={cn('truncate rounded-control px-xs text-left text-caption text-text', item.kind === 'appointment' ? 'bg-[color-mix(in_oklab,var(--color-primary)_16%,var(--color-surface))]' : 'bg-[color-mix(in_oklab,var(--color-info)_14%,var(--color-surface))]')}
                 >
-                  <span className="font-medium">{item.startsAt}</span> {describeItem(item).title}
+                  {(item.kind === 'appointment' || item.time.kind === 'timed') && <span className="font-medium">{item.startsAt}</span>} {describeItem(item).title}
                 </button>
               ))}
               {hidden > 0 && (

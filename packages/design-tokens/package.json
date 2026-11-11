@@ -35,6 +35,7 @@
     "./theme.css": "./dist/theme.css"
   },
   "scripts": {
+    "clean": "rm -rf dist",
     "build": "tsup && node --experimental-strip-types scripts/write-theme-css.ts",
     "dev": "tsup --watch",
     "lint": "eslint .",

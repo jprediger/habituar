@@ -43,9 +43,14 @@
     "./agenda-forms": {
       "types": "./dist/agenda-forms.d.ts",
       "import": "./dist/agenda-forms.js"
+    },
+    "./task-forms": {
+      "types": "./dist/task-forms.d.ts",
+      "import": "./dist/task-forms.js"
     }
   },
   "scripts": {
+    "clean": "rm -rf dist",
     "build": "tsup",
     "dev": "tsup --watch",
     "lint": "eslint .",

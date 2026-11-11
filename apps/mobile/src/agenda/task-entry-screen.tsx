@@ -1,12 +1,14 @@
 import { assertNever } from '@habituar/core/assert-never'
 import { type LocalDate, readLocalDateTime } from '@habituar/core/calendar'
-import type { RoutineBlockId, StudentId } from '@habituar/core/identity/ids'
-import { ROUTINE_ENTRY_EVALUATION_OUTCOMES, ROUTINE_ENTRY_PHOTO_LIMIT, ROUTINE_ENTRY_PHOTO_MAX_BYTES, ROUTINE_ENTRY_PHOTO_MEDIA_TYPES, routineEntryPhotoMediaTypeSchema } from '@habituar/core/routine-entries'
-import type { RoutineEntry, RoutineEntryPhoto } from '@habituar/core/routine-entries'
+import type { StudentId, TaskId } from '@habituar/core/identity/ids'
+import { TASK_EVALUATION_OUTCOMES, TASK_PHOTO_LIMIT, TASK_PHOTO_MAX_BYTES, TASK_PHOTO_MEDIA_TYPES, taskPhotoMediaTypeSchema } from '@habituar/core/tasks'
+import type { TaskOccurrence, TaskPhoto as TaskPhotoValue } from '@habituar/core/tasks'
 import { SPACING } from '@habituar/design-tokens/spacing'
-import { useRoutineEntryEvaluationForm, useRoutineEntryNoteForm } from '@habituar/react-client/agenda-forms'
-import { isTaskDue, readTaskProgress } from '@habituar/react-client/react-client'
-import type { AgendaWriteResult, PhotoUploadResult, RoutineEntryAccess, RoutineEntryWriteResult } from '@habituar/react-client/react-client'
+import { useTaskEvaluationForm, useTaskNoteForm } from '@habituar/react-client/agenda-forms'
+import { canWriteTaskSeries, isTaskDue, readTaskProgress } from '@habituar/react-client/react-client'
+import type { AgendaWriteResult, PhotoUploadResult, RoutineEntryWriteResult, TaskOccurrenceAccess, TaskSeriesWriteResult } from '@habituar/react-client/react-client'
+import { listTaskRemovalScopes } from '@habituar/react-client/task-forms'
+import type { Task, TaskChangeScope } from '@habituar/core/tasks'
 import * as DocumentPicker from 'expo-document-picker'
 import type { TFunction } from 'i18next'
 import { readAsStringAsync } from 'expo-file-system/legacy'
@@ -31,21 +33,27 @@ import type { InstitutionSession } from '../session/session-screen'
 import { useThemeTokens } from '../theme/tokens'
 import { readCurrentTime } from '../time/current-time'
 import { useAgendaLabels } from './agenda-labels'
+import type { AgendaPlace } from './agenda-routes'
+import { useAgendaRoutes } from './agenda-routes'
+import { ScopeSheet } from './scope-sheet'
 
 /**
- * Tarefa da rotina num dia. O aluno registra como foi — uma observação e até seis fotos —
- * e marca como entregue; quem tem `routine.entry.evaluate` dá o retorno sobre a tarefa
- * entregue; o responsável vê tudo só para leitura.
+ * Detalhe de uma ocorrência de tarefa. O aluno registra como foi — uma observação e até
+ * seis fotos — e conclui; quem tem `task.evaluate` dá o retorno sobre a ocorrência
+ * concluída de tarefa da equipe; quem é dono da origem edita e exclui pela série; o
+ * responsável vê tudo só para leitura.
  */
-export function TaskEntryScreen({ session, studentId, blockId, date }: Readonly<{ session: InstitutionSession; studentId: StudentId; blockId: RoutineBlockId; date: LocalDate }>) {
+export function TaskEntryScreen({ session, studentId, taskId, originalDate, place }: Readonly<{ session: InstitutionSession; studentId: StudentId; taskId: TaskId; originalDate: LocalDate; place: AgendaPlace }>) {
   const { t } = useTranslation('agenda')
   const { t: tc } = useTranslation()
   const labels = useAgendaLabels()
-  const access = habituar.useRoutineEntry(session.membership, studentId, blockId, date)
-  const title = access.state.status === 'ready' ? access.state.block.title : t('title')
+  const routes = useAgendaRoutes(place)
+  const access = habituar.useTaskOccurrence(session.membership, studentId, taskId, originalDate)
+  const title = access.state.status === 'ready' ? access.state.task.title : t('title')
+  const canEditSeries = access.state.status === 'ready' && canWriteTaskSeries(session.membership, access.state.task.origin)
 
   return (
-    <StackPage title={title}>
+    <StackPage title={title} action={canEditSeries ? { icon: 'pencil-simple', label: t('calendar.editTask'), onPress: () => { routes.editTask(studentId, taskId, originalDate) } } : undefined}>
       {(() => {
         switch (access.state.status) {
           case 'loading':
@@ -57,18 +65,25 @@ export function TaskEntryScreen({ session, studentId, blockId, date }: Readonly<
               <View style={styles.stack}>
                 <OfflineNotice />
                 <ListSection footer={t(access.canWrite ? 'task.description' : 'task.readOnlyDescription')}>
-                  <ListRow title={labels.formatShortDate(date)} value={t('time', { start: access.state.block.startsAt, end: access.state.block.endsAt })} />
-                  <ListRow title={t('task.kind')} value={tc(`routine.kinds.${access.state.block.kind}`)} />
-                  {access.state.block.notes !== null && <ListRow title={t('task.guidance')} description={access.state.block.notes} />}
+                  <ListRow title={labels.formatShortDate(access.state.date)} value={access.state.time.kind === 'timed' ? t('time', { start: access.state.time.startsAt, end: access.state.time.endsAt }) : t('task.allDay')} />
+                  <ListRow title={t('calendar.origin')} value={labels.entryType(access.state.task.origin === 'staff' ? 'staff-task' : 'student-task')} />
+                  <ListRow title={t('task.kind')} value={access.state.task.kind === null ? tc('routine.noKind') : tc(`routine.kinds.${access.state.task.kind}`)} />
+                  {access.state.task.notes !== null && <ListRow title={t('task.guidance')} description={access.state.task.notes} />}
                 </ListSection>
                 <ListDivider />
-                <TaskNote key={access.state.entry?.version ?? 0} access={access} />
+                <TaskCompletion access={access} occurrence={access.state.occurrence} date={access.state.date} />
                 <ListDivider />
-                <TaskPhotos session={session} studentId={studentId} access={access} photos={access.state.entry?.photos ?? []} />
+                <TaskNote key={access.state.occurrence?.version ?? 0} access={access} />
                 <ListDivider />
-                <TaskDelivery access={access} entry={access.state.entry} date={date} isPendingSync={access.state.isPendingSync} />
+                <TaskPhotos session={session} studentId={studentId} access={access} photos={access.state.occurrence?.photos ?? []} />
                 <ListDivider />
-                <TaskEvaluation key={`evaluation-${String(access.state.entry?.evaluation?.version ?? 0)}`} access={access} entry={access.state.entry} />
+                <TaskEvaluation key={`evaluation-${String(access.state.occurrence?.evaluation?.version ?? 0)}`} access={access} occurrence={access.state.occurrence} />
+                {canEditSeries && (
+                  <>
+                    <ListDivider />
+                    <TaskRemoval session={session} studentId={studentId} task={access.state.task} originalDate={originalDate} onRemoved={() => { routes.backToAgenda(studentId) }} />
+                  </>
+                )}
               </View>
             )
           default:
@@ -79,11 +94,11 @@ export function TaskEntryScreen({ session, studentId, blockId, date }: Readonly<
   )
 }
 
-function TaskNote({ access }: Readonly<{ access: RoutineEntryAccess }>) {
+function TaskNote({ access }: Readonly<{ access: TaskOccurrenceAccess }>) {
   const { t } = useTranslation('agenda')
   const toast = useToast()
-  const entry = access.state.status === 'ready' ? access.state.entry : undefined
-  const form = useRoutineEntryNoteForm({ entry, save: access.saveNote })
+  const entry = access.state.status === 'ready' ? access.state.occurrence : undefined
+  const form = useTaskNoteForm({ occurrence: entry, save: access.saveNote })
   const [failure, setFailure] = useState<Exclude<AgendaWriteResult, 'saved'> | undefined>(undefined)
 
   if (!access.canWrite) {
@@ -94,8 +109,9 @@ function TaskNote({ access }: Readonly<{ access: RoutineEntryAccess }>) {
     )
   }
 
+  // Sem título de seção: o rótulo do campo já diz "Observação" e fica ligado a ele.
   return (
-    <ListSection title={t('task.notes')}>
+    <ListSection>
       <View style={styles.stack}>
         <FormField id="task-notes" label={t('task.notes')} isRequired={false} hint={t('task.notesHint')} error={form.isInvalid ? t('task.invalidNotes', { maximum: form.maxLength }) : undefined}>
           {(control) => <Textarea maxLength={form.maxLength} value={form.notes} onChangeText={form.change} {...control} />}
@@ -127,7 +143,7 @@ function TaskNote({ access }: Readonly<{ access: RoutineEntryAccess }>) {
 
 type PhotoFailure = Exclude<PhotoUploadResult, 'saved'> | 'remove-failed'
 
-function TaskPhotos({ session, studentId, access, photos }: Readonly<{ session: InstitutionSession; studentId: StudentId; access: RoutineEntryAccess; photos: readonly RoutineEntryPhoto[] }>) {
+function TaskPhotos({ session, studentId, access, photos }: Readonly<{ session: InstitutionSession; studentId: StudentId; access: TaskOccurrenceAccess; photos: readonly TaskPhotoValue[] }>) {
   const { t } = useTranslation('agenda')
   const toast = useToast()
   const [isUploading, setIsUploading] = useState(false)
@@ -139,11 +155,11 @@ function TaskPhotos({ session, studentId, access, photos }: Readonly<{ session: 
   // conferido aqui para a mensagem certa, e de novo na API pelo conteúdo real.
   async function pickPhoto(): Promise<void> {
     setFailure(undefined)
-    const result = await DocumentPicker.getDocumentAsync({ type: [...ROUTINE_ENTRY_PHOTO_MEDIA_TYPES], copyToCacheDirectory: true })
+    const result = await DocumentPicker.getDocumentAsync({ type: [...TASK_PHOTO_MEDIA_TYPES], copyToCacheDirectory: true })
     const asset = result.canceled ? undefined : result.assets[0]
     if (asset === undefined) return
-    const mediaType = routineEntryPhotoMediaTypeSchema.safeParse(asset.mimeType)
-    if (!mediaType.success || (asset.size !== undefined && asset.size > ROUTINE_ENTRY_PHOTO_MAX_BYTES)) {
+    const mediaType = taskPhotoMediaTypeSchema.safeParse(asset.mimeType)
+    if (!mediaType.success || (asset.size !== undefined && asset.size > TASK_PHOTO_MAX_BYTES)) {
       setFailure('invalid')
       return
     }
@@ -185,9 +201,10 @@ function TaskPhotos({ session, studentId, access, photos }: Readonly<{ session: 
               ))}
             </View>
           )}
-      {access.canWrite && photos.length < ROUTINE_ENTRY_PHOTO_LIMIT && (isOffline
+      {access.canWrite && photos.length < TASK_PHOTO_LIMIT && (isOffline
         ? <Text size="caption" tone="muted">{t('task.photosNeedConnection')}</Text>
-        : <ListRow icon="image" title={isUploading ? t('task.uploading') : t('task.addPhoto')} onPress={isUploading ? undefined : () => { void pickPhoto() }} />
+        :
+        <ListRow icon="image" title={isUploading ? t('task.uploading') : t('task.addPhoto')} onPress={isUploading ? undefined : () => { void pickPhoto() }} />
       )}
       {failure !== undefined && <Text accessibilityRole="alert" accessibilityLiveRegion="polite" tone="danger">{photoFailureText(failure, t)}</Text>}
     </ListSection>
@@ -197,17 +214,17 @@ function TaskPhotos({ session, studentId, access, photos }: Readonly<{ session: 
 function photoFailureText(failure: PhotoFailure, t: TFunction<'agenda'>): string {
   switch (failure) {
     case 'invalid': return t('task.photoInvalid')
-    case 'limit-reached': return t('task.photoLimit', { maximum: ROUTINE_ENTRY_PHOTO_LIMIT })
+    case 'limit-reached': return t('task.photoLimit', { maximum: TASK_PHOTO_LIMIT })
     case 'not-saved': return t('task.photoFailedToSave')
     case 'remove-failed': return t('writeFailed')
     default: return assertNever(failure)
   }
 }
 
-function TaskPhoto({ session, studentId, photo, index, onRemove }: Readonly<{ session: InstitutionSession; studentId: StudentId; photo: RoutineEntryPhoto; index: number; onRemove: (() => void) | undefined }>) {
+function TaskPhoto({ session, studentId, photo, index, onRemove }: Readonly<{ session: InstitutionSession; studentId: StudentId; photo: TaskPhotoValue; index: number; onRemove: (() => void) | undefined }>) {
   const { t } = useTranslation('agenda')
   const { colors, radius, minimumTouchTarget } = useThemeTokens()
-  const content = habituar.useRoutineEntryPhoto(session.membership, studentId, photo.id)
+  const content = habituar.useTaskPhoto(session.membership, studentId, photo.id)
 
   return (
     <View style={[styles.photo, { borderRadius: radius.field, backgroundColor: colors.surfaceMuted }]}>
@@ -240,15 +257,16 @@ function formatDateTime(iso: string): string {
   return DATE_TIME_FORMAT.format(new Date(iso))
 }
 
-function TaskDelivery({ access, entry, date, isPendingSync }: Readonly<{ access: RoutineEntryAccess; entry: RoutineEntry | undefined; date: LocalDate; isPendingSync: boolean }>) {
+function TaskCompletion({ access, occurrence, date }: Readonly<{ access: TaskOccurrenceAccess; occurrence: TaskOccurrence | undefined; date: LocalDate }>) {
   const { t } = useTranslation('agenda')
   const toast = useToast()
   const [isBusy, setIsBusy] = useState(false)
   const [isConfirmingUndo, setIsConfirmingUndo] = useState(false)
   const [failure, setFailure] = useState<Exclude<AgendaWriteResult, 'saved'> | undefined>(undefined)
-  const progress = readTaskProgress(entry)
+  const progress = readTaskProgress(occurrence)
   const isDue = isTaskDue(date, readLocalDateTime(readCurrentTime()).date)
-  const deliveredAt = entry?.deliveredAt ?? null
+  const deliveredAt = occurrence?.completedAt ?? null
+  const isPendingSync = access.state.status === 'ready' && access.state.isPendingSync === true
 
   async function run(write: () => Promise<RoutineEntryWriteResult>, toastKey: 'taskDelivered' | 'deliveryUndone'): Promise<void> {
     setFailure(undefined)
@@ -277,9 +295,9 @@ function TaskDelivery({ access, entry, date, isPendingSync }: Readonly<{ access:
         <Text tone={deliveredAt === null ? 'muted' : 'default'}>{status}</Text>
         {failure !== undefined && <Text accessibilityRole="alert" accessibilityLiveRegion="polite" tone="danger">{t(failure === 'conflict' ? 'task.delivery.changed' : 'writeFailed')}</Text>}
         {access.canWrite && progress === 'open' && isDue && (
-          <Button label={isBusy ? t('task.delivery.delivering') : t('task.delivery.deliver')} isBusy={isBusy} onPress={() => { void run(access.deliver, 'taskDelivered') }} />
+          <Button label={isBusy ? t('task.delivery.delivering') : t('task.delivery.deliver')} isBusy={isBusy} onPress={() => { void run(access.complete, 'taskDelivered') }} />
         )}
-        {access.canWrite && progress === 'delivered' && (
+        {access.canWrite && progress === 'completed' && (
           <Button label={t('task.delivery.undo')} variant="outline" onPress={() => { setFailure(undefined); setIsConfirmingUndo(true) }} />
         )}
       </View>
@@ -291,7 +309,7 @@ function TaskDelivery({ access, entry, date, isPendingSync }: Readonly<{ access:
           cancelLabel={t('cancel')}
           confirmVariant="danger"
           isBusy={isBusy}
-          onConfirm={() => { void run(access.undeliver, 'deliveryUndone') }}
+          onConfirm={() => { void run(access.uncomplete, 'deliveryUndone') }}
           onCancel={() => { setIsConfirmingUndo(false) }}
         />
       )}
@@ -299,13 +317,13 @@ function TaskDelivery({ access, entry, date, isPendingSync }: Readonly<{ access:
   )
 }
 
-function TaskEvaluation({ access, entry }: Readonly<{ access: RoutineEntryAccess; entry: RoutineEntry | undefined }>) {
+function TaskEvaluation({ access, occurrence }: Readonly<{ access: TaskOccurrenceAccess; occurrence: TaskOccurrence | undefined }>) {
   const { t } = useTranslation('agenda')
   const toast = useToast()
-  const form = useRoutineEntryEvaluationForm({ entry, save: access.evaluate })
+  const form = useTaskEvaluationForm({ occurrence, save: access.evaluate })
   const [failure, setFailure] = useState<Exclude<AgendaWriteResult, 'saved'> | undefined>(undefined)
-  const evaluation = entry?.evaluation ?? null
-  const isDelivered = readTaskProgress(entry) !== 'open'
+  const evaluation = occurrence?.evaluation ?? null
+  const isDelivered = readTaskProgress(occurrence) !== 'open'
 
   if (!access.canEvaluate || !isDelivered) {
     if (evaluation === null) {
@@ -328,7 +346,7 @@ function TaskEvaluation({ access, entry }: Readonly<{ access: RoutineEntryAccess
       <View style={styles.stack}>
         <ChoiceList
           label={t('task.evaluation.outcome')}
-          choices={ROUTINE_ENTRY_EVALUATION_OUTCOMES.map(outcome => ({ value: outcome, label: t(`task.evaluation.outcomes.${outcome}`) }))}
+          choices={TASK_EVALUATION_OUTCOMES.map(outcome => ({ value: outcome, label: t(`task.evaluation.outcomes.${outcome}`) }))}
           value={form.outcome}
           onChange={(outcome) => { setFailure(undefined); form.changeOutcome(outcome) }}
         />
@@ -353,6 +371,56 @@ function TaskEvaluation({ access, entry }: Readonly<{ access: RoutineEntryAccess
           }}
         />
       </View>
+    </ListSection>
+  )
+}
+
+function TaskRemoval({ session, studentId, task, originalDate, onRemoved }: Readonly<{ session: InstitutionSession; studentId: StudentId; task: Task; originalDate: LocalDate; onRemoved: () => void }>) {
+  const { t } = useTranslation('agenda')
+  const toast = useToast()
+  const series = habituar.useTaskSeries(session.membership, studentId)
+  const [isAsking, setIsAsking] = useState(false)
+  const [isBusy, setIsBusy] = useState(false)
+  const [failure, setFailure] = useState<Exclude<TaskSeriesWriteResult, 'saved'> | undefined>(undefined)
+  const scopes = listTaskRemovalScopes(task, originalDate, readLocalDateTime(readCurrentTime()).date)
+
+  async function remove(scope: TaskChangeScope): Promise<void> {
+    setIsBusy(true)
+    const result = await series.remove(task, { scope, occurrenceDate: originalDate })
+    setIsBusy(false)
+    setIsAsking(false)
+    if (result !== 'saved') {
+      setFailure(result)
+      return
+    }
+    toast({ type: 'success', title: t('toast.taskRemoved.title'), subtitle: t('toast.taskRemoved.description') })
+    onRemoved()
+  }
+
+  return (
+    <ListSection title={t('calendar.removeTitle')}>
+      <View style={styles.stack}>
+        {failure !== undefined && <Text accessibilityRole="alert" accessibilityLiveRegion="polite" tone="danger">{t(`calendar.writeFailure.${failure}`)}</Text>}
+        <Button
+          variant="dangerOutline"
+          label={t('calendar.removeTask')}
+          onPress={() => {
+            setFailure(undefined)
+            // Avulsa não pergunta alcance: há um só, e ele vem confirmado pela folha.
+            setIsAsking(true)
+          }}
+        />
+      </View>
+      {isAsking && (
+        <ScopeSheet
+          title={t(task.schedule.recurrence.kind === 'none' ? 'calendar.removeSingleQuestion' : 'calendar.removeRecurringQuestion')}
+          scopes={scopes}
+          isBusy={isBusy}
+          isDanger
+          onChoose={(scope) => { void remove(scope) }}
+          onCancel={() => { setIsAsking(false) }}
+        />
+      )}
     </ListSection>
   )
 }

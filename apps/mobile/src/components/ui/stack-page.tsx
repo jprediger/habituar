@@ -25,43 +25,69 @@ export type StackPageAction = Readonly<{
  * mais que isso transforma a barra em barra de ferramentas.
  */
 export function StackPage({ title, action, children }: PropsWithChildren<Readonly<{ title: string; action?: StackPageAction | undefined }>>) {
+  const { colors } = useThemeTokens()
+
+  return (
+    <SafeAreaView edges={['top', 'left', 'right']} style={[styles.safeArea, { backgroundColor: colors.surface }]}>
+      <StackPageBar title={title} action={action} />
+      <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.content}>
+        <DeferredMount fallback={<StackPageSkeleton />}>{children}</DeferredMount>
+      </ScrollView>
+    </SafeAreaView>
+  )
+}
+
+/**
+ * Mesmo enquadramento de `StackPage`, mas sem rolar: o conteúdo recebe a altura que sobra
+ * abaixo da barra. Existe para telas que são donas da própria rolagem, como a agenda —
+ * dentro de uma rolagem sem limite elas cresceriam até o fim e nunca rolariam.
+ */
+export function FixedStackPage({ title, action, children }: PropsWithChildren<Readonly<{ title: string; action?: StackPageAction | undefined }>>) {
+  const { colors } = useThemeTokens()
+
+  return (
+    <SafeAreaView edges={['top', 'left', 'right']} style={[styles.safeArea, { backgroundColor: colors.surface }]}>
+      <StackPageBar title={title} action={action} />
+      <View style={[styles.content, styles.fixedContent]}>
+        <DeferredMount fallback={<StackPageSkeleton />}>{children}</DeferredMount>
+      </View>
+    </SafeAreaView>
+  )
+}
+
+function StackPageBar({ title, action }: Readonly<{ title: string; action: StackPageAction | undefined }>) {
   const { t } = useTranslation()
   const router = useRouter()
   const { colors, minimumTouchTarget } = useThemeTokens()
 
   return (
-    <SafeAreaView edges={['top', 'left', 'right']} style={[styles.safeArea, { backgroundColor: colors.surface }]}>
-      <View style={[styles.bar, { minHeight: minimumTouchTarget, borderBottomColor: colors.divider }]}>
+    <View style={[styles.bar, { minHeight: minimumTouchTarget, borderBottomColor: colors.divider }]}>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={t('navigation.back')}
+        onPress={() => { router.back() }}
+        hitSlop={SPACING.sm}
+        style={({ pressed }) => [styles.iconButton, { minWidth: minimumTouchTarget, minHeight: minimumTouchTarget, opacity: pressed ? 0.7 : 1 }]}
+      >
+        <Icon name="arrow-left" size={24} color={colors.text} />
+      </Pressable>
+      <View style={styles.title}>
+        <Text accessibilityRole="header" size="title" weight="bold" numberOfLines={1}>
+          {title}
+        </Text>
+      </View>
+      {action !== undefined && (
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel={t('navigation.back')}
-          onPress={() => { router.back() }}
+          accessibilityLabel={action.label}
+          onPress={action.onPress}
           hitSlop={SPACING.sm}
           style={({ pressed }) => [styles.iconButton, { minWidth: minimumTouchTarget, minHeight: minimumTouchTarget, opacity: pressed ? 0.7 : 1 }]}
         >
-          <Icon name="arrow-left" size={24} color={colors.text} />
+          <Icon name={action.icon} size={24} color={colors.text} />
         </Pressable>
-        <View style={styles.title}>
-          <Text accessibilityRole="header" size="title" weight="bold" numberOfLines={1}>
-            {title}
-          </Text>
-        </View>
-        {action !== undefined && (
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={action.label}
-            onPress={action.onPress}
-            hitSlop={SPACING.sm}
-            style={({ pressed }) => [styles.iconButton, { minWidth: minimumTouchTarget, minHeight: minimumTouchTarget, opacity: pressed ? 0.7 : 1 }]}
-          >
-            <Icon name={action.icon} size={24} color={colors.text} />
-          </Pressable>
-        )}
-      </View>
-      <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.content}>
-        <DeferredMount fallback={<StackPageSkeleton />}>{children}</DeferredMount>
-      </ScrollView>
-    </SafeAreaView>
+      )}
+    </View>
   )
 }
 
@@ -70,5 +96,6 @@ const styles = StyleSheet.create({
   bar: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm, paddingHorizontal: SPACING.sm, borderBottomWidth: StyleSheet.hairlineWidth },
   iconButton: { alignItems: 'center', justifyContent: 'center' },
   title: { flex: 1 },
+  fixedContent: { flex: 1 },
   content: { flexGrow: 1, paddingHorizontal: SPACING.xl, paddingTop: SPACING.lg, paddingBottom: SPACING.xl, gap: SPACING.xl },
 })

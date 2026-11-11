@@ -1,0 +1,103 @@
+# Ambiente de desenvolvimento acessível pela internet: API em contêiner, banco próprio e
+# túnel ngrok com domínio fixo. O domínio fixo é o que permite gravar a origem da API no
+# APK uma vez só. Uso e variáveis: README, seção "Ambiente live".
+#
+#   docker compose -f compose.live.yml --env-file .env.live up -d --build
+#
+# Projeto separado do `docker-compose.yml` de desenvolvimento: volume, rede e contêineres
+# próprios, então os dois rodam lado a lado sem disputar porta nem dados.
+name: habituar-live
+
+x-api-image: &api-image
+  image: habituar-api:live
+  build:
+    context: .
+    dockerfile: apps/api/Dockerfile
+
+# NODE_ENV fica em `development` de propósito: o seed de dados de exemplo recusa produção.
+# Por isso `DEV_SEED_PASSWORD` é obrigatória aqui — a senha padrão do `.env.example` é
+# pública no repositório e este ambiente é alcançável por qualquer um com a URL.
+x-api-environment: &api-environment
+  NODE_ENV: development
+  APP_VERSION: ${APP_VERSION:-0.0.0-live}
+  # As credenciais dos papéis vêm de `db/bootstrap.sql`. Só valem dentro da rede do
+  # compose: o Postgres deste arquivo não publica porta no host.
+  DATABASE_URL: postgresql://habituar_app:habituar_app@postgres:5432/habituar
+  LOG_LEVEL: ${LOG_LEVEL:-info}
+  EMAIL_TRANSPORT: log
+  FILE_STORAGE_DIRECTORY: /data/storage
+
+services:
+  postgres:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: habituar
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD no .env.live}
+    volumes:
+      - postgres-data:/var/lib/postgresql
+      - ./apps/api/db/bootstrap.sql:/docker-entrypoint-initdb.d/bootstrap.sql:ro
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d habituar']
+      interval: 2s
+      timeout: 5s
+      retries: 15
+
+  migrate:
+    <<: *api-image
+    command: ['node', 'dist/database/migrate.js']
+    environment:
+      DATABASE_MIGRATION_URL: postgresql://habituar_owner:habituar_owner@postgres:5432/habituar
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # Os dois seeds são idempotentes, então rodam a cada `up` sem duplicar nada.
+  seed:
+    <<: *api-image
+    command: ['sh', '-c', 'node dist/database/seeds/admin.seed.js && node dist/database/seeds/development.seed.js']
+    environment:
+      <<: *api-environment
+      DEV_SEED_PASSWORD: ${DEV_SEED_PASSWORD:?defina DEV_SEED_PASSWORD no .env.live}
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  api:
+    <<: *api-image
+    restart: unless-stopped
+    environment: *api-environment
+    volumes:
+      - api-storage:/data/storage
+    # Só no loopback do host, para inspecionar sem passar pelo túnel.
+    ports:
+      - '127.0.0.1:${API_HOST_PORT:-8090}:8080'
+    healthcheck:
+      test: ['CMD', 'node', '-e', "fetch('http://127.0.0.1:8080/v1/health').then(r => process.exit(r.ok ? 0 : 1), () => process.exit(1))"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 5s
+    depends_on:
+      seed:
+        condition: service_completed_successfully
+
+  tunnel:
+    image: ngrok/ngrok:3.39.7-alpine
+    restart: unless-stopped
+    # Sem `--log`, o ngrok fora de um terminal não escreve nada e o `logs` fica mudo.
+    command: ['http', '--url=${NGROK_DOMAIN:?defina NGROK_DOMAIN no .env.live}', '--log=stdout', 'api:8080']
+    environment:
+      NGROK_AUTHTOKEN: ${NGROK_AUTHTOKEN:?defina NGROK_AUTHTOKEN no .env.live}
+    # O inspetor do ngrok mostra corpo de requisição, senha de login inclusive: fica só
+    # no loopback.
+    ports:
+      - '127.0.0.1:4040:4040'
+    depends_on:
+      api:
+        condition: service_healthy
+
+volumes:
+  postgres-data:
+  api-storage:

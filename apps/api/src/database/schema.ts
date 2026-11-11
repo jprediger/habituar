@@ -1,8 +1,8 @@
 import { MembershipEnvironment } from '@habituar/core/roles'
 import { sql } from 'drizzle-orm'
 import type { AppointmentRecurrence } from '@habituar/core/appointments'
-import type { RoutineEntryEvaluationOutcome } from '@habituar/core/routine-entries'
-import type { RoutineKind } from '@habituar/core/routines'
+import type { OccurrenceException, ScheduleRecurrence, ScheduleTime } from '@habituar/core/schedule'
+import type { TaskEvaluationOutcome, TaskKind, TaskOrigin } from '@habituar/core/tasks'
 import type { StudentCondition } from '@habituar/core/student-records'
 import { boolean, check, date, foreignKey, index, integer, pgEnum, pgTable, primaryKey, smallint, text, time, timestamp, unique, uniqueIndex, uuid } from 'drizzle-orm/pg-core'
 
@@ -21,6 +21,9 @@ export const institutions = pgTable('institutions', {
   contactName: text('contact_name'),
   contactEmail: text('contact_email'),
   contactPhone: text('contact_phone'),
+  // Fuso IANA da instituição: é ele que diz qual é o "hoje" de quem decide no servidor,
+  // como na regra de que só se conclui o que já aconteceu.
+  timeZone: text('time_zone').notNull().default('America/Sao_Paulo'),
   updatedAt: timestamp('updated_at', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 })
@@ -362,38 +365,7 @@ export const studentConsultations = pgTable('student_consultations', {
   check('student_consultations_notes_length', sql`char_length(${table.notes}) between 1 and 4000`),
 ])
 
-// Literais repetidos de ROUTINE_KINDS pelo mesmo motivo de STUDENT_CONDITION_VALUES.
-const ROUTINE_KIND_VALUES = ['class', 'study', 'therapy', 'activity', 'rest', 'other'] as const satisfies readonly [RoutineKind, ...RoutineKind[]]
-export const routineKindEnum = pgEnum('routine_kind', ROUTINE_KIND_VALUES)
-
-// Grade semanal: blocos que se repetem toda semana. Diferente da ficha, é editável e
-// apagável — rotina muda, e o que conta é a versão atual. `version` recusa a edição feita
-// sobre uma versão que outra pessoa já mudou.
-export const routineBlocks = pgTable('routine_blocks', {
-  id: uuid().primaryKey().defaultRandom(),
-  institutionId: uuid('institution_id').notNull(),
-  studentId: uuid('student_id').notNull(),
-  weekday: smallint().notNull(),
-  startsAt: time('starts_at').notNull(),
-  endsAt: time('ends_at').notNull(),
-  title: text().notNull(),
-  kind: routineKindEnum().notNull(),
-  notes: text(),
-  version: integer().notNull().default(1),
-  createdByUserId: uuid('created_by_user_id').notNull().references(() => users.id),
-  updatedByUserId: uuid('updated_by_user_id').notNull().references(() => users.id),
-  createdAt: timestamp('created_at', { withTimezone: true }).notNull(),
-  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull(),
-}, (table) => [
-  foreignKey({ columns: [table.studentId, table.institutionId], foreignColumns: [students.id, students.institutionId] }).onDelete('cascade'),
-  index('routine_blocks_student_weekday').on(table.studentId, table.weekday, table.startsAt),
-  check('routine_blocks_weekday', sql`${table.weekday} between 1 and 7`),
-  check('routine_blocks_time_order', sql`${table.endsAt} > ${table.startsAt}`),
-  check('routine_blocks_title_length', sql`char_length(${table.title}) between 1 and 80`),
-  check('routine_blocks_notes_length', sql`${table.notes} is null or char_length(${table.notes}) between 1 and 500`),
-])
-
-// Literais repetidos de AppointmentRecurrence['kind'] pelo mesmo motivo de ROUTINE_KIND_VALUES.
+// Literais repetidos de AppointmentRecurrence['kind'] pelo mesmo motivo de STUDENT_CONDITION_VALUES.
 const APPOINTMENT_RECURRENCE_VALUES = ['none', 'weekly'] as const satisfies readonly [AppointmentRecurrence['kind'], ...AppointmentRecurrence['kind'][]]
 export const appointmentRecurrenceEnum = pgEnum('appointment_recurrence', APPOINTMENT_RECURRENCE_VALUES)
 
@@ -437,18 +409,39 @@ export const appointmentCancelledOccurrences = pgTable('appointment_cancelled_oc
   cancelledAt: timestamp('cancelled_at', { withTimezone: true }).notNull(),
 }, (table) => [primaryKey({ columns: [table.appointmentId, table.occurrenceDate] })])
 
-// Registro do aluno sobre a tarefa de um dia: o bloco da rotina diz o que fazer toda semana,
-// a linha guarda como foi naquela data. Apagar o bloco leva os registros junto.
-export const routineEntries = pgTable('routine_entries', {
+// Literais repetidos dos tipos do core pelo mesmo motivo de STUDENT_CONDITION_VALUES.
+const TASK_ORIGIN_VALUES = ['student', 'staff'] as const satisfies readonly [TaskOrigin, ...TaskOrigin[]]
+export const taskOriginEnum = pgEnum('task_origin', TASK_ORIGIN_VALUES)
+const TASK_KIND_VALUES = ['class', 'study', 'therapy', 'activity', 'rest', 'other'] as const satisfies readonly [TaskKind, ...TaskKind[]]
+export const taskKindEnum = pgEnum('task_kind', TASK_KIND_VALUES)
+const SCHEDULE_TIME_KIND_VALUES = ['all-day', 'timed'] as const satisfies readonly [ScheduleTime['kind'], ...ScheduleTime['kind'][]]
+export const scheduleTimeKindEnum = pgEnum('schedule_time_kind', SCHEDULE_TIME_KIND_VALUES)
+const SCHEDULE_RECURRENCE_KIND_VALUES = ['none', 'daily', 'weekly'] as const satisfies readonly [ScheduleRecurrence['kind'], ...ScheduleRecurrence['kind'][]]
+export const scheduleRecurrenceKindEnum = pgEnum('schedule_recurrence_kind', SCHEDULE_RECURRENCE_KIND_VALUES)
+const OCCURRENCE_EXCEPTION_KIND_VALUES = ['none', 'cancelled', 'moved'] as const satisfies readonly [OccurrenceException['kind'], ...OccurrenceException['kind'][]]
+export const occurrenceExceptionKindEnum = pgEnum('occurrence_exception_kind', OCCURRENCE_EXCEPTION_KIND_VALUES)
+const TASK_EVALUATION_OUTCOME_VALUES = ['achieved', 'partial', 'not-achieved'] as const satisfies readonly [TaskEvaluationOutcome, ...TaskEvaluationOutcome[]]
+export const taskEvaluationOutcomeEnum = pgEnum('task_evaluation_outcome', TASK_EVALUATION_OUTCOME_VALUES)
+
+// Série de uma tarefa: guardada uma vez e expandida pelo `schedule` do core, como o
+// atendimento. As colunas de agenda espelham o `scheduleSchema`, e os checks recusam no
+// banco o mesmo que o schema recusa na borda. `version` recusa a edição feita sobre uma
+// versão que outra pessoa já mudou.
+export const tasks = pgTable('tasks', {
   id: uuid().primaryKey().defaultRandom(),
   institutionId: uuid('institution_id').notNull(),
   studentId: uuid('student_id').notNull(),
-  routineBlockId: uuid('routine_block_id').notNull().references(() => routineBlocks.id, { onDelete: 'cascade' }),
-  occursOn: date('occurs_on').notNull(),
+  origin: taskOriginEnum().notNull(),
+  title: text().notNull(),
+  kind: taskKindEnum(),
   notes: text(),
-  // Entrega é um estado do registro, não um evento à parte: desfazer volta para nulo.
-  deliveredAt: timestamp('delivered_at', { withTimezone: true }),
-  deliveredByUserId: uuid('delivered_by_user_id').references(() => users.id),
+  startsOn: date('starts_on').notNull(),
+  timeKind: scheduleTimeKindEnum('time_kind').notNull(),
+  startsAt: time('starts_at'),
+  endsAt: time('ends_at'),
+  recurrenceKind: scheduleRecurrenceKindEnum('recurrence_kind').notNull(),
+  recurrenceWeekdays: smallint('recurrence_weekdays').array(),
+  recurrenceUntil: date('recurrence_until'),
   version: integer().notNull().default(1),
   createdByUserId: uuid('created_by_user_id').notNull().references(() => users.id),
   updatedByUserId: uuid('updated_by_user_id').notNull().references(() => users.id),
@@ -456,44 +449,79 @@ export const routineEntries = pgTable('routine_entries', {
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull(),
 }, (table) => [
   foreignKey({ columns: [table.studentId, table.institutionId], foreignColumns: [students.id, students.institutionId] }).onDelete('cascade'),
-  unique('routine_entries_block_day').on(table.routineBlockId, table.occursOn),
-  index('routine_entries_student_occurs_on').on(table.studentId, table.occursOn),
-  check('routine_entries_notes_length', sql`${table.notes} is null or char_length(${table.notes}) between 1 and 1000`),
-  check('routine_entries_delivery', sql`(${table.deliveredAt} is null) = (${table.deliveredByUserId} is null)`),
+  // Alvo da chave composta das ocorrências: a linha da ocorrência não aponta para série de outro aluno.
+  unique('tasks_id_student').on(table.id, table.studentId),
+  index('tasks_student_starts_on').on(table.studentId, table.startsOn),
+  check('tasks_title_length', sql`char_length(${table.title}) between 1 and 80`),
+  check('tasks_notes_length', sql`${table.notes} is null or char_length(${table.notes}) between 1 and 500`),
+  check('tasks_time', sql`(${table.timeKind} = 'all-day' and ${table.startsAt} is null and ${table.endsAt} is null) or (${table.timeKind} = 'timed' and ${table.startsAt} is not null and ${table.endsAt} is not null and ${table.endsAt} > ${table.startsAt})`),
+  check('tasks_recurrence', sql`(${table.recurrenceKind} = 'none' and ${table.recurrenceWeekdays} is null and ${table.recurrenceUntil} is null) or (${table.recurrenceKind} = 'daily' and ${table.recurrenceWeekdays} is null) or (${table.recurrenceKind} = 'weekly' and cardinality(${table.recurrenceWeekdays}) between 1 and 7 and ${table.recurrenceWeekdays} <@ '{1,2,3,4,5,6,7}'::smallint[] and extract(isodow from ${table.startsOn})::smallint = any(${table.recurrenceWeekdays}))`),
+  check('tasks_recurrence_until', sql`${table.recurrenceUntil} is null or ${table.recurrenceUntil} >= ${table.startsOn}`),
+])
+
+// Uma linha só quando a ocorrência difere do padrão: o ajuste (cancelada, remarcada) e o
+// registro (observação, conclusão). A chave é a data original, que a remarcação não muda.
+// Apagar a série leva as linhas junto.
+export const taskOccurrences = pgTable('task_occurrences', {
+  id: uuid().primaryKey().defaultRandom(),
+  institutionId: uuid('institution_id').notNull(),
+  studentId: uuid('student_id').notNull(),
+  taskId: uuid('task_id').notNull(),
+  originalDate: date('original_date').notNull(),
+  exceptionKind: occurrenceExceptionKindEnum('exception_kind').notNull().default('none'),
+  movedDate: date('moved_date'),
+  movedTimeKind: scheduleTimeKindEnum('moved_time_kind'),
+  movedStartsAt: time('moved_starts_at'),
+  movedEndsAt: time('moved_ends_at'),
+  notes: text(),
+  // Conclusão é estado da ocorrência, não evento à parte: desfazer volta para nulo.
+  completedAt: timestamp('completed_at', { withTimezone: true }),
+  completedByUserId: uuid('completed_by_user_id').references(() => users.id),
+  version: integer().notNull().default(1),
+  createdByUserId: uuid('created_by_user_id').notNull().references(() => users.id),
+  updatedByUserId: uuid('updated_by_user_id').notNull().references(() => users.id),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull(),
+}, (table) => [
+  foreignKey({ columns: [table.studentId, table.institutionId], foreignColumns: [students.id, students.institutionId] }).onDelete('cascade'),
+  foreignKey({ columns: [table.taskId, table.studentId], foreignColumns: [tasks.id, tasks.studentId] }).onDelete('cascade'),
+  unique('task_occurrences_task_original_date').on(table.taskId, table.originalDate),
+  index('task_occurrences_student_original_date').on(table.studentId, table.originalDate),
+  index('task_occurrences_student_moved_date').on(table.studentId, table.movedDate),
+  check('task_occurrences_notes_length', sql`${table.notes} is null or char_length(${table.notes}) between 1 and 1000`),
+  check('task_occurrences_completion', sql`(${table.completedAt} is null) = (${table.completedByUserId} is null)`),
+  check('task_occurrences_exception', sql`(${table.exceptionKind} = 'moved' and ${table.movedDate} is not null and ((${table.movedTimeKind} = 'all-day' and ${table.movedStartsAt} is null and ${table.movedEndsAt} is null) or (${table.movedTimeKind} = 'timed' and ${table.movedStartsAt} is not null and ${table.movedEndsAt} is not null and ${table.movedEndsAt} > ${table.movedStartsAt}))) or (${table.exceptionKind} <> 'moved' and ${table.movedDate} is null and ${table.movedTimeKind} is null and ${table.movedStartsAt} is null and ${table.movedEndsAt} is null)`),
 ])
 
 // Só metadados: o conteúdo mora na porta de armazenamento, endereçado por `storage_key`.
-export const routineEntryPhotos = pgTable('routine_entry_photos', {
+export const taskOccurrencePhotos = pgTable('task_occurrence_photos', {
   id: uuid().primaryKey().defaultRandom(),
   institutionId: uuid('institution_id').notNull(),
-  entryId: uuid('entry_id').notNull().references(() => routineEntries.id, { onDelete: 'cascade' }),
+  occurrenceId: uuid('occurrence_id').notNull().references(() => taskOccurrences.id, { onDelete: 'cascade' }),
   storageKey: text('storage_key').notNull().unique(),
   mediaType: text('media_type').notNull(),
   byteSize: integer('byte_size').notNull(),
   createdByUserId: uuid('created_by_user_id').notNull().references(() => users.id),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull(),
 }, (table) => [
-  index('routine_entry_photos_entry').on(table.entryId, table.createdAt),
-  check('routine_entry_photos_media_type', sql`${table.mediaType} in ('image/jpeg', 'image/png', 'image/webp')`),
-  check('routine_entry_photos_byte_size', sql`${table.byteSize} between 1 and 2000000`),
+  index('task_occurrence_photos_occurrence').on(table.occurrenceId, table.createdAt),
+  check('task_occurrence_photos_media_type', sql`${table.mediaType} in ('image/jpeg', 'image/png', 'image/webp')`),
+  check('task_occurrence_photos_byte_size', sql`${table.byteSize} between 1 and 2000000`),
 ])
 
-// Literais repetidos de ROUTINE_ENTRY_EVALUATION_OUTCOMES pelo mesmo motivo de ROUTINE_KIND_VALUES.
-const ROUTINE_ENTRY_EVALUATION_OUTCOME_VALUES = ['achieved', 'partial', 'not-achieved'] as const satisfies readonly [RoutineEntryEvaluationOutcome, ...RoutineEntryEvaluationOutcome[]]
-export const routineEntryEvaluationOutcomeEnum = pgEnum('routine_entry_evaluation_outcome', ROUTINE_ENTRY_EVALUATION_OUTCOME_VALUES)
-
-// Retorno da equipe sobre a tarefa entregue. Tabela própria, com versão própria: o aluno
-// seguir escrevendo no registro não deve invalidar a avaliação de quem acompanha.
-export const routineEntryEvaluations = pgTable('routine_entry_evaluations', {
+// Retorno da equipe sobre a ocorrência concluída. Tabela própria, com versão própria: o
+// aluno seguir escrevendo na ocorrência não deve invalidar a avaliação de quem acompanha.
+// "Só tarefa da equipe é avaliada" é regra do serviço, que um teste tenta burlar.
+export const taskOccurrenceEvaluations = pgTable('task_occurrence_evaluations', {
   id: uuid().primaryKey().defaultRandom(),
   institutionId: uuid('institution_id').notNull(),
-  entryId: uuid('entry_id').notNull().unique().references(() => routineEntries.id, { onDelete: 'cascade' }),
-  outcome: routineEntryEvaluationOutcomeEnum().notNull(),
+  occurrenceId: uuid('occurrence_id').notNull().unique().references(() => taskOccurrences.id, { onDelete: 'cascade' }),
+  outcome: taskEvaluationOutcomeEnum().notNull(),
   comment: text(),
   version: integer().notNull().default(1),
   evaluatedByUserId: uuid('evaluated_by_user_id').notNull().references(() => users.id),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull(),
 }, (table) => [
-  check('routine_entry_evaluations_comment_length', sql`${table.comment} is null or char_length(${table.comment}) between 1 and 1000`),
+  check('task_occurrence_evaluations_comment_length', sql`${table.comment} is null or char_length(${table.comment}) between 1 and 1000`),
 ])

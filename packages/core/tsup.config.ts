@@ -10,10 +10,10 @@ export default defineConfig({
     students: 'src/students.ts',
     'students/contract': 'src/students/contract.ts',
     'student-records': 'src/student-records.ts',
-    routines: 'src/routines.ts',
+    schedule: 'src/schedule.ts',
+    tasks: 'src/tasks.ts',
     calendar: 'src/calendar.ts',
     appointments: 'src/appointments.ts',
-    'routine-entries': 'src/routine-entries.ts',
     'role-bundles': 'src/role-bundles.ts',
     delegation: 'src/delegation.ts',
     'type/assert-never': 'src/type/assert-never.ts',
@@ -35,6 +35,8 @@ export default defineConfig({
   dts: true,
   splitting: true,
   sourcemap: true,
-  clean: true,
+  // Sem limpar a pasta: o Metro do app lê `dist` enquanto roda, e apagá-la no meio do build
+  // deixa o bundler sem o módulo até reiniciar com cache limpo. Limpeza é o script `clean`.
+  clean: false,
   target: 'es2022',
 })

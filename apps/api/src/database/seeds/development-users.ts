@@ -1,8 +1,9 @@
 import { MembershipEnvironment } from '@habituar/core/roles'
 import { and, eq, sql } from 'drizzle-orm'
 import { DatabaseTransaction } from '../database.js'
-import { assignments, guardians, routineBlocks, membershipRoles, memberships, roles, studentConsents, studentGuardians, students, users } from '../schema.js'
+import { assignments, guardians, membershipRoles, memberships, roles, studentConsents, studentGuardians, students, users } from '../schema.js'
 import { seedDevelopmentConsultations, seedDevelopmentRecordHistory } from './development-record-history.js'
+import { seedDevelopmentTasks } from './development-tasks.js'
 
 // Data estável para o cadastro de exemplo; nenhuma regra do seed depende da idade.
 const SEEDED_BIRTH_DATE = '2015-01-01'
@@ -20,8 +21,9 @@ export type SeededUsers = Readonly<Record<keyof typeof DEVELOPMENT_USERS, string
 
 /**
  * Cria um usuário por ambiente com vínculo no template do ambiente, mais a ficha do
- * estudante, a atribuição que dá ao profissional alguém sob o alcance `assigned` e o
- * responsável com o consentimento institucional registrado, à espera da confirmação dele.
+ * estudante, a atribuição que dá ao profissional alguém sob o alcance `assigned`, o
+ * responsável com o consentimento institucional registrado, à espera da confirmação dele,
+ * e a agenda de exemplo do estudante.
  * Recusa instituição sem templates de papel; contas existentes recebem os nomes atuais
  * do seed, sem trocar IDs nem senhas, e o restante não é sobrescrito.
  * Exige transação já escopada à instituição — as tabelas escritas aqui têm RLS.
@@ -46,9 +48,9 @@ export async function seedDevelopmentUsers(
   const studentId = await ensureStudent(transaction, institutionId, studentUserId, DEVELOPMENT_USERS.student.name)
   await ensureAssignment(transaction, institutionId, professionalUserId, professionalMembershipId, studentId)
   await ensureGuardianWithInstitutionConsent(transaction, institutionId, guardianUserId, coordinatorUserId, studentId)
-  await ensureRoutine(transaction, institutionId, professionalUserId, studentId)
   const recordAuthors = { professional: professionalUserId, coordinator: coordinatorUserId }
   const now = new Date()
+  await seedDevelopmentTasks(transaction, institutionId, studentId, { student: studentUserId, professional: professionalUserId }, now)
   await seedDevelopmentRecordHistory(transaction, institutionId, studentId, recordAuthors, now)
   await seedDevelopmentConsultations(transaction, institutionId, studentId, recordAuthors, now)
 
@@ -161,29 +163,4 @@ async function ensureGuardianWithInstitutionConsent(
     signedOn: '2026-01-10',
     recordedByUserId,
   })
-}
-
-// Semana de exemplo para a aba Rotina não abrir vazia no desenvolvimento local.
-const SEEDED_ROUTINE = [
-  { weekday: 1, startsAt: '07:30', endsAt: '12:00', title: 'Aulas', kind: 'class' },
-  { weekday: 1, startsAt: '14:00', endsAt: '15:00', title: 'Tarefa de casa', kind: 'study' },
-  { weekday: 3, startsAt: '07:30', endsAt: '12:00', title: 'Aulas', kind: 'class' },
-  { weekday: 3, startsAt: '15:00', endsAt: '15:50', title: 'Atendimento de apoio', kind: 'therapy' },
-  { weekday: 5, startsAt: '16:00', endsAt: '17:00', title: 'Natação', kind: 'activity' },
-] as const
-
-async function ensureRoutine(transaction: DatabaseTransaction, institutionId: string, professionalUserId: string, studentId: string): Promise<void> {
-  const existing = await transaction.query.routineBlocks.findFirst({ where: eq(routineBlocks.studentId, studentId) })
-  if (existing !== undefined) return
-  const now = new Date()
-  await transaction.insert(routineBlocks).values(SEEDED_ROUTINE.map((block) => ({
-    ...block,
-    institutionId,
-    studentId,
-    notes: null,
-    createdByUserId: professionalUserId,
-    updatedByUserId: professionalUserId,
-    createdAt: now,
-    updatedAt: now,
-  })))
 }

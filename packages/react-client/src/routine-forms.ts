@@ -1,11 +1,13 @@
 /**
- * Entrypoint do formulário de bloco da rotina: dono do rascunho, da validação pelo schema
- * do contrato e do desfecho do envio. Não conhece navegação nem visual.
+ * Entrypoint do formulário de bloco da rotina: dono do rascunho semanal, da tradução dele
+ * para a série de tarefa do contrato, da validação pelo schema do contrato e do desfecho do
+ * envio. Não conhece navegação nem visual.
  */
-import { ROUTINE_NOTES_MAX_LENGTH, ROUTINE_TITLE_MAX_LENGTH, routineBlockInputSchema } from '@habituar/core/routines'
-import type { RoutineBlock, RoutineBlockInput, RoutineKind, Weekday } from '@habituar/core/routines'
+import { addDays, type LocalDate, type Weekday, weekdayOfLocalDate } from '@habituar/core/calendar'
+import { TASK_NOTES_MAX_LENGTH, TASK_TITLE_MAX_LENGTH, taskInputSchema } from '@habituar/core/tasks'
+import type { TaskInput, TaskKind } from '@habituar/core/tasks'
 import { useState } from 'react'
-import type { RoutineWriteResult } from './routine-hooks.js'
+import type { RoutineBlock, RoutineWriteResult } from './routine-hooks.js'
 
 /** Chave de i18n do nome de cada dia; o mapa fechado mantém a chave verificável no build. */
 export const WEEKDAY_LABEL_KEYS = {
@@ -20,7 +22,7 @@ export const WEEKDAY_LABEL_KEYS = {
 
 export type RoutineBlockField = 'weekday' | 'startsAt' | 'endsAt' | 'title' | 'kind' | 'notes'
 
-export type RoutineBlockDraft = Readonly<{ weekday: Weekday; startsAt: string; endsAt: string; title: string; kind: RoutineKind; notes: string }>
+export type RoutineBlockDraft = Readonly<{ weekday: Weekday; startsAt: string; endsAt: string; title: string; kind: TaskKind; notes: string }>
 
 export type RoutineBlockForm = Readonly<{
   values: RoutineBlockDraft
@@ -32,19 +34,51 @@ export type RoutineBlockForm = Readonly<{
   isSaving: boolean
 }>
 
-const FIELDS: readonly RoutineBlockField[] = ['weekday', 'startsAt', 'endsAt', 'title', 'kind', 'notes']
-
 function toDraft(block: RoutineBlock | undefined, weekday: Weekday): RoutineBlockDraft {
   if (block === undefined) return { weekday, startsAt: '', endsAt: '', title: '', kind: 'class', notes: '' }
-  return { weekday: block.weekday, startsAt: block.startsAt, endsAt: block.endsAt, title: block.title, kind: block.kind, notes: block.notes ?? '' }
+  return { weekday: block.weekday, startsAt: block.startsAt, endsAt: block.endsAt, title: block.title, kind: block.kind ?? 'other', notes: block.notes ?? '' }
+}
+
+// Trocar o dia de um bloco troca só aquele dia da série; os outros dias dela continuam.
+function weekdaysFor(draft: RoutineBlockDraft, block: RoutineBlock | undefined): readonly Weekday[] {
+  if (block === undefined) return [draft.weekday]
+  const recurrence = block.task.schedule.recurrence
+  const current = recurrence.kind === 'weekly' ? recurrence.weekdays : [block.weekday]
+  return [...new Set(current.map(day => day === block.weekday ? draft.weekday : day))]
+}
+
+// A série semanal começa num dos dias dela: o primeiro a partir de hoje.
+function toTaskInput(draft: RoutineBlockDraft, block: RoutineBlock | undefined, today: LocalDate): unknown {
+  const weekdays = weekdaysFor(draft, block)
+  const recurrence = block?.task.schedule.recurrence
+  const startsOn = [0, 1, 2, 3, 4, 5, 6].map(offset => addDays(today, offset)).find(date => weekdays.includes(weekdayOfLocalDate(date))) ?? today
+  return {
+    title: draft.title,
+    kind: draft.kind,
+    notes: draft.notes.trim() === '' ? null : draft.notes,
+    schedule: {
+      startsOn,
+      time: { kind: 'timed', startsAt: draft.startsAt, endsAt: draft.endsAt },
+      recurrence: { kind: 'weekly', weekdays, until: recurrence?.kind === 'weekly' ? recurrence.until : null },
+    },
+  }
+}
+
+// O schema da série aponta caminhos dentro de `schedule`; a tela conhece os campos do rascunho.
+function fieldOf(path: readonly PropertyKey[]): RoutineBlockField {
+  const [first, second, third] = path
+  if (first === 'title' || first === 'kind' || first === 'notes') return first
+  if (first === 'schedule' && second === 'time' && (third === 'startsAt' || third === 'endsAt')) return third
+  return 'weekday'
 }
 
 /**
- * Criação ou edição de um bloco. Parte do bloco existente, quando há, ou do dia escolhido;
- * observação em branco vira "sem observação", e horário invertido aponta o campo de fim.
+ * Criação ou edição de um bloco semanal da equipe. Parte do bloco existente, quando há, ou do
+ * dia escolhido; observação em branco vira "sem observação", e horário invertido aponta o
+ * campo de fim. O que é salvo é uma série de tarefa semanal com horário.
  */
 export function useRoutineBlockForm(
-  options: Readonly<{ block?: RoutineBlock | undefined; weekday: Weekday; save: (input: RoutineBlockInput) => Promise<RoutineWriteResult> }>,
+  options: Readonly<{ block?: RoutineBlock | undefined; weekday: Weekday; today: LocalDate; save: (input: TaskInput) => Promise<RoutineWriteResult> }>,
 ): RoutineBlockForm {
   const [values, setValues] = useState<RoutineBlockDraft>(() => toDraft(options.block, options.weekday))
   const [invalidFields, setInvalidFields] = useState<ReadonlySet<RoutineBlockField>>(new Set())
@@ -54,12 +88,12 @@ export function useRoutineBlockForm(
     values,
     change: (field, value) => { setValues({ ...values, [field]: value }) },
     invalidFields,
-    titleMaxLength: ROUTINE_TITLE_MAX_LENGTH,
-    notesMaxLength: ROUTINE_NOTES_MAX_LENGTH,
+    titleMaxLength: TASK_TITLE_MAX_LENGTH,
+    notesMaxLength: TASK_NOTES_MAX_LENGTH,
     submit: async () => {
-      const parsed = routineBlockInputSchema.safeParse({ ...values, notes: values.notes.trim() === '' ? null : values.notes })
+      const parsed = taskInputSchema.safeParse(toTaskInput(values, options.block, options.today))
       if (!parsed.success) {
-        setInvalidFields(new Set(parsed.error.issues.flatMap((issue) => FIELDS.filter((field) => field === issue.path[0]))))
+        setInvalidFields(new Set(parsed.error.issues.map(issue => fieldOf(issue.path))))
         return 'invalid'
       }
       setInvalidFields(new Set())

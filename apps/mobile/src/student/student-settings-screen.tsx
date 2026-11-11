@@ -4,10 +4,10 @@ import { Page } from '../components/ui/page'
 import { PageHeader } from '../components/ui/page-header'
 import { habituar } from '../client/habituar-client'
 import { ReminderSettings } from '../notifications/reminder-settings'
-import { useRoutineReminders } from '../notifications/use-routine-reminders'
+import { useTaskReminders } from '../notifications/use-task-reminders'
 import type { InstitutionSession } from '../session/session-screen'
 
-/** Configurações do ambiente de aluno: por ora, só os lembretes locais de rotina. */
+/** Configurações do ambiente de aluno: por ora, só os lembretes locais das tarefas. */
 export function StudentSettingsScreen({ session }: Readonly<{ session: InstitutionSession }>) {
   const { t } = useTranslation()
   const { state } = habituar.useAccessibleStudents(session.membership)
@@ -22,7 +22,7 @@ export function StudentSettingsScreen({ session }: Readonly<{ session: Instituti
 }
 
 function RemindersSection({ session, studentId }: Readonly<{ session: InstitutionSession; studentId: StudentId }>) {
-  const reminders = useRoutineReminders(session.membership, studentId)
+  const reminders = useTaskReminders(session.membership, studentId)
   return (
     <ReminderSettings
       leadMinutesList={reminders.leadMinutesList}

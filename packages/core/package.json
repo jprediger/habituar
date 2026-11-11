@@ -24,9 +24,13 @@
       "types": "./dist/student-records.d.ts",
       "import": "./dist/student-records.js"
     },
-    "./routines": {
-      "types": "./dist/routines.d.ts",
-      "import": "./dist/routines.js"
+    "./schedule": {
+      "types": "./dist/schedule.d.ts",
+      "import": "./dist/schedule.js"
+    },
+    "./tasks": {
+      "types": "./dist/tasks.d.ts",
+      "import": "./dist/tasks.js"
     },
     "./calendar": {
       "types": "./dist/calendar.d.ts",
@@ -35,10 +39,6 @@
     "./appointments": {
       "types": "./dist/appointments.d.ts",
       "import": "./dist/appointments.js"
-    },
-    "./routine-entries": {
-      "types": "./dist/routine-entries.d.ts",
-      "import": "./dist/routine-entries.js"
     },
     "./students/contract": {
       "types": "./dist/students/contract.d.ts",
@@ -106,6 +106,7 @@
     }
   },
   "scripts": {
+    "clean": "rm -rf dist",
     "build": "tsup",
     "dev": "tsup --watch",
     "lint": "eslint .",

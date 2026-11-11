@@ -23,6 +23,8 @@ import type { HealthState } from './health-state.js'
 import { createStaffHooks } from './staff-hooks.js'
 import { createAgendaHooks } from './agenda-hooks.js'
 import type { AgendaHooks } from './agenda-hooks.js'
+import { createCalendarHooks } from './calendar-hooks.js'
+import type { CalendarHooks } from './calendar-hooks.js'
 import { createRoutineHooks } from './routine-hooks.js'
 import type { RoutineHooks } from './routine-hooks.js'
 import { createStudentHomeHooks } from './student-home-hooks.js'
@@ -99,7 +101,7 @@ type InstitutionSwitcher = Readonly<{ current: MembershipContext | undefined; ot
  */
 export type OfflineStatus = Readonly<{ connection: ConnectionState; pendingChanges: number; discardedChanges: number; syncNow(): Promise<void>; dismissDiscarded(): void }>
 
-export type HabituarReactClient = StaffHooks & StudentHooks & StudentRecordHooks & StudentHomeHooks & RoutineHooks & AgendaHooks & Readonly<{
+export type HabituarReactClient = StaffHooks & StudentHooks & StudentRecordHooks & StudentHomeHooks & RoutineHooks & AgendaHooks & CalendarHooks & Readonly<{
   Provider(props: PropsWithChildren): ReactElement
   useHealth(): Readonly<{ state: HealthState; retry(): void }>
   useAuthentication(): AuthContextValue
@@ -182,6 +184,7 @@ export function createHabituarReactClient(
     credentialStorage?: CredentialStorage
     preferenceStorage?: PreferenceStorage
     studentPreferenceStorage?: PreferenceStorage
+    calendarFilterStorage?: PreferenceStorage
     onSessionEnded?: () => Promise<void> | void
     offline?: OfflineOptions
   }>,
@@ -642,5 +645,6 @@ export function createHabituarReactClient(
   const studentHomeHooks = createStudentHomeHooks({ apiClient, queryClient })
   const routineHooks = createRoutineHooks({ apiClient, queryClient })
   const agendaHooks = createAgendaHooks({ apiClient, queryClient, offline })
-  return { Provider, useHealth, useAuthentication, useInstitutionSwitcher, useOfflineStatus, usePlatformInstitutions, usePlatformInstitution, useInvitation, ...staffHooks, ...studentHooks, ...studentRecordHooks, ...studentHomeHooks, ...routineHooks, ...agendaHooks }
+  const calendarHooks = createCalendarHooks({ apiClient, queryClient, offline, filterStorage: options.calendarFilterStorage ?? createMemoryPreferenceStorage() })
+  return { Provider, useHealth, useAuthentication, useInstitutionSwitcher, useOfflineStatus, usePlatformInstitutions, usePlatformInstitution, useInvitation, ...staffHooks, ...studentHooks, ...studentRecordHooks, ...studentHomeHooks, ...routineHooks, ...agendaHooks, ...calendarHooks }
 }

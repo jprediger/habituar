@@ -33,6 +33,7 @@ export type ThemeTokens = Readonly<{
 // `LINE_HEIGHT` é razão, e o RN só aceita altura de linha em pixels: a multiplicação pelo
 // tamanho da fonte acontece aqui para nenhuma tela inventar a sua.
 const LINE_HEIGHT_PIXELS = {
+  micro: { tight: FONT_SIZE.micro * LINE_HEIGHT.tight, normal: FONT_SIZE.micro * LINE_HEIGHT.normal },
   caption: { tight: FONT_SIZE.caption * LINE_HEIGHT.tight, normal: FONT_SIZE.caption * LINE_HEIGHT.normal },
   body: { tight: FONT_SIZE.body * LINE_HEIGHT.tight, normal: FONT_SIZE.body * LINE_HEIGHT.normal },
   title: { tight: FONT_SIZE.title * LINE_HEIGHT.tight, normal: FONT_SIZE.title * LINE_HEIGHT.normal },

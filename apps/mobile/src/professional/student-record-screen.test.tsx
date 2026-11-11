@@ -31,7 +31,7 @@ describe('student record entry', () => {
     renderScreen()
 
     expect(screen.getByRole('header', { name: 'Bruno Lima' })).toBeOnTheScreen()
-    for (const section of ['Cadastro', 'Dados da ficha', 'Rotina semanal', 'Consultas', 'Observações e histórico']) {
+    for (const section of ['Cadastro', 'Dados da ficha', 'Agenda', 'Consultas', 'Observações e histórico']) {
       expect(screen.getByRole('button', { name: new RegExp(section) })).toBeOnTheScreen()
     }
     expect(screen.queryByText('TDAH')).toBeNull()

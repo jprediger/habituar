@@ -17,12 +17,13 @@ export const ROLE_BUNDLE_KEYS = [
   'assignment-manage',
   'record-read',
   'record-write',
-  'routine-read',
-  'routine-write',
+  'task-read',
+  'task-write',
+  'task-own-write',
+  'task-complete',
+  'task-evaluate',
   'appointment-read',
   'appointment-write',
-  'routine-entry-write',
-  'routine-entry-evaluate',
 ] as const
 
 export const roleBundleKeySchema = z.enum(ROLE_BUNDLE_KEYS)
@@ -54,14 +55,16 @@ export const ROLE_BUNDLE_CATALOG: Readonly<Record<RoleBundleKey, RoleBundleDefin
   'assignment-manage': { labelKey: 'roleBundles.assignmentManage', permissions: ['assignment.manage'], scopesByEnvironment: { professional: ['institution'] } },
   'record-read': { labelKey: 'roleBundles.recordRead', permissions: ['record.read'], scopesByEnvironment: { professional: ['assigned', 'institution'] } },
   'record-write': { labelKey: 'roleBundles.recordWrite', permissions: ['record.write'], scopesByEnvironment: { professional: ['assigned', 'institution'] } },
-  'routine-read': { labelKey: 'roleBundles.routineRead', permissions: ['routine.read'], scopesByEnvironment: { professional: ['assigned', 'institution'] } },
-  'routine-write': { labelKey: 'roleBundles.routineWrite', permissions: ['routine.write'], scopesByEnvironment: { professional: ['assigned', 'institution'] } },
+  'task-read': { labelKey: 'roleBundles.taskRead', permissions: ['task.read'], scopesByEnvironment: { professional: ['assigned', 'institution'] } },
+  'task-write': { labelKey: 'roleBundles.taskWrite', permissions: ['task.write'], scopesByEnvironment: { professional: ['assigned', 'institution'] } },
+  // Tarefa própria, conclusão e registro são a voz do próprio aluno: só o papel de sistema
+  // dele recebe, e nenhum ambiente personalizável oferece o bundle — a equipe lê, mas não
+  // escreve no lugar dele.
+  'task-own-write': { labelKey: 'roleBundles.taskOwnWrite', permissions: ['task.own.write'], scopesByEnvironment: {} },
+  'task-complete': { labelKey: 'roleBundles.taskComplete', permissions: ['task.complete'], scopesByEnvironment: {} },
+  'task-evaluate': { labelKey: 'roleBundles.taskEvaluate', permissions: ['task.evaluate'], scopesByEnvironment: { professional: ['assigned', 'institution'] } },
   'appointment-read': { labelKey: 'roleBundles.appointmentRead', permissions: ['appointment.read'], scopesByEnvironment: { professional: ['assigned', 'institution'] } },
   'appointment-write': { labelKey: 'roleBundles.appointmentWrite', permissions: ['appointment.write'], scopesByEnvironment: { professional: ['assigned', 'institution'] } },
-  // Registro da tarefa é a voz do próprio aluno: só o papel de sistema dele recebe, e nenhum
-  // ambiente personalizável oferece o bundle — a equipe lê, mas não escreve no lugar dele.
-  'routine-entry-write': { labelKey: 'roleBundles.routineEntryWrite', permissions: ['routine.entry.write'], scopesByEnvironment: {} },
-  'routine-entry-evaluate': { labelKey: 'roleBundles.routineEntryEvaluate', permissions: ['routine.entry.evaluate'], scopesByEnvironment: { professional: ['assigned', 'institution'] } },
 }
 
 export const roleBundleSelectionSchema = z.object({

@@ -14,15 +14,14 @@ import type { InstitutionSession } from '../session/session-screen'
 import { formatRecordDate } from './student-record-format'
 import { StudentRecordGate } from './student-record-gate'
 
-type StudentRecordSection = 'registration' | 'profile' | 'routine' | 'tasks' | 'consultations' | 'history'
+type StudentRecordSection = 'registration' | 'profile' | 'agenda' | 'consultations' | 'history'
 
 // Ordem da lista e destino de cada linha, num lugar só: seção nova entra aqui e o
 // compilador cobra o título e a descrição em `labelSection`.
 const SECTIONS = [
   { section: 'registration', icon: 'identification-card', pathname: '/professional/students/[student-id]/registration' },
   { section: 'profile', icon: 'heartbeat', pathname: '/professional/students/[student-id]/profile' },
-  { section: 'routine', icon: 'calendar-blank', pathname: '/professional/students/[student-id]/routine' },
-  { section: 'tasks', icon: 'list-checks', pathname: '/professional/students/[student-id]/tasks' },
+  { section: 'agenda', icon: 'calendar-blank', pathname: '/professional/students/[student-id]/agenda' },
   { section: 'consultations', icon: 'clipboard-text', pathname: '/professional/students/[student-id]/consultations' },
   { section: 'history', icon: 'clock-counter-clockwise', pathname: '/professional/students/[student-id]/history' },
 ] as const satisfies readonly Readonly<{ section: StudentRecordSection; icon: IconName; pathname: string }>[]
@@ -65,8 +64,8 @@ export function StudentRecordScreen({ session, studentId }: Readonly<{ session: 
 }
 
 // Só os dados de apoio dizem algo próprio na linha: consultas e histórico precisariam de
-// uma busca a mais só para contar, e a entrada existe justamente para não buscar tudo. As
-// tarefas falam pelo namespace da agenda, onde o acompanhamento já tem seus textos.
+// uma busca a mais só para contar, e a entrada existe justamente para não buscar tudo. A
+// agenda fala pelo próprio namespace.
 function labelSection(section: StudentRecordSection, profile: StudentProfileState, t: TFunction, tAgenda: TFunction<'agenda'>): Readonly<{ title: string; description: string }> {
   switch (section) {
     case 'registration':
@@ -78,10 +77,8 @@ function labelSection(section: StudentRecordSection, profile: StudentProfileStat
           ? t('students.record.sections.profileUpdated', { date: formatRecordDate(profile.revision.recordedAt) })
           : t('students.record.sections.profileEmpty'),
       }
-    case 'routine':
-      return { title: t('routine.title'), description: t('routine.description') }
-    case 'tasks':
-      return { title: tAgenda('tracking.title'), description: tAgenda('tracking.openDescription') }
+    case 'agenda':
+      return { title: tAgenda('title'), description: tAgenda('calendar.recordDescription') }
     case 'consultations':
       return { title: t('students.consultations.title'), description: t('students.record.sections.consultations') }
     case 'history':

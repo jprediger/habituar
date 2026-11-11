@@ -1,20 +1,19 @@
 import { type Appointment, type AppointmentInput, type AppointmentOccurrence, expandAppointmentOccurrences } from '@habituar/core/appointments'
 import type { MembershipContext } from '@habituar/core/auth/context'
-import { addDays, addMonths, type LocalDate, type LocalDateRange, listRangeDays, listWeekDays, monthGridRange, weekdayOfLocalDate } from '@habituar/core/calendar'
-import type { AppointmentId, RoutineBlockId, RoutineEntryPhotoId, StudentId } from '@habituar/core/identity/ids'
-import { routineEntrySchema } from '@habituar/core/routine-entries'
-import type { RoutineEntry, RoutineEntryEvaluationInput, RoutineEntryPhoto, RoutineEntryPhotoContent, RoutineEntryPhotoInput } from '@habituar/core/routine-entries'
-import type { RoutineBlock } from '@habituar/core/routines'
+import { addDays, addMonths, type LocalDate, type LocalDateRange, listRangeDays, listWeekDays, monthGridRange } from '@habituar/core/calendar'
+import type { AppointmentId, StudentId, TaskId, TaskPhotoId } from '@habituar/core/identity/ids'
+import { type ScheduleTime, expandOccurrences } from '@habituar/core/schedule'
+import { taskAgendaSchema, canCompleteOn } from '@habituar/core/tasks'
+import type { Task, TaskAgenda, TaskEvaluationInput, TaskOccurrence, TaskPhoto, TaskPhotoContent, TaskPhotoInput } from '@habituar/core/tasks'
 import type { QueryClient } from '@tanstack/react-query'
 import { useQuery } from '@tanstack/react-query'
 import { useState, useSyncExternalStore } from 'react'
 import type { ApiClient } from './api-client.js'
-import { entryKeyOf, overlayPendingChange } from './offline-sync.js'
+import { entryKeyOf, overlayPendingChange, overlayTaskAgenda } from './offline-sync.js'
 import type { OfflineSync, PendingEntryChange, RoutineEntryWriteResult } from './offline-sync.js'
 import { queryKeys } from './query-keys.js'
 import { hasServerResponse, isBlockingFailure, readFailureCode } from './request-failure.js'
 
-const routineEntryListSchema = routineEntrySchema.array().readonly()
 
 /** Desfecho de uma escrita na agenda; `conflict` pede que a pessoa veja a versão atual. */
 export type AgendaWriteResult = 'saved' | 'conflict' | 'not-saved'
@@ -24,9 +23,13 @@ export type PhotoUploadResult = 'saved' | 'invalid' | 'limit-reached' | 'not-sav
 
 export type AgendaLoadFailure = 'forbidden' | 'not-found' | 'failed'
 
-/** Item de um dia da agenda: a tarefa vem da rotina, o atendimento da agenda da equipe. */
+/**
+ * Item de um dia da agenda: a ocorrência de uma tarefa ou de um atendimento da equipe.
+ * `startsAt`/`endsAt` posicionam o item na grade; tarefa de dia inteiro ocupa o dia todo
+ * e o `time` diz qual é o caso.
+ */
 export type AgendaItem =
-  | Readonly<{ kind: 'task'; key: string; date: LocalDate; startsAt: string; endsAt: string; block: RoutineBlock; entry: RoutineEntry | undefined; isPendingSync: boolean }>
+  | Readonly<{ kind: 'task'; key: string; date: LocalDate; originalDate: LocalDate; time: ScheduleTime; startsAt: string; endsAt: string; task: Task; occurrence: TaskOccurrence | undefined }>
   | Readonly<{ kind: 'appointment'; key: string; date: LocalDate; startsAt: string; endsAt: string; occurrence: AppointmentOccurrence }>
 
 export type AgendaDay = Readonly<{ date: LocalDate; items: readonly AgendaItem[] }>
@@ -76,53 +79,55 @@ export type AppointmentDetail = Readonly<{
 
 export type StudentAgenda = Readonly<{
   state: AgendaState
-  /** Só o próprio aluno escreve nos registros; responsável e equipe leem. */
-  canWriteEntries: boolean
+  /** Só o próprio aluno registra e conclui; responsável e equipe leem. */
+  canComplete: boolean
 }>
 
-/** Andamento da tarefa do dia pelo registro: avaliada pela equipe, entregue pelo aluno, ou em aberto. */
-export type TaskProgress = 'evaluated' | 'delivered' | 'open'
+/** Andamento da ocorrência pelo registro: avaliada pela equipe, concluída pelo aluno, ou em aberto. */
+export type TaskProgress = 'evaluated' | 'completed' | 'open'
 
 /**
- * Situação de uma tarefa para quem acompanha: avaliada, entregue, não entregue num dia que
- * já chegou, ou ainda por vir. Observação e fotos sem entrega não contam como entrega.
+ * Situação de uma tarefa para quem acompanha: avaliada, concluída, não concluída num dia que
+ * já chegou, ou ainda por vir. Observação e fotos sem conclusão não contam como conclusão.
  */
-export type TrackedTaskStatus = 'evaluated' | 'delivered' | 'missing' | 'upcoming'
+export type TrackedTaskStatus = 'evaluated' | 'completed' | 'missing' | 'upcoming'
 
-export type TrackedTask = Readonly<{ key: string; date: LocalDate; block: RoutineBlock; entry: RoutineEntry | undefined; status: TrackedTaskStatus }>
+export type TrackedTask = Readonly<{ key: string; date: LocalDate; originalDate: LocalDate; time: ScheduleTime; startsAt: string; endsAt: string; task: Task; occurrence: TaskOccurrence | undefined; status: TrackedTaskStatus }>
 
 export type TaskTrackingDay = Readonly<{ date: LocalDate; tasks: readonly TrackedTask[] }>
 
-/** `delivered` inclui as avaliadas: toda tarefa avaliada foi entregue antes. */
-export type TaskTrackingSummary = Readonly<{ total: number; delivered: number; evaluated: number; missing: number; upcoming: number }>
+/** `completed` inclui as avaliadas: toda ocorrência avaliada foi concluída antes. */
+export type TaskTrackingSummary = Readonly<{ total: number; completed: number; evaluated: number; missing: number; upcoming: number }>
 
 export type TaskTrackingState =
   | Readonly<{ status: 'loading' }>
   | Readonly<{ status: 'failed'; failure: AgendaLoadFailure }>
   | Readonly<{ status: 'ready'; days: readonly TaskTrackingDay[]; summary: TaskTrackingSummary }>
 
-export type RoutineEntryState =
+/** Ocorrência aberta pela série e pela data original; `date` e `time` são onde ela caiu de fato. */
+export type TaskOccurrenceState =
   | Readonly<{ status: 'loading' }>
   | Readonly<{ status: 'failed'; failure: AgendaLoadFailure }>
-  | Readonly<{ status: 'ready'; block: RoutineBlock; entry: RoutineEntry | undefined; isPendingSync: boolean }>
+  | Readonly<{ status: 'ready'; task: Task; occurrence: TaskOccurrence | undefined; date: LocalDate; time: ScheduleTime; isPendingSync?: boolean }>
 
-export type RoutineEntryAccess = Readonly<{
-  state: RoutineEntryState
+export type TaskOccurrenceAccess = Readonly<{
+  state: TaskOccurrenceState
+  /** Dica de interface, não autorização: a API confere `task.complete` de novo em cada envio. */
   canWrite: boolean
+  /** Só tarefa da equipe tem avaliação; a API recusa a do aluno mesmo para quem tem `task.evaluate`. */
   canEvaluate: boolean
-  /** Sem conexão, observação e entrega ficam no aparelho e devolvem `queued`. */
   saveNote: (notes: string | null) => Promise<RoutineEntryWriteResult>
-  deliver: () => Promise<RoutineEntryWriteResult>
-  undeliver: () => Promise<RoutineEntryWriteResult>
-  evaluate: (input: RoutineEntryEvaluationInput) => Promise<AgendaWriteResult>
-  addPhoto: (photo: RoutineEntryPhotoInput) => Promise<PhotoUploadResult>
-  removePhoto: (photo: RoutineEntryPhoto) => Promise<AgendaWriteResult>
+  complete: () => Promise<RoutineEntryWriteResult>
+  uncomplete: () => Promise<RoutineEntryWriteResult>
+  evaluate: (input: TaskEvaluationInput) => Promise<AgendaWriteResult>
+  addPhoto: (photo: TaskPhotoInput) => Promise<PhotoUploadResult>
+  removePhoto: (photo: TaskPhoto) => Promise<AgendaWriteResult>
 }>
 
 export type PhotoContentState =
   | Readonly<{ status: 'loading' }>
   | Readonly<{ status: 'failed' }>
-  | Readonly<{ status: 'ready'; content: RoutineEntryPhotoContent; uri: string }>
+  | Readonly<{ status: 'ready'; content: TaskPhotoContent; uri: string }>
 
 export type AgendaHooks = Readonly<{
   useAgendaCursor: (today: LocalDate, initialView: AgendaView) => AgendaCursor
@@ -130,8 +135,8 @@ export type AgendaHooks = Readonly<{
   useStudentAgenda: (membership: MembershipContext, studentId: StudentId, range: LocalDateRange) => StudentAgenda
   useAppointmentDetail: (membership: MembershipContext, studentId: StudentId, appointmentId: AppointmentId, date: LocalDate) => AppointmentDetail
   useStudentTaskTracking: (membership: MembershipContext, studentId: StudentId, range: LocalDateRange, today: LocalDate) => TaskTrackingState
-  useRoutineEntry: (membership: MembershipContext, studentId: StudentId, blockId: RoutineBlockId, date: LocalDate) => RoutineEntryAccess
-  useRoutineEntryPhoto: (membership: MembershipContext, studentId: StudentId, photoId: RoutineEntryPhotoId) => PhotoContentState
+  useTaskOccurrence: (membership: MembershipContext, studentId: StudentId, taskId: TaskId, originalDate: LocalDate) => TaskOccurrenceAccess
+  useTaskPhoto: (membership: MembershipContext, studentId: StudentId, photoId: TaskPhotoId) => PhotoContentState
 }>
 
 type AgendaHookDependencies = Readonly<{ apiClient: ApiClient; queryClient: QueryClient; offline: OfflineSync }>
@@ -183,44 +188,27 @@ function appointmentItems(appointments: readonly Appointment[], range: LocalDate
   }))
 }
 
-function isSameOccurrence(change: PendingEntryChange, blockId: RoutineBlockId, date: LocalDate): boolean {
-  return change.routineBlockId === blockId && change.occursOn === date
+// Dia inteiro ocupa o dia todo na grade de horas; quem desenha sabe o caso pelo `time`.
+function gridTimes(time: ScheduleTime): Readonly<{ startsAt: string; endsAt: string }> {
+  return time.kind === 'timed' ? { startsAt: time.startsAt, endsAt: time.endsAt } : { startsAt: '00:00', endsAt: '23:59' }
 }
 
-// Mudança do aluno que espera a conexão aparece por cima do servidor, como ele a deixou: a
-// releitura em segundo plano não pode fazer a observação ou a entrega sumirem da tela.
-function overlayPending(entries: readonly RoutineEntry[], pending: readonly PendingEntryChange[]): readonly RoutineEntry[] {
-  if (pending.length === 0) return entries
-  const untouched = entries.filter(entry => !pending.some(change => isSameOccurrence(change, entry.routineBlockId, entry.occursOn)))
-  return [...untouched, ...pending.map(change => overlayPendingChange(entries.find(entry => isSameOccurrence(change, entry.routineBlockId, entry.occursOn)), change))]
-}
-
-function pendingOfStudent(pending: readonly PendingEntryChange[], institutionId: MembershipContext['institution']['id'], studentId: StudentId): readonly PendingEntryChange[] {
-  return pending.filter(change => change.institutionId === institutionId && change.studentId === studentId)
-}
-
-// A rotina se repete toda semana, então cada dia do intervalo recebe os blocos do seu dia
-// da semana; o registro do aluno se prende ao par bloco × data.
-function taskItems(blocks: readonly RoutineBlock[], entries: readonly RoutineEntry[], range: LocalDateRange, pending: readonly PendingEntryChange[]): AgendaItem[] {
-  return listRangeDays(range).flatMap(date => blocks
-    .filter(block => block.weekday === weekdayOfLocalDate(date))
-    .map(block => ({
-      kind: 'task',
-      key: `task:${block.id}:${date}`,
-      date,
-      startsAt: block.startsAt,
-      endsAt: block.endsAt,
-      block,
-      entry: entries.find(entry => entry.routineBlockId === block.id && entry.occursOn === date),
-      isPendingSync: pending.some(change => isSameOccurrence(change, block.id, date)),
-    })))
-}
-
-// O cache guarda `unknown` para a busca genérica; só a lista de registros que este módulo
-// mesmo gravou passa, e o resto é ignorado em vez de convertido.
-function routineEntriesOf(data: unknown): readonly RoutineEntry[] | undefined {
-  const parsed = routineEntryListSchema.safeParse(data)
-  return parsed.success ? parsed.data : undefined
+// A série vem uma vez e é expandida aqui; a linha de ocorrência se prende ao par série ×
+// data original, que a remarcação não muda.
+function taskItems(agenda: TaskAgenda, range: LocalDateRange): Extract<AgendaItem, { kind: 'task' }>[] {
+  return agenda.tasks.flatMap(task => {
+    const occurrences = agenda.occurrences.filter(occurrence => occurrence.taskId === task.id)
+    return expandOccurrences(task.schedule, occurrences, range).map(scheduled => ({
+      kind: 'task' as const,
+      key: `task:${task.id}:${scheduled.originalDate}`,
+      date: scheduled.date,
+      originalDate: scheduled.originalDate,
+      time: scheduled.time,
+      ...gridTimes(scheduled.time),
+      task,
+      occurrence: occurrences.find(occurrence => occurrence.originalDate === scheduled.originalDate),
+    }))
+  })
 }
 
 /** Agrupa os itens por dia do intervalo, em ordem de horário; dia vazio aparece vazio. */
@@ -228,22 +216,21 @@ export function groupAgendaByDay(items: readonly AgendaItem[], range: LocalDateR
   return listRangeDays(range).map(date => ({ date, items: items.filter(item => item.date === date).sort(compareItems) }))
 }
 
-/** Lê o andamento da tarefa a partir do registro; sem registro, a tarefa está em aberto. */
-export function readTaskProgress(entry: RoutineEntry | undefined): TaskProgress {
-  if (entry?.evaluation !== null && entry?.evaluation !== undefined) return 'evaluated'
-  if (entry?.deliveredAt !== null && entry?.deliveredAt !== undefined) return 'delivered'
+/** Lê o andamento da ocorrência a partir do registro; sem registro, a tarefa está em aberto. */
+export function readTaskProgress(occurrence: TaskOccurrence | undefined): TaskProgress {
+  if (occurrence?.evaluation !== null && occurrence?.evaluation !== undefined) return 'evaluated'
+  if (occurrence?.completedAt !== null && occurrence?.completedAt !== undefined) return 'completed'
   return 'open'
 }
 
-/** Diz se o aluno já pode entregar a tarefa daquele dia: hoje ou dias anteriores, nunca adiantado. */
+/** Diz se o aluno já pode concluir a ocorrência daquele dia: hoje ou dias anteriores, nunca adiantada. */
 export function isTaskDue(date: LocalDate, today: LocalDate): boolean {
-  // Data local ISO compara em ordem lexical.
-  return date <= today
+  return canCompleteOn(date, today)
 }
 
-/** Classifica a tarefa de um dia pela entrega, pela avaliação e pela data de hoje do aparelho. */
-export function classifyTrackedTask(entry: RoutineEntry | undefined, date: LocalDate, today: LocalDate): TrackedTaskStatus {
-  const progress = readTaskProgress(entry)
+/** Classifica a ocorrência de um dia pela conclusão, pela avaliação e pela data de hoje do aparelho. */
+export function classifyTrackedTask(occurrence: TaskOccurrence | undefined, date: LocalDate, today: LocalDate): TrackedTaskStatus {
+  const progress = readTaskProgress(occurrence)
   if (progress !== 'open') return progress
   return isTaskDue(date, today) ? 'missing' : 'upcoming'
 }
@@ -253,18 +240,18 @@ export function summarizeTaskTracking(days: readonly TaskTrackingDay[]): TaskTra
   const tasks = days.flatMap(day => day.tasks)
   return {
     total: tasks.length,
-    delivered: tasks.filter(task => task.status === 'delivered' || task.status === 'evaluated').length,
+    completed: tasks.filter(task => task.status === 'completed' || task.status === 'evaluated').length,
     evaluated: tasks.filter(task => task.status === 'evaluated').length,
     missing: tasks.filter(task => task.status === 'missing').length,
     upcoming: tasks.filter(task => task.status === 'upcoming').length,
   }
 }
 
-function trackTasks(blocks: readonly RoutineBlock[], entries: readonly RoutineEntry[], range: LocalDateRange, today: LocalDate): readonly TaskTrackingDay[] {
-  return groupAgendaByDay(taskItems(blocks, entries, range, []), range).map(day => ({
+function trackTasks(agenda: TaskAgenda, range: LocalDateRange, today: LocalDate): readonly TaskTrackingDay[] {
+  return groupAgendaByDay(taskItems(agenda, range), range).map(day => ({
     date: day.date,
     tasks: day.items.flatMap(item => item.kind === 'task'
-      ? [{ key: item.key, date: item.date, block: item.block, entry: item.entry, status: classifyTrackedTask(item.entry, item.date, today) }]
+      ? [{ key: item.key, date: item.date, originalDate: item.originalDate, time: item.time, startsAt: item.startsAt, endsAt: item.endsAt, task: item.task, occurrence: item.occurrence, status: classifyTrackedTask(item.occurrence, item.date, today) }]
       : []),
   }))
 }
@@ -279,18 +266,18 @@ export function createAgendaHooks(dependencies: AgendaHookDependencies): AgendaH
 
   // A tarefa aberta da agenda reaproveita os registros da janela já em cache: sem conexão, é
   // deles que a tela vive, e com conexão a busca do dia só confirma o que já está na tela.
-  function readCachedEntriesOn(institutionId: MembershipContext['institution']['id'], studentId: StudentId, date: LocalDate): Readonly<{ entries: readonly RoutineEntry[]; updatedAt: number }> | undefined {
-    for (const query of queryClient.getQueryCache().findAll({ queryKey: queryKeys.studentRoutineEntriesScope(institutionId, studentId) })) {
+  function readCachedEntriesOn(institutionId: MembershipContext['institution']['id'], studentId: StudentId, date: LocalDate): Readonly<{ entries: TaskAgenda; updatedAt: number }> | undefined {
+    for (const query of queryClient.getQueryCache().findAll({ queryKey: queryKeys.studentTasksScope(institutionId, studentId) })) {
       const [from, to] = [query.queryKey[5], query.queryKey[6]]
-      const entries = routineEntriesOf(query.state.data)
-      if (entries === undefined || typeof from !== 'string' || typeof to !== 'string' || date < from || date > to) continue
-      return { entries: entries.filter(entry => entry.occursOn === date), updatedAt: query.state.dataUpdatedAt }
+      const entries = taskAgendaSchema.safeParse(query.state.data)
+      if (!entries.success || typeof from !== 'string' || typeof to !== 'string' || date < from || date > to) continue
+      return { entries: entries.data, updatedAt: query.state.dataUpdatedAt }
     }
     return undefined
   }
 
   function usePendingChanges(institutionId: MembershipContext['institution']['id'], studentId: StudentId): readonly PendingEntryChange[] {
-    return pendingOfStudent(useSyncExternalStore(offline.subscribe, offline.getState).pending, institutionId, studentId)
+    return useSyncExternalStore(offline.subscribe, offline.getState).pending.filter(change => change.institutionId === institutionId && change.studentId === studentId)
   }
 
   function useAgendaCursor(today: LocalDate, initialView: AgendaView): AgendaCursor {
@@ -306,6 +293,17 @@ export function createAgendaHooks(dependencies: AgendaHookDependencies): AgendaH
       goPrevious: () => { setDate(shiftAgendaDate(view, date, -1)) },
       goNext: () => { setDate(shiftAgendaDate(view, date, 1)) },
     }
+  }
+
+  // Uma consulta por intervalo, na mesma chave que qualquer tela daquele intervalo usa.
+  function useTaskAgenda(institutionId: MembershipContext['institution']['id'], studentId: StudentId, range: LocalDateRange) {
+    const cached = readCachedEntriesOn(institutionId, studentId, range.from)
+    return useQuery({
+      ...(range.from !== range.to || cached === undefined ? {} : { initialData: cached.entries, initialDataUpdatedAt: cached.updatedAt }),
+      queryKey: queryKeys.studentTasks(institutionId, studentId, range.from, range.to),
+      queryFn: () => apiClient.tasks.list({ institutionId, studentId, from: range.from, to: range.to }),
+      retry: retryOnlyWithoutServerResponse,
+    }, queryClient)
   }
 
   async function invalidateAppointments(institutionId: MembershipContext['institution']['id'], studentId: StudentId): Promise<void> {
@@ -381,13 +379,8 @@ export function createAgendaHooks(dependencies: AgendaHookDependencies): AgendaH
 
   function useStudentAgenda(membership: MembershipContext, studentId: StudentId, range: LocalDateRange): StudentAgenda {
     const institutionId = membership.institution.id
-    const routine = useQuery({ queryKey: queryKeys.studentRoutine(institutionId, studentId), queryFn: () => apiClient.routines.list({ institutionId, studentId }), retry: retryOnlyWithoutServerResponse }, queryClient)
-    const entries = useQuery({
-      queryKey: queryKeys.studentRoutineEntries(institutionId, studentId, range.from, range.to),
-      queryFn: () => apiClient.routineEntries.list({ institutionId, studentId, from: range.from, to: range.to }),
-      retry: retryOnlyWithoutServerResponse,
-    }, queryClient)
-    // Atendimento é complemento da agenda do aluno: sem `appointment.read` a agenda mostra só a rotina.
+    const tasks = useTaskAgenda(institutionId, studentId, range)
+    // Atendimento é complemento da agenda do aluno: sem `appointment.read` a agenda mostra só as tarefas.
     const canReadAppointments = membership.permissions.some(grant => grant.key === 'appointment.read')
     const appointments = useQuery({
       queryKey: queryKeys.studentAppointments(institutionId, studentId, range.from, range.to),
@@ -397,66 +390,56 @@ export function createAgendaHooks(dependencies: AgendaHookDependencies): AgendaH
     }, queryClient)
 
     const pending = usePendingChanges(institutionId, studentId)
-
-    const failed = [routine, entries, ...(canReadAppointments ? [appointments] : [])].find(isBlockingFailure)
+    const failed = [tasks, ...(canReadAppointments ? [appointments] : [])].find(isBlockingFailure)
     const state: AgendaState = failed !== undefined
       ? { status: 'failed', failure: toLoadFailure(failed.error) }
-      : routine.data === undefined || entries.data === undefined || (canReadAppointments && appointments.data === undefined)
+      : tasks.data === undefined || (canReadAppointments && appointments.data === undefined)
         ? { status: 'loading' }
-        : { status: 'ready', days: groupAgendaByDay([...taskItems(routine.data, overlayPending(entries.data, pending), range, pending), ...appointmentItems(appointments.data ?? [], range)], range) }
+        : { status: 'ready', days: groupAgendaByDay([...taskItems(overlayTaskAgenda(tasks.data, pending), range), ...appointmentItems(appointments.data ?? [], range)], range) }
 
-    return { state, canWriteEntries: membership.permissions.some(grant => grant.key === 'routine.entry.write') }
+    return { state, canComplete: membership.permissions.some(grant => grant.key === 'task.complete') }
   }
 
   function useStudentTaskTracking(membership: MembershipContext, studentId: StudentId, range: LocalDateRange, today: LocalDate): TaskTrackingState {
     const institutionId = membership.institution.id
-    const routine = useQuery({ queryKey: queryKeys.studentRoutine(institutionId, studentId), queryFn: () => apiClient.routines.list({ institutionId, studentId }), retry: retryOnlyWithoutServerResponse }, queryClient)
-    const entries = useQuery({
-      queryKey: queryKeys.studentRoutineEntries(institutionId, studentId, range.from, range.to),
-      queryFn: () => apiClient.routineEntries.list({ institutionId, studentId, from: range.from, to: range.to }),
-      retry: retryOnlyWithoutServerResponse,
-    }, queryClient)
+    const tasks = useTaskAgenda(institutionId, studentId, range)
 
-    const failed = [routine, entries].find(query => query.isError)
-    if (failed !== undefined) return { status: 'failed', failure: toLoadFailure(failed.error) }
-    if (routine.data === undefined || entries.data === undefined) return { status: 'loading' }
-    const days = trackTasks(routine.data, entries.data, range, today)
+    if (tasks.isError) return { status: 'failed', failure: toLoadFailure(tasks.error) }
+    if (tasks.data === undefined) return { status: 'loading' }
+    const days = trackTasks(tasks.data, range, today)
     return { status: 'ready', days, summary: summarizeTaskTracking(days) }
   }
 
-  function useRoutineEntry(membership: MembershipContext, studentId: StudentId, blockId: RoutineBlockId, date: LocalDate): RoutineEntryAccess {
+  function useTaskOccurrence(membership: MembershipContext, studentId: StudentId, taskId: TaskId, originalDate: LocalDate): TaskOccurrenceAccess {
     const institutionId = membership.institution.id
-    const routine = useQuery({ queryKey: queryKeys.studentRoutine(institutionId, studentId), queryFn: () => apiClient.routines.list({ institutionId, studentId }), retry: retryOnlyWithoutServerResponse }, queryClient)
-    const cached = readCachedEntriesOn(institutionId, studentId, date)
-    const entries = useQuery({
-      queryKey: queryKeys.studentRoutineEntries(institutionId, studentId, date, date),
-      queryFn: () => apiClient.routineEntries.list({ institutionId, studentId, from: date, to: date }),
-      retry: retryOnlyWithoutServerResponse,
-      ...(cached === undefined ? {} : { initialData: cached.entries, initialDataUpdatedAt: cached.updatedAt }),
-    }, queryClient)
-    const block = routine.data?.find(candidate => candidate.id === blockId)
-    const entry = entries.data?.find(candidate => candidate.routineBlockId === blockId && candidate.occursOn === date)
-    const target = { institutionId, studentId, routineBlockId: blockId, occursOn: date }
-    const pendingChange = usePendingChanges(institutionId, studentId).find(change => entryKeyOf(change) === entryKeyOf(target))
+    // O intervalo da data original devolve a série e a linha da ocorrência, mesmo remarcada.
+    const tasks = useTaskAgenda(institutionId, studentId, { from: originalDate, to: originalDate })
+    const pendingChange = usePendingChanges(institutionId, studentId).find(change => entryKeyOf(change) === entryKeyOf({ institutionId, studentId, taskId, originalDate }))
+    const task = tasks.data?.tasks.find(candidate => candidate.id === taskId)
+    const serverOccurrence = tasks.data?.occurrences.find(candidate => candidate.taskId === taskId && candidate.originalDate === originalDate)
+    const occurrence = pendingChange === undefined ? serverOccurrence : overlayPendingChange(serverOccurrence, pendingChange)
+    const scheduled = task === undefined ? undefined : expandOccurrences(task.schedule, occurrence === undefined ? [] : [occurrence], { from: occurrence?.exception.kind === 'moved' ? occurrence.exception.date : originalDate, to: occurrence?.exception.kind === 'moved' ? occurrence.exception.date : originalDate }).find(candidate => candidate.originalDate === originalDate)
 
     async function refresh(): Promise<void> {
-      await queryClient.invalidateQueries({ queryKey: queryKeys.studentRoutineEntriesScope(institutionId, studentId) })
+      await queryClient.invalidateQueries({ queryKey: queryKeys.studentTasksScope(institutionId, studentId) })
     }
 
-    const failed = [routine, entries].find(isBlockingFailure)
-    const state: RoutineEntryState = failed !== undefined
-      ? { status: 'failed', failure: toLoadFailure(failed.error) }
-      : routine.data === undefined || entries.data === undefined
+    // Ocorrência cancelada ou fora da série some da expansão: para quem abriu o endereço, é "não encontrada".
+    const state: TaskOccurrenceState = isBlockingFailure(tasks)
+      ? { status: 'failed', failure: toLoadFailure(tasks.error) }
+      : tasks.data === undefined
         ? { status: 'loading' }
-        : block === undefined
+        : task === undefined || scheduled === undefined
           ? { status: 'failed', failure: 'not-found' }
-          : { status: 'ready', block, entry: pendingChange === undefined ? entry : overlayPendingChange(entry, pendingChange), isPendingSync: pendingChange !== undefined }
+          : { status: 'ready', task, occurrence, date: scheduled.date, time: scheduled.time, isPendingSync: pendingChange !== undefined }
+
+    const target = { institutionId, studentId, taskId, originalDate }
 
     async function saveNote(notes: string | null): Promise<RoutineEntryWriteResult> {
       // No app, observação e entrega passam pela fila: com rede, ela envia na hora; sem, guarda.
-      if (offline.isEnabled) return offline.record(target, entry, { kind: 'note', notes })
+      if (offline.isEnabled) return offline.record(target, serverOccurrence, { kind: 'note', notes })
       try {
-        await apiClient.routineEntries.saveNote({ institutionId, studentId, routineBlockId: blockId, occursOn: date, notes, expectedVersion: entry?.version ?? null })
+        await apiClient.tasks.saveNote({ ...target, notes, expectedVersion: occurrence?.version ?? null })
       } catch (error) {
         if (readFailureCode(error) !== 'conflict') return 'not-saved'
         await refresh()
@@ -466,9 +449,9 @@ export function createAgendaHooks(dependencies: AgendaHookDependencies): AgendaH
       return 'saved'
     }
 
-    async function addPhoto(photo: RoutineEntryPhotoInput): Promise<PhotoUploadResult> {
+    async function addPhoto(photo: TaskPhotoInput): Promise<PhotoUploadResult> {
       try {
-        await apiClient.routineEntries.addPhoto({ institutionId, studentId, routineBlockId: blockId, occursOn: date, photo })
+        await apiClient.tasks.addPhoto({ ...target, photo })
       } catch (error) {
         const code = readFailureCode(error)
         if (code === 'photo-invalid' || code === 'invalid_input' || code === 'BAD_REQUEST') return 'invalid'
@@ -479,14 +462,14 @@ export function createAgendaHooks(dependencies: AgendaHookDependencies): AgendaH
       return 'saved'
     }
 
-    // Conflito e recusa de regra (já avaliada, ainda não entregue) recarregam: a tela passa a
-    // mostrar o estado atual em vez de insistir numa ação que não vale mais.
-    async function runEntryWrite(write: () => Promise<unknown>): Promise<AgendaWriteResult> {
+    // Conflito e recusa de regra (já avaliada, ainda não concluída, ainda não chegou)
+    // recarregam: a tela passa a mostrar o estado atual em vez de insistir numa ação que não vale mais.
+    async function runOccurrenceWrite(write: () => Promise<unknown>): Promise<AgendaWriteResult> {
       try {
         await write()
       } catch (error) {
         const code = readFailureCode(error)
-        if (code !== 'conflict' && code !== 'entry-already-evaluated' && code !== 'entry-not-delivered') return 'not-saved'
+        if (code !== 'conflict' && code !== 'occurrence-already-evaluated' && code !== 'occurrence-not-completed' && code !== 'occurrence-in-future') return 'not-saved'
         await refresh()
         return 'conflict'
       }
@@ -494,51 +477,51 @@ export function createAgendaHooks(dependencies: AgendaHookDependencies): AgendaH
       return 'saved'
     }
 
-    function deliver(): Promise<RoutineEntryWriteResult> {
-      if (offline.isEnabled) return offline.record(target, entry, { kind: 'deliver' })
-      return runEntryWrite(() => apiClient.routineEntries.deliver({ institutionId, studentId, routineBlockId: blockId, occursOn: date, expectedVersion: entry?.version ?? null }))
+    function complete(): Promise<RoutineEntryWriteResult> {
+      if (offline.isEnabled) return offline.record(target, serverOccurrence, { kind: 'deliver' })
+      return runOccurrenceWrite(() => apiClient.tasks.complete({ ...target, expectedVersion: occurrence?.version ?? null }))
     }
 
-    function undeliver(): Promise<RoutineEntryWriteResult> {
-      if (offline.isEnabled) return offline.record(target, entry, { kind: 'undeliver' })
-      if (entry === undefined) return Promise.resolve('not-saved')
-      return runEntryWrite(() => apiClient.routineEntries.undeliver({ institutionId, studentId, routineBlockId: blockId, occursOn: date, expectedVersion: entry.version }))
+    function uncomplete(): Promise<RoutineEntryWriteResult> {
+      if (offline.isEnabled) return offline.record(target, serverOccurrence, { kind: 'undeliver' })
+      if (occurrence === undefined) return Promise.resolve('not-saved')
+      return runOccurrenceWrite(() => apiClient.tasks.uncomplete({ ...target, expectedVersion: occurrence.version }))
     }
 
-    function evaluate(input: RoutineEntryEvaluationInput): Promise<AgendaWriteResult> {
-      return runEntryWrite(() => apiClient.routineEntries.evaluate({ institutionId, studentId, routineBlockId: blockId, occursOn: date, ...input, expectedVersion: entry?.evaluation?.version ?? null }))
+    function evaluate(input: TaskEvaluationInput): Promise<AgendaWriteResult> {
+      return runOccurrenceWrite(() => apiClient.tasks.evaluate({ ...target, ...input, expectedVersion: occurrence?.evaluation?.version ?? null }))
     }
 
-    async function removePhoto(photo: RoutineEntryPhoto): Promise<AgendaWriteResult> {
+    async function removePhoto(photo: TaskPhoto): Promise<AgendaWriteResult> {
       try {
-        await apiClient.routineEntries.removePhoto({ institutionId, studentId, photoId: photo.id })
+        await apiClient.tasks.removePhoto({ institutionId, studentId, photoId: photo.id })
       } catch {
         return 'not-saved'
       }
-      queryClient.removeQueries({ queryKey: queryKeys.routineEntryPhoto(institutionId, studentId, photo.id) })
+      queryClient.removeQueries({ queryKey: queryKeys.taskPhoto(institutionId, studentId, photo.id) })
       await refresh()
       return 'saved'
     }
 
     return {
       state,
-      canWrite: membership.permissions.some(grant => grant.key === 'routine.entry.write'),
-      canEvaluate: membership.permissions.some(grant => grant.key === 'routine.entry.evaluate'),
+      canWrite: membership.permissions.some(grant => grant.key === 'task.complete'),
+      canEvaluate: task?.origin === 'staff' && membership.permissions.some(grant => grant.key === 'task.evaluate'),
       saveNote,
-      deliver,
-      undeliver,
+      complete,
+      uncomplete,
       evaluate,
       addPhoto,
       removePhoto,
     }
   }
 
-  function useRoutineEntryPhoto(membership: MembershipContext, studentId: StudentId, photoId: RoutineEntryPhotoId): PhotoContentState {
+  function useTaskPhoto(membership: MembershipContext, studentId: StudentId, photoId: TaskPhotoId): PhotoContentState {
     const institutionId = membership.institution.id
     // Foto não muda depois de enviada: o conteúdo vale enquanto a sessão durar.
     const query = useQuery({
-      queryKey: queryKeys.routineEntryPhoto(institutionId, studentId, photoId),
-      queryFn: () => apiClient.routineEntries.getPhoto({ institutionId, studentId, photoId }),
+      queryKey: queryKeys.taskPhoto(institutionId, studentId, photoId),
+      queryFn: () => apiClient.tasks.getPhoto({ institutionId, studentId, photoId }),
       retry: retryOnlyWithoutServerResponse,
       staleTime: Number.POSITIVE_INFINITY,
     }, queryClient)
@@ -547,5 +530,5 @@ export function createAgendaHooks(dependencies: AgendaHookDependencies): AgendaH
     return { status: 'ready', content: query.data, uri: `data:${query.data.mediaType};base64,${query.data.base64}` }
   }
 
-  return { useAgendaCursor, useProfessionalAgenda, useStudentAgenda, useAppointmentDetail, useStudentTaskTracking, useRoutineEntry, useRoutineEntryPhoto }
+  return { useAgendaCursor, useProfessionalAgenda, useStudentAgenda, useAppointmentDetail, useStudentTaskTracking, useTaskOccurrence, useTaskPhoto }
 }

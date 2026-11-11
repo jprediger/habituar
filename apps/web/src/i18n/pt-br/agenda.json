@@ -115,8 +115,8 @@
   "confirmRemove": "Sim, excluir",
   "noStudentsToSchedule": "Nenhum aluno disponível para agendar.",
   "task": {
-    "description": "Registre como foi esta tarefa no dia e marque como entregue quando terminar.",
-    "readOnlyDescription": "O que o aluno registrou e entregou nesta tarefa no dia.",
+    "description": "Registre como foi esta tarefa no dia e marque como concluída quando terminar.",
+    "readOnlyDescription": "O que o aluno registrou e concluiu nesta tarefa no dia.",
     "notes": "Observação",
     "notesHint": "Como foi a tarefa?",
     "saveNote": "Salvar observação",
@@ -142,20 +142,20 @@
     "kind": "Tipo",
     "guidance": "Orientação da equipe",
     "delivery": {
-      "title": "Entrega",
-      "hint": "Marque como entregue quando terminar. A observação e as fotos vão junto.",
-      "deliver": "Marcar como entregue",
-      "delivering": "Entregando...",
-      "undo": "Desfazer entrega",
+      "title": "Conclusão",
+      "hint": "Marque como concluída quando terminar. A observação e as fotos vão junto.",
+      "deliver": "Marcar como concluída",
+      "delivering": "Concluindo...",
+      "undo": "Desfazer conclusão",
       "undoing": "Desfazendo...",
-      "undoQuestion": "Desfazer a entrega desta tarefa? Ela volta a contar como não entregue.",
+      "undoQuestion": "Desfazer a conclusão desta tarefa? Ela volta a contar como não concluída.",
       "confirmUndo": "Sim, desfazer",
-      "deliveredOn": "Entregue em {{date}}",
-      "notDelivered": "Ainda não entregue.",
-      "notDue": "A entrega abre no dia da tarefa.",
-      "delivered": "Tarefa entregue.",
-      "undone": "Entrega desfeita.",
-      "locked": "A equipe já avaliou esta tarefa, então a entrega não pode mais ser desfeita.",
+      "deliveredOn": "Concluída em {{date}}",
+      "notDelivered": "Ainda não concluída.",
+      "notDue": "A conclusão abre no dia da tarefa.",
+      "delivered": "Tarefa concluída.",
+      "undone": "Conclusão desfeita.",
+      "locked": "A equipe já avaliou esta tarefa, então a conclusão não pode mais ser desfeita.",
       "changed": "A tarefa mudou enquanto você via. Ela foi atualizada; confira e tente de novo."
     },
     "evaluation": {
@@ -167,7 +167,7 @@
       "saving": "Salvando...",
       "saved": "Avaliação salva.",
       "none": "Ainda sem avaliação.",
-      "waitingDelivery": "A avaliação abre depois que o aluno entregar a tarefa.",
+      "waitingDelivery": "A avaliação abre depois que o aluno concluir a tarefa.",
       "evaluatedBy": "Avaliada por {{name}}",
       "chooseOutcome": "Escolha o conceito.",
       "invalidComment": "Use até {{maximum}} caracteres.",
@@ -178,36 +178,40 @@
       }
     },
     "progress": {
-      "delivered": "Entregue",
-      "evaluated": "Avaliada"
+      "completed": "Concluída",
+      "evaluated": "Avaliada",
+      "delivered": "Entregue"
     },
+    "allDay": "Dia inteiro",
     "savedOffline": "Salvo no aparelho. Enviamos quando a conexão voltar."
   },
   "tracking": {
     "open": "Acompanhar tarefas",
-    "openDescription": "Entregas, registros e avaliações do aluno, dia a dia.",
+    "openDescription": "Conclusões, registros e avaliações do aluno, dia a dia.",
     "back": "Voltar para a ficha",
     "title": "Tarefas do aluno",
-    "description": "O que o aluno entregou e registrou em cada tarefa da rotina, semana a semana. Abra uma tarefa entregue para avaliar.",
+    "description": "O que o aluno concluiu e registrou em cada tarefa, semana a semana. Abra uma tarefa da equipe concluída para avaliar.",
     "loading": "Carregando as tarefas...",
     "failed": "Não foi possível carregar as tarefas. Confira a conexão e tente novamente.",
     "forbidden": "Seu papel não inclui as tarefas deste aluno.",
     "summary": "Resumo do período",
-    "summaryFooter": "Tarefa de hoje ou de dia anterior que o aluno não marcou como entregue conta como não entregue.",
+    "summaryFooter": "Tarefa de hoje ou de dia anterior que o aluno não marcou como concluída conta como não concluída.",
     "summaryValue": "{{count}} de {{total}}",
     "summaryLabels": {
-      "delivered": "Entregues",
+      "completed": "Concluídas",
       "evaluated": "Avaliadas",
-      "missing": "Não entregues",
-      "upcoming": "Por vir"
+      "missing": "Não concluídas",
+      "upcoming": "Por vir",
+      "delivered": "Entregues"
     },
     "status": {
       "evaluated": "Avaliada",
-      "delivered": "Entregue",
-      "missing": "Não entregue",
-      "upcoming": "Por vir"
+      "completed": "Concluída",
+      "missing": "Não concluída",
+      "upcoming": "Por vir",
+      "delivered": "Entregue"
     },
     "emptyWeekTitle": "Nenhuma tarefa no período",
-    "emptyWeekDescription": "Quando a rotina do aluno tiver blocos, as tarefas aparecem aqui para acompanhar."
+    "emptyWeekDescription": "Quando o aluno tiver tarefas no período, elas aparecem aqui para acompanhar."
   }
 }

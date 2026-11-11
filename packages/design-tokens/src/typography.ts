@@ -14,6 +14,8 @@ export const FONT_FAMILY = {
 
 /** Escala de tamanho de fonte, número sem unidade — cada plataforma aplica `px`/`sp`. */
 export const FONT_SIZE = {
+  // Rótulo de item dentro da grade de mês da agenda: a célula tem um sétimo da largura.
+  micro: 10,
   caption: 12,
   body: 16,
   title: 20,

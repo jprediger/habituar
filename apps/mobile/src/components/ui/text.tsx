@@ -3,8 +3,8 @@ import { Text as NativeText } from 'react-native'
 import type { FontWeightRole } from '../../theme/tokens'
 import { useThemeTokens } from '../../theme/tokens'
 
-export type TextSize = 'caption' | 'body' | 'title' | 'display'
-export type TextTone = 'default' | 'muted' | 'danger' | 'primary' | 'onPrimary' | 'onDanger' | 'onToast'
+export type TextSize = 'micro' | 'caption' | 'body' | 'title' | 'display'
+export type TextTone = 'default' | 'muted' | 'danger' | 'primary' | 'onPrimary' | 'onDanger' | 'onToast' | 'onEvent'
 
 export type TextProps = Omit<NativeTextProps, 'style'> &
   Readonly<{
@@ -46,12 +46,14 @@ export function Text({
         fontFamily: fontFamily[weight],
         // Título respira menos que corpo: entrelinha de leitura numa frase curta e
         // grande abre um buraco no meio da tela.
-        lineHeight: size === 'display' || size === 'title' ? lineHeight[size].tight : lineHeight[size].normal,
+        lineHeight: size === 'display' || size === 'title' || size === 'micro' ? lineHeight[size].tight : lineHeight[size].normal,
         textAlign: isCentered ? 'center' : undefined,
         // Caixa-alta por estilo, nunca no texto do catálogo: o leitor de tela soletra
         // palavra escrita toda em maiúsculas, e o rótulo precisa ser lido como palavra.
         textTransform: isEyebrow ? 'uppercase' : undefined,
         letterSpacing: isEyebrow ? EYEBROW_LETTER_SPACING : undefined,
+        // Sem o respiro de fonte do Android o texto fica no centro óptico da linha; com ele, cai para baixo em caixa justa.
+        includeFontPadding: false,
       }}
     />
   )
@@ -73,5 +75,7 @@ function getToneColor(tone: TextTone, colors: ReturnType<typeof useThemeTokens>[
       return colors.onDanger
     case 'onToast':
       return colors.onToast
+    case 'onEvent':
+      return colors.onEvent
   }
 }

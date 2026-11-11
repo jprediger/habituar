@@ -235,12 +235,13 @@
     "assignmentManage": "Gerenciar acompanhamentos",
     "recordRead": "Consultar fichas de alunos",
     "recordWrite": "Registrar em fichas de alunos",
-    "routineRead": "Consultar rotina de alunos",
-    "routineWrite": "Montar rotina de alunos",
+    "taskRead": "Consultar tarefas de alunos",
+    "taskWrite": "Criar e editar tarefas da equipe",
+    "taskOwnWrite": "Criar e editar as próprias tarefas",
+    "taskComplete": "Concluir tarefas e registrar fotos e observações",
+    "taskEvaluate": "Avaliar as tarefas concluídas pelos alunos",
     "appointmentRead": "Ver agenda de atendimentos",
-    "appointmentWrite": "Agendar atendimentos",
-    "routineEntryWrite": "Registrar fotos e observações das tarefas",
-    "routineEntryEvaluate": "Avaliar as tarefas entregues pelos alunos"
+    "appointmentWrite": "Agendar atendimentos"
   },
   "staff": {
     "title": "Gestão",
@@ -770,6 +771,7 @@
       "rest": "Descanso",
       "other": "Outro"
     },
+    "noKind": "Sem tipo",
     "time": "{{start}} às {{end}}",
     "timeHint": "Use o formato 08:30.",
     "addTo": "Adicionar bloco em {{day}}",
@@ -804,23 +806,27 @@
     "writeFailed": "Não foi possível salvar. Tente novamente."
   },
   "notifications": {
-  "permissionHint": "Ative as notificações para receber lembretes da sua rotina.",
-  "enableButton": "Ativar notificações",
-  "reminderLeadLabel": "Lembretes de rotina",
-  "noRemindersConfigured": "Nenhum lembrete configurado ainda.",
-  "tapToRemove": "Toque para remover",
-  "removeReminderLabel": "Remover lembrete de {{value}}",
-  "customSectionTitle": "Adicionar outro",
-  "customValuePlaceholder": "Quantidade",
-  "customUnitLabel": "Unidade",
-  "addCustomButton": "Adicionar",
-  "reminderUnit": {
-    "minutes": "{{count}} minuto(s) antes",
-    "hours": "{{count}} hora(s) antes",
-    "days": "{{count}} dia(s) antes",
-    "minutesLabel": "Minutos",
-    "hoursLabel": "Horas",
-    "daysLabel": "Dias"
+    "permissionHint": "Ative as notificações para receber lembretes das suas tarefas.",
+    "enableButton": "Ativar notificações",
+    "reminderLeadLabel": "Lembretes de tarefas",
+    "noRemindersConfigured": "Nenhum lembrete configurado ainda.",
+    "tapToRemove": "Toque para remover",
+    "removeReminderLabel": "Remover lembrete de {{value}}",
+    "customSectionTitle": "Adicionar outro",
+    "customValuePlaceholder": "Quantidade",
+    "customUnitLabel": "Unidade",
+    "addCustomButton": "Adicionar",
+    "reminderUnit": {
+      "minutes": "{{count}} minuto(s) antes",
+      "hours": "{{count}} hora(s) antes",
+      "days": "{{count}} dia(s) antes",
+      "minutesLabel": "Minutos",
+      "hoursLabel": "Horas",
+      "daysLabel": "Dias"
+    },
+    "startsIn": "Começa em {{lead}}",
+    "leadMinutes": "{{count}} min",
+    "leadHours": "{{count}}h",
+    "leadDays": "{{count}} dia(s)"
   }
-}
 }

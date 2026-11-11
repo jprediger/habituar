@@ -16,7 +16,7 @@ import { RbacModule } from './rbac/rbac.module.js'
 import { StaffModule } from './staff/staff.module.js'
 import { StudentsModule } from './students/students.module.js'
 import { StudentRecordsModule } from './student-records/student-records.module.js'
-import { RoutinesModule } from './routines/routines.module.js'
+import { TasksModule } from './tasks/tasks.module.js'
 import { AppointmentsModule } from './appointments/appointments.module.js'
 
 /**
@@ -43,7 +43,7 @@ import { AppointmentsModule } from './appointments/appointments.module.js'
     StaffModule,
     StudentsModule,
     StudentRecordsModule,
-    RoutinesModule,
+    TasksModule,
     AppointmentsModule,
     HealthModule,
     // Último de propósito: o wildcard de 404 só deve capturar o que sobrou.

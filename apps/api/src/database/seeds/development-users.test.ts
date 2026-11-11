@@ -8,7 +8,7 @@ import { RequestContext } from '../../platform/request-context.js'
 import { RbacRepository } from '../../rbac/rbac.repository.js'
 import { RbacService } from '../../rbac/rbac.service.js'
 import { Database, TenantContext } from '../database.js'
-import { studentConsents, studentConsultations, studentGuardians, studentObservations, studentProfileRevisions, students, users } from '../schema.js'
+import { studentConsents, studentConsultations, studentGuardians, studentObservations, studentProfileRevisions, students, taskOccurrenceEvaluations, taskOccurrences, tasks, users } from '../schema.js'
 import { DEVELOPMENT_USERS, SeededUsers, seedDevelopmentUsers } from './development-users.js'
 import { seedPermissionCatalog } from './permission-catalog.seed.js'
 import { seedRoleTemplates } from './role-templates.js'
@@ -134,6 +134,49 @@ describe('usuários de desenvolvimento', () => {
       expect(consultation.recordedAt.getTime()).toBeGreaterThanOrEqual(consultation.occurredAt.getTime() + consultation.durationMinutes * 60_000)
       expect(consultation.recordedAt.getTime()).toBeLessThanOrEqual(now)
     }
+  })
+
+  it('dá à agenda do estudante tarefas das duas origens, recorrentes e avulsas, com e sem horário, sem duplicar em execução repetida', async () => {
+    const seededTasks = await database.withTenantOutsideRequest(TENANT, (transaction) =>
+      transaction.select().from(tasks).where(eq(tasks.studentId, assignedStudentId)))
+    expect(seededTasks).toHaveLength(10)
+    expect(new Set(seededTasks.map((task) => task.origin))).toEqual(new Set(['student', 'staff']))
+    expect(new Set(seededTasks.map((task) => task.recurrenceKind))).toEqual(new Set(['none', 'daily', 'weekly']))
+    expect(new Set(seededTasks.map((task) => task.timeKind))).toEqual(new Set(['all-day', 'timed']))
+    const authorByOrigin = new Set(seededTasks.map((task) => `${task.origin}:${task.createdByUserId === seeded.student ? 'student' : 'professional'}`))
+    expect(authorByOrigin).toEqual(new Set(['student:student', 'staff:professional']))
+  })
+
+  it('só semeia conclusão em ocorrência que já passou, e avaliação só em tarefa da equipe', async () => {
+    const records = await database.withTenantOutsideRequest(TENANT, async (transaction) => {
+      const occurrences = await transaction.select({ originalDate: taskOccurrences.originalDate, completedAt: taskOccurrences.completedAt, origin: tasks.origin, id: taskOccurrences.id }).from(taskOccurrences).innerJoin(tasks, eq(tasks.id, taskOccurrences.taskId)).where(eq(taskOccurrences.studentId, assignedStudentId))
+      const evaluations = await transaction.select({ occurrenceId: taskOccurrenceEvaluations.occurrenceId }).from(taskOccurrenceEvaluations)
+      return { occurrences, evaluations }
+    })
+    const today = new Date(Date.now()).toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' })
+    expect(records.occurrences.length).toBeGreaterThan(0)
+    for (const occurrence of records.occurrences) {
+      expect(occurrence.completedAt).not.toBeNull()
+      expect(occurrence.originalDate < today).toBe(true)
+    }
+    const evaluated = records.occurrences.filter((occurrence) => records.evaluations.some((evaluation) => evaluation.occurrenceId === occurrence.id))
+    expect(evaluated.length).toBeGreaterThan(0)
+    expect(evaluated.every((occurrence) => occurrence.origin === 'staff')).toBe(true)
+  })
+
+  it('deixa o estudante escrever as próprias tarefas e só a equipe escrever as dela', async () => {
+    const student = { userId: seeded.student, sessionId: SESSION_ID }
+    const professional = { userId: seeded.professional, sessionId: SESSION_ID }
+    const guardian = { userId: seeded.guardian, sessionId: SESSION_ID }
+    const context = { studentId: assignedStudentId }
+
+    await expect(rbac.hasPermission(student, INSTITUTION_ID, 'task.own.write', context)).resolves.toBe(true)
+    await expect(rbac.hasPermission(student, INSTITUTION_ID, 'task.complete', context)).resolves.toBe(true)
+    await expect(rbac.hasPermission(student, INSTITUTION_ID, 'task.write', context)).resolves.toBe(false)
+    await expect(rbac.hasPermission(professional, INSTITUTION_ID, 'task.write', context)).resolves.toBe(true)
+    await expect(rbac.hasPermission(professional, INSTITUTION_ID, 'task.own.write', context)).resolves.toBe(false)
+    await expect(rbac.hasPermission(guardian, INSTITUTION_ID, 'task.read', context)).resolves.toBe(true)
+    await expect(rbac.hasPermission(guardian, INSTITUTION_ID, 'task.own.write', context)).resolves.toBe(false)
   })
 
   it('devolve a transação ao ator de quem chamou depois de gravar o histórico em nome dos autores', () => {

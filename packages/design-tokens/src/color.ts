@@ -23,4 +23,6 @@ export const COLOR = {
   amber400: '#FBBF24',
   blue700: '#1D4ED8',
   blue400: '#60A5FA',
+  purple700: '#6D28D9',
+  purple400: '#A78BFA',
 } as const

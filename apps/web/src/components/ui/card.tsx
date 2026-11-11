@@ -1,7 +1,12 @@
 import type { HTMLAttributes, ReactElement } from 'react'
 import { cn } from '../../lib/utils.js'
 
-/** Superfície de agrupamento visual (gerada a partir do shadcn); não decide o conteúdo. */
+/**
+ * Superfície de agrupamento visual (gerada a partir do shadcn); não decide o conteúdo.
+ * Diverge do mobile de propósito, em teste: lá o cartão é preenchido (`surfaceMuted`) e sem
+ * borda, porque `border` é a borda de campo (3:1) e fazia o cartão parecer controle. A web
+ * mantém a borda até a comparação nas duas plataformas decidir qual fica.
+ */
 export function Card({ className, ...props }: HTMLAttributes<HTMLDivElement>): ReactElement {
   return (
     <div

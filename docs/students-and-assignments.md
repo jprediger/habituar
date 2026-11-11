@@ -13,9 +13,8 @@ Fontes da verdade no código:
 - Consultas por alcance: `apps/api/src/students/students.repository.ts`
 - Autorizações: `packages/core/src/permissions/permission-catalog.ts` e `apps/api/src/rbac/rbac.service.ts`
 
-Requisitos relacionados: RF0008 e RF0009 em `DOCUMENTACAO.md`. O vínculo de
-acompanhamento está implementado no servidor; ficha, observações e histórico clínico
-continuam previstos.
+Requisitos relacionados: RF0008 e RF0009 em `DOCUMENTACAO.md`. Cadastro,
+acompanhamento, ficha, observações e consultas realizadas estão implementados.
 
 ## Conceitos e relações
 

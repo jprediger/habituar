@@ -23,6 +23,31 @@ versionamento segue [SemVer](https://semver.org/lang/pt-BR/).
 ## [Não publicado]
 
 ### Adicionado
+- `[mobile]` O app do aluno funciona sem conexão: agenda, tarefas e a última
+  sessão ficam salvas no aparelho, e a observação e a entrega feitas offline entram numa
+  fila enviada quando a conexão volta. Um aviso mostra que o app está offline e quantas
+  alterações esperam envio. Se a regra não permitir mais a mudança, ela é descartada e o
+  aluno é avisado. Fotos continuam exigindo conexão, e a cópia é apagada ao sair da conta.
+- `[web] [mobile] [api] [core]` Entrega e avaliação das tarefas: o aluno marca a tarefa do
+  dia como entregue e pode desfazer enquanto ela não for avaliada; a equipe que acompanha
+  avalia com conceito (alcançado, parcial ou não alcançado) e comentário opcional, que
+  aluno e responsável leem. Nova permissão `routine.entry.evaluate`.
+- `[web] [mobile]` Na ficha do aluno, a equipe abre o acompanhamento das
+  tarefas por período, com cada tarefa avaliada, entregue, não entregue ou por vir, e a
+  organização da rotina em tela própria.
+- `[web] [mobile] [api] [core]` Registro da tarefa do dia: o aluno escreve uma observação e
+  anexa até seis fotos (JPEG, PNG ou WebP de até 2 MB), que responsável e equipe só
+  consultam. As fotos ficam fora do banco, no diretório de `FILE_STORAGE_DIRECTORY`. Nova
+  permissão `routine.entry.write`.
+- `[web] [mobile] [api] [core]` Agenda de atendimentos: o profissional agenda, edita e
+  cancela atendimentos, com repetição semanal e cancelamento de uma única ocorrência, e
+  consulta por dia, semana ou mês. Aluno e responsável veem atendimentos e tarefas juntos
+  na aba Agenda, que substitui a aba Rotina. Novas permissões `appointment.read` e
+  `appointment.write` e rotas em `/v1/institutions/{institutionId}/appointments` e
+  `/v1/institutions/{institutionId}/students/{studentId}/appointments`.
+- `[mobile]` Lembretes da rotina: o app avisa antes de cada bloco da grade semanal, com uma
+  ou mais antecedências escolhidas na nova tela de configurações. Sair da conta cancela
+  os lembretes.
 - `[web] [mobile] [api] [core]` Rotina semanal do aluno: a equipe que acompanha monta, na
   ficha do estudante, os blocos de cada dia da semana (horário, título, tipo e observação),
   e o aluno e o responsável veem a semana na nova aba Rotina, com o dia de hoje em

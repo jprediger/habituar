@@ -9,6 +9,8 @@ decisões técnicas ficam em [`ARCHITECTURE.md`](../ARCHITECTURE.md).
 |---|---|
 | [Papéis e permissões](roles-and-permissions.md) | Vínculos, concessões, alcances, templates e delegação. |
 | [Estudantes e acompanhamentos](students-and-assignments.md) | Cadastro institucional, atribuição de profissionais e monitores, acesso e arquivamento. |
+| [Rotina e tarefas do dia](routines-and-tasks.md) | Grade semanal, registro, entrega e avaliação das tarefas, lembretes e uso sem conexão. |
+| [Atendimentos](appointments.md) | Agendamento com repetição semanal, ocorrências canceladas e agenda da instituição. |
 
 Ao mudar uma regra, revise a página correspondente junto com o contrato, a implementação
 e os requisitos relacionados. Use links entre páginas para manter cada regra em um lugar.

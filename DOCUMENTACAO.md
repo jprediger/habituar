@@ -127,7 +127,7 @@ a ficha apenas para consulta.
 O aluno deve montar a grade semanal, receber tarefas e acompanhar entregas e avaliações.
 A grade semanal já existe: a equipe que acompanha o aluno monta os blocos de cada dia
 (horário, título, tipo e observação), e o aluno e o responsável veem esses blocos como as
-tarefas de cada dia na aba Agenda. Em desenvolvimento, o aluno registra em cada tarefa do
+tarefas de cada dia na aba Agenda. O aluno registra em cada tarefa do
 dia uma observação e até seis fotos, que o responsável e a equipe consultam sem poder
 alterar. O aluno marca a tarefa do dia como entregue, levando junto a observação e as
 fotos, e pode desfazer a entrega enquanto ela não for avaliada. A equipe que acompanha
@@ -137,7 +137,10 @@ em telas próprias a organização da rotina e o acompanhamento das tarefas. No
 acompanhamento, período a período, cada tarefa aparece como avaliada, entregue, não
 entregue ou por vir, com um resumo de quantas foram entregues e avaliadas, e abrir a
 tarefa mostra a orientação da equipe, o registro do aluno e a avaliação.
-No app, a observação e a entrega também funcionam sem conexão e são enviadas quando ela volta. O modo foco ainda está previsto.
+No app, o aluno recebe lembretes dos blocos da rotina com uma ou mais antecedências
+escolhidas nas configurações, em minutos, horas ou dias. Em desenvolvimento, a observação
+e a entrega também funcionam sem conexão no app e são enviadas quando ela volta. O modo
+foco ainda está previsto.
 
 | Prioridade | Complexidade | Situação | Versão |
 | --- | --- | --- | --- |
@@ -146,7 +149,7 @@ No app, a observação e a entrega também funcionam sem conexão e são enviada
 ### RF0011 – Agendar atendimentos
 
 Profissionais devem agendar consultas e o aluno deve visualizá-las em sua agenda.
-Em desenvolvimento, o profissional agenda, edita e cancela atendimentos, com repetição
+O profissional agenda, edita e cancela atendimentos, com repetição
 semanal opcional e cancelamento de uma única ocorrência da série, e consulta a agenda por
 dia, semana ou mês; o aluno e o responsável veem os atendimentos na mesma agenda das
 tarefas. Registrar o atendimento como realizado ainda está previsto.
@@ -287,9 +290,145 @@ Escritas e leituras sensíveis devem produzir trilha de auditoria vinculada ao a
 
 ## Diagrama(s) de Casos de Uso
 
-O diagrama apresenta as interações centrais previstas para cada perfil. As funções ainda não disponíveis permanecem documentadas como escopo funcional do produto.
+Os diagramas desta seção seguem a notação da UML 2.5. Os atores aparecem fora da
+fronteira do sistema, cada caso de uso recebe um identificador (UC) rastreável aos
+requisitos funcionais, as dependências «include» indicam comportamento sempre executado
+pelo caso de uso base e as dependências «extend» indicam comportamento opcional ou
+condicional. Casos de uso marcados com «previsto» descrevem escopo funcional ainda não
+implementado. Para manter a legibilidade, o modelo foi dividido em três diagramas por
+área do produto, precedidos da hierarquia de atores.
 
-_[Diagrama de casos de uso disponível no DOCX oficial.]_
+### Atores
+
+Os atores representam papéis desempenhados em relação ao sistema, não pessoas. A
+generalização indica que o ator especializado herda todos os casos de uso do ator geral:
+o Gestor da instituição é um Profissional que recebeu o papel Gestão da equipe, e
+Profissional e Monitor compartilham os casos de uso do Membro da equipe.
+
+_[Figura 1 – Hierarquia de atores do Habituar, disponível no DOCX oficial.]_
+
+| Ator | Descrição |
+| --- | --- |
+| Visitante | Pessoa sem sessão ativa. Consulta o estado do serviço, cria conta, entra no sistema ou aceita um convite. |
+| Usuário autenticado | Ator abstrato que generaliza todos os perfis com sessão ativa. Encerra a sessão e troca de instituição. |
+| Aluno | Estudante com vínculo do tipo aluno. Consulta a agenda, registra observação e fotos e entrega as tarefas do dia. |
+| Responsável | Familiar ou tutor vinculado ao estudante. Consulta a agenda do aluno e confirma ou revoga o consentimento. |
+| Membro da equipe | Ator abstrato que generaliza Profissional e Monitor. Lista os estudantes acompanhados, monta a rotina e avalia tarefas. |
+| Profissional | Mantém a ficha do estudante, registra observações e consultas e agenda atendimentos. |
+| Monitor | Acompanha estudantes no ambiente profissional, sem acesso à ficha; os destinos dependem das permissões do vínculo. |
+| Gestor da instituição | Profissional com o papel Gestão da equipe. Gerencia equipe, convites, papéis, estudantes e acompanhamentos. |
+| Administrador geral | Provisiona instituições e configura equipe e papéis, sem vínculo nem acesso implícito a dados de alunos. |
+
+### Acesso e conta
+
+Autenticar sempre inclui a resolução do contexto de acesso (instituições, tipo de
+vínculo, papéis e permissões efetivas), o mesmo comportamento executado ao trocar de
+instituição. A recuperação de senha estende a autenticação e ainda está prevista.
+
+_[Figura 2 – Diagrama de casos de uso – Acesso e conta, disponível no DOCX oficial.]_
+
+### Gestão institucional
+
+O provisionamento de instituição inclui a gestão de equipe e convites, pois a instituição
+recém-criada só ganha membros por convite. A alteração de papéis inclui a pré-visualização
+do impacto sobre membros e convites, exigida pelo RF0007.
+
+_[Figura 3 – Diagrama de casos de uso – Gestão institucional, disponível no DOCX oficial.]_
+
+### Acompanhamento, rotina e agenda
+
+A avaliação da tarefa entregue estende o acompanhamento por período, que é onde a equipe
+abre a tarefa. O registro de observação ou consulta estende a manutenção da ficha do
+estudante, a partir da qual é acionado.
+
+_[Figura 4 – Diagrama de casos de uso – Acompanhamento, rotina e agenda, disponível no DOCX oficial.]_
+
+### Matriz de rastreabilidade
+
+A matriz relaciona cada caso de uso aos requisitos funcionais da seção 2 e à situação
+atual de implementação.
+
+| ID | Caso de uso | Ator principal | Requisitos | Situação |
+| --- | --- | --- | --- | --- |
+| UC01 | Consultar estado do serviço | Visitante | RF0001 | Implementado |
+| UC02 | Cadastrar conta | Visitante | RF0002 | Implementado |
+| UC03 | Autenticar | Visitante | RF0003 | Implementado |
+| UC04 | Resolver contexto de acesso | (incluído) | RF0004, RF0006 | Implementado |
+| UC05 | Encerrar sessão | Usuário autenticado | RF0005 | Implementado |
+| UC06 | Trocar de instituição | Usuário autenticado | RF0004 | Implementado |
+| UC07 | Recuperar senha | Visitante | RF0015 | Previsto |
+| UC08 | Aceitar convite | Visitante | RF0002, RF0014 | Implementado |
+| UC09 | Gerenciar equipe e convites | Gestor, Administrador geral | RF0007, RF0014 | Implementado |
+| UC10 | Gerenciar papéis e permissões | Gestor, Administrador geral | RF0007 | Implementado |
+| UC11 | Cadastrar e arquivar estudante | Gestor | RF0009 | Implementado |
+| UC12 | Definir equipe que acompanha o estudante | Gestor | RF0008 | Implementado |
+| UC13 | Manter ficha do estudante | Profissional | RF0009 | Implementado |
+| UC14 | Registrar observação ou consulta | Profissional | RF0009 | Implementado |
+| UC15 | Montar grade semanal | Membro da equipe | RF0010 | Implementado |
+| UC16 | Avaliar tarefa entregue | Membro da equipe | RF0010 | Implementado |
+| UC17 | Agendar, editar ou cancelar atendimento | Profissional | RF0011 | Implementado |
+| UC18 | Listar estudantes acompanhados | Membro da equipe | RF0008, RF0009 | Implementado |
+| UC19 | Consultar agenda | Aluno, Responsável | RF0010, RF0011 | Implementado |
+| UC20 | Registrar observação e fotos da tarefa | Aluno | RF0010 | Implementado |
+| UC21 | Entregar ou desfazer entrega da tarefa | Aluno | RF0010 | Implementado |
+| UC22 | Confirmar ou revogar consentimento | Responsável | RF0009 | Implementado |
+| UC23 | Provisionar instituição | Administrador geral | RF0014 | Implementado |
+| UC24 | Registrar métricas | Profissional | RF0012 | Previsto |
+| UC25 | Emitir relatórios | Profissional | RF0013 | Previsto |
+| UC26 | Acompanhar tarefas por período | Membro da equipe | RF0010 | Implementado |
+
+### Especificação dos principais casos de uso
+
+As especificações abaixo detalham os casos de uso de maior risco ou complexidade, no
+formato de fluxo principal, fluxos alternativos e regras de negócio.
+
+#### UC03 – Autenticar
+
+| Campo | Conteúdo |
+| --- | --- |
+| Ator principal | Visitante |
+| Requisitos | RF0003, RF0004, RF0006, RNF0004, RNF0005 |
+| Pré-condições | A pessoa possui conta cadastrada. |
+| Fluxo principal | 1. O visitante informa e-mail e senha na web ou no app.<br>2. O sistema valida o formato dos dados.<br>3. O sistema confere a senha com o hash Argon2 armazenado.<br>4. O sistema cria uma sessão opaca e guarda apenas o hash do token.<br>5. Na web, o token é entregue em cookie seguro; no mobile, como credencial Bearer guardada no SecureStore.<br>6. O sistema executa UC04: resolve instituições, vínculo, papéis e permissões efetivas.<br>7. O sistema direciona a pessoa ao ambiente correspondente ao perfil. |
+| Fluxos alternativos | 3a. Credenciais inválidas: o sistema responde com a falha unauthenticated, sem revelar se o e-mail existe, e mostra a mensagem junto do campo.<br>6a. Mais de um vínculo: o sistema abre a última instituição escolhida ou pede a escolha.<br>6b. Nenhum vínculo ativo: o sistema exibe o estado de espera por convite. |
+| Pós-condições | Sessão ativa associada ao usuário e contexto institucional carregado no cliente. |
+| Regras de negócio | Sessões têm validade renovada a cada uso; o token em texto claro nunca é persistido; toda rota não pública exige sessão válida. |
+
+#### UC08 – Aceitar convite
+
+| Campo | Conteúdo |
+| --- | --- |
+| Ator principal | Visitante (pessoa convidada) |
+| Requisitos | RF0002, RF0007, RF0014 |
+| Pré-condições | Um gestor ou o administrador geral emitiu um convite e entregou o link de uso único. |
+| Fluxo principal | 1. A pessoa abre o link na web.<br>2. O sistema localiza o convite pelo hash do token e mostra instituição e tipo de vínculo.<br>3. A pessoa entra com a conta existente ou cadastra nome e senha.<br>4. O sistema revalida a autoridade de quem emitiu o convite.<br>5. O sistema cria ou reativa o vínculo com os papéis do convite e marca o convite como aceito.<br>6. O sistema direciona a pessoa ao ambiente do perfil. |
+| Fluxos alternativos | 2a. Convite expirado, revogado ou já aceito: o sistema informa a situação e encerra o caso de uso.<br>4a. O emissor perdeu a autoridade sobre os papéis: o sistema recusa com invitation-authority-lost. |
+| Pós-condições | Vínculo ativo na instituição; convite em estado terminal (aceito). |
+| Regras de negócio | O convite vale por sete dias e é de uso único; somente o hash do token é guardado; ninguém concede papéis com permissões que não possui. |
+
+#### UC21 – Entregar ou desfazer entrega da tarefa
+
+| Campo | Conteúdo |
+| --- | --- |
+| Ator principal | Aluno |
+| Requisitos | RF0010, RNF0010 |
+| Pré-condições | Aluno autenticado; a grade semanal possui um bloco no dia da tarefa; o estudante não está arquivado. |
+| Fluxo principal | 1. O aluno abre a tarefa do dia na Agenda.<br>2. Opcionalmente registra uma observação e até seis fotos (UC20).<br>3. O aluno marca a tarefa como entregue.<br>4. O sistema grava a data e o autor da entrega, conferindo a versão do registro.<br>5. A tarefa passa a aparecer como entregue para o responsável e a equipe. |
+| Fluxos alternativos | 4a. Sem conexão (app mobile): a mudança fica na fila do aparelho e é reenviada a cada 30 segundos até a conexão voltar.<br>4b. Versão desatualizada: o sistema responde conflict, recarrega o registro e avisa o aluno.<br>5a. Desfazer entrega: permitido somente enquanto não houver avaliação; caso contrário, o sistema recusa com entry-already-evaluated. |
+| Pós-condições | Registro da tarefa com entregueEm preenchido (ou nulo, quando desfeito). |
+| Regras de negócio | Um registro por bloco e data; fotos JPEG, PNG ou WebP de até 2 MB, guardadas fora do banco; responsável e equipe apenas consultam. |
+
+#### UC16 – Avaliar tarefa entregue
+
+| Campo | Conteúdo |
+| --- | --- |
+| Ator principal | Membro da equipe que acompanha o aluno |
+| Requisitos | RF0010 |
+| Pré-condições | A tarefa do dia foi entregue pelo aluno; o membro da equipe acompanha o estudante. |
+| Fluxo principal | 1. O membro da equipe abre o acompanhamento de tarefas do aluno e escolhe o período.<br>2. O sistema lista as tarefas como avaliada, entregue, não entregue ou por vir, com o resumo do período.<br>3. O membro da equipe abre a tarefa entregue e vê orientação, registro do aluno e fotos.<br>4. Informa o conceito (alcançado, parcial ou não alcançado) e um comentário opcional.<br>5. O sistema grava a avaliação, que passa a ser lida pelo aluno e pelo responsável. |
+| Fluxos alternativos | 4a. Tarefa não entregue: o sistema recusa com entry-not-delivered.<br>5a. Outra pessoa alterou a avaliação: o sistema responde conflict e recarrega os dados. |
+| Pós-condições | Avaliação registrada com versão própria; a entrega deixa de poder ser desfeita. |
+| Regras de negócio | A avaliação tem versão independente do registro do aluno, para que novas anotações não a invalidem. |
 
 ## Modelo do Banco de Dados
 
@@ -307,7 +446,7 @@ fica em `student_profile_revisions`, uma revisão por gravação, as observaçõ
 `student_observations` e as consultas realizadas em `student_consultations`; as três
 tabelas aceitam somente leitura e inserção, com autoria igual à pessoa autenticada. A
 grade semanal do aluno fica em `routine_blocks`, com versão para recusar edição feita
-sobre dados desatualizados. Em desenvolvimento, e ainda fora do modelo abaixo, os
+sobre dados desatualizados. Ainda fora do diagrama abaixo, os
 atendimentos ficam em `appointments`, com repetição semanal e versão, e as ocorrências
 canceladas de uma série em `appointment_cancelled_occurrences`; a observação e a entrega de cada
 tarefa do dia ficam em `routine_entries` e as fotos, guardadas fora do banco, têm os
@@ -317,6 +456,103 @@ em `routine_entry_evaluations`, com versão própria. O banco aplica isolamento 
 _[Modelo atual do banco de dados disponível no DOCX oficial.]_
 
 Entidades previstas para evolução do produto incluem métricas, grupos e relatórios. Elas ainda não fazem parte do modelo físico apresentado.
+
+## Modelagem UML
+
+Esta seção complementa os casos de uso com as visões estrutural e comportamental do
+sistema. O diagrama de classes representa o modelo de domínio em nível conceitual (o
+modelo físico está na seção Modelo do Banco de Dados); os diagramas de sequência,
+atividades e máquina de estados descrevem os fluxos de maior risco; e os diagramas de
+componentes e implantação descrevem a organização do código e a distribuição física da
+solução.
+
+### Diagramas de Classes
+
+Os atributos seguem a notação visibilidade nome : Tipo [multiplicidade] {restrição}.
+Losangos preenchidos indicam composição: a parte não existe sem o todo (por exemplo, a
+sessão sem o usuário). Classes com o estereótipo «somente inclusão» não aceitam alteração
+nem exclusão após gravadas. Classes repetidas entre diagramas trazem o estereótipo que
+aponta onde estão detalhadas.
+
+#### Identidade, instituições e controle de acesso
+
+O usuário é global e se liga a cada instituição por um Vínculo, que tem um tipo e soma os
+papéis recebidos. Cada Papel concede permissões com um alcance (próprio, atribuído ou
+instituição); o conjunto dessas concessões forma as permissões efetivas do vínculo.
+
+_[Figura 5 – Diagrama de classes – Identidade, instituições e controle de acesso, disponível no DOCX oficial.]_
+
+#### Estudante, responsáveis e ficha
+
+_[Figura 6 – Diagrama de classes – Estudante, responsáveis e ficha, disponível no DOCX oficial.]_
+
+#### Rotina, tarefas e agenda
+
+_[Figura 7 – Diagrama de classes – Rotina, tarefas e agenda, disponível no DOCX oficial.]_
+
+### Diagramas de Sequência
+
+Os diagramas de sequência mostram a troca de mensagens entre os objetos nos cenários
+centrais. Os fragmentos combinados alt, opt e loop representam alternativas, trechos
+opcionais e repetições; mensagens tracejadas são retornos.
+
+#### Autenticação e resolução do contexto (UC03 e UC04)
+
+_[Figura 8 – Diagrama de sequência – Autenticação e resolução do contexto de acesso, disponível no DOCX oficial.]_
+
+#### Processamento de uma requisição autenticada
+
+Toda rota passa pela mesma cadeia: autenticação, verificação de permissão e instalação do
+contexto institucional, que o PostgreSQL usa para aplicar o isolamento por linha (RNF0003
+e RNF0005).
+
+_[Figura 9 – Diagrama de sequência – Cadeia de autorização e isolamento institucional, disponível no DOCX oficial.]_
+
+#### Registro, entrega e avaliação da tarefa do dia (UC20, UC21 e UC16)
+
+_[Figura 10 – Diagrama de sequência – Registro, entrega e avaliação da tarefa do dia, disponível no DOCX oficial.]_
+
+#### Emissão e aceite de convite (UC09 e UC08)
+
+_[Figura 11 – Diagrama de sequência – Emissão e aceite de convite, disponível no DOCX oficial.]_
+
+### Diagramas de Atividades
+
+Os diagramas de atividades usam raias para separar as responsabilidades de cada
+participante e losangos para as decisões.
+
+_[Figura 12 – Diagrama de atividades – Ciclo da tarefa do dia, disponível no DOCX oficial.]_
+
+_[Figura 13 – Diagrama de atividades – Convite e aceite, disponível no DOCX oficial.]_
+
+### Diagramas de Máquina de Estados
+
+As máquinas de estados descrevem o ciclo de vida das entidades cujo comportamento depende
+do estado atual. As transições indicam evento [condição] / ação.
+
+_[Figura 14 – Máquina de estados – Tarefa do dia (RegistroDaTarefa), disponível no DOCX oficial.]_
+
+_[Figura 15 – Máquina de estados – Convite, disponível no DOCX oficial.]_
+
+_[Figura 16 – Máquina de estados – Vínculo institucional, disponível no DOCX oficial.]_
+
+### Diagrama de Componentes
+
+O monorepo é organizado em aplicações (web, mobile e API) e pacotes compartilhados. Web e
+mobile consomem a API apenas pela interface oRPC versionada, por meio do cliente React
+compartilhado; os módulos da API são agrupados por área e acessam o banco exclusivamente
+pelo módulo database.
+
+_[Figura 17 – Diagrama de componentes do Habituar, disponível no DOCX oficial.]_
+
+### Diagrama de Implantação
+
+O diagrama mostra os nós físicos, os ambientes de execução e os artefatos implantados em
+cada um, além dos protocolos de comunicação. O banco é executado em contêiner Docker e a
+API se conecta com um papel de aplicação que não é dono das tabelas, o que impede
+contornar as políticas de isolamento.
+
+_[Figura 18 – Diagrama de implantação, disponível no DOCX oficial.]_
 
 ## Tecnologias utilizadas
 
@@ -360,8 +596,8 @@ A API valida entradas e saídas a partir de contratos compartilhados, nega acess
 | Instituições e convites | Média | Implementado | Cadastro, convite de uso único e aceite na web |
 | Interfaces de autenticação | Alta | Implementado | Entrada, cadastro e ambientes por perfil na web e no mobile |
 | Fichas e observações | Alta | Implementado | Cadastro do estudante, termo assinado, ficha, histórico e consultas realizadas; auditoria prevista |
-| Rotina, tarefas e foco | Alta | Em desenvolvimento | Grade semanal pronta; registro, entrega e avaliação das tarefas do dia e uso sem conexão no app em desenvolvimento; foco previsto |
-| Agenda e atendimentos | Alta | Em desenvolvimento | Agendamento com repetição semanal em desenvolvimento; anotações e notificações previstas |
+| Rotina, tarefas e foco | Alta | Em desenvolvimento | Grade semanal, registro, entrega, avaliação e acompanhamento das tarefas e lembretes no app prontos; uso sem conexão no app em desenvolvimento; foco previsto |
+| Agenda e atendimentos | Alta | Em desenvolvimento | Agendamento com repetição semanal pronto; registro do atendimento realizado, anotações e notificações previstos |
 | Métricas e grupos | Média | Previsto | Indicadores configuráveis por instituição |
 | Relatórios | Alta | Previsto | Consolidação e exportação de acompanhamento |
 | Conformidade e retenção | Alta | Previsto | Consentimento, auditoria e descarte controlado |
@@ -417,6 +653,25 @@ Todas as entregas previstas para a sprint foram concluídas; a tabela apresenta 
 Resultado: os requisitos RF0002 a RF0009 e RF0014 estão implementados, e a grade semanal do RF0010 já está disponível. Ficam para as próximas sprints as tarefas do aluno, o uso sem conexão, a agenda de atendimentos, as métricas, os relatórios, a recuperação de senha e a trilha de auditoria.
 
 ## Sprint 3
+
+Período: 07/10/2026 a 11/11/2026.
+
+A terceira sprint levou a rotina para o dia a dia do aluno: lembretes no celular, uma agenda que reúne tarefas e atendimentos, o registro e a entrega das tarefas e a avaliação pela equipe, além do uso do app sem conexão.
+
+A tabela apresenta a data em que cada entrega foi concluída.
+
+**Entregas da Sprint 3**
+
+| Entrega | Área | Data de entrega | Descrição |
+| --- | --- | --- | --- |
+| Lembretes da rotina | Mobile | 07/10/2026 | O app agenda no próprio aparelho lembretes dos blocos da grade semanal, com uma ou mais antecedências escolhidas pelo aluno em minutos, horas ou dias na nova tela de configurações; sair da conta cancela os lembretes (RF0010). |
+| Agenda de atendimentos | API, web e mobile | 10/11/2026 | O profissional agenda, edita e cancela atendimentos, com repetição semanal e cancelamento de uma ocorrência da série, e consulta a agenda por dia, semana ou mês; aluno e responsável veem atendimentos e tarefas na mesma aba Agenda (RF0011, parcial). |
+| Registro das tarefas do dia | API, web e mobile | 10/11/2026 | O aluno registra em cada tarefa do dia uma observação e até seis fotos, guardadas fora do banco; responsável e equipe consultam sem alterar (RF0010). |
+| Acompanhamento das tarefas | Web e mobile | 10/11/2026 | Na ficha do aluno, a equipe abre em telas próprias a organização da rotina e o acompanhamento das tarefas por período, com o resumo de entregues e avaliadas (RF0010). |
+| Entrega e avaliação | API, web e mobile | 10/11/2026 | O aluno entrega a tarefa e pode desfazer a entrega enquanto ela não for avaliada; a equipe avalia com um conceito e um comentário opcional, que aluno e responsável leem (RF0010). |
+| Uso sem conexão no app | Mobile e pacote compartilhado | 11/11/2026 | Agenda e tarefas do aluno ficam salvas no aparelho, e observação e entrega feitas sem conexão entram numa fila enviada quando a conexão volta; concluído localmente e ainda em desenvolvimento até ser integrado (RNF0010). |
+
+Resultado: o RF0010 passa a contar com o registro, a entrega, a avaliação e o acompanhamento das tarefas e com os lembretes no app, e o RF0011 com o agendamento de atendimentos. O uso sem conexão no app (RNF0010) segue em desenvolvimento até ser integrado. Ficam para as próximas sprints o modo foco, o registro do atendimento realizado, as métricas, os relatórios, a recuperação de senha e a trilha de auditoria.
 
 ## Sprint final
 

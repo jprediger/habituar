@@ -9,7 +9,7 @@ import { I18nProvider } from '../i18n/i18n-provider.js'
 import { InstitutionSessionProvider } from '../session/institution-session.js'
 import { createInstitutionSession } from '../session/institution-session-fixture.js'
 import { expectNoSeriousA11yViolations } from '../test/expect-no-a11y-violations.js'
-import { StudentRecordScreen } from './student-record-screen.js'
+import { StudentRecordSections } from './student-record-screen.js'
 
 const studentId = studentIdSchema.parse('30000000-0000-4000-8000-000000000001')
 const author = { id: '20000000-0000-4000-8000-000000000002', name: 'Ana Souza' }
@@ -80,14 +80,14 @@ function createAccess(overrides: Partial<StudentRecordAccess> = {}): StudentReco
   }
 }
 
-function renderScreen() {
+function renderScreen(section: 'profile' | 'agenda' | 'consultations' | 'history' = 'profile') {
   const root = createRootRoute()
   const page = createRoute({
     getParentRoute: () => root,
     path: '/',
     component: () => (
       <InstitutionSessionProvider session={createInstitutionSession('professional')}>
-        <StudentRecordScreen studentId={studentId} />
+        <StudentRecordSections studentId={studentId} section={section} />
       </InstitutionSessionProvider>
     ),
   })
@@ -98,21 +98,23 @@ function renderScreen() {
 describe('ficha do estudante', () => {
   beforeEach(() => { client.access = createAccess() })
 
-  it('mostra o cadastro para consulta, os dados de apoio e a linha do tempo', async () => {
+  it('mostra os dados de apoio na seção escolhida', async () => {
     const { container } = renderScreen()
-
-    expect(await screen.findByRole('heading', { level: 1, name: 'Bruno Lima' })).toBeInTheDocument()
-    expect(screen.getByText('09/03/2014')).toBeInTheDocument()
-    expect(screen.getByText('TDAH')).toBeInTheDocument()
-    expect(screen.getByText('Marta Lima')).toBeInTheDocument()
+    expect(await screen.findByText('TDAH')).toBeInTheDocument()
     expect(screen.getAllByText('Não informado')).toHaveLength(1)
-    expect(screen.getByText('Concentrou-se melhor com pausas curtas.')).toBeInTheDocument()
-    expect(screen.getByText('Atualizou: Turma ou série, Condições acompanhadas.')).toBeInTheDocument()
+    expect(screen.queryByText('Marta Lima')).not.toBeInTheDocument()
+    expect(screen.queryByText('Concentrou-se melhor com pausas curtas.')).not.toBeInTheDocument()
     await expectNoSeriousA11yViolations(container)
   })
 
+  it('mostra as observações e as alterações na seção de histórico', async () => {
+    renderScreen('history')
+    expect(await screen.findByText('Concentrou-se melhor com pausas curtas.')).toBeInTheDocument()
+    expect(screen.getByText('Atualizou: Turma ou série, Condições acompanhadas.')).toBeInTheDocument()
+  })
+
   it('leva a organização da rotina e o acompanhamento das tarefas para páginas próprias', async () => {
-    renderScreen()
+    renderScreen('agenda')
 
     expect(await screen.findByRole('link', { name: 'Organizar rotina' })).toHaveAttribute('href', `/professional/students/${studentId}/routine`)
     expect(screen.getByRole('link', { name: 'Acompanhar tarefas' })).toHaveAttribute('href', `/professional/students/${studentId}/tasks`)
@@ -122,7 +124,7 @@ describe('ficha do estudante', () => {
   it('só registra a observação depois da confirmação que avisa que ela é definitiva', async () => {
     const access = createAccess()
     client.access = access
-    renderScreen()
+    renderScreen('history')
 
     fireEvent.change(await screen.findByRole('textbox', { name: /Nova observação/ }), { target: { value: 'Participou da atividade em grupo.' } })
     fireEvent.click(screen.getByRole('button', { name: 'Registrar observação' }))
@@ -158,7 +160,7 @@ describe('ficha do estudante', () => {
   it('lista as consultas e só registra uma nova depois da confirmação', async () => {
     const access = createAccess()
     client.access = access
-    const { container } = renderScreen()
+    const { container } = renderScreen('consultations')
 
     expect(await screen.findByText('Montamos juntos a agenda de estudos da semana.')).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Registrar consulta' }))
@@ -179,7 +181,7 @@ describe('ficha do estudante', () => {
     client.access = createAccess({ canWrite: false })
     renderScreen()
 
-    expect(await screen.findByRole('heading', { level: 1, name: 'Bruno Lima' })).toBeInTheDocument()
+    expect(await screen.findByText('TDAH')).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Editar ficha' })).not.toBeInTheDocument()
     expect(screen.queryByRole('textbox', { name: /Nova observação/ })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Registrar consulta' })).not.toBeInTheDocument()
@@ -189,7 +191,7 @@ describe('ficha do estudante', () => {
     client.access = createAccess({ record: { status: 'ready', student: { ...student, archivedAt: '2026-09-20T12:00:00.000Z' }, record }, canWrite: false })
     renderScreen()
 
-    expect(await screen.findByText('Este estudante está arquivado. A ficha continua disponível para consulta, mas não recebe registros novos.')).toBeInTheDocument()
+    expect(await screen.findByText('TDAH')).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Editar ficha' })).not.toBeInTheDocument()
   })
 

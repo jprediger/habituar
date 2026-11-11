@@ -25,7 +25,7 @@ export function StudentsScreen({ session }: Readonly<{ session: InstitutionSessi
       {list.state.status === 'ready' && list.state.items.length === 0 && <Text>{list.search.length > 0 ? t('students.noResults') : t('students.empty')}</Text>}
       {list.state.status === 'ready' && list.state.items.length > 0 && <>
         <ListSection title={t('students.total', { count: list.state.total })}>
-          {list.state.items.map((student) => <ListRow key={student.id} title={student.socialName ?? student.fullName} description={student.socialName === null ? t(`students.ageRange.${student.ageRange}`) : `${student.fullName} · ${t(`students.ageRange.${student.ageRange}`)}`} onPress={() => { router.push({ pathname: '/professional/management/students/student/[student-id]', params: { 'student-id': student.id } }) }} />)}
+          {list.state.items.map((student) => <ListRow key={student.id} title={student.socialName ?? student.fullName} description={student.socialName === null ? t(`students.ageRange.${student.ageRange}`) : `${student.fullName} · ${t(`students.ageRange.${student.ageRange}`)}`} onPress={() => { router.push({ pathname: '/professional/students/[student-id]', params: { 'student-id': student.id, from: 'management' } }) }} />)}
         </ListSection>
         {list.page > 1 && <Button variant="outline" label={t('students.previous')} onPress={() => { list.setPage(list.page - 1) }} />}
         {list.page * list.state.pageSize < list.state.total && <Button variant="outline" label={t('students.next')} onPress={() => { list.setPage(list.page + 1) }} />}

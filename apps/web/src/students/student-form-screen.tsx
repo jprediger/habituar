@@ -56,7 +56,7 @@ export function StudentFormScreen({ student, onClose }: StudentFormProps): React
   }
 
   return <div className="flex max-w-[48rem] flex-col gap-xxl">
-    <PageHeader eyebrow={session.membership.institution.name} title={student === undefined ? t('students.new') : t('students.edit')} description={t('students.formDescription')} />
+    {student === undefined ? <PageHeader eyebrow={session.membership.institution.name} title={t('students.new')} description={t('students.formDescription')} /> : <h2 className="text-title font-bold">{t('students.edit')}</h2>}
     <form className="flex flex-col gap-xxl" onSubmit={(event) => { void submit(event) }}>
       <Section title={t('students.dataSection')}><div className="grid gap-md sm:grid-cols-2">
         <FormField id={`${fieldPrefix}-name`} label={t('students.fullName')} isRequired requiredMarkLabel={t('students.required')}>

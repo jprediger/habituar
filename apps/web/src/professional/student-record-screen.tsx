@@ -7,7 +7,7 @@ import type { StudentConsultationsState, StudentHistoryState, StudentRecordAcces
 import { useConsultationForm, useObservationForm, useStudentProfileForm } from '@habituar/react-client/student-record-forms'
 import type { ConsultationField, StudentProfileForm, StudentProfileTextField } from '@habituar/react-client/student-record-forms'
 import { Link } from '@tanstack/react-router'
-import { Archive, CalendarRange, FileText, History, ListChecks, LockKeyhole, Stethoscope } from 'lucide-react'
+import { CalendarRange, FileText, History, ListChecks, LockKeyhole, Stethoscope } from 'lucide-react'
 import { useId, useState } from 'react'
 import type { ReactElement } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -17,9 +17,9 @@ import { Button } from '../components/ui/button.js'
 import { EmptyState } from '../components/ui/empty-state.js'
 import { FormField } from '../components/ui/form-field.js'
 import { Input } from '../components/ui/input.js'
-import { PageHeader } from '../components/ui/page-header.js'
 import { Section } from '../components/ui/section.js'
 import { Textarea } from '../components/ui/textarea.js'
+import type { StudentRecordSection } from '@habituar/react-client/student-record-navigation'
 import { useInstitutionSession } from '../session/institution-session.js'
 
 /**
@@ -27,56 +27,46 @@ import { useInstitutionSession } from '../session/institution-session.js'
  * edição, consultas realizadas, observações e a linha do tempo. Não decide acesso — mostra o que a API devolveu e oferece edição só
  * como dica de interface, porque a API confere a permissão de novo em cada envio.
  */
-export function StudentRecordScreen({ studentId }: Readonly<{ studentId: StudentId }>): ReactElement {
+export function StudentRecordSections({ studentId, section }: Readonly<{ studentId: StudentId; section: Exclude<StudentRecordSection, 'registration' | 'management'> }>): ReactElement {
   const { t } = useTranslation()
   const session = useInstitutionSession()
   const access = habituar.useStudentRecord(session.membership, studentId)
-  const back = <Link to="/professional" className="self-start text-body text-primary underline">{t('students.record.back')}</Link>
 
   switch (access.record.status) {
     case 'loading':
-      return <div className="flex flex-col gap-xl">{back}<p role="status" className="text-body text-text-muted">{t('students.record.loading')}</p></div>
+      return <div className="flex flex-col gap-xl"><p role="status" className="text-body text-text-muted">{t('students.record.loading')}</p></div>
     case 'failed':
       return (
         <div className="flex flex-col gap-xl">
-          {back}
           {access.record.failure === 'failed'
             ? <p role="alert" className="text-body text-danger">{t('students.record.failed')}</p>
             : <EmptyState icon={LockKeyhole} title={t(`students.record.${access.record.failure}.title`)} description={t(`students.record.${access.record.failure}.description`)} />}
         </div>
       )
     case 'ready':
-      return <StudentRecordView student={access.record.student} record={access.record.record} access={access} back={back} />
+      return <StudentRecordView student={access.record.student} record={access.record.record} access={access} section={section} />
     default:
       return assertNever(access.record)
   }
 }
 
-function StudentRecordView({ student, record, access, back }: Readonly<{ student: StudentDetail; record: StudentRecord; access: StudentRecordAccess; back: ReactElement }>): ReactElement {
+function StudentRecordView({ student, record, access, section }: Readonly<{ student: StudentDetail; record: StudentRecord; access: StudentRecordAccess; section: Exclude<StudentRecordSection, 'registration' | 'management'> }>): ReactElement {
   const { t } = useTranslation()
   const { t: tAgenda } = useTranslation('agenda')
   const form = useStudentProfileForm({ profile: record.profile, save: access.recordProfile })
 
   return (
     <div className="flex flex-col gap-xxl">
-      {back}
-      <PageHeader eyebrow={t('students.record.eyebrow')} title={student.socialName ?? student.fullName} description={t('students.record.description')} />
-      {student.archivedAt !== null && <EmptyState icon={Archive} title={t('students.record.archived')} description={t('students.record.registration.description')} />}
-
-      <Section title={t('students.record.registration.title')} description={t('students.record.registration.description')}>
-        <StudentRegistration student={student} />
-      </Section>
-
-      <Section title={t('students.profile.title')}>
+      {section === 'profile' && <Section title={t('students.profile.title')}>
         {form.isEditing
           ? <StudentProfileEditor form={form} />
           : <StudentProfileSummary profile={record.profile} canWrite={access.canWrite} onEdit={form.startEditing} />}
-      </Section>
+      </Section>}
 
-      <Section title={t('routine.title')} description={t('routine.description')}>
+      {section === 'agenda' && <Section title={t('routine.title')} description={t('routine.description')}>
         <div className="flex flex-wrap items-center gap-sm">
           <Button asChild variant="outline">
-            <Link to="/professional/students/$studentId/routine" params={{ studentId: student.id }}>
+            <Link to="/professional/students/$studentId/routine" params={{ studentId: student.id }} search={(previous) => previous}>
               <CalendarRange aria-hidden className="size-4" />
               {t('routine.open')}
             </Link>
@@ -85,62 +75,25 @@ function StudentRecordView({ student, record, access, back }: Readonly<{ student
         </div>
         <div className="flex flex-wrap items-center gap-sm">
           <Button asChild variant="outline">
-            <Link to="/professional/students/$studentId/tasks" params={{ studentId: student.id }}>
+            <Link to="/professional/students/$studentId/tasks" params={{ studentId: student.id }} search={(previous) => previous}>
               <ListChecks aria-hidden className="size-4" />
               {tAgenda('tracking.open')}
             </Link>
           </Button>
           <p className="text-body text-text-muted">{tAgenda('tracking.openDescription')}</p>
         </div>
-      </Section>
+      </Section>}
 
-      <Section title={t('students.consultations.title')} description={t('students.consultations.description')}>
+      {section === 'consultations' && <Section title={t('students.consultations.title')} description={t('students.consultations.description')}>
         {access.canWrite && <ConsultationComposer record={access.recordConsultation} />}
         <ConsultationList consultations={access.consultations} />
-      </Section>
+      </Section>}
 
-      <Section title={t('students.history.title')} description={t('students.history.description')}>
+      {section === 'history' && <Section title={t('students.history.title')} description={t('students.history.description')}>
         {access.canWrite && <ObservationComposer add={access.addObservation} />}
         <StudentHistory history={access.history} />
-      </Section>
+      </Section>}
     </div>
-  )
-}
-
-// Cadastro é da instituição: aqui só se lê. Contato de responsável só chega a quem pode
-// vinculá-lo, então lista vazia também cobre quem não tem esse acesso.
-function StudentRegistration({ student }: Readonly<{ student: StudentDetail }>): ReactElement {
-  const { t } = useTranslation()
-  const item = 'flex flex-col gap-xs rounded-field border border-hairline bg-surface px-lg py-md'
-
-  return (
-    <dl className="grid gap-sm sm:grid-cols-2">
-      <div className={item}>
-        <dt className="text-caption font-medium uppercase tracking-widest text-text-muted">{t('students.record.registration.birthDate')}</dt>
-        <dd className="text-body text-text">{formatCalendarDate(student.birthDate)}</dd>
-      </div>
-      {student.socialName !== null && (
-        <div className={item}>
-          <dt className="text-caption font-medium uppercase tracking-widest text-text-muted">{t('students.record.registration.socialName')}</dt>
-          <dd className="text-body text-text">{student.socialName}</dd>
-        </div>
-      )}
-      <div className={`${item} sm:col-span-2`}>
-        <dt className="text-caption font-medium uppercase tracking-widest text-text-muted">{t('students.record.registration.guardians')}</dt>
-        {student.guardians.length === 0
-          ? <dd className="text-body text-text-muted">{t('students.record.registration.noGuardians')}</dd>
-          : student.guardians.map((guardian) => (
-              <dd key={guardian.id} className="text-body text-text">
-                <span className="font-medium">{guardian.fullName}</span>
-                {' — '}
-                {t('students.record.registration.guardianContact', {
-                  relationship: t(`students.recordRelationship.${guardian.relationship}`),
-                  contact: [guardian.phone, guardian.email].filter((value) => value !== null).join(' · '),
-                })}
-              </dd>
-            ))}
-      </div>
-    </dl>
   )
 }
 
@@ -385,10 +338,4 @@ const DATE_TIME_FORMAT = new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', 
 // Instante gravado pela API (UTC), mostrado no fuso de quem lê.
 function formatDateTime(iso: string): string {
   return DATE_TIME_FORMAT.format(new Date(iso))
-}
-
-// Data de calendário sem fuso: passar por `Date` a deslocaria um dia a oeste de UTC.
-function formatCalendarDate(isoDate: string): string {
-  const [year, month, day] = isoDate.split('-')
-  return `${day ?? ''}/${month ?? ''}/${year ?? ''}`
 }

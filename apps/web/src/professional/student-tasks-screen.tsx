@@ -45,7 +45,7 @@ export function StudentTasksScreen({ studentId }: Readonly<{ studentId: StudentI
 
   return (
     <div className="flex flex-col gap-xl">
-      <Link to="/professional/students/$studentId" params={{ studentId }} className="self-start text-body text-primary underline">{t('tracking.back')}</Link>
+      <Link to="/professional/students/$studentId" params={{ studentId }} search={(previous) => previous} className="self-start text-body text-primary underline">{t('tracking.back')}</Link>
       <PageHeader eyebrow={tc('students.record.eyebrow')} title={t('tracking.title')} description={t('tracking.description')} />
       <AgendaToolbar cursor={cursor} />
       {(() => {

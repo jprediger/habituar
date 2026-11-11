@@ -11,6 +11,7 @@ export default defineConfig({
     'platform-forms': 'src/platform-forms.ts',
     'invitation-acceptance': 'src/invitation-acceptance.ts',
     'staff-management': 'src/staff-management.ts',
+    'student-record-navigation': 'src/student-record-navigation.ts',
     'student-record-forms': 'src/student-record-forms.ts',
     'routine-forms': 'src/routine-forms.ts',
     'agenda-forms': 'src/agenda-forms.ts',

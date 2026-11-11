@@ -16,6 +16,21 @@ Fontes da verdade no código:
 Requisitos relacionados: RF0008 e RF0009 em `DOCUMENTACAO.md`. Cadastro,
 acompanhamento, ficha, observações e consultas realizadas estão implementados.
 
+## Ficha única nos clientes
+
+Na web e no mobile, as listas do início e da gestão abrem a mesma ficha. A entrada
+apresenta as seções disponíveis pelas concessões atuais e preserva a lista de origem ao
+voltar. Abrir a entrada e o Cadastro busca apenas os dados cadastrais: não exige
+`record.read` nem consulta dados de acompanhamento.
+
+Cadastro reúne identificação, responsáveis e consentimento. A lista de responsáveis
+aparece uma única vez, com as ações permitidas junto de cada pessoa. Dados da ficha,
+Agenda, Consultas e Observações e histórico aparecem para quem possui `record.read`.
+Gestão reúne acompanhamentos profissionais, convites para o estudante e arquivamento;
+só aparece quando existe uma dessas ações disponível. A API continua conferindo o
+alcance sobre o estudante em cada leitura e escrita. Estudantes arquivados mantêm as
+informações para consulta, com reabertura disponível a quem pode fazê-la.
+
 ## Conceitos e relações
 
 - **Cadastro do estudante** (`students`): pertence a uma instituição e guarda dados

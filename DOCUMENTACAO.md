@@ -106,17 +106,19 @@ definição fica no detalhe do estudante, dentro da seção Gestão.
 ### RF0009 – Manter ficha do estudante
 
 Profissionais autorizados devem registrar dados, observações e histórico do estudante.
-Na seção Gestão, na web e no mobile, quem gerencia estudantes cadastra e edita os dados
-civis e os responsáveis, anexa o termo institucional assinado, em PDF ou imagem de até
-2 MB, e arquiva o estudante.
-A ficha reúne turma, condições acompanhadas e necessidades de apoio; data de nascimento,
-nome social e responsáveis vêm do cadastro do estudante e aparecem na ficha para
-consulta. Cada gravação preserva a versão anterior, e observações não podem ser editadas
-nem apagadas. Na web e no aplicativo mobile, o profissional abre a ficha a partir da
-lista dos estudantes que acompanha, com busca por nome, e registra as consultas
-realizadas, com data, duração e anotação, que também não podem ser alteradas. A
-monitoria vê os estudantes que acompanha sem abrir a ficha, e estudante arquivado mantém
-a ficha apenas para consulta.
+Na web e no mobile, a lista de acompanhamento e a Gestão abrem a mesma ficha, organizada
+em Cadastro, Dados da ficha, Agenda, Consultas, Observações e histórico e Gestão. O
+retorno preserva a lista de origem. As seções e ações dependem das permissões: consultar
+o cadastro não exige acesso aos dados de acompanhamento. Cadastro reúne identificação,
+responsáveis e consentimento, com edição e ações sobre responsáveis para quem tem
+permissão. Gestão reúne acompanhamentos profissionais, convites de acesso e arquivamento.
+O termo institucional assinado pode ser anexado em PDF ou imagem de até 2 MB.
+A ficha reúne turma, condições acompanhadas e necessidades de apoio. Cada gravação
+preserva a versão anterior, e observações não podem ser editadas nem apagadas. O
+profissional registra as consultas realizadas, com data, duração e anotação, que também
+não podem ser alteradas. A monitoria vê os estudantes que acompanha sem abrir os dados
+de acompanhamento. Estudante arquivado mantém os dados para consulta; quem possui
+permissão institucional pode reabrir o cadastro.
 
 | Prioridade | Complexidade | Situação | Versão |
 | --- | --- | --- | --- |

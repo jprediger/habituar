@@ -15,7 +15,7 @@ export function StudentRoutineScreen({ studentId }: Readonly<{ studentId: Studen
 
   return (
     <div className="flex flex-col gap-xl">
-      <Link to="/professional/students/$studentId" params={{ studentId }} className="self-start text-body text-primary underline">{tAgenda('tracking.back')}</Link>
+      <Link to="/professional/students/$studentId" params={{ studentId }} search={(previous) => previous} className="self-start text-body text-primary underline">{tAgenda('tracking.back')}</Link>
       <PageHeader eyebrow={t('students.record.eyebrow')} title={t('routine.title')} description={t('routine.description')} />
       <StudentRoutineEditor studentId={studentId} />
     </div>

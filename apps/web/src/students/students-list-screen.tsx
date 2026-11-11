@@ -50,7 +50,7 @@ export function StudentsListScreen(): ReactElement {
             <th scope="col" className="py-sm font-medium">{t('students.ageRangeLabel')}</th>
           </tr></thead>
           <tbody>{state.items.map((student) => <tr key={student.id} className="flex flex-col gap-xs border-b border-hairline py-md md:table-row">
-            <td className="md:py-md md:pr-md"><Link to="/professional/students/$studentId" params={{ studentId: student.id }} className="font-medium text-primary underline-offset-4 hover:underline">{student.socialName ?? student.fullName}</Link>{student.socialName !== null && <span className="block text-caption text-text-muted">{student.fullName}</span>}</td>
+            <td className="md:py-md md:pr-md"><Link to="/professional/students/$studentId" params={{ studentId: student.id }} search={{ from: 'management' }} className="font-medium text-primary underline-offset-4 hover:underline">{student.socialName ?? student.fullName}</Link>{student.socialName !== null && <span className="block text-caption text-text-muted">{student.fullName}</span>}</td>
             <td className="md:py-md md:pr-md">{formatCalendarDate(student.birthDate)}</td>
             <td className="md:py-md">{t(`students.ageRange.${student.ageRange}`)}</td>
           </tr>)}</tbody>

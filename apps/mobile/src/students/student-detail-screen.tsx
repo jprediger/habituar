@@ -1,4 +1,5 @@
 import type { StudentId } from '@habituar/core/identity/ids'
+import { getStudentRecordCapabilities } from '@habituar/react-client/student-record-navigation'
 import type { StudentDetail } from '@habituar/core/students'
 import { SPACING } from '@habituar/design-tokens/spacing'
 import { useRouter } from 'expo-router'
@@ -20,6 +21,7 @@ import { ListDivider } from '../components/ui/list-divider'
 import { ListSection } from '../components/ui/list-section'
 import { StackPage } from '../components/ui/stack-page'
 import { Text } from '../components/ui/text'
+import { formatCalendarDate } from '../professional/student-record-format'
 import { useToast } from '../components/ui/toast'
 import type { InstitutionSession } from '../session/session-screen'
 import { toStaffContext } from '../management/staff-context'
@@ -31,33 +33,24 @@ export function StudentDetailScreen({ session, studentId }: Readonly<{ session: 
   const detail = habituar.useStudentDetail(session.membership.institution.id, studentId)
   const canEdit = session.membership.permissions.some((permission) => permission.key === 'student.update')
   const student = detail.state.status === 'ready' ? detail.state.student : undefined
-  return <StackPage title={student?.socialName ?? student?.fullName ?? t('students.title')} action={canEdit && student !== undefined ? { icon: 'pencil-simple', label: t('students.edit'), onPress: () => { router.push({ pathname: '/professional/management/students/student/[student-id]/edit', params: { 'student-id': studentId } }) } } : undefined}>
+  return <StackPage title={t('students.record.registration.title')} action={canEdit && student !== undefined && student.archivedAt === null ? { icon: 'pencil-simple', label: t('students.edit'), onPress: () => { router.push({ pathname: '/professional/students/[student-id]/edit', params: { 'student-id': studentId } }) } } : undefined}>
     {detail.state.status === 'loading' && <Skeleton><ListSectionSkeleton hasTitle rows={5} row={{ hasDescription: false, hasValue: true }} /><ListSectionSkeleton hasTitle rows={1} /></Skeleton>}
     {detail.state.status === 'error' && <><Text accessibilityRole="alert">{t('students.loadFailed')}</Text><Button variant="outline" label={t('students.retry')} onPress={() => { void detail.refresh() }} /></>}
     {student !== undefined && <View style={styles.stack}>
       <ListSection title={t('students.data')}>
         <ListRow title={t('students.fullName')} value={student.fullName} />
         {student.socialName !== null && <ListRow title={t('students.socialName')} value={student.socialName} />}
-        <ListRow title={t('students.birthDate')} value={student.birthDate} />
+        <ListRow title={t('students.birthDate')} value={formatCalendarDate(student.birthDate)} />
         <ListRow title={t('students.ageRangeLabel')} value={t(`students.ageRange.${student.ageRange}`)} />
         <ListRow title={t('students.accountStatusLabel')} value={t(`students.accountStatus.${student.accountStatus}`)} />
       </ListSection>
       <ListDivider />
-      <ListSection title={t('students.guardians')}>
-        {student.guardians.length === 0 && <Text tone="muted">{t('students.noGuardians')}</Text>}
-        {student.guardians.map((guardian) => <ListRow key={guardian.id} title={guardian.fullName} description={t(`students.relationship.${guardian.relationship}`)} />)}
-      </ListSection>
+      <StudentGuardians session={session} student={student} />
       <ListDivider />
       <ListSection title={t('students.consent')}>
         <ListRow title={t('students.consentStatusLabel')} value={t(`students.consentStatus.${student.consentStatus}`)} />
         {student.institutionalDocumentId !== null && <ConsentDocumentRow session={session} student={student} />}
       </ListSection>
-      <ListDivider />
-      <ListSection title={t('students.assignments')}>
-        {student.assignments.length === 0 && <Text tone="muted">{t('students.noAssignments')}</Text>}
-        {student.assignments.map((assignment) => <ListRow key={assignment.id} title={assignment.name} description={t(`students.environment.${assignment.environment}`)} />)}
-      </ListSection>
-      <StudentManagement session={session} student={student} />
     </View>}
   </StackPage>
 }
@@ -81,22 +74,17 @@ function ConsentDocumentRow({ session, student }: Readonly<{ session: Institutio
     {hasError && <Text accessibilityRole="alert" tone="danger">{t('students.documentLoadFailed')}</Text>}</>
 }
 
-function StudentManagement({ session, student }: Readonly<{ session: InstitutionSession; student: StudentDetail }>) {
+function StudentGuardians({ session, student }: Readonly<{ session: InstitutionSession; student: StudentDetail }>) {
   const { t } = useTranslation()
-  const router = useRouter()
   const toast = useToast()
   const institutionId = session.membership.institution.id
   const actions = habituar.useStudentActions(institutionId, student.id)
   const [guardianName, setGuardianName] = useState('')
   const [guardianEmail, setGuardianEmail] = useState('')
   const [inviteUrl, setInviteUrl] = useState<string | undefined>()
-  const [isArchiving, setIsArchiving] = useState(false)
   const [isAddingGuardian, setIsAddingGuardian] = useState(false)
-  const canLink = session.membership.permissions.some((permission) => permission.key === 'guardian.link')
-  const canUnlink = session.membership.permissions.some((permission) => permission.key === 'guardian.unlink')
-  const canArchive = session.membership.permissions.some((permission) => permission.key === 'student.update' && permission.scope === 'institution')
-  const canManageAssignments = session.membership.permissions.some((permission) => permission.key === 'assignment.manage' && permission.scope === 'institution')
-    && session.membership.permissions.some((permission) => permission.key === 'membership.read' && permission.scope === 'institution')
+  const { canInvite: canLink, canUnlinkGuardian: canUnlink } = getStudentRecordCapabilities(session.membership.permissions)
+
 
   const addGuardian = async () => {
     if (guardianName.trim().length === 0) return
@@ -107,21 +95,53 @@ function StudentManagement({ session, student }: Readonly<{ session: Institution
     } catch { return }
   }
 
-  return <>
-    {canManageAssignments && <><ListDivider /><AssignmentEditor session={session} student={student} /></>}
-    {canLink && <><ListDivider /><ListSection title={t('students.manageGuardians')}>
+  return <ListSection title={t('students.guardians')}>
+    {student.guardians.length === 0 && <Text tone="muted">{t('students.noGuardians')}</Text>}
+    {canLink && student.archivedAt === null && <>
       <Button variant="outline" label={t('students.addGuardian')} onPress={() => { setIsAddingGuardian(!isAddingGuardian) }} />
       {isAddingGuardian && <>
         <FormField id="new-guardian-name" label={t('students.guardianName')} isRequired>{(control) => <Input {...control} value={guardianName} onChangeText={setGuardianName} />}</FormField>
         <FormField id="new-guardian-email" label={t('students.guardianEmail')} isRequired={false}>{(control) => <Input {...control} value={guardianEmail} onChangeText={setGuardianEmail} keyboardType="email-address" autoCapitalize="none" />}</FormField>
         <Button label={t('students.addGuardian')} isBusy={actions.pending} isDisabled={actions.pending || guardianName.trim().length === 0} onPress={() => { void addGuardian() }} />
       </>}
-      {student.guardians.map((guardian) => <ListRow key={guardian.id} title={guardian.fullName} description={guardian.email ?? undefined}>
-        {guardian.email !== null && <Button variant="link" size="inline" label={t('students.inviteGuardian')} onPress={() => { void actions.invite({ institutionId, studentId: student.id, target: 'guardian', guardianId: guardian.id, email: guardian.email ?? '' }).then((result) => { setInviteUrl(result.inviteUrl) }).catch(() => undefined) }} />}
-        {canUnlink && <Button variant="dangerOutline" size="inline" label={t('students.removeGuardian')} onPress={() => { void actions.removeGuardian({ institutionId, studentId: student.id, guardianId: guardian.id }).then(() => { toast({ type: 'success', title: t('students.guardianRemoved'), subtitle: guardian.fullName }) }).catch(() => undefined) }} />}
+    </>}
+      {student.guardians.map((guardian) => <ListRow key={guardian.id} title={guardian.fullName} description={[t(`students.relationship.${guardian.relationship}`), guardian.phone, guardian.email].filter((value) => value !== null).join(' · ')}>
+        {canLink && student.archivedAt === null && guardian.email !== null && <Button variant="link" size="inline" label={t('students.inviteGuardian')} onPress={() => { void actions.invite({ institutionId, studentId: student.id, target: 'guardian', guardianId: guardian.id, email: guardian.email ?? '' }).then((result) => { setInviteUrl(result.inviteUrl) }).catch(keepSurfacedFailure) }} />}
+        {canUnlink && student.archivedAt === null && <Button variant="dangerOutline" size="inline" label={t('students.removeGuardian')} onPress={() => { void actions.removeGuardian({ institutionId, studentId: student.id, guardianId: guardian.id }).then(() => { toast({ type: 'success', title: t('students.guardianRemoved'), subtitle: guardian.fullName }) }).catch(keepSurfacedFailure) }} />}
       </ListRow>)}
       {inviteUrl !== undefined && <Text selectable>{inviteUrl}</Text>}
-    </ListSection></>}
+      {actions.failure !== undefined && <Text accessibilityRole="alert" tone="danger">{t('students.actionFailed')}</Text>}
+  </ListSection>
+}
+
+
+/** Ações administrativas isoladas das informações de acompanhamento. */
+export function StudentManagementScreen({ session, studentId }: Readonly<{ session: InstitutionSession; studentId: StudentId }>) {
+  const { t } = useTranslation()
+  const detail = habituar.useStudentDetail(session.membership.institution.id, studentId)
+  const capabilities = getStudentRecordCapabilities(session.membership.permissions)
+  return <StackPage title={t('students.record.management.title')}>
+    {!capabilities.canManage ? <Text accessibilityRole="alert">{t('students.record.management.forbidden')}</Text>
+      : detail.state.status === 'loading' ? <Skeleton><ListSectionSkeleton rows={3} /></Skeleton>
+      : detail.state.status === 'error' ? <><Text accessibilityRole="alert">{t('students.loadFailed')}</Text><Button label={t('students.retry')} onPress={() => { void detail.refresh() }} /></>
+      : <StudentManagement session={session} student={detail.state.student} />}
+  </StackPage>
+}
+
+function StudentManagement({ session, student }: Readonly<{ session: InstitutionSession; student: StudentDetail }>) {
+  const { t } = useTranslation()
+  const router = useRouter()
+  const toast = useToast()
+  const actions = habituar.useStudentActions(session.membership.institution.id, student.id)
+  const [isArchiving, setIsArchiving] = useState(false)
+  const { canManageAssignments, canArchive, canInvite } = getStudentRecordCapabilities(session.membership.permissions)
+  return <>
+    <ListSection title={t('students.assignments')}>
+      {student.assignments.length === 0 && <Text tone="muted">{t('students.noAssignments')}</Text>}
+      {student.assignments.map((assignment) => <ListRow key={assignment.id} title={assignment.name} description={t(`students.environment.${assignment.environment}`)} />)}
+    </ListSection>
+    {canManageAssignments && student.archivedAt === null && <AssignmentEditor session={session} student={student} />}
+    {canInvite && student.archivedAt === null && <StudentInvitation session={session} student={student} />}
     {canArchive && <><ListDivider /><ListSection title={t('students.archiveSection')}>
       <Button variant="dangerOutline" label={student.archivedAt === null ? t('students.archive') : t('students.unarchive')} onPress={() => { setIsArchiving(true) }} />
       {isArchiving && <ConfirmationSheet title={t('students.archiveSection')} message={t(student.archivedAt === null ? 'students.archiveConfirm' : 'students.unarchiveConfirm', { name: student.fullName })} confirmLabel={t(student.archivedAt === null ? 'students.archive' : 'students.unarchive')} cancelLabel={t('students.cancel')} confirmVariant={student.archivedAt === null ? 'danger' : 'primary'} isBusy={actions.pending} onCancel={() => { setIsArchiving(false) }} onConfirm={() => { void (student.archivedAt === null ? actions.archive() : actions.unarchive()).then(() => { toast({ type: 'success', title: t(student.archivedAt === null ? 'students.archived' : 'students.unarchived'), subtitle: student.fullName }); router.back() }).catch(() => { setIsArchiving(false) }) }} />}
@@ -160,4 +180,24 @@ function AssignmentEditor({ session, student }: Readonly<{ session: InstitutionS
       {actions.failure !== undefined && <Text accessibilityRole="alert" tone="danger">{t('students.actionFailed')}</Text>}
     </>}
   </ListSection>
+}
+
+function StudentInvitation({ session, student }: Readonly<{ session: InstitutionSession; student: StudentDetail }>) {
+  const { t } = useTranslation()
+  const actions = habituar.useStudentActions(session.membership.institution.id, student.id)
+  const [email, setEmail] = useState('')
+  const [inviteUrl, setInviteUrl] = useState<string | undefined>()
+  if (student.accountStatus !== 'none') return null
+  return <ListSection title={t('students.record.management.inviteTitle')}>
+    <FormField id="student-invite-email" label={t('students.record.management.email')} isRequired>{(control) => <Input {...control} value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" />}</FormField>
+    <Button label={t('students.record.management.invite')} isDisabled={actions.pending || email.trim().length === 0} isBusy={actions.pending} onPress={() => { void actions.invite({ institutionId: session.membership.institution.id, studentId: student.id, target: 'student', guardianId: null, email: email.trim() }).then((result) => { setInviteUrl(result.inviteUrl) }).catch(keepSurfacedFailure) }} />
+    {inviteUrl !== undefined && <Text selectable>{inviteUrl}</Text>}
+    {actions.failure !== undefined && <Text accessibilityRole="alert" tone="danger">{t('students.actionFailed')}</Text>}
+  </ListSection>
+}
+
+// `useStudentActions` já registra a falha em `actions.failure`, que a seção mostra como
+// alerta; aqui só se impede que a rejeição relançada vire promessa não tratada.
+function keepSurfacedFailure(): void {
+  return
 }

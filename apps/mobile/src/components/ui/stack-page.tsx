@@ -24,12 +24,12 @@ export type StackPageAction = Readonly<{
  * aqui ele repetiria o que a barra já diz. Aceita no máximo uma ação, a de criar da tela:
  * mais que isso transforma a barra em barra de ferramentas.
  */
-export function StackPage({ title, action, children }: PropsWithChildren<Readonly<{ title: string; action?: StackPageAction | undefined }>>) {
+export function StackPage({ title, action, onBack, children }: PropsWithChildren<Readonly<{ title: string; action?: StackPageAction | undefined; onBack?: (() => void) | undefined }>>) {
   const { colors } = useThemeTokens()
 
   return (
     <SafeAreaView edges={['top', 'left', 'right']} style={[styles.safeArea, { backgroundColor: colors.surface }]}>
-      <StackPageBar title={title} action={action} />
+      <StackPageBar title={title} action={action} onBack={onBack} />
       <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.content}>
         <DeferredMount fallback={<StackPageSkeleton />}>{children}</DeferredMount>
       </ScrollView>
@@ -42,12 +42,12 @@ export function StackPage({ title, action, children }: PropsWithChildren<Readonl
  * abaixo da barra. Existe para telas que são donas da própria rolagem, como a agenda —
  * dentro de uma rolagem sem limite elas cresceriam até o fim e nunca rolariam.
  */
-export function FixedStackPage({ title, action, children }: PropsWithChildren<Readonly<{ title: string; action?: StackPageAction | undefined }>>) {
+export function FixedStackPage({ title, action, onBack, children }: PropsWithChildren<Readonly<{ title: string; action?: StackPageAction | undefined; onBack?: (() => void) | undefined }>>) {
   const { colors } = useThemeTokens()
 
   return (
     <SafeAreaView edges={['top', 'left', 'right']} style={[styles.safeArea, { backgroundColor: colors.surface }]}>
-      <StackPageBar title={title} action={action} />
+      <StackPageBar title={title} action={action} onBack={onBack} />
       <View style={[styles.content, styles.fixedContent]}>
         <DeferredMount fallback={<StackPageSkeleton />}>{children}</DeferredMount>
       </View>
@@ -55,7 +55,7 @@ export function FixedStackPage({ title, action, children }: PropsWithChildren<Re
   )
 }
 
-function StackPageBar({ title, action }: Readonly<{ title: string; action: StackPageAction | undefined }>) {
+function StackPageBar({ title, action, onBack }: Readonly<{ title: string; action: StackPageAction | undefined; onBack?: (() => void) | undefined }>) {
   const { t } = useTranslation()
   const router = useRouter()
   const { colors, minimumTouchTarget } = useThemeTokens()
@@ -65,7 +65,7 @@ function StackPageBar({ title, action }: Readonly<{ title: string; action: Stack
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={t('navigation.back')}
-        onPress={() => { router.back() }}
+        onPress={onBack ?? (() => { router.back() })}
         hitSlop={SPACING.sm}
         style={({ pressed }) => [styles.iconButton, { minWidth: minimumTouchTarget, minHeight: minimumTouchTarget, opacity: pressed ? 0.7 : 1 }]}
       >

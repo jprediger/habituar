@@ -57,6 +57,7 @@ module.exports = {
     '^@habituar/react-client/agenda-forms$': '<rootDir>/../../packages/react-client/src/agenda-forms.ts',
     '^@habituar/react-client/routine-forms$': '<rootDir>/../../packages/react-client/src/routine-forms.ts',
     '^@habituar/react-client/task-forms$': '<rootDir>/../../packages/react-client/src/task-forms.ts',
+    '^@habituar/react-client/student-record-navigation$': '<rootDir>/../../packages/react-client/src/student-record-navigation.ts',
     '^@habituar/react-client/student-record-forms$':
       '<rootDir>/../../packages/react-client/src/student-record-forms.ts',
   },

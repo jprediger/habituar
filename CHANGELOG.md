@@ -145,6 +145,11 @@ versionamento segue [SemVer](https://semver.org/lang/pt-BR/).
   primeira migração do M1, antes de qualquer release ou dado de produção.
 
 ### Corrigido
+- `[web] [mobile]` A seleção de um estudante pelo início ou pela gestão abre a mesma
+  ficha, organizada por seções e com retorno à lista de origem. Cadastro, responsáveis
+  e consentimento ficam reunidos; vínculos, convites e arquivamento ficam em Gestão.
+  As seções respeitam as permissões e o cadastro abre sem exigir acesso à ficha de
+  acompanhamento.
 - `[api]` Registrar, confirmar e revogar consentimento respondiam com erro interno: a
   resposta levava colunas do banco que o contrato não declara.
 - `[api] [core]` A lista de alunos recusava o filtro de arquivados vindo pela URL, porque

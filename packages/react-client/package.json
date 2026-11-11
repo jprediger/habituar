@@ -32,6 +32,10 @@
       "types": "./dist/staff-management.d.ts",
       "import": "./dist/staff-management.js"
     },
+    "./student-record-navigation": {
+      "types": "./dist/student-record-navigation.d.ts",
+      "import": "./dist/student-record-navigation.js"
+    },
     "./student-record-forms": {
       "types": "./dist/student-record-forms.d.ts",
       "import": "./dist/student-record-forms.js"

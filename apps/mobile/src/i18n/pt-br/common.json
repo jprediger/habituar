@@ -458,6 +458,16 @@
       "noRecordAccess": "Você acompanha este estudante, mas seu papel não abre a ficha."
     },
     "record": {
+      "overviewDescription": "Cadastro, acompanhamento e gestão do estudante, conforme seu acesso.",
+      "agendaTitle": "Agenda",
+      "backToSections": "Voltar às seções da ficha",
+      "management": {
+        "title": "Gestão",
+        "forbidden": "Seu acesso não permite gerenciar este estudante.",
+        "inviteTitle": "Acesso do estudante",
+        "email": "E-mail do estudante",
+        "invite": "Convidar estudante"
+      },
       "back": "Voltar ao início",
       "eyebrow": "Ficha do estudante",
       "description": "Dados de acompanhamento e histórico. São informações sensíveis: use-as só para o acompanhamento deste estudante.",
@@ -472,7 +482,7 @@
       },
       "registration": {
         "title": "Cadastro",
-        "description": "Dados do cadastro do estudante na instituição. Para corrigi-los, fale com quem gerencia os cadastros.",
+        "description": "Dados cadastrais, responsáveis e consentimento. As ações disponíveis dependem do seu acesso.",
         "birthDate": "Data de nascimento",
         "socialName": "Nome social",
         "guardians": "Responsáveis",
@@ -482,6 +492,9 @@
       "archived": "Este estudante está arquivado. A ficha continua disponível para consulta, mas não recebe registros novos.",
       "sectionsTitle": "Seções da ficha",
       "sections": {
+        "profile": "Informações para o acompanhamento do estudante.",
+        "agenda": "Tarefas e atendimentos do estudante.",
+        "management": "Acompanhamentos profissionais, convites e arquivamento.",
         "registration": "Data de nascimento e responsáveis.",
         "profileEmpty": "Ainda não preenchida.",
         "profileUpdated": "Atualizada em {{date}}.",

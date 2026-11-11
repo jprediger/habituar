@@ -1,12 +1,10 @@
 import { studentIdSchema } from '@habituar/core/identity/ids'
 import { Redirect, useLocalSearchParams } from 'expo-router'
-import { InstitutionSessionScreen } from '../../../../../session/session-screen'
-import { StudentDetailScreen } from '../../../../../students/student-detail-screen'
 
-/** Detalhe de aluno, com ID do link validado antes de consultar dados. */
+/** Links antigos da gestão chegam à mesma ficha e preservam a lista de origem. */
 export default function StudentRoute() {
   const params = useLocalSearchParams<{ 'student-id': string }>()
   const parsed = studentIdSchema.safeParse(params['student-id'])
   if (!parsed.success) return <Redirect href="/professional/management/students" />
-  return <InstitutionSessionScreen>{(session) => <StudentDetailScreen session={session} studentId={parsed.data} />}</InstitutionSessionScreen>
+  return <Redirect href={{ pathname: '/professional/students/[student-id]', params: { 'student-id': parsed.data, from: 'management' } }} />
 }

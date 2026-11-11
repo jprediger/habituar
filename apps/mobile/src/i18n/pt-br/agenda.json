@@ -157,7 +157,8 @@
       "delivered": "Tarefa entregue.",
       "undone": "Entrega desfeita.",
       "locked": "A equipe já avaliou esta tarefa, então a entrega não pode mais ser desfeita.",
-      "changed": "A tarefa mudou enquanto você via. Ela foi atualizada; confira e tente de novo."
+      "changed": "A tarefa mudou enquanto você via. Ela foi atualizada; confira e tente de novo.",
+      "deliveredOffline": "Entregue no aparelho em {{date}}. Enviamos quando a conexão voltar."
     },
     "evaluation": {
       "title": "Avaliação da equipe",
@@ -181,7 +182,9 @@
     "progress": {
       "delivered": "Entregue",
       "evaluated": "Avaliada"
-    }
+    },
+    "pendingSync": "Aguardando envio",
+    "photosNeedConnection": "Fotos precisam de conexão. A observação e a entrega podem ser feitas agora."
   },
   "tracking": {
     "open": "Acompanhar tarefas",
@@ -249,6 +252,21 @@
     "evaluationSaved": {
       "title": "Avaliação salva",
       "description": "O aluno já vê o retorno."
+    },
+    "savedOffline": {
+      "title": "Salvo no aparelho",
+      "description": "Enviamos quando a conexão voltar."
     }
+  },
+  "offline": {
+    "title": "Sem conexão",
+    "description": "Você está vendo o que ficou salvo no aparelho. Observação e entrega continuam funcionando.",
+    "pending_one": "{{count}} alteração aguardando envio",
+    "pending_other": "{{count}} alterações aguardando envio",
+    "pendingDescription": "Enviamos sozinhos quando a conexão voltar.",
+    "discarded_one": "{{count}} alteração não foi enviada",
+    "discarded_other": "{{count}} alterações não foram enviadas",
+    "discardedDescription": "A tarefa mudou enquanto você estava sem conexão. Confira como ela ficou.",
+    "dismissHint": "Dispensa este aviso"
   }
 }

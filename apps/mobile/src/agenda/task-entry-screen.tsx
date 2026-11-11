@@ -6,7 +6,7 @@ import type { RoutineEntry, RoutineEntryPhoto } from '@habituar/core/routine-ent
 import { SPACING } from '@habituar/design-tokens/spacing'
 import { useRoutineEntryEvaluationForm, useRoutineEntryNoteForm } from '@habituar/react-client/agenda-forms'
 import { isTaskDue, readTaskProgress } from '@habituar/react-client/react-client'
-import type { AgendaWriteResult, PhotoUploadResult, RoutineEntryAccess } from '@habituar/react-client/react-client'
+import type { AgendaWriteResult, PhotoUploadResult, RoutineEntryAccess, RoutineEntryWriteResult } from '@habituar/react-client/react-client'
 import * as DocumentPicker from 'expo-document-picker'
 import type { TFunction } from 'i18next'
 import { readAsStringAsync } from 'expo-file-system/legacy'
@@ -14,6 +14,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Image, Pressable, StyleSheet, View } from 'react-native'
 import { habituar } from '../client/habituar-client'
+import { OfflineNotice } from './offline-notice'
 import { Button } from '../components/ui/button'
 import { ChoiceList } from '../components/ui/choice-list'
 import { ConfirmationSheet } from '../components/ui/confirmation-sheet'
@@ -54,6 +55,7 @@ export function TaskEntryScreen({ session, studentId, blockId, date }: Readonly<
           case 'ready':
             return (
               <View style={styles.stack}>
+                <OfflineNotice />
                 <ListSection footer={t(access.canWrite ? 'task.description' : 'task.readOnlyDescription')}>
                   <ListRow title={labels.formatShortDate(date)} value={t('time', { start: access.state.block.startsAt, end: access.state.block.endsAt })} />
                   <ListRow title={t('task.kind')} value={tc(`routine.kinds.${access.state.block.kind}`)} />
@@ -64,9 +66,9 @@ export function TaskEntryScreen({ session, studentId, blockId, date }: Readonly<
                 <ListDivider />
                 <TaskPhotos session={session} studentId={studentId} access={access} photos={access.state.entry?.photos ?? []} />
                 <ListDivider />
-                <TaskDelivery access={access} entry={access.state.entry} date={date} />
+                <TaskDelivery access={access} entry={access.state.entry} date={date} isPendingSync={access.state.isPendingSync} />
                 <ListDivider />
-                <TaskEvaluation key={`evaluation-${access.state.entry?.evaluation?.version ?? 0}`} access={access} entry={access.state.entry} />
+                <TaskEvaluation key={`evaluation-${String(access.state.entry?.evaluation?.version ?? 0)}`} access={access} entry={access.state.entry} />
               </View>
             )
           default:
@@ -106,6 +108,10 @@ function TaskNote({ access }: Readonly<{ access: RoutineEntryAccess }>) {
             setFailure(undefined)
             void form.submit().then((result) => {
               if (result === 'invalid') return
+              if (result === 'queued') {
+                toast({ type: 'success', title: t('toast.savedOffline.title'), subtitle: t('toast.savedOffline.description') })
+                return
+              }
               if (result !== 'saved') {
                 setFailure(result)
                 return
@@ -126,6 +132,8 @@ function TaskPhotos({ session, studentId, access, photos }: Readonly<{ session: 
   const toast = useToast()
   const [isUploading, setIsUploading] = useState(false)
   const [failure, setFailure] = useState<PhotoFailure | undefined>(undefined)
+  // Foto não entra na fila: sem conexão o envio nem é oferecido, para não falhar no meio.
+  const isOffline = habituar.useOfflineStatus().connection === 'offline'
 
   // Galeria e arquivos pelo seletor de documentos que o app já usa no termo: o tipo é
   // conferido aqui para a mensagem certa, e de novo na API pelo conteúdo real.
@@ -177,8 +185,9 @@ function TaskPhotos({ session, studentId, access, photos }: Readonly<{ session: 
               ))}
             </View>
           )}
-      {access.canWrite && photos.length < ROUTINE_ENTRY_PHOTO_LIMIT && (
-        <ListRow icon="image" title={isUploading ? t('task.uploading') : t('task.addPhoto')} onPress={isUploading ? undefined : () => { void pickPhoto() }} />
+      {access.canWrite && photos.length < ROUTINE_ENTRY_PHOTO_LIMIT && (isOffline
+        ? <Text size="caption" tone="muted">{t('task.photosNeedConnection')}</Text>
+        : <ListRow icon="image" title={isUploading ? t('task.uploading') : t('task.addPhoto')} onPress={isUploading ? undefined : () => { void pickPhoto() }} />
       )}
       {failure !== undefined && <Text accessibilityRole="alert" accessibilityLiveRegion="polite" tone="danger">{photoFailureText(failure, t)}</Text>}
     </ListSection>
@@ -231,7 +240,7 @@ function formatDateTime(iso: string): string {
   return DATE_TIME_FORMAT.format(new Date(iso))
 }
 
-function TaskDelivery({ access, entry, date }: Readonly<{ access: RoutineEntryAccess; entry: RoutineEntry | undefined; date: LocalDate }>) {
+function TaskDelivery({ access, entry, date, isPendingSync }: Readonly<{ access: RoutineEntryAccess; entry: RoutineEntry | undefined; date: LocalDate; isPendingSync: boolean }>) {
   const { t } = useTranslation('agenda')
   const toast = useToast()
   const [isBusy, setIsBusy] = useState(false)
@@ -241,13 +250,14 @@ function TaskDelivery({ access, entry, date }: Readonly<{ access: RoutineEntryAc
   const isDue = isTaskDue(date, readLocalDateTime(readCurrentTime()).date)
   const deliveredAt = entry?.deliveredAt ?? null
 
-  async function run(write: () => Promise<AgendaWriteResult>, toastKey: 'taskDelivered' | 'deliveryUndone'): Promise<void> {
+  async function run(write: () => Promise<RoutineEntryWriteResult>, toastKey: 'taskDelivered' | 'deliveryUndone'): Promise<void> {
     setFailure(undefined)
     setIsBusy(true)
     try {
       const result = await write()
       setIsConfirmingUndo(false)
       if (result === 'saved') toast({ type: 'success', title: t(`toast.${toastKey}.title`), subtitle: t(`toast.${toastKey}.description`) })
+      else if (result === 'queued') toast({ type: 'success', title: t('toast.savedOffline.title'), subtitle: t('toast.savedOffline.description') })
       else setFailure(result)
     } finally {
       setIsBusy(false)
@@ -255,7 +265,7 @@ function TaskDelivery({ access, entry, date }: Readonly<{ access: RoutineEntryAc
   }
 
   const status = deliveredAt !== null
-    ? t('task.delivery.deliveredOn', { date: formatDateTime(deliveredAt) })
+    ? t(isPendingSync ? 'task.delivery.deliveredOffline' : 'task.delivery.deliveredOn', { date: formatDateTime(deliveredAt) })
     : access.canWrite && !isDue ? t('task.delivery.notDue') : t('task.delivery.notDelivered')
   const footer = !access.canWrite
     ? undefined

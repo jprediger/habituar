@@ -9,6 +9,7 @@ import { useTranslation } from 'react-i18next'
 import { habituar } from '../client/habituar-client'
 import { AgendaDayList } from '../components/agenda-day-list'
 import { AgendaWeekStrip } from '../components/agenda-week-strip'
+import { OfflineNotice } from './offline-notice'
 import { ChoiceList } from '../components/ui/choice-list'
 import { EmptyState } from '../components/ui/empty-state'
 import { Page } from '../components/ui/page'
@@ -31,6 +32,7 @@ export function StudentAgendaScreen({ session }: Readonly<{ session: Institution
   return (
     <Page>
       <PageHeader eyebrow={tc('navigation.agenda')} title={t('title')} />
+      <OfflineNotice />
       {(() => {
         switch (state.status) {
           case 'loading':
@@ -73,6 +75,7 @@ function StudentAgenda({ session, studentId }: Readonly<{ session: InstitutionSe
   function describeItem(item: AgendaItem) {
     switch (item.kind) {
       case 'task': {
+        if (item.isPendingSync) return { title: item.block.title, description: t('task.pendingSync') }
         const progress = readTaskProgress(item.entry)
         if (progress !== 'open') return { title: item.block.title, description: t(`task.progress.${progress}`) }
         const photoCount = item.entry?.photos.length ?? 0

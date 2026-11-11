@@ -1,5 +1,8 @@
 import { createHabituarReactClient } from '@habituar/react-client/react-client'
 import * as Notifications from 'expo-notifications'
+import { Platform } from 'react-native'
+import { readCurrentTime } from '../time/current-time'
+import { offlineSnapshotStorage } from './offline-snapshot-storage'
 import { sessionCredentialStorage } from './session-credential-storage'
 import { institutionPreferenceStorage } from './institution-preference-storage'
 import { studentPreferenceStorage } from './student-preference-storage'
@@ -33,4 +36,6 @@ export const habituar = createHabituarReactClient({
   preferenceStorage: institutionPreferenceStorage,
   studentPreferenceStorage,
   onSessionEnded: () => Notifications.cancelAllScheduledNotificationsAsync(),
+  // No navegador do Expo o app segue o web: sem cópia em disco nem fila.
+  ...(Platform.OS === 'web' ? {} : { offline: { storage: offlineSnapshotStorage, clock: readCurrentTime } }),
 })

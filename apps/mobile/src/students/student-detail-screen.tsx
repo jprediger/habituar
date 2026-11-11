@@ -8,6 +8,8 @@ import { cacheDirectory, deleteAsync, writeAsStringAsync } from 'expo-file-syste
 import { useTranslation } from 'react-i18next'
 import { StyleSheet, View } from 'react-native'
 import { habituar } from '../client/habituar-client'
+import { ListSectionSkeleton } from '../components/skeletons/list-section-skeleton'
+import { Skeleton } from '../components/skeletons/skeleton'
 import { Button } from '../components/ui/button'
 import { CheckboxRow } from '../components/ui/checkbox-row'
 import { ConfirmationSheet } from '../components/ui/confirmation-sheet'
@@ -30,7 +32,7 @@ export function StudentDetailScreen({ session, studentId }: Readonly<{ session: 
   const canEdit = session.membership.permissions.some((permission) => permission.key === 'student.update')
   const student = detail.state.status === 'ready' ? detail.state.student : undefined
   return <StackPage title={student?.socialName ?? student?.fullName ?? t('students.title')} action={canEdit && student !== undefined ? { icon: 'pencil-simple', label: t('students.edit'), onPress: () => { router.push({ pathname: '/professional/management/students/student/[student-id]/edit', params: { 'student-id': studentId } }) } } : undefined}>
-    {detail.state.status === 'loading' && <Text>{t('students.loading')}</Text>}
+    {detail.state.status === 'loading' && <Skeleton><ListSectionSkeleton hasTitle rows={5} row={{ hasDescription: false, hasValue: true }} /><ListSectionSkeleton hasTitle rows={1} /></Skeleton>}
     {detail.state.status === 'error' && <><Text accessibilityRole="alert">{t('students.loadFailed')}</Text><Button variant="outline" label={t('students.retry')} onPress={() => { void detail.refresh() }} /></>}
     {student !== undefined && <View style={styles.stack}>
       <ListSection title={t('students.data')}>
@@ -147,7 +149,7 @@ function AssignmentEditor({ session, student }: Readonly<{ session: InstitutionS
   return <ListSection title={t('students.manageAssignments')} footer={t('students.assignmentPageHint')}>
     <Button variant="outline" label={t('students.editAssignments')} onPress={() => { setIsEditing(!isEditing) }} />
     {isEditing && <>
-      {team.state.status === 'loading' && <Text>{t('students.loading')}</Text>}
+      {team.state.status === 'loading' && <Skeleton><ListSectionSkeleton rows={3} row={{ hasIcon: true, hasDescription: false }} /></Skeleton>}
       {team.state.status === 'failed' && <Text accessibilityRole="alert" tone="danger">{t('students.loadFailed')}</Text>}
       {team.state.status === 'ready' && team.state.items.map((member) => <CheckboxRow key={member.id} label={member.user.name} isChecked={selectedIds.includes(member.id)} onChange={(isChecked) => { setSelectedIds((ids) => isChecked ? [...ids, member.id] : ids.filter((id) => id !== member.id)) }} />)}
       {team.state.status === 'ready' && <>

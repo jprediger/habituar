@@ -6,6 +6,8 @@ import { useRouter } from 'expo-router'
 import { useTranslation } from 'react-i18next'
 import { StyleSheet, View } from 'react-native'
 import { habituar } from '../client/habituar-client'
+import { ListSectionSkeleton } from '../components/skeletons/list-section-skeleton'
+import { Skeleton } from '../components/skeletons/skeleton'
 import { Button } from '../components/ui/button'
 import { EmptyState } from '../components/ui/empty-state'
 import { ListRow } from '../components/ui/list-row'
@@ -37,7 +39,7 @@ function StudentListContent({ students, title }: Readonly<{ students: Accessible
 
   switch (state.status) {
     case 'loading':
-      return <Text tone="muted" accessibilityLiveRegion="polite">{t('students.list.loading')}</Text>
+      return <Skeleton><ListSectionSkeleton hasTitle rows={4} row={{ hasDescription: false }} /></Skeleton>
     case 'failed':
       return state.failure === 'forbidden'
         ? <EmptyState title={t('students.list.forbiddenTitle')} description={t('students.list.forbiddenDescription')} />

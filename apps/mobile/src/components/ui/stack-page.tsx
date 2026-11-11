@@ -4,7 +4,9 @@ import type { PropsWithChildren } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import { StackPageSkeleton } from '../skeletons/page-skeleton'
 import { useThemeTokens } from '../../theme/tokens'
+import { DeferredMount } from './deferred-mount'
 import { Text } from './text'
 import type { IconName } from './icon'
 import { Icon } from './icon'
@@ -56,7 +58,9 @@ export function StackPage({ title, action, children }: PropsWithChildren<Readonl
           </Pressable>
         )}
       </View>
-      <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.content}>{children}</ScrollView>
+      <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.content}>
+        <DeferredMount fallback={<StackPageSkeleton />}>{children}</DeferredMount>
+      </ScrollView>
     </SafeAreaView>
   )
 }

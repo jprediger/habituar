@@ -10,7 +10,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { StyleSheet, View } from 'react-native'
 import { habituar } from '../client/habituar-client'
-import { RoutineWeek } from '../components/routine-week'
+import { RoutineWeek, RoutineWeekSkeleton } from '../components/routine-week'
 import { Button } from '../components/ui/button'
 import { ChoiceList } from '../components/ui/choice-list'
 import { ConfirmationSheet } from '../components/ui/confirmation-sheet'
@@ -57,7 +57,7 @@ export function StudentRoutineEditor({ session, studentId }: Readonly<{ session:
 
   switch (routine.state.status) {
     case 'loading':
-      return <Text tone="muted" accessibilityLiveRegion="polite">{t('routine.loading')}</Text>
+      return <RoutineWeekSkeleton />
     case 'failed':
       return <Text accessibilityRole="alert" tone="danger">{t(routine.state.failure === 'forbidden' ? 'routine.forbidden' : 'routine.failed')}</Text>
     case 'ready':

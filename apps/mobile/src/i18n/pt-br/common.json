@@ -440,7 +440,6 @@
   },
   "students": {
     "list": {
-      "loading": "Carregando estudantes...",
       "failed": "Não foi possível carregar os estudantes. Confira a conexão e tente novamente.",
       "emptyTitle": "Nenhum estudante para mostrar",
       "emptyDescription": "Quando a instituição vincular estudantes ao seu acompanhamento, eles aparecem nesta lista.",
@@ -461,7 +460,6 @@
       "back": "Voltar ao início",
       "eyebrow": "Ficha do estudante",
       "description": "Dados de acompanhamento e histórico. São informações sensíveis: use-as só para o acompanhamento deste estudante.",
-      "loading": "Carregando a ficha...",
       "failed": "Não foi possível carregar a ficha. Confira a conexão e tente novamente.",
       "forbidden": {
         "title": "Você não tem acesso a esta ficha",
@@ -480,7 +478,19 @@
         "noGuardians": "Nenhum responsável cadastrado.",
         "guardianContact": "{{relationship}} · {{contact}}"
       },
-      "archived": "Este estudante está arquivado. A ficha continua disponível para consulta, mas não recebe registros novos."
+      "archived": "Este estudante está arquivado. A ficha continua disponível para consulta, mas não recebe registros novos.",
+      "sectionsTitle": "Seções da ficha",
+      "sections": {
+        "registration": "Data de nascimento e responsáveis.",
+        "profileEmpty": "Ainda não preenchida.",
+        "profileUpdated": "Atualizada em {{date}}.",
+        "consultations": "Atendimentos que já aconteceram.",
+        "history": "Observações e atualizações da ficha."
+      },
+      "readOnly": {
+        "title": "Esta ficha está só para consulta",
+        "description": "Seu acesso permite consultar a ficha deste estudante, mas não registrar nem editar."
+      }
     },
     "profile": {
       "title": "Dados da ficha",
@@ -497,7 +507,6 @@
       "save": "Salvar ficha",
       "saveReplacing": "Salvar e substituir a versão atual",
       "saving": "Salvando...",
-      "cancel": "Cancelar",
       "fields": {
         "schoolGrade": "Turma ou série",
         "conditions": "Condições acompanhadas",
@@ -509,7 +518,7 @@
       },
       "failure": {
         "invalid": "Confira os campos marcados antes de salvar.",
-        "conflict": "Outra pessoa salvou esta ficha enquanto você editava. Suas alterações continuam no formulário. Cancele para ver a versão atual, ou salve de novo para substituí-la.",
+        "conflict": "Outra pessoa salvou esta ficha enquanto você editava. Suas alterações continuam no formulário. Volte para ver a versão atual, ou salve de novo para substituí-la.",
         "server": "Não foi possível salvar. Suas alterações continuam no formulário; tente novamente."
       }
     },
@@ -524,7 +533,7 @@
       "other": "Outra condição"
     },
     "observation": {
-      "label": "Nova observação",
+      "label": "Observação",
       "hint": "Até {{maximum}} caracteres. Depois de registrada, a observação não pode ser editada nem apagada; para corrigir, registre outra.",
       "invalid": "Escreva a observação, com até {{maximum}} caracteres.",
       "submit": "Registrar observação",
@@ -533,25 +542,25 @@
       "confirm": "Sim, registrar",
       "keepEditing": "Voltar e editar",
       "saving": "Registrando...",
-      "failed": "Não foi possível registrar. O texto continua no campo; tente novamente."
+      "failed": "Não foi possível registrar. O texto continua no campo; tente novamente.",
+      "newTitle": "Nova observação"
     },
     "consultations": {
       "title": "Consultas",
-      "description": "Atendimentos que já aconteceram, do mais recente para o mais antigo.",
+      "description": "Atendimentos que já aconteceram, do mais recente para o mais antigo. Depois de registrada, a consulta não pode ser editada nem apagada; para corrigir, registre uma observação na ficha.",
       "open": "Registrar consulta",
-      "close": "Fechar",
       "submit": "Revisar e registrar",
       "confirmTitle": "Confirmar registro da consulta",
       "confirmDescription": "Registrar esta consulta? Depois de registrada, ela não pode ser editada nem apagada. Para corrigir, registre uma observação na ficha.",
       "confirm": "Sim, registrar",
       "keepEditing": "Voltar e editar",
       "saving": "Registrando...",
-      "loading": "Carregando consultas...",
       "failed": "Não foi possível carregar as consultas. Confira a conexão e tente novamente.",
       "emptyTitle": "Nenhuma consulta registrada",
       "emptyDescription": "Depois de cada atendimento, registre aqui a data, a duração e o que foi trabalhado.",
       "notesHint": "O que foi trabalhado e o que combinar para a próxima vez.",
-      "summary": "{{date}} · {{minutes}} min",
+      "when": "{{date}} às {{time}}",
+      "duration": "{{minutes}} min",
       "recordedBy": "Registrada por {{name}}",
       "fields": {
         "occurredAt": "Data e hora da consulta",
@@ -566,21 +575,29 @@
       "failure": {
         "future": "A data está no futuro. Aqui se registra só consulta que já aconteceu; confira a data e a hora.",
         "server": "Não foi possível registrar. Os dados continuam no formulário; tente novamente."
+      },
+      "newTitle": "Nova consulta",
+      "topics": {
+        "when": "Quando"
       }
     },
     "history": {
       "title": "Observações e histórico",
       "description": "Tudo o que foi registrado nesta ficha, do mais recente para o mais antigo.",
-      "loading": "Carregando o histórico...",
       "failed": "Não foi possível carregar o histórico. Confira a conexão e tente novamente.",
       "emptyTitle": "Nada registrado ainda",
       "emptyDescription": "Observações e atualizações da ficha aparecem aqui, com quem registrou e quando.",
-      "meta": "{{name}}, em {{date}}",
-      "changedFields": "Atualizou: {{fields}}.",
-      "kind": {
-        "observation": "Observação",
-        "profile-revision": "Atualização da ficha"
-      }
+      "period": {
+        "today": "Hoje",
+        "yesterday": "Ontem"
+      },
+      "observationMeta": "{{name}} · {{when}}",
+      "observationLabel": "Observação de {{name}}, em {{date}}: {{body}}",
+      "revision": "{{name}} atualizou a ficha: {{fields}}.",
+      "revisionRepeated": "{{name}} atualizou a ficha {{count}} vezes: {{fields}}.",
+      "revisionWithoutFields": "{{name}} atualizou a ficha.",
+      "revisionRepeatedWithoutFields": "{{name}} atualizou a ficha {{count}} vezes.",
+      "revisionLabel": "{{summary}} Em {{date}}."
     },
     "relationship": {
       "mother": "Mãe",
@@ -591,7 +608,6 @@
     },
     "title": "Estudantes",
     "search": "Buscar estudante",
-    "loading": "Carregando estudantes...",
     "loadFailed": "Não foi possível carregar os estudantes.",
     "retry": "Tentar novamente",
     "noResults": "Nenhum estudante encontrado para esta busca.",
@@ -690,7 +706,6 @@
       "description": "Dados que a instituição tem sobre você. Para corrigir algo, fale com a instituição.",
       "birthDate": "Data de nascimento",
       "birthDateValue": "Data de nascimento: {{date}}",
-      "loading": "Carregando seu cadastro...",
       "failed": "Não foi possível carregar seu cadastro. Confira a conexão e tente novamente.",
       "emptyTitle": "Nenhum cadastro encontrado",
       "emptyDescription": "A instituição ainda não ligou um cadastro de estudante à sua conta."
@@ -718,7 +733,6 @@
       "confirmed": "Consentimento confirmado para {{name}}.",
       "revoked": "Consentimento revogado para {{name}}.",
       "failed": "Não foi possível enviar. Confira a conexão e tente novamente.",
-      "loading": "Carregando consentimentos...",
       "loadFailed": "Não foi possível carregar os consentimentos. Confira a conexão e tente novamente.",
       "noneTitle": "Nenhum estudante sob sua responsabilidade",
       "noneDescription": "Quando a instituição ligar um estudante a você como responsável, ele aparece aqui."
@@ -726,8 +740,6 @@
   },
   "routine": {
     "title": "Rotina semanal",
-    "open": "Organizar rotina",
-    "openDescription": "Blocos da semana do aluno, de segunda a domingo",
     "studentTitle": "Rotina de {{name}}",
     "description": "A semana do aluno, de segunda a domingo.",
     "readOnlyHint": "Quem monta a rotina é a equipe que acompanha o aluno.",
@@ -737,7 +749,6 @@
     "emptyDay": "Nada planejado",
     "emptyTitle": "Rotina ainda não montada",
     "emptyDescription": "Quando a equipe montar a rotina da semana, ela aparece aqui.",
-    "loading": "Carregando a rotina...",
     "failed": "Não foi possível carregar a rotina. Confira a conexão e tente novamente.",
     "forbidden": "Seu papel não inclui a rotina deste aluno.",
     "noStudentsTitle": "Nenhuma rotina para mostrar",

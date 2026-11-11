@@ -2,6 +2,8 @@ import type { RoutineBlock, RoutineDay, Weekday } from '@habituar/core/routines'
 import { WEEKDAY_LABEL_KEYS } from '@habituar/react-client/routine-forms'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
+import { ListSectionSkeleton } from './skeletons/list-section-skeleton'
+import { Skeleton } from './skeletons/skeleton'
 import { ListDivider } from './ui/list-divider'
 import { ListRow } from './ui/list-row'
 import { ListSection } from './ui/list-section'
@@ -45,5 +47,19 @@ export function RoutineWeek({
         )
       })}
     </>
+  )
+}
+
+// Três dias bastam para descrever a grade sem empurrar a tela inteira para baixo.
+const SKELETON_DAYS = 3
+
+/** Esqueleto da semana de rotina, na forma de `RoutineWeek`: grupos por dia com horário à direita. */
+export function RoutineWeekSkeleton() {
+  return (
+    <Skeleton>
+      {Array.from({ length: SKELETON_DAYS }, (_, index) => (
+        <ListSectionSkeleton key={index} hasTitle rows={2} row={{ hasValue: true }} />
+      ))}
+    </Skeleton>
   )
 }

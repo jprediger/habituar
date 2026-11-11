@@ -7,6 +7,8 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { StyleSheet, View } from 'react-native'
 import { habituar } from '../client/habituar-client'
+import { ListSectionSkeleton } from '../components/skeletons/list-section-skeleton'
+import { Skeleton } from '../components/skeletons/skeleton'
 import { Button } from '../components/ui/button'
 import { ConfirmationSheet } from '../components/ui/confirmation-sheet'
 import { EmptyState } from '../components/ui/empty-state'
@@ -68,7 +70,7 @@ function OwnRecordSection({ session, isGuardianToo }: Readonly<{ session: Instit
 
   switch (state.status) {
     case 'loading':
-      return <Text tone="muted" accessibilityLiveRegion="polite">{t('studentHome.self.loading')}</Text>
+      return <Skeleton><ListSectionSkeleton hasTitle rows={1} /></Skeleton>
     case 'failed':
       return <Text accessibilityRole="alert" tone="danger">{t('studentHome.self.failed')}</Text>
     case 'ready':
@@ -143,7 +145,7 @@ function PendingConsentList({ consents, onConfirm }: Readonly<{ consents: Guardi
 
   switch (consents.pending.status) {
     case 'loading':
-      return <Text tone="muted" accessibilityLiveRegion="polite">{t('studentHome.consent.loading')}</Text>
+      return <Skeleton><ListSectionSkeleton hasTitle rows={1} /></Skeleton>
     case 'failed':
       return <Text accessibilityRole="alert" tone="danger">{t('studentHome.consent.loadFailed')}</Text>
     case 'ready':
@@ -169,7 +171,7 @@ function ConfirmedConsentList({ consents, onRevoke }: Readonly<{ consents: Guard
 
   switch (consents.confirmed.status) {
     case 'loading':
-      return <Text tone="muted" accessibilityLiveRegion="polite">{t('studentHome.consent.loading')}</Text>
+      return <Skeleton><ListSectionSkeleton hasTitle rows={1} /></Skeleton>
     case 'failed':
       return <Text accessibilityRole="alert" tone="danger">{t('studentHome.consent.loadFailed')}</Text>
     case 'ready':

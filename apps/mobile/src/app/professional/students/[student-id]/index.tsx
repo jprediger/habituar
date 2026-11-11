@@ -1,16 +1,7 @@
-import { studentIdSchema } from '@habituar/core/identity/ids'
-import { Redirect, useLocalSearchParams } from 'expo-router'
+import { StudentRecordRoute } from '../../../../professional/student-record-route'
 import { StudentRecordScreen } from '../../../../professional/student-record-screen'
-import { InstitutionSessionScreen } from '../../../../session/session-screen'
 
-/** Ficha de um estudante; o parâmetro do deep link passa por parse antes de chegar à tela. */
-export default function StudentRecordRoute() {
-  const params = useLocalSearchParams<{ 'student-id': string }>()
-  const studentId = studentIdSchema.safeParse(params['student-id'])
-  if (!studentId.success) return <Redirect href="/professional" />
-  return (
-    <InstitutionSessionScreen>
-      {(session) => <StudentRecordScreen session={session} studentId={studentId.data} />}
-    </InstitutionSessionScreen>
-  )
+/** Entrada da ficha de um estudante, aberta a partir da lista do Início. */
+export default function StudentRecordIndexRoute() {
+  return <StudentRecordRoute>{(session, studentId) => <StudentRecordScreen session={session} studentId={studentId} />}</StudentRecordRoute>
 }

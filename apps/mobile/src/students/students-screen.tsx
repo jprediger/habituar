@@ -1,6 +1,8 @@
 import { useRouter } from 'expo-router'
 import { useTranslation } from 'react-i18next'
 import { habituar } from '../client/habituar-client'
+import { ListSectionSkeleton } from '../components/skeletons/list-section-skeleton'
+import { Skeleton } from '../components/skeletons/skeleton'
 import { Button } from '../components/ui/button'
 import { ListRow } from '../components/ui/list-row'
 import { ListSection } from '../components/ui/list-section'
@@ -18,7 +20,7 @@ export function StudentsScreen({ session }: Readonly<{ session: InstitutionSessi
   return (
     <StackPage title={t('students.title')} action={canCreate ? { icon: 'plus', label: t('students.create'), onPress: () => { router.push('/professional/management/students/new') } } : undefined}>
       <SearchField label={t('students.search')} value={list.search} onChangeText={list.setSearch} onSubmit={() => { list.setPage(1) }} />
-      {list.state.status === 'loading' && <Text>{t('students.loading')}</Text>}
+      {list.state.status === 'loading' && <Skeleton><ListSectionSkeleton hasTitle rows={5} /></Skeleton>}
       {list.state.status === 'error' && <><Text accessibilityRole="alert">{t('students.loadFailed')}</Text><Button variant="outline" label={t('students.retry')} onPress={() => { void list.refresh() }} /></>}
       {list.state.status === 'ready' && list.state.items.length === 0 && <Text>{list.search.length > 0 ? t('students.noResults') : t('students.empty')}</Text>}
       {list.state.status === 'ready' && list.state.items.length > 0 && <>

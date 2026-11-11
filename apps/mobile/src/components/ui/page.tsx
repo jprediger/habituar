@@ -2,7 +2,9 @@ import { SPACING } from '@habituar/design-tokens/spacing'
 import type { PropsWithChildren } from 'react'
 import { ScrollView, StyleSheet } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import { PageSkeleton } from '../skeletons/page-skeleton'
 import { useThemeTokens } from '../../theme/tokens'
+import { DeferredMount } from './deferred-mount'
 
 /**
  * Enquadramento das telas dentro de um ambiente com navegação persistente: conteúdo
@@ -14,7 +16,9 @@ export function Page({ children }: PropsWithChildren) {
 
   return (
     <SafeAreaView edges={['top', 'left', 'right']} style={[styles.safeArea, { backgroundColor: colors.surface }]}>
-      <ScrollView contentContainerStyle={styles.content}>{children}</ScrollView>
+      <ScrollView contentContainerStyle={styles.content}>
+        <DeferredMount fallback={<PageSkeleton />}>{children}</DeferredMount>
+      </ScrollView>
     </SafeAreaView>
   )
 }

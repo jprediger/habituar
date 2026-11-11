@@ -8,6 +8,8 @@ import { readAsStringAsync } from 'expo-file-system/legacy'
 import { useTranslation } from 'react-i18next'
 import { StyleSheet, View } from 'react-native'
 import { habituar } from '../client/habituar-client'
+import { FormFieldSkeleton } from '../components/skeletons/form-field-skeleton'
+import { Skeleton } from '../components/skeletons/skeleton'
 import { Button } from '../components/ui/button'
 import { FormField } from '../components/ui/form-field'
 import { Input } from '../components/ui/input'
@@ -29,7 +31,7 @@ export function StudentFormScreen({ session, studentId, onDone }: Readonly<{ ses
 function EditStudentForm({ session, studentId, onDone }: Readonly<{ session: InstitutionSession; studentId: StudentId; onDone: () => void }>) {
   const { t } = useTranslation()
   const detail = habituar.useStudentDetail(session.membership.institution.id, studentId)
-  if (detail.state.status !== 'ready') return <StackPage title={t('students.edit')}>{detail.state.status === 'loading' ? <Text>{t('students.loading')}</Text> : <><Text accessibilityRole="alert">{t('students.loadFailed')}</Text><Button label={t('students.retry')} onPress={() => { void detail.refresh() }} /></>}</StackPage>
+  if (detail.state.status !== 'ready') return <StackPage title={t('students.edit')}>{detail.state.status === 'loading' ? <Skeleton><FormFieldSkeleton /><FormFieldSkeleton /><FormFieldSkeleton /></Skeleton> : <><Text accessibilityRole="alert">{t('students.loadFailed')}</Text><Button label={t('students.retry')} onPress={() => { void detail.refresh() }} /></>}</StackPage>
   return <StudentFormContent session={session} studentId={studentId} initial={detail.state.student} onDone={onDone} />
 }
 

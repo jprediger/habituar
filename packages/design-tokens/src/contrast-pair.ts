@@ -46,6 +46,16 @@ export const CONTRAST_PAIRS = [
     background: 'surfaceMuted',
     usage: 'body-text',
   },
+  // O cartão do mobile é preenchido com `surfaceMuted`: o que ele contém — legenda, erro do
+  // formulário de entrada e o próprio campo — precisa passar sobre esse tom, não só sobre o branco.
+  {
+    name: 'texto secundário sobre superfície suave',
+    foreground: 'textMuted',
+    background: 'surfaceMuted',
+    usage: 'body-text',
+  },
+  { name: 'erro sobre superfície suave', foreground: 'danger', background: 'surfaceMuted', usage: 'body-text' },
+  { name: 'borda de campo sobre superfície suave', foreground: 'border', background: 'surfaceMuted', usage: 'ui-component' },
   { name: 'rótulo de botão primário', foreground: 'onPrimary', background: 'primary', usage: 'body-text' },
   { name: 'rótulo de botão destrutivo', foreground: 'onDanger', background: 'danger', usage: 'body-text' },
   { name: 'texto de aviso passageiro', foreground: 'onToast', background: 'toast', usage: 'body-text' },

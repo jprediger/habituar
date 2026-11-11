@@ -1,5 +1,5 @@
 import { ConfigService } from '@nestjs/config'
-import { eq } from 'drizzle-orm'
+import { eq, sql } from 'drizzle-orm'
 import { Pool } from 'pg'
 import { afterAll, beforeAll, describe, expect, inject, it } from 'vitest'
 import { environmentSchema } from '../../environment/environment.schema.js'
@@ -8,7 +8,7 @@ import { RequestContext } from '../../platform/request-context.js'
 import { RbacRepository } from '../../rbac/rbac.repository.js'
 import { RbacService } from '../../rbac/rbac.service.js'
 import { Database, TenantContext } from '../database.js'
-import { studentConsents, studentGuardians, students, users } from '../schema.js'
+import { studentConsents, studentGuardians, studentObservations, studentProfileRevisions, students, users } from '../schema.js'
 import { DEVELOPMENT_USERS, SeededUsers, seedDevelopmentUsers } from './development-users.js'
 import { seedPermissionCatalog } from './permission-catalog.seed.js'
 import { seedRoleTemplates } from './role-templates.js'
@@ -36,6 +36,7 @@ describe('usuários de desenvolvimento', () => {
   let seeded: SeededUsers
   let assignedStudentId: string
   let unassignedStudentId: string
+  let actorAfterSeed: string | undefined
 
   beforeAll(async () => {
     await ownerPool.query('delete from institutions where id = $1', [INSTITUTION_ID])
@@ -57,6 +58,8 @@ describe('usuários de desenvolvimento', () => {
       await seedPermissionCatalog(transaction)
       await seedRoleTemplates(transaction, INSTITUTION_ID)
       seeded = await seedDevelopmentUsers(transaction, INSTITUTION_ID, passwordHash)
+      const actor = await transaction.execute<{ actor: string }>(sql`select current_setting('app.actor_id', true) as actor`)
+      actorAfterSeed = actor.rows[0]?.actor
       await transaction.update(users).set({ name: 'Profissional de Desenvolvimento' }).where(eq(users.id, seeded.professional))
       await transaction.update(students).set({ fullName: 'Estudante de Desenvolvimento' }).where(eq(students.userId, seeded.student))
       // Segundo seed no mesmo container: o script é rodado mais de uma vez em base local.
@@ -104,6 +107,19 @@ describe('usuários de desenvolvimento', () => {
       return [links.length, consents.filter((consent) => consent.kind === 'institution-record').length]
     })
     expect(counts).toEqual([1, 1])
+  })
+
+  it('dá à ficha do estudante um histórico de exemplo, sem duplicar em execução repetida', async () => {
+    const counts = await database.withTenantOutsideRequest(TENANT, async (transaction) => {
+      const observations = await transaction.select().from(studentObservations).where(eq(studentObservations.studentId, assignedStudentId))
+      const revisions = await transaction.select().from(studentProfileRevisions).where(eq(studentProfileRevisions.studentId, assignedStudentId))
+      return [observations.length, revisions.map((revision) => revision.revisionNumber).sort((first, second) => first - second)]
+    })
+    expect(counts).toEqual([11, [1, 2, 3, 4, 5, 6]])
+  })
+
+  it('devolve a transação ao ator de quem chamou depois de gravar o histórico em nome dos autores', () => {
+    expect(actorAfterSeed).toBe(OUTSIDER_USER_ID)
   })
 
   it('exibe nomes de pessoas e atualiza os nomes antigos ao repetir o seed', async () => {

@@ -2,6 +2,7 @@ import { MembershipEnvironment } from '@habituar/core/roles'
 import { and, eq, sql } from 'drizzle-orm'
 import { DatabaseTransaction } from '../database.js'
 import { assignments, guardians, routineBlocks, membershipRoles, memberships, roles, studentConsents, studentGuardians, students, users } from '../schema.js'
+import { seedDevelopmentRecordHistory } from './development-record-history.js'
 
 // Data estável para o cadastro de exemplo; nenhuma regra do seed depende da idade.
 const SEEDED_BIRTH_DATE = '2015-01-01'
@@ -46,6 +47,7 @@ export async function seedDevelopmentUsers(
   await ensureAssignment(transaction, institutionId, professionalUserId, professionalMembershipId, studentId)
   await ensureGuardianWithInstitutionConsent(transaction, institutionId, guardianUserId, coordinatorUserId, studentId)
   await ensureRoutine(transaction, institutionId, professionalUserId, studentId)
+  await seedDevelopmentRecordHistory(transaction, institutionId, studentId, { professional: professionalUserId, coordinator: coordinatorUserId }, new Date())
 
   return { student: studentUserId, professional: professionalUserId, monitor: monitorUserId, coordinator: coordinatorUserId, guardian: guardianUserId }
 }

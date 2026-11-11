@@ -138,8 +138,8 @@ acompanhamento, período a período, cada tarefa aparece como avaliada, entregue
 entregue ou por vir, com um resumo de quantas foram entregues e avaliadas, e abrir a
 tarefa mostra a orientação da equipe, o registro do aluno e a avaliação.
 No app, o aluno recebe lembretes dos blocos da rotina com uma ou mais antecedências
-escolhidas nas configurações, em minutos, horas ou dias. Em desenvolvimento, a observação
-e a entrega também funcionam sem conexão no app e são enviadas quando ela volta. O modo
+escolhidas nas configurações, em minutos, horas ou dias. A observação e a
+entrega também funcionam sem conexão no app e são enviadas quando ela volta. O modo
 foco ainda está previsto.
 
 | Prioridade | Complexidade | Situação | Versão |
@@ -274,11 +274,11 @@ Lint, tipos, testes, contraste e fronteiras arquiteturais devem ser verificados 
 
 ### RNF0010 – Operação offline
 
-Rotina e tarefas do aluno devem continuar utilizáveis sem conexão, com sincronização posterior. No app mobile, em desenvolvimento, a agenda e as tarefas do aluno ficam salvas no aparelho e o app abre sem conexão com a última sessão. A observação e a entrega feitas sem conexão ficam numa fila no aparelho e são enviadas quando a conexão volta; um aviso mostra que o app está sem conexão e quantas alterações esperam envio. As fotos continuam exigindo conexão. Se a tarefa mudou em outro aparelho, vale a última alteração; se a regra não permite mais a alteração, como desfazer a entrega já avaliada, ela é descartada e o aluno é avisado. A cópia no aparelho é apagada quando a pessoa sai da conta. No web, o uso continua exigindo conexão.
+Rotina e tarefas do aluno devem continuar utilizáveis sem conexão, com sincronização posterior. No app mobile, a agenda e as tarefas do aluno ficam salvas no aparelho e o app abre sem conexão com a última sessão. A observação e a entrega feitas sem conexão ficam numa fila no aparelho e são enviadas quando a conexão volta; um aviso mostra que o app está sem conexão e quantas alterações esperam envio. As fotos continuam exigindo conexão. Se a tarefa mudou em outro aparelho, vale a última alteração; se a regra não permite mais a alteração, como desfazer a entrega já avaliada, ela é descartada e o aluno é avisado. A cópia no aparelho é apagada quando a pessoa sai da conta. No web, o uso continua exigindo conexão.
 
 | Prioridade | Complexidade | Situação | Versão |
 | --- | --- | --- | --- |
-| Média | Alta | Em desenvolvimento | Atual |
+| Média | Alta | Implementado | Atual |
 
 ### RNF0011 – Auditoria sensível
 
@@ -596,7 +596,7 @@ A API valida entradas e saídas a partir de contratos compartilhados, nega acess
 | Instituições e convites | Média | Implementado | Cadastro, convite de uso único e aceite na web |
 | Interfaces de autenticação | Alta | Implementado | Entrada, cadastro e ambientes por perfil na web e no mobile |
 | Fichas e observações | Alta | Implementado | Cadastro do estudante, termo assinado, ficha, histórico e consultas realizadas; auditoria prevista |
-| Rotina, tarefas e foco | Alta | Em desenvolvimento | Grade semanal, registro, entrega, avaliação e acompanhamento das tarefas e lembretes no app prontos; uso sem conexão no app em desenvolvimento; foco previsto |
+| Rotina, tarefas e foco | Alta | Em desenvolvimento | Grade semanal, registro, entrega, avaliação e acompanhamento das tarefas, lembretes e uso sem conexão no app prontos; foco previsto |
 | Agenda e atendimentos | Alta | Em desenvolvimento | Agendamento com repetição semanal pronto; registro do atendimento realizado, anotações e notificações previstos |
 | Métricas e grupos | Média | Previsto | Indicadores configuráveis por instituição |
 | Relatórios | Alta | Previsto | Consolidação e exportação de acompanhamento |
@@ -669,9 +669,9 @@ A tabela apresenta a data em que cada entrega foi concluída.
 | Registro das tarefas do dia | API, web e mobile | 10/11/2026 | O aluno registra em cada tarefa do dia uma observação e até seis fotos, guardadas fora do banco; responsável e equipe consultam sem alterar (RF0010). |
 | Acompanhamento das tarefas | Web e mobile | 10/11/2026 | Na ficha do aluno, a equipe abre em telas próprias a organização da rotina e o acompanhamento das tarefas por período, com o resumo de entregues e avaliadas (RF0010). |
 | Entrega e avaliação | API, web e mobile | 10/11/2026 | O aluno entrega a tarefa e pode desfazer a entrega enquanto ela não for avaliada; a equipe avalia com um conceito e um comentário opcional, que aluno e responsável leem (RF0010). |
-| Uso sem conexão no app | Mobile e pacote compartilhado | 11/11/2026 | Agenda e tarefas do aluno ficam salvas no aparelho, e observação e entrega feitas sem conexão entram numa fila enviada quando a conexão volta; concluído localmente e ainda em desenvolvimento até ser integrado (RNF0010). |
+| Uso sem conexão no app | Mobile e pacote compartilhado | 11/11/2026 | Agenda e tarefas do aluno ficam salvas no aparelho, e observação e entrega feitas sem conexão entram numa fila enviada quando a conexão volta (RNF0010). |
 
-Resultado: o RF0010 passa a contar com o registro, a entrega, a avaliação e o acompanhamento das tarefas e com os lembretes no app, e o RF0011 com o agendamento de atendimentos. O uso sem conexão no app (RNF0010) segue em desenvolvimento até ser integrado. Ficam para as próximas sprints o modo foco, o registro do atendimento realizado, as métricas, os relatórios, a recuperação de senha e a trilha de auditoria.
+Resultado: o RF0010 passa a contar com o registro, a entrega, a avaliação e o acompanhamento das tarefas e com os lembretes no app, e o RF0011 com o agendamento de atendimentos. O app passa a funcionar sem conexão para o aluno (RNF0010). Ficam para as próximas sprints o modo foco, o registro do atendimento realizado, as métricas, os relatórios, a recuperação de senha e a trilha de auditoria.
 
 ## Sprint final
 

@@ -25,10 +25,11 @@ import type { StudentId } from '@habituar/core/identity/ids'
 import { useAgendaLabels } from '../agenda/agenda-labels'
 import { useAgendaRoutes } from '../agenda/agenda-routes'
 import { readCurrentTime } from '../time/current-time'
+import { StudentHomeMetricsSection } from './student-home-metrics'
 
 /**
  * Tela inicial do ambiente de aluno: a única superfície escrita na primeira pessoa. Mostra
- * as tarefas do dia e ao responsável os consentimentos que confirma ou revoga.
+ * o resumo de constância, as tarefas do dia e ao responsável os consentimentos que confirma ou revoga.
  */
 export function StudentHomeScreen({ session }: Readonly<{ session: InstitutionSession }>) {
   const { t } = useTranslation()
@@ -89,7 +90,15 @@ function OwnTodayTasks({ session }: Readonly<{ session: InstitutionSession }>) {
   // Responsável que também é aluno vê vários cadastros: aí a agenda da aba escolhe de quem é o dia.
   const own = state.status === 'ready' && state.students.length === 1 ? state.students[0] : undefined
   if (own === undefined) return null
-  return <><ListDivider /><TodayTasksSection session={session} studentId={own.id} /></>
+  const today = readLocalDateTime(readCurrentTime()).date
+  return (
+    <>
+      <ListDivider />
+      <StudentHomeMetricsSection session={session} studentId={own.id} today={today} />
+      <ListDivider />
+      <TodayTasksSection session={session} studentId={own.id} />
+    </>
+  )
 }
 
 // Ação à espera de confirmação: só uma por vez, e a frase da folha nomeia o estudante.

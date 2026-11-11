@@ -1,7 +1,7 @@
 import { localDateSchema } from '@habituar/core/calendar'
 import { consentIdSchema, studentIdSchema } from '@habituar/core/identity/ids'
 import { taskSchema } from '@habituar/core/tasks'
-import type { AccessibleStudents, AuthenticationState, GuardianConsents, StudentCalendar } from '@habituar/react-client/react-client'
+import type { AccessibleStudents, AuthenticationState, GuardianConsents, HomeMetricsState, StudentCalendar, StudentHomeMetrics } from '@habituar/react-client/react-client'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react-native'
 import type { ReactNode } from 'react'
 import { AccessibilityInfo } from 'react-native'
@@ -27,6 +27,7 @@ const mockClient: {
   students: AccessibleStudents | undefined
   consents: GuardianConsents | undefined
   calendar: StudentCalendar
+  metrics: HomeMetricsState<StudentHomeMetrics>
 } = {
   authentication: { state: { status: 'unauthenticated' }, actions: { logout: jest.fn() } },
   students: undefined,
@@ -35,6 +36,7 @@ const mockClient: {
     state: { status: 'ready', days: [{ date: today, entries: [{ kind: 'task', key: 'leitura', type: 'staff-task', task: reading, occurrence: undefined, originalDate: today, date: today, time: reading.schedule.time, status: 'pending' }] }] },
     creatableOrigins: [],
   },
+  metrics: { status: 'ready', metrics: { today: { done: 1, total: 3 }, streakDays: 4, weekRate: 80, weekMissing: 2 } },
 }
 
 jest.mock('../client/habituar-client', () => ({
@@ -44,6 +46,7 @@ jest.mock('../client/habituar-client', () => ({
     useAccessibleStudents: () => mockClient.students,
     useGuardianConsents: () => mockClient.consents,
     useStudentCalendar: () => mockClient.calendar,
+    useStudentHomeMetrics: () => mockClient.metrics,
   },
 }))
 
@@ -100,6 +103,16 @@ describe('student home', () => {
 
     expect(screen.getByRole('header', { name: 'Hoje' })).toBeOnTheScreen()
     expect(screen.getByRole('button', { name: /Leitura, Tarefa da equipe, .*14:00 às 15:00, Pendente/ })).toBeOnTheScreen()
+  })
+
+  it('summarizes progress today, the streak and the last seven days', () => {
+    renderScreen(sessionWithRole('student'))
+
+    expect(screen.getByRole('header', { name: 'Resumo' })).toBeOnTheScreen()
+    expect(screen.getByText('1 de 3')).toBeOnTheScreen()
+    expect(screen.getByText('4 dias')).toBeOnTheScreen()
+    expect(screen.getByText('80%')).toBeOnTheScreen()
+    expect(screen.getByText('2 tarefas em falta')).toBeOnTheScreen()
   })
 
   it('keeps account actions out of the home screen', () => {

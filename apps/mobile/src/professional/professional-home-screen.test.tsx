@@ -14,6 +14,7 @@ jest.mock('../client/habituar-client', () => ({
   habituar: {
     useAuthentication: () => mockAuthentication,
     useInstitutionSwitcher: () => ({ current: undefined, others: [], switchTo: jest.fn() }),
+    useProfessionalHomeMetrics: () => ({ status: 'ready', metrics: { todayAppointments: 2, weekAppointments: 5, next: { date: '2026-11-12', startsAt: '09:00', studentName: 'Bruno Lima' } } }),
     useAccessibleStudents: () => ({
       state: { status: 'ready', students: [], total: 0, page: 1, pageCount: 1 }, searchDraft: '', setSearchDraft: jest.fn(), applySearch: jest.fn(), clearSearch: jest.fn(),
       activeSearch: '', pagination: { hasPreviousPage: false, hasNextPage: false, goToPreviousPage: jest.fn(), goToNextPage: jest.fn() }, canOpenRecord: true,
@@ -49,6 +50,15 @@ describe('professional home', () => {
 
     expect(screen.getByText('Nenhum estudante para mostrar')).toBeOnTheScreen()
     expect(screen.getByLabelText(/Buscar estudante pelo nome/)).toBeOnTheScreen()
+  })
+
+  it('summarizes the agenda for those who read appointments', () => {
+    const session = createInstitutionSession('professional')
+    render(<ProfessionalHomeScreen session={{ ...session, membership: { ...session.membership, permissions: [...session.membership.permissions, { key: 'appointment.read', scope: 'assigned' }] } }} />)
+
+    expect(screen.getByRole('header', { name: 'Resumo' })).toBeOnTheScreen()
+    expect(screen.getByText('Atendimentos hoje')).toBeOnTheScreen()
+    expect(screen.getByText(/Bruno Lima · .* às 09:00/)).toBeOnTheScreen()
   })
 
   it('leaves signing out to the profile', () => {

@@ -180,7 +180,8 @@
     "progress": {
       "delivered": "Entregue",
       "evaluated": "Avaliada"
-    }
+    },
+    "savedOffline": "Salvo no aparelho. Enviamos quando a conexão voltar."
   },
   "tracking": {
     "open": "Acompanhar tarefas",

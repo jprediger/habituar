@@ -21,8 +21,8 @@ const entry = routineEntrySchema.parse({ id: 'e2000000-0000-4000-8000-0000000000
 let canWrite = true
 const saveNote = vi.fn(() => Promise.resolve('saved' as const))
 const deliver = vi.fn(() => Promise.resolve('saved' as const))
-const agenda: StudentAgenda = { state: { status: 'ready', days: groupAgendaByDay([{ kind: 'task', key: 'task', date: MONDAY, startsAt: '14:00', endsAt: '15:00', block, entry }], range) }, canWriteEntries: true }
-const routineEntry = (): RoutineEntryAccess => ({ state: { status: 'ready', block, entry }, canWrite, canEvaluate: false, saveNote, deliver, undeliver: vi.fn(), evaluate: vi.fn(), addPhoto: vi.fn(), removePhoto: vi.fn() })
+const agenda: StudentAgenda = { state: { status: 'ready', days: groupAgendaByDay([{ kind: 'task', key: 'task', date: MONDAY, startsAt: '14:00', endsAt: '15:00', block, entry, isPendingSync: false }], range) }, canWriteEntries: true }
+const routineEntry = (): RoutineEntryAccess => ({ state: { status: 'ready', block, entry, isPendingSync: false }, canWrite, canEvaluate: false, saveNote, deliver, undeliver: vi.fn(), evaluate: vi.fn(), addPhoto: vi.fn(), removePhoto: vi.fn() })
 const cursor: AgendaCursor = { date: MONDAY, view: 'week', range, select: vi.fn(), changeView: vi.fn(), goToday: vi.fn(), goPrevious: vi.fn(), goNext: vi.fn() }
 const students: AccessibleStudents = {
   state: { status: 'ready', students: [{ id: studentId, fullName: 'Bruno Lima', socialName: null, birthDate: '2014-03-09', ageRange: '11-14', archivedAt: null }], total: 1, page: 1, pageCount: 1 },

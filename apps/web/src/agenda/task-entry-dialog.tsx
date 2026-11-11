@@ -6,7 +6,7 @@ import type { RoutineEntry, RoutineEntryPhoto } from '@habituar/core/routine-ent
 import type { RoutineBlock } from '@habituar/core/routines'
 import { useRoutineEntryEvaluationForm, useRoutineEntryNoteForm } from '@habituar/react-client/agenda-forms'
 import { isTaskDue, readTaskProgress } from '@habituar/react-client/react-client'
-import type { AgendaWriteResult, PhotoUploadResult, RoutineEntryAccess } from '@habituar/react-client/react-client'
+import type { PhotoUploadResult, RoutineEntryAccess, RoutineEntryWriteResult } from '@habituar/react-client/react-client'
 import { ImagePlus, Trash2 } from 'lucide-react'
 import { useId, useRef, useState } from 'react'
 import type { ReactElement } from 'react'
@@ -20,8 +20,9 @@ import { FormField } from '../components/ui/form-field.js'
 import { Textarea } from '../components/ui/textarea.js'
 import { readCurrentTime } from '../time/current-time.js'
 
-type NoteFeedback = AgendaWriteResult | undefined
-type DeliveryFeedback = 'delivered' | 'undone' | 'conflict' | 'not-saved' | undefined
+// `queued` só acontece no app, que guarda a escrita sem conexão; o tipo é o mesmo nos dois.
+type NoteFeedback = RoutineEntryWriteResult | undefined
+type DeliveryFeedback = 'delivered' | 'undone' | 'queued' | 'conflict' | 'not-saved' | undefined
 
 const DATE_TIME_FORMAT = new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short' })
 
@@ -68,7 +69,7 @@ export function TaskEntryDialog({ studentId, block, date, onClose }: Readonly<{ 
                 <TaskNote key={entry.state.entry?.version ?? 0} access={entry} />
                 <TaskPhotos studentId={studentId} access={entry} photos={entry.state.entry?.photos ?? []} />
                 <TaskDelivery access={entry} entry={entry.state.entry} date={date} />
-                <TaskEvaluation key={`evaluation-${entry.state.entry?.evaluation?.version ?? 0}`} access={entry} entry={entry.state.entry} />
+                <TaskEvaluation key={`evaluation-${String(entry.state.entry?.evaluation?.version ?? 0)}`} access={entry} entry={entry.state.entry} />
               </>
             )
           default:
@@ -112,6 +113,7 @@ function TaskNote({ access }: Readonly<{ access: RoutineEntryAccess }>): ReactEl
       <div className="flex flex-wrap items-center gap-sm">
         <Button type="submit" disabled={form.isSaving}>{form.isSaving ? t('task.savingNote') : t('task.saveNote')}</Button>
         {feedback === 'saved' && <p role="status" className="text-body text-text">{t('task.noteSaved')}</p>}
+        {feedback === 'queued' && <p role="status" className="text-body text-text">{t('task.savedOffline')}</p>}
         {feedback === 'conflict' && <p role="alert" className="text-body text-danger">{t('conflict')}</p>}
         {feedback === 'not-saved' && <p role="alert" className="text-body text-danger">{t('writeFailed')}</p>}
       </div>
@@ -246,7 +248,7 @@ function TaskDelivery({ access, entry, date }: Readonly<{ access: RoutineEntryAc
   const progress = readTaskProgress(entry)
   const isDue = isTaskDue(date, readLocalDateTime(readCurrentTime()).date)
 
-  async function run(write: () => Promise<AgendaWriteResult>, success: 'delivered' | 'undone'): Promise<void> {
+  async function run(write: () => Promise<RoutineEntryWriteResult>, success: 'delivered' | 'undone'): Promise<void> {
     setIsBusy(true)
     try {
       const result = await write()
@@ -285,6 +287,7 @@ function TaskDelivery({ access, entry, date }: Readonly<{ access: RoutineEntryAc
       {access.canWrite && progress === 'evaluated' && <p className="text-caption text-text-muted">{t('task.delivery.locked')}</p>}
       {feedback === 'delivered' && <p role="status" className="text-body text-text">{t('task.delivery.delivered')}</p>}
       {feedback === 'undone' && <p role="status" className="text-body text-text">{t('task.delivery.undone')}</p>}
+      {feedback === 'queued' && <p role="status" className="text-body text-text">{t('task.savedOffline')}</p>}
       {feedback === 'conflict' && <p role="alert" className="text-body text-danger">{t('task.delivery.changed')}</p>}
       {feedback === 'not-saved' && <p role="alert" className="text-body text-danger">{t('writeFailed')}</p>}
     </section>

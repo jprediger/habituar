@@ -31,7 +31,7 @@ const tracking: TaskTrackingState = {
 }
 const cursor: AgendaCursor = { date: MONDAY, view: 'week', range, select: vi.fn(), changeView: vi.fn(), goToday: vi.fn(), goPrevious: vi.fn(), goNext: vi.fn() }
 const entryAccess: RoutineEntryAccess = {
-  state: { status: 'ready', block: reading, entry },
+  state: { status: 'ready', block: reading, entry, isPendingSync: false },
   canWrite: false,
   canEvaluate: true,
   saveNote: vi.fn(), deliver: vi.fn(), undeliver: vi.fn(), evaluate: vi.fn(() => Promise.resolve('saved' as const)), addPhoto: vi.fn(), removePhoto: vi.fn(),

@@ -466,9 +466,17 @@ cognitivo — exatamente onde estão TDAH e autismo:
 
 ## D13 — Offline
 
-TanStack Query persistido em MMKV, com mutations otimistas enfileiradas e reexecutadas na
+TanStack Query persistido no aparelho, com mutations otimistas enfileiradas e reexecutadas na
 reconexão. Conflitos aqui são triviais — last-write-wins em um checkbox está certo.
 Pomodoro é local de qualquer forma.
+
+Como está: só o app mobile, e só o ambiente de aluno. A cópia (rotina, registros,
+atendimentos e o último contexto da sessão) e a fila de observação e entrega ficam no
+AsyncStorage, já presente no app — MMKV pediria módulo nativo novo para um volume pequeno.
+Cada item lido do disco passa pelo schema de `packages/core` antes de entrar no cache. Na
+fila, conflito de versão relê o registro e grava por cima (last-write-wins); recusa de regra
+descarta a mudança e avisa o aluno. Foto não entra na fila. A volta da rede é detectada
+pela primeira requisição que responde, sem dependência nativa de conectividade.
 
 **Por que não um sync engine local-first:** PowerSync/ElectricSQL exigem sync rules que
 espelham as políticas RLS — ou seja, manter o modelo de isolamento de tenant **duas vezes,

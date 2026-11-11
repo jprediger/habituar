@@ -12,7 +12,9 @@ export type {
   AuthenticationFailure,
   AuthenticationState,
   MembershipContext,
+  OfflineStatus,
 } from './create-habituar-react-client.js'
+export type { ConnectionState, OfflineOptions, OfflineStorage, RoutineEntryWriteResult } from './offline-sync.js'
 export type {
   AccessibleStudents,
   StudentConsultationsState,

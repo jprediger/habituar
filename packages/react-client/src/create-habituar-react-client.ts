@@ -8,13 +8,16 @@ import type { InstitutionInput } from '@habituar/core/platform'
 import { createORPCClient } from '@orpc/client'
 import { OpenAPILink } from '@orpc/openapi-client/fetch'
 import { QueryClient, useQuery } from '@tanstack/react-query'
-import { createContext, createElement, useContext, useEffect, useRef, useState } from 'react'
+import { createContext, createElement, useContext, useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import type { PropsWithChildren, ReactElement } from 'react'
 import type { ApiClient } from './api-client.js'
 import type { CredentialStorage } from './credential-storage.js'
 import { createMemoryPreferenceStorage } from './preference-storage.js'
 import type { PreferenceStorage } from './preference-storage.js'
+import { createOfflineSync, OFFLINE_GC_TIME_MS } from './offline-sync.js'
+import type { ConnectionState, OfflineOptions } from './offline-sync.js'
 import { queryKeys } from './query-keys.js'
+import { hasServerResponse } from './request-failure.js'
 import { toHealthState } from './health-state.js'
 import type { HealthState } from './health-state.js'
 import { createStaffHooks } from './staff-hooks.js'
@@ -90,11 +93,18 @@ type AuthContextValue = Readonly<{ state: AuthenticationState; actions: Authenti
 
 type InstitutionSwitcher = Readonly<{ current: MembershipContext | undefined; others: readonly MembershipContext[]; switchTo(institutionId: InstitutionId): Promise<void> }>
 
+/**
+ * O que a tela conta ao aluno sobre o uso sem conexão: se a última tentativa chegou à API,
+ * quantas mudanças esperam envio e quantas a API recusou ao sincronizar.
+ */
+export type OfflineStatus = Readonly<{ connection: ConnectionState; pendingChanges: number; discardedChanges: number; syncNow(): Promise<void>; dismissDiscarded(): void }>
+
 export type HabituarReactClient = StaffHooks & StudentHooks & StudentRecordHooks & StudentHomeHooks & RoutineHooks & AgendaHooks & Readonly<{
   Provider(props: PropsWithChildren): ReactElement
   useHealth(): Readonly<{ state: HealthState; retry(): void }>
   useAuthentication(): AuthContextValue
   useInstitutionSwitcher(): InstitutionSwitcher
+  useOfflineStatus(): OfflineStatus
   usePlatformInstitutions(): Readonly<{ institutions: Awaited<ReturnType<ApiClient['platform']['listInstitutions']>>; isLoading: boolean; error: boolean; create(input: InstitutionInput): Promise<InstitutionId> }>
   usePlatformInstitution(institutionId?: InstitutionId): Readonly<{ institution: Awaited<ReturnType<ApiClient['platform']['getInstitution']>> | undefined; isLoading: boolean; error: boolean; update(input: InstitutionInput): Promise<void> }>
   useInvitation(token: string): Readonly<{ preview: Awaited<ReturnType<ApiClient['invitations']['preview']>> | undefined; isLoading: boolean; error: boolean; accept(): Promise<void>; acceptWithRegistration(input: Readonly<{ name: string; password: string }>): Promise<void> }>
@@ -173,6 +183,7 @@ export function createHabituarReactClient(
     preferenceStorage?: PreferenceStorage
     studentPreferenceStorage?: PreferenceStorage
     onSessionEnded?: () => Promise<void> | void
+    offline?: OfflineOptions
   }>,
 ): HabituarReactClient {
   const baseUrl = parseOriginOrThrow(options.origin)
@@ -201,7 +212,8 @@ export function createHabituarReactClient(
   })
 
   const apiClient: ApiClient = createORPCClient(link)
-  const queryClient = new QueryClient()
+  const queryClient = new QueryClient(options.offline === undefined ? undefined : { defaultOptions: { queries: { gcTime: OFFLINE_GC_TIME_MS } } })
+  const offline = createOfflineSync({ apiClient, queryClient, options: options.offline, retry: () => revalidateAccessOnce() })
 
   // Trocar de instituição apaga, não invalida: recarregar em segundo plano deixaria a tela
   // mostrando o dado da instituição anterior até a resposta chegar.
@@ -248,6 +260,11 @@ export function createHabituarReactClient(
 
     async function resolveAfterAuthentication(preferredInstitutionId?: InstitutionId): Promise<void> {
       const context = await apiClient.auth.context()
+      offline.markOnline()
+      await applyContext(context, preferredInstitutionId)
+    }
+
+    async function applyContext(context: AuthenticationContextResult, preferredInstitutionId?: InstitutionId): Promise<void> {
       memberships.current = context.memberships
       const firstMembership = context.memberships[0]
       const previousInstitutionId = activeInstitutionId.current
@@ -264,6 +281,7 @@ export function createHabituarReactClient(
       // então decidir por `memberships` primeiro o deixaria sem lugar nenhum.
       if (context.isPlatformAdministrator) {
         activeInstitutionId.current = undefined
+        await offline.rememberSession(undefined)
         setState({
           status: 'authenticated',
           session: { kind: 'platform-administration', user: context.user, destination: 'admin-home' },
@@ -272,6 +290,7 @@ export function createHabituarReactClient(
       }
 
       if (context.memberships.length === 0) {
+        await offline.rememberSession(undefined)
         setState({ status: 'awaiting-invitation', user: context.user })
         return
       }
@@ -285,6 +304,8 @@ export function createHabituarReactClient(
         await preferenceStorage.write(selectedMembership.institution.id)
         if (selectedMembership.institution.id !== activeInstitutionId.current) await clearInstitutionScope()
         activeInstitutionId.current = selectedMembership.institution.id
+        // Só o ambiente de aluno tem uso sem conexão: a cópia em disco é da agenda dele.
+        await offline.rememberSession(selectedMembership.environment === 'student' ? { institutionId: selectedMembership.institution.id, context } : undefined)
         setState({
           status: 'authenticated',
           session: {
@@ -298,6 +319,7 @@ export function createHabituarReactClient(
       }
 
       activeInstitutionId.current = undefined
+      await offline.rememberSession(undefined)
       setState({ status: 'selecting-membership', user: context.user, memberships: context.memberships })
     }
 
@@ -308,9 +330,13 @@ export function createHabituarReactClient(
       try {
         await resolveAfterAuthentication()
       } catch (error) {
-        if (!isUnauthorizedError(error)) return
+        if (!isUnauthorizedError(error)) {
+          if (!hasServerResponse(error)) offline.markOffline()
+          return
+        }
         memberships.current = []
         activeInstitutionId.current = undefined
+        await offline.clear()
         queryClient.removeQueries({ queryKey: queryKeys.institutionScope })
         queryClient.removeQueries({ queryKey: queryKeys.personalScope })
         if (credentialStorage) await credentialStorage.remove()
@@ -323,17 +349,28 @@ export function createHabituarReactClient(
       if (credentialStorage) {
         const token = await credentialStorage.read()
         if (token === undefined) {
+          await offline.clear()
           setState({ status: 'unauthenticated' })
           return
         }
 
+        // A cópia em disco entra antes da primeira leitura: com rede, ela só antecipa a tela;
+        // sem rede, é com ela que o aluno abre o app.
+        const saved = await offline.restore()
+        if (saved !== undefined) activeInstitutionId.current = saved.institutionId
         try {
           await resolveAfterAuthentication()
           return
         } catch (error) {
           if (isUnauthorizedError(error)) {
+            await offline.clear()
             await credentialStorage.remove()
             setState({ status: 'unauthenticated' })
+            return
+          }
+          if (saved !== undefined && !hasServerResponse(error)) {
+            offline.markOffline()
+            await applyContext(saved.context)
             return
           }
 
@@ -387,6 +424,7 @@ export function createHabituarReactClient(
         memberships.current = []
         activeInstitutionId.current = undefined
         await preferenceStorage.remove()
+        await offline.clear()
         queryClient.removeQueries({ queryKey: queryKeys.institutionScope })
         queryClient.removeQueries({ queryKey: queryKeys.personalScope })
         if (credentialStorage) {
@@ -400,6 +438,7 @@ export function createHabituarReactClient(
           memberships.current = []
           activeInstitutionId.current = undefined
           await preferenceStorage.remove()
+          await offline.clear()
           queryClient.removeQueries({ queryKey: queryKeys.institutionScope })
           queryClient.removeQueries({ queryKey: queryKeys.personalScope })
           if (credentialStorage) {
@@ -524,6 +563,11 @@ export function createHabituarReactClient(
     return { current, others: current === undefined ? [] : memberships.filter((entry) => entry.institution.id !== current.institution.id), switchTo: actions.switchInstitution }
   }
 
+  function useOfflineStatus(): OfflineStatus {
+    const state = useSyncExternalStore(offline.subscribe, offline.getState)
+    return { connection: state.connection, pendingChanges: state.pending.length, discardedChanges: state.discarded, syncNow: offline.flush, dismissDiscarded: offline.dismissDiscarded }
+  }
+
   function usePlatformInstitutions() {
     const query = useQuery({ queryKey: queryKeys.platformInstitutions, queryFn: () => apiClient.platform.listInstitutions() }, queryClient)
     async function create(input: InstitutionInput): Promise<InstitutionId> {
@@ -597,6 +641,6 @@ export function createHabituarReactClient(
   const studentRecordHooks = createStudentRecordHooks({ apiClient, queryClient })
   const studentHomeHooks = createStudentHomeHooks({ apiClient, queryClient })
   const routineHooks = createRoutineHooks({ apiClient, queryClient })
-  const agendaHooks = createAgendaHooks({ apiClient, queryClient })
-  return { Provider, useHealth, useAuthentication, useInstitutionSwitcher, usePlatformInstitutions, usePlatformInstitution, useInvitation, ...staffHooks, ...studentHooks, ...studentRecordHooks, ...studentHomeHooks, ...routineHooks, ...agendaHooks }
+  const agendaHooks = createAgendaHooks({ apiClient, queryClient, offline })
+  return { Provider, useHealth, useAuthentication, useInstitutionSwitcher, useOfflineStatus, usePlatformInstitutions, usePlatformInstitution, useInvitation, ...staffHooks, ...studentHooks, ...studentRecordHooks, ...studentHomeHooks, ...routineHooks, ...agendaHooks }
 }

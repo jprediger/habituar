@@ -12,6 +12,7 @@ import { ROUTINE_ENTRY_EVALUATION_COMMENT_MAX_LENGTH, ROUTINE_ENTRY_NOTES_MAX_LE
 import type { RoutineEntry, RoutineEntryEvaluationInput, RoutineEntryEvaluationOutcome } from '@habituar/core/routine-entries'
 import { useState } from 'react'
 import type { AgendaWriteResult } from './agenda-hooks.js'
+import type { RoutineEntryWriteResult } from './offline-sync.js'
 
 /** Durações oferecidas na escolha rápida; o atendimento escolar raramente foge delas. */
 export const APPOINTMENT_DURATION_OPTIONS = [30, 45, 50, 60, 90] as const
@@ -116,13 +117,13 @@ export type RoutineEntryNoteForm = Readonly<{
   change: (notes: string) => void
   isInvalid: boolean
   maxLength: number
-  submit: () => Promise<AgendaWriteResult | 'invalid'>
+  submit: () => Promise<RoutineEntryWriteResult | 'invalid'>
   isSaving: boolean
 }>
 
 /** Observação do aluno sobre a tarefa do dia; texto em branco apaga a que existia. */
 export function useRoutineEntryNoteForm(
-  options: Readonly<{ entry: RoutineEntry | undefined; save: (notes: string | null) => Promise<AgendaWriteResult> }>,
+  options: Readonly<{ entry: RoutineEntry | undefined; save: (notes: string | null) => Promise<RoutineEntryWriteResult> }>,
 ): RoutineEntryNoteForm {
   const [notes, setNotes] = useState(options.entry?.notes ?? '')
   const [isInvalid, setIsInvalid] = useState(false)

@@ -6,7 +6,7 @@ import type { QueryClient } from '@tanstack/react-query'
 import { useQuery } from '@tanstack/react-query'
 import type { ApiClient } from './api-client.js'
 import { queryKeys } from './query-keys.js'
-import { hasServerResponse, readFailureCode } from './request-failure.js'
+import { hasServerResponse, isBlockingFailure, readFailureCode } from './request-failure.js'
 
 /** Desfecho de uma escrita na rotina; `conflict` pede que a pessoa veja a versão atual. */
 export type RoutineWriteResult = 'saved' | 'conflict' | 'not-saved'
@@ -70,10 +70,10 @@ export function createRoutineHooks(dependencies: RoutineHookDependencies): Routi
       return 'saved'
     }
 
-    const state: RoutineState = query.isPending
-      ? { status: 'loading' }
-      : query.isError
-        ? { status: 'failed', failure: toLoadFailure(query.error) }
+    const state: RoutineState = isBlockingFailure(query)
+      ? { status: 'failed', failure: toLoadFailure(query.error) }
+      : query.data === undefined
+        ? { status: 'loading' }
         : { status: 'ready', days: groupRoutineByWeekday(query.data), isEmpty: query.data.length === 0 }
 
     return {

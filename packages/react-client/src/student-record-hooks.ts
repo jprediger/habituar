@@ -15,7 +15,7 @@ import { useState } from 'react'
 import type { ApiClient } from './api-client.js'
 import { queryKeys } from './query-keys.js'
 import type { Pagination } from './staff-management.js'
-import { hasServerResponse, readFailureCode } from './request-failure.js'
+import { hasServerResponse, isBlockingFailure, readFailureCode } from './request-failure.js'
 
 const STUDENT_PAGE_SIZE = 20
 
@@ -115,10 +115,10 @@ export function createStudentRecordHooks(dependencies: StudentRecordHookDependen
     }, queryClient)
 
     const pageCount = query.data === undefined ? 1 : Math.max(1, Math.ceil(query.data.total / query.data.pageSize))
-    const state: StudentListState = query.isPending
-      ? { status: 'loading' }
-      : query.isError
-        ? { status: 'failed', failure: toStudentLoadFailure(query.error) }
+    const state: StudentListState = isBlockingFailure(query)
+      ? { status: 'failed', failure: toStudentLoadFailure(query.error) }
+      : query.data === undefined
+        ? { status: 'loading' }
         : { status: 'ready', students: query.data.items, total: query.data.total, page: query.data.page, pageCount }
 
     // Busca nova volta à primeira página: continuar na página 3 de outro filtro mostraria vazio.

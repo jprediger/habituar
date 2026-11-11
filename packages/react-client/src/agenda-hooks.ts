@@ -2,14 +2,19 @@ import { type Appointment, type AppointmentInput, type AppointmentOccurrence, ex
 import type { MembershipContext } from '@habituar/core/auth/context'
 import { addDays, addMonths, type LocalDate, type LocalDateRange, listRangeDays, listWeekDays, monthGridRange, weekdayOfLocalDate } from '@habituar/core/calendar'
 import type { AppointmentId, RoutineBlockId, RoutineEntryPhotoId, StudentId } from '@habituar/core/identity/ids'
+import { routineEntrySchema } from '@habituar/core/routine-entries'
 import type { RoutineEntry, RoutineEntryEvaluationInput, RoutineEntryPhoto, RoutineEntryPhotoContent, RoutineEntryPhotoInput } from '@habituar/core/routine-entries'
 import type { RoutineBlock } from '@habituar/core/routines'
 import type { QueryClient } from '@tanstack/react-query'
 import { useQuery } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useState, useSyncExternalStore } from 'react'
 import type { ApiClient } from './api-client.js'
+import { entryKeyOf, overlayPendingChange } from './offline-sync.js'
+import type { OfflineSync, PendingEntryChange, RoutineEntryWriteResult } from './offline-sync.js'
 import { queryKeys } from './query-keys.js'
-import { hasServerResponse, readFailureCode } from './request-failure.js'
+import { hasServerResponse, isBlockingFailure, readFailureCode } from './request-failure.js'
+
+const routineEntryListSchema = routineEntrySchema.array().readonly()
 
 /** Desfecho de uma escrita na agenda; `conflict` pede que a pessoa veja a versão atual. */
 export type AgendaWriteResult = 'saved' | 'conflict' | 'not-saved'
@@ -21,7 +26,7 @@ export type AgendaLoadFailure = 'forbidden' | 'not-found' | 'failed'
 
 /** Item de um dia da agenda: a tarefa vem da rotina, o atendimento da agenda da equipe. */
 export type AgendaItem =
-  | Readonly<{ kind: 'task'; key: string; date: LocalDate; startsAt: string; endsAt: string; block: RoutineBlock; entry: RoutineEntry | undefined }>
+  | Readonly<{ kind: 'task'; key: string; date: LocalDate; startsAt: string; endsAt: string; block: RoutineBlock; entry: RoutineEntry | undefined; isPendingSync: boolean }>
   | Readonly<{ kind: 'appointment'; key: string; date: LocalDate; startsAt: string; endsAt: string; occurrence: AppointmentOccurrence }>
 
 export type AgendaDay = Readonly<{ date: LocalDate; items: readonly AgendaItem[] }>
@@ -99,15 +104,16 @@ export type TaskTrackingState =
 export type RoutineEntryState =
   | Readonly<{ status: 'loading' }>
   | Readonly<{ status: 'failed'; failure: AgendaLoadFailure }>
-  | Readonly<{ status: 'ready'; block: RoutineBlock; entry: RoutineEntry | undefined }>
+  | Readonly<{ status: 'ready'; block: RoutineBlock; entry: RoutineEntry | undefined; isPendingSync: boolean }>
 
 export type RoutineEntryAccess = Readonly<{
   state: RoutineEntryState
   canWrite: boolean
   canEvaluate: boolean
-  saveNote: (notes: string | null) => Promise<AgendaWriteResult>
-  deliver: () => Promise<AgendaWriteResult>
-  undeliver: () => Promise<AgendaWriteResult>
+  /** Sem conexão, observação e entrega ficam no aparelho e devolvem `queued`. */
+  saveNote: (notes: string | null) => Promise<RoutineEntryWriteResult>
+  deliver: () => Promise<RoutineEntryWriteResult>
+  undeliver: () => Promise<RoutineEntryWriteResult>
   evaluate: (input: RoutineEntryEvaluationInput) => Promise<AgendaWriteResult>
   addPhoto: (photo: RoutineEntryPhotoInput) => Promise<PhotoUploadResult>
   removePhoto: (photo: RoutineEntryPhoto) => Promise<AgendaWriteResult>
@@ -128,7 +134,7 @@ export type AgendaHooks = Readonly<{
   useRoutineEntryPhoto: (membership: MembershipContext, studentId: StudentId, photoId: RoutineEntryPhotoId) => PhotoContentState
 }>
 
-type AgendaHookDependencies = Readonly<{ apiClient: ApiClient; queryClient: QueryClient }>
+type AgendaHookDependencies = Readonly<{ apiClient: ApiClient; queryClient: QueryClient; offline: OfflineSync }>
 
 function toLoadFailure(error: unknown): AgendaLoadFailure {
   const code = readFailureCode(error)
@@ -177,9 +183,25 @@ function appointmentItems(appointments: readonly Appointment[], range: LocalDate
   }))
 }
 
+function isSameOccurrence(change: PendingEntryChange, blockId: RoutineBlockId, date: LocalDate): boolean {
+  return change.routineBlockId === blockId && change.occursOn === date
+}
+
+// Mudança do aluno que espera a conexão aparece por cima do servidor, como ele a deixou: a
+// releitura em segundo plano não pode fazer a observação ou a entrega sumirem da tela.
+function overlayPending(entries: readonly RoutineEntry[], pending: readonly PendingEntryChange[]): readonly RoutineEntry[] {
+  if (pending.length === 0) return entries
+  const untouched = entries.filter(entry => !pending.some(change => isSameOccurrence(change, entry.routineBlockId, entry.occursOn)))
+  return [...untouched, ...pending.map(change => overlayPendingChange(entries.find(entry => isSameOccurrence(change, entry.routineBlockId, entry.occursOn)), change))]
+}
+
+function pendingOfStudent(pending: readonly PendingEntryChange[], institutionId: MembershipContext['institution']['id'], studentId: StudentId): readonly PendingEntryChange[] {
+  return pending.filter(change => change.institutionId === institutionId && change.studentId === studentId)
+}
+
 // A rotina se repete toda semana, então cada dia do intervalo recebe os blocos do seu dia
 // da semana; o registro do aluno se prende ao par bloco × data.
-function taskItems(blocks: readonly RoutineBlock[], entries: readonly RoutineEntry[], range: LocalDateRange): AgendaItem[] {
+function taskItems(blocks: readonly RoutineBlock[], entries: readonly RoutineEntry[], range: LocalDateRange, pending: readonly PendingEntryChange[]): AgendaItem[] {
   return listRangeDays(range).flatMap(date => blocks
     .filter(block => block.weekday === weekdayOfLocalDate(date))
     .map(block => ({
@@ -190,7 +212,15 @@ function taskItems(blocks: readonly RoutineBlock[], entries: readonly RoutineEnt
       endsAt: block.endsAt,
       block,
       entry: entries.find(entry => entry.routineBlockId === block.id && entry.occursOn === date),
+      isPendingSync: pending.some(change => isSameOccurrence(change, block.id, date)),
     })))
+}
+
+// O cache guarda `unknown` para a busca genérica; só a lista de registros que este módulo
+// mesmo gravou passa, e o resto é ignorado em vez de convertido.
+function routineEntriesOf(data: unknown): readonly RoutineEntry[] | undefined {
+  const parsed = routineEntryListSchema.safeParse(data)
+  return parsed.success ? parsed.data : undefined
 }
 
 /** Agrupa os itens por dia do intervalo, em ordem de horário; dia vazio aparece vazio. */
@@ -231,7 +261,7 @@ export function summarizeTaskTracking(days: readonly TaskTrackingDay[]): TaskTra
 }
 
 function trackTasks(blocks: readonly RoutineBlock[], entries: readonly RoutineEntry[], range: LocalDateRange, today: LocalDate): readonly TaskTrackingDay[] {
-  return groupAgendaByDay(taskItems(blocks, entries, range), range).map(day => ({
+  return groupAgendaByDay(taskItems(blocks, entries, range, []), range).map(day => ({
     date: day.date,
     tasks: day.items.flatMap(item => item.kind === 'task'
       ? [{ key: item.key, date: item.date, block: item.block, entry: item.entry, status: classifyTrackedTask(item.entry, item.date, today) }]
@@ -245,7 +275,23 @@ function trackTasks(blocks: readonly RoutineBlock[], entries: readonly RoutineEn
  * a recorrência aqui, a partir das séries que a API devolve para o intervalo.
  */
 export function createAgendaHooks(dependencies: AgendaHookDependencies): AgendaHooks {
-  const { apiClient, queryClient } = dependencies
+  const { apiClient, queryClient, offline } = dependencies
+
+  // A tarefa aberta da agenda reaproveita os registros da janela já em cache: sem conexão, é
+  // deles que a tela vive, e com conexão a busca do dia só confirma o que já está na tela.
+  function readCachedEntriesOn(institutionId: MembershipContext['institution']['id'], studentId: StudentId, date: LocalDate): Readonly<{ entries: readonly RoutineEntry[]; updatedAt: number }> | undefined {
+    for (const query of queryClient.getQueryCache().findAll({ queryKey: queryKeys.studentRoutineEntriesScope(institutionId, studentId) })) {
+      const [from, to] = [query.queryKey[5], query.queryKey[6]]
+      const entries = routineEntriesOf(query.state.data)
+      if (entries === undefined || typeof from !== 'string' || typeof to !== 'string' || date < from || date > to) continue
+      return { entries: entries.filter(entry => entry.occursOn === date), updatedAt: query.state.dataUpdatedAt }
+    }
+    return undefined
+  }
+
+  function usePendingChanges(institutionId: MembershipContext['institution']['id'], studentId: StudentId): readonly PendingEntryChange[] {
+    return pendingOfStudent(useSyncExternalStore(offline.subscribe, offline.getState).pending, institutionId, studentId)
+  }
 
   function useAgendaCursor(today: LocalDate, initialView: AgendaView): AgendaCursor {
     const [date, setDate] = useState(today)
@@ -350,12 +396,14 @@ export function createAgendaHooks(dependencies: AgendaHookDependencies): AgendaH
       enabled: canReadAppointments,
     }, queryClient)
 
-    const failed = [routine, entries, ...(canReadAppointments ? [appointments] : [])].find(query => query.isError)
+    const pending = usePendingChanges(institutionId, studentId)
+
+    const failed = [routine, entries, ...(canReadAppointments ? [appointments] : [])].find(isBlockingFailure)
     const state: AgendaState = failed !== undefined
       ? { status: 'failed', failure: toLoadFailure(failed.error) }
       : routine.data === undefined || entries.data === undefined || (canReadAppointments && appointments.data === undefined)
         ? { status: 'loading' }
-        : { status: 'ready', days: groupAgendaByDay([...taskItems(routine.data, entries.data, range), ...appointmentItems(appointments.data ?? [], range)], range) }
+        : { status: 'ready', days: groupAgendaByDay([...taskItems(routine.data, overlayPending(entries.data, pending), range, pending), ...appointmentItems(appointments.data ?? [], range)], range) }
 
     return { state, canWriteEntries: membership.permissions.some(grant => grant.key === 'routine.entry.write') }
   }
@@ -379,28 +427,34 @@ export function createAgendaHooks(dependencies: AgendaHookDependencies): AgendaH
   function useRoutineEntry(membership: MembershipContext, studentId: StudentId, blockId: RoutineBlockId, date: LocalDate): RoutineEntryAccess {
     const institutionId = membership.institution.id
     const routine = useQuery({ queryKey: queryKeys.studentRoutine(institutionId, studentId), queryFn: () => apiClient.routines.list({ institutionId, studentId }), retry: retryOnlyWithoutServerResponse }, queryClient)
+    const cached = readCachedEntriesOn(institutionId, studentId, date)
     const entries = useQuery({
       queryKey: queryKeys.studentRoutineEntries(institutionId, studentId, date, date),
       queryFn: () => apiClient.routineEntries.list({ institutionId, studentId, from: date, to: date }),
       retry: retryOnlyWithoutServerResponse,
+      ...(cached === undefined ? {} : { initialData: cached.entries, initialDataUpdatedAt: cached.updatedAt }),
     }, queryClient)
     const block = routine.data?.find(candidate => candidate.id === blockId)
     const entry = entries.data?.find(candidate => candidate.routineBlockId === blockId && candidate.occursOn === date)
+    const target = { institutionId, studentId, routineBlockId: blockId, occursOn: date }
+    const pendingChange = usePendingChanges(institutionId, studentId).find(change => entryKeyOf(change) === entryKeyOf(target))
 
     async function refresh(): Promise<void> {
       await queryClient.invalidateQueries({ queryKey: queryKeys.studentRoutineEntriesScope(institutionId, studentId) })
     }
 
-    const failed = [routine, entries].find(query => query.isError)
+    const failed = [routine, entries].find(isBlockingFailure)
     const state: RoutineEntryState = failed !== undefined
       ? { status: 'failed', failure: toLoadFailure(failed.error) }
       : routine.data === undefined || entries.data === undefined
         ? { status: 'loading' }
         : block === undefined
           ? { status: 'failed', failure: 'not-found' }
-          : { status: 'ready', block, entry }
+          : { status: 'ready', block, entry: pendingChange === undefined ? entry : overlayPendingChange(entry, pendingChange), isPendingSync: pendingChange !== undefined }
 
-    async function saveNote(notes: string | null): Promise<AgendaWriteResult> {
+    async function saveNote(notes: string | null): Promise<RoutineEntryWriteResult> {
+      // No app, observação e entrega passam pela fila: com rede, ela envia na hora; sem, guarda.
+      if (offline.isEnabled) return offline.record(target, entry, { kind: 'note', notes })
       try {
         await apiClient.routineEntries.saveNote({ institutionId, studentId, routineBlockId: blockId, occursOn: date, notes, expectedVersion: entry?.version ?? null })
       } catch (error) {
@@ -440,11 +494,13 @@ export function createAgendaHooks(dependencies: AgendaHookDependencies): AgendaH
       return 'saved'
     }
 
-    function deliver(): Promise<AgendaWriteResult> {
+    function deliver(): Promise<RoutineEntryWriteResult> {
+      if (offline.isEnabled) return offline.record(target, entry, { kind: 'deliver' })
       return runEntryWrite(() => apiClient.routineEntries.deliver({ institutionId, studentId, routineBlockId: blockId, occursOn: date, expectedVersion: entry?.version ?? null }))
     }
 
-    function undeliver(): Promise<AgendaWriteResult> {
+    function undeliver(): Promise<RoutineEntryWriteResult> {
+      if (offline.isEnabled) return offline.record(target, entry, { kind: 'undeliver' })
       if (entry === undefined) return Promise.resolve('not-saved')
       return runEntryWrite(() => apiClient.routineEntries.undeliver({ institutionId, studentId, routineBlockId: blockId, occursOn: date, expectedVersion: entry.version }))
     }

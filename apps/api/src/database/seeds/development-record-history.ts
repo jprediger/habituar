@@ -2,7 +2,7 @@ import { assertNever } from '@habituar/core/assert-never'
 import { StudentCondition } from '@habituar/core/student-records'
 import { eq, sql } from 'drizzle-orm'
 import { DatabaseTransaction } from '../database.js'
-import { studentObservations, studentProfileRevisions } from '../schema.js'
+import { studentConsultations, studentObservations, studentProfileRevisions } from '../schema.js'
 
 // Quando, relativo à hora em que o seed roda: com data fixa, "Hoje" e "Ontem" sumiriam do
 // histórico um dia depois. O que é de hoje conta em minutos para nunca cair no futuro.
@@ -39,6 +39,22 @@ const SEEDED_HISTORY: readonly SeededHistoryEntry[] = [
   { kind: 'observation', author: 'coordinator', at: { kind: 'today', minutesAgo: 40 }, body: 'Chegou mais tranquila hoje e quis contar sobre o fim de semana com a avó.' },
 ]
 
+type SeededConsultation = Readonly<{ author: SeededAuthor; at: SeededMoment; durationMinutes: number; recordedAfterMinutes: number; notes: string }>
+
+// Do mais antigo para o mais novo, na mesma história das observações acima. Varia duração,
+// autor e tamanho da anotação, e termina hoje, para a lista do app mostrar todos os casos.
+// `recordedAfterMinutes` conta do fim da consulta: o registro vem sempre depois do atendimento.
+const SEEDED_CONSULTATIONS: readonly SeededConsultation[] = [
+  { author: 'coordinator', at: { kind: 'past', daysAgo: 71, hour: 14, minute: 0 }, durationMinutes: 60, recordedAfterMinutes: 20, notes: 'Acolhimento com Lia e a responsável. Levantamos a rotina de casa e da escola, os horários de sono e o que mais a deixa ansiosa: troca de atividade sem aviso e prova longa. Combinamos montar um quadro de rotina visual e testar pausas curtas nas tarefas longas.' },
+  { author: 'professional', at: { kind: 'past', daysAgo: 63, hour: 10, minute: 0 }, durationMinutes: 50, recordedAfterMinutes: 15, notes: 'Montamos juntos o primeiro quadro de rotina da semana, com uma cor por tipo de atividade. Lia escolheu os ícones e pediu para incluir o horário do lanche.' },
+  { author: 'professional', at: { kind: 'past', daysAgo: 49, hour: 15, minute: 30 }, durationMinutes: 45, recordedAfterMinutes: 10, notes: 'Treinamos dividir a tarefa em blocos de 20 minutos com pausa curta. Ela completou dois blocos de leitura sem levantar.' },
+  { author: 'coordinator', at: { kind: 'past', daysAgo: 34, hour: 9, minute: 0 }, durationMinutes: 90, recordedAfterMinutes: 30, notes: 'Revisão do primeiro mês com Lia e a responsável. Menos saídas da sala e mais tarefas concluídas. Depois da avaliação psicopedagógica, incluímos o transtorno de aprendizagem nas condições acompanhadas e mantivemos o tempo extra em provas.' },
+  { author: 'professional', at: { kind: 'past', daysAgo: 20, hour: 16, minute: 0 }, durationMinutes: 50, recordedAfterMinutes: 5, notes: 'Preparação para a semana de avaliações: ensaiamos dividir a prova em duas partes e combinamos um sinal discreto para pedir pausa.' },
+  { author: 'professional', at: { kind: 'past', daysAgo: 12, hour: 14, minute: 0 }, durationMinutes: 30, recordedAfterMinutes: 10, notes: 'Revisão rápida da semana de provas. Ela contou que a divisão em partes ajudou.' },
+  { author: 'professional', at: { kind: 'past', daysAgo: 6, hour: 10, minute: 30 }, durationMinutes: 45, recordedAfterMinutes: 25, notes: 'Conversamos sobre o sono, que ela vinha relatando curto na véspera das provas. Montamos com ela uma rotina de noite com três passos fixos: guardar o material, separar a roupa do dia seguinte e ler por quinze minutos. Ela pediu para colocar esses passos no quadro de rotina, ao lado dos da manhã. Também revisamos o uso do quadro na escola: nesta semana ela o consultou sozinha antes da aula de matemática, sem precisar de lembrete. Próximo passo: combinar com a família um horário fixo para dormir nos dias de semana e acompanhar por duas semanas, registrando como ela chega à escola.' },
+  { author: 'professional', at: { kind: 'today', minutesAgo: 150 }, durationMinutes: 40, recordedAfterMinutes: 10, notes: 'Falamos sobre a troca de sala de ontem. Combinamos que, quando a troca for avisada no dia, ela marca a mudança no quadro de rotina logo na chegada.' },
+]
+
 /**
  * Histórico de exemplo da ficha do estudante do seed, para a linha do tempo do app não abrir
  * vazia no desenvolvimento local. Recusa ficha que já tem histórico: observação e revisão são
@@ -55,15 +71,13 @@ export async function seedDevelopmentRecordHistory(
   const [revision] = await transaction.select({ id: studentProfileRevisions.id }).from(studentProfileRevisions).where(eq(studentProfileRevisions.studentId, studentId)).limit(1)
   if (observation !== undefined || revision !== undefined) return
 
-  // A RLS só aceita observação e revisão cujo autor é o ator da transação. O ator de quem
-  // chamou volta no fim, para o resto da transação não escrever em nome de outra pessoa.
-  const previousActor = await transaction.execute<{ actor: string | null }>(sql`select current_setting('app.actor_id', true) as actor`)
+  const previousActor = await readActor(transaction)
   let revisionNumber = 0
 
   for (const entry of SEEDED_HISTORY) {
     const authorId = authors[entry.author]
     const recordedAt = resolveMoment(entry.at, now)
-    await transaction.execute(sql`select set_config('app.actor_id', ${authorId}, true)`)
+    await setActor(transaction, authorId)
 
     if (entry.kind === 'observation') {
       await transaction.insert(studentObservations).values({ institutionId, studentId, authorUserId: authorId, body: entry.body, recordedAt })
@@ -82,7 +96,52 @@ export async function seedDevelopmentRecordHistory(
     }
   }
 
-  await transaction.execute(sql`select set_config('app.actor_id', ${previousActor.rows[0]?.actor ?? ''}, true)`)
+  await setActor(transaction, previousActor)
+}
+
+/**
+ * Consultas de exemplo da ficha do estudante do seed. Trava própria, e não a do histórico:
+ * base local semeada antes das consultas existirem ganha as consultas na próxima execução
+ * sem duplicar o histórico, e consulta também é append-only.
+ */
+export async function seedDevelopmentConsultations(
+  transaction: DatabaseTransaction,
+  institutionId: string,
+  studentId: string,
+  authors: Readonly<Record<SeededAuthor, string>>,
+  now: Date,
+): Promise<void> {
+  const [existing] = await transaction.select({ id: studentConsultations.id }).from(studentConsultations).where(eq(studentConsultations.studentId, studentId)).limit(1)
+  if (existing !== undefined) return
+
+  const previousActor = await readActor(transaction)
+  for (const consultation of SEEDED_CONSULTATIONS) {
+    const professionalUserId = authors[consultation.author]
+    const occurredAt = resolveMoment(consultation.at, now)
+    await setActor(transaction, professionalUserId)
+    await transaction.insert(studentConsultations).values({
+      institutionId,
+      studentId,
+      professionalUserId,
+      occurredAt,
+      durationMinutes: consultation.durationMinutes,
+      notes: consultation.notes,
+      recordedAt: new Date(occurredAt.getTime() + (consultation.durationMinutes + consultation.recordedAfterMinutes) * 60_000),
+    })
+  }
+  await setActor(transaction, previousActor)
+}
+
+// A RLS da ficha só aceita registro cujo autor é o ator da transação. Quem semeia em nome dos
+// autores devolve o ator de quem chamou no fim, para o resto da transação não escrever em
+// nome de outra pessoa.
+async function readActor(transaction: DatabaseTransaction): Promise<string> {
+  const result = await transaction.execute<{ actor: string | null }>(sql`select current_setting('app.actor_id', true) as actor`)
+  return result.rows[0]?.actor ?? ''
+}
+
+async function setActor(transaction: DatabaseTransaction, userId: string): Promise<void> {
+  await transaction.execute(sql`select set_config('app.actor_id', ${userId}, true)`)
 }
 
 function resolveMoment(moment: SeededMoment, now: Date): Date {

@@ -8,7 +8,7 @@ import { RequestContext } from '../../platform/request-context.js'
 import { RbacRepository } from '../../rbac/rbac.repository.js'
 import { RbacService } from '../../rbac/rbac.service.js'
 import { Database, TenantContext } from '../database.js'
-import { studentConsents, studentGuardians, studentObservations, studentProfileRevisions, students, users } from '../schema.js'
+import { studentConsents, studentConsultations, studentGuardians, studentObservations, studentProfileRevisions, students, users } from '../schema.js'
 import { DEVELOPMENT_USERS, SeededUsers, seedDevelopmentUsers } from './development-users.js'
 import { seedPermissionCatalog } from './permission-catalog.seed.js'
 import { seedRoleTemplates } from './role-templates.js'
@@ -116,6 +116,24 @@ describe('usuários de desenvolvimento', () => {
       return [observations.length, revisions.map((revision) => revision.revisionNumber).sort((first, second) => first - second)]
     })
     expect(counts).toEqual([11, [1, 2, 3, 4, 5, 6]])
+  })
+
+  it('dá à ficha do estudante consultas de exemplo dos dois profissionais, sem duplicar em execução repetida', async () => {
+    const consultations = await database.withTenantOutsideRequest(TENANT, (transaction) =>
+      transaction.select().from(studentConsultations).where(eq(studentConsultations.studentId, assignedStudentId)))
+    expect(consultations).toHaveLength(8)
+    expect(new Set(consultations.map((consultation) => consultation.professionalUserId))).toEqual(new Set([seeded.professional, seeded.coordinator]))
+  })
+
+  it('só semeia consulta que já aconteceu, registrada depois de acontecer', async () => {
+    const consultations = await database.withTenantOutsideRequest(TENANT, (transaction) =>
+      transaction.select().from(studentConsultations).where(eq(studentConsultations.studentId, assignedStudentId)))
+    const now = Date.now()
+    for (const consultation of consultations) {
+      expect(consultation.occurredAt.getTime()).toBeLessThan(now)
+      expect(consultation.recordedAt.getTime()).toBeGreaterThanOrEqual(consultation.occurredAt.getTime() + consultation.durationMinutes * 60_000)
+      expect(consultation.recordedAt.getTime()).toBeLessThanOrEqual(now)
+    }
   })
 
   it('devolve a transação ao ator de quem chamou depois de gravar o histórico em nome dos autores', () => {

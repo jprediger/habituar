@@ -583,7 +583,7 @@
     },
     "history": {
       "title": "Observações e histórico",
-      "description": "Tudo o que foi registrado nesta ficha, do mais recente para o mais antigo.",
+      "finalNotice": "Observação registrada não pode ser editada nem apagada.",
       "failed": "Não foi possível carregar o histórico. Confira a conexão e tente novamente.",
       "emptyTitle": "Nada registrado ainda",
       "emptyDescription": "Observações e atualizações da ficha aparecem aqui, com quem registrou e quando.",

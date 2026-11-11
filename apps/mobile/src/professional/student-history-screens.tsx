@@ -15,6 +15,7 @@ import { Button } from '../components/ui/button'
 import { ConfirmationSheet } from '../components/ui/confirmation-sheet'
 import { EmptyState } from '../components/ui/empty-state'
 import { FormField } from '../components/ui/form-field'
+import { InlineNotice } from '../components/ui/inline-notice'
 import { ListSection } from '../components/ui/list-section'
 import { StackPage } from '../components/ui/stack-page'
 import { Text } from '../components/ui/text'
@@ -57,24 +58,31 @@ function StudentHistory({ history }: Readonly<{ history: StudentHistoryState }>)
     case 'failed':
       return <Text accessibilityRole="alert" tone="danger">{t('students.history.failed')}</Text>
     case 'ready':
-      if (history.entries.length === 0) return <EmptyState title={t('students.history.emptyTitle')} description={t('students.history.emptyDescription')} />
+      // O aviso fala do registro, então só aparece quando há linha do tempo, mesmo vazia: no
+      // carregamento e na falha ele disputaria atenção com o que a pessoa precisa ver.
       return (
-        <View style={styles.groups}>
-          {groupStudentHistory(history.entries, readCurrentTime()).map((group) => {
-            const title = formatPeriod(group.period, t)
-            // O título serve de chave: cada período aparece uma vez só na linha do tempo.
-            return (
-              <ListSection key={title} title={title}>
-                <View accessibilityRole="list">
-                  {group.moments.map((moment, index) => (
-                    <HistoryMoment key={momentKey(moment)} moment={moment} period={group.period} position={positionOf(index, group.moments.length)} />
-                  ))}
-                </View>
-              </ListSection>
-            )
-          })}
-          <Text size="caption" tone="muted">{t('students.history.description')}</Text>
-        </View>
+        <>
+          <InlineNotice message={t('students.history.finalNotice')} />
+          {history.entries.length === 0
+            ? <EmptyState title={t('students.history.emptyTitle')} description={t('students.history.emptyDescription')} />
+            : (
+              <View style={styles.groups}>
+                {groupStudentHistory(history.entries, readCurrentTime()).map((group) => {
+                  const title = formatPeriod(group.period, t)
+                  // O título serve de chave: cada período aparece uma vez só na linha do tempo.
+                  return (
+                    <ListSection key={title} title={title}>
+                      <View accessibilityRole="list">
+                        {group.moments.map((moment, index) => (
+                          <HistoryMoment key={momentKey(moment)} moment={moment} period={group.period} position={positionOf(index, group.moments.length)} />
+                        ))}
+                      </View>
+                    </ListSection>
+                  )
+                })}
+              </View>
+            )}
+        </>
       )
     default:
       return assertNever(history)

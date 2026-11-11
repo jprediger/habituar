@@ -81,6 +81,29 @@ describe('student record history', () => {
     expect(screen.getByText('Ana Souza atualizou a ficha 2 vezes: Necessidades de apoio e adaptações, Turma ou série.')).toBeOnTheScreen()
   })
 
+  it('warns above the timeline that a recorded observation is final, so nobody looks for an edit that does not exist', () => {
+    renderHistory()
+
+    // A ordem da árvore é a ordem de leitura: o aviso vem antes do primeiro período.
+    const [first] = screen.getAllByText(/não pode ser editada nem apagada|Concentrou-se melhor/)
+    expect(first).toHaveTextContent('Observação registrada não pode ser editada nem apagada.')
+    expect(screen.queryByText(/do mais recente para o mais antigo/)).toBeNull()
+  })
+
+  it('warns that an observation is final even before the first one is recorded', () => {
+    renderHistory(readyHistory([]))
+
+    expect(screen.getByText('Nada registrado ainda')).toBeOnTheScreen()
+    expect(screen.getByText('Observação registrada não pode ser editada nem apagada.')).toBeOnTheScreen()
+  })
+
+  it('holds the warning back while there is no timeline to warn about', () => {
+    renderHistory(createHistoryAccess({ history: { status: 'failed' } }))
+
+    expect(screen.getByRole('alert')).toHaveTextContent(/Não foi possível carregar o histórico/)
+    expect(screen.queryByText(/não pode ser editada nem apagada/)).toBeNull()
+  })
+
   it('records a new observation from the bar action, on its own screen', () => {
     renderHistory()
 

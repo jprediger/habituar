@@ -446,7 +446,7 @@ fica em `student_profile_revisions`, uma revisão por gravação, as observaçõ
 `student_observations` e as consultas realizadas em `student_consultations`; as três
 tabelas aceitam somente leitura e inserção, com autoria igual à pessoa autenticada. A
 grade semanal do aluno fica em `routine_blocks`, com versão para recusar edição feita
-sobre dados desatualizados. Ainda fora do diagrama abaixo, os
+sobre dados desatualizados. Os
 atendimentos ficam em `appointments`, com repetição semanal e versão, e as ocorrências
 canceladas de uma série em `appointment_cancelled_occurrences`; a observação e a entrega de cada
 tarefa do dia ficam em `routine_entries` e as fotos, guardadas fora do banco, têm os

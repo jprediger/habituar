@@ -22,6 +22,7 @@ vi.mock('../client/habituar-client.js', () => ({
     useInstitutionSwitcher: () => ({ current: undefined, others: [], switchTo: vi.fn() }),
     useAccessibleStudents: () => client.students,
     useGuardianConsents: () => client.consents,
+    useStudentHomeMetrics: () => ({ status: 'ready', metrics: { today: { done: 2, total: 2 }, streakDays: 1, weekRate: null, weekMissing: 0 } }),
   },
 }))
 
@@ -67,6 +68,15 @@ beforeEach(() => {
 })
 
 describe('student home', () => {
+  it('summarizes the student progress before the registration', () => {
+    renderScreen(sessionWithRole('student'))
+
+    expect(screen.getByRole('heading', { name: 'Resumo' })).toBeInTheDocument()
+    expect(screen.getByText('2 de 2')).toBeInTheDocument()
+    expect(screen.getByText('1 dia')).toBeInTheDocument()
+    expect(screen.getByText('Nenhuma tarefa vencida na semana')).toBeInTheDocument()
+  })
+
   it('shows the student their institution and their own registration', () => {
     renderScreen(sessionWithRole('student'))
 

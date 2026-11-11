@@ -13,6 +13,7 @@ import { PageHeader } from '../components/ui/page-header.js'
 import { Section } from '../components/ui/section.js'
 import { SummaryCards } from '../components/ui/summary-cards.js'
 import { useInstitutionSession } from '../session/institution-session.js'
+import { StudentHomeMetrics } from './student-home-metrics.js'
 
 /**
  * Tela inicial do ambiente de aluno: a única superfície escrita na primeira pessoa. Mostra
@@ -40,10 +41,19 @@ export function StudentHomeScreen(): ReactElement {
         />
       </Section>
 
+      {sections.showsOwnRecord && <OwnMetrics />}
       {sections.showsOwnRecord && <OwnRecordSection isGuardianToo={sections.isGuardianToo} />}
       {sections.showsGuardianConsents && <GuardianConsentSections />}
     </div>
   )
+}
+
+// Responsável que também é aluno vê vários cadastros: aí o resumo fica na ficha de cada um.
+function OwnMetrics(): ReactElement | null {
+  const session = useInstitutionSession()
+  const { state } = habituar.useAccessibleStudents(session.membership)
+  const own = state.status === 'ready' && state.students.length === 1 ? state.students[0] : undefined
+  return own === undefined ? null : <StudentHomeMetrics studentId={own.id} />
 }
 
 function OwnRecordSection({ isGuardianToo }: Readonly<{ isGuardianToo: boolean }>): ReactElement {

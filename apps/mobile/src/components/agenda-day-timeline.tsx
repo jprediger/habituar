@@ -115,8 +115,11 @@ function EventBlock({ entry, onPress }: Readonly<{ entry: CalendarEntry; onPress
       onPress={onPress}
       style={({ pressed }) => [styles.block, { flex: 1, borderRadius: radius.field, backgroundColor: isMissing ? colors.surface : color, borderColor: color, opacity: pressed ? 0.8 : 1 }]}
     >
-      {isDone && <Icon name="check" size={14} color={colors.onEvent} />}
-      <Text size="caption" weight="medium" tone={isMissing ? 'default' : 'onEvent'} numberOfLines={1}>{labels.entryTitle(entry)}</Text>
+      <View style={styles.blockTitle}>
+        {isDone && <Icon name="check" size={14} color={colors.onEvent} />}
+        {isMissing && <Icon name="clock-counter-clockwise" size={14} color={colors.text} />}
+        <Text size="caption" weight="medium" tone={isMissing ? 'default' : 'onEvent'} numberOfLines={1}>{labels.entryTitle(entry)}</Text>
+      </View>
     </Pressable>
   )
 }
@@ -131,5 +134,6 @@ const styles = StyleSheet.create({
   positioned: { position: 'absolute', left: 0, right: 0, flexDirection: 'row' },
   slot: { flex: 1, padding: 1 },
   block: { minHeight: MINIMUM_EVENT_HEIGHT, flexDirection: 'row', alignItems: 'flex-start', gap: SPACING.xs, paddingHorizontal: SPACING.xs, paddingVertical: 2, borderWidth: 1 },
+  blockTitle: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: SPACING.xs },
   now: { position: 'absolute', left: 0, right: 0, height: 2 },
 })

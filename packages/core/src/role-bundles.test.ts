@@ -20,9 +20,9 @@ describe('matriz de bundles', () => {
     }
   })
 
-  it('dá ao monitor apenas a consulta de cadastro dos acompanhados', () => {
+  it('dá ao monitor apenas a consulta de cadastro e de relatórios dos acompanhados', () => {
     const monitorBundles = ROLE_BUNDLE_KEYS.filter(key => ROLE_BUNDLE_CATALOG[key].scopesByEnvironment.monitor !== undefined)
-    expect(monitorBundles).toEqual(['student-read'])
+    expect(monitorBundles).toEqual(['student-read', 'report-read', 'report-export'])
     expect(ROLE_BUNDLE_CATALOG['student-read'].scopesByEnvironment.monitor).toEqual(['assigned'])
   })
 

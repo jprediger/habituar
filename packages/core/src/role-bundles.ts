@@ -24,6 +24,8 @@ export const ROLE_BUNDLE_KEYS = [
   'task-evaluate',
   'appointment-read',
   'appointment-write',
+  'report-read',
+  'report-export',
 ] as const
 
 export const roleBundleKeySchema = z.enum(ROLE_BUNDLE_KEYS)
@@ -65,6 +67,8 @@ export const ROLE_BUNDLE_CATALOG: Readonly<Record<RoleBundleKey, RoleBundleDefin
   'task-evaluate': { labelKey: 'roleBundles.taskEvaluate', permissions: ['task.evaluate'], scopesByEnvironment: { professional: ['assigned', 'institution'] } },
   'appointment-read': { labelKey: 'roleBundles.appointmentRead', permissions: ['appointment.read'], scopesByEnvironment: { professional: ['assigned', 'institution'] } },
   'appointment-write': { labelKey: 'roleBundles.appointmentWrite', permissions: ['appointment.write'], scopesByEnvironment: { professional: ['assigned', 'institution'] } },
+  'report-read': { labelKey: 'roleBundles.reportRead', permissions: ['report.read'], scopesByEnvironment: { professional: ['assigned', 'institution'], monitor: ['assigned'] } },
+  'report-export': { labelKey: 'roleBundles.reportExport', permissions: ['report.export'], scopesByEnvironment: { professional: ['assigned', 'institution'], monitor: ['assigned'] } },
 }
 
 export const roleBundleSelectionSchema = z.object({

@@ -12,6 +12,7 @@ export default defineConfig({
     'student-records': 'src/student-records.ts',
     schedule: 'src/schedule.ts',
     tasks: 'src/tasks.ts',
+    reports: 'src/reports.ts',
     calendar: 'src/calendar.ts',
     appointments: 'src/appointments.ts',
     'role-bundles': 'src/role-bundles.ts',

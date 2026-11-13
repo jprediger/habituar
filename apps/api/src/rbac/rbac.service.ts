@@ -77,6 +77,13 @@ export class RbacService {
     )
   }
 
+  /** Consulta escopos na transação chamadora, evitando revogação entre autorização e leitura sensível. */
+  async listPermissionScopesInTransaction(transaction: DatabaseTransaction, actor: { readonly userId: string }, institutionId: string, permission: PermissionKey): Promise<readonly PermissionScope[]> {
+    const membership = await this.rbac.findMembership(transaction, actor.userId, institutionId)
+    if (membership === undefined) return []
+    return (await this.rbac.listGrantScopes(transaction, membership.id, permission)).map(grant => grant.scope)
+  }
+
   /** Autoriza apenas operações globais de configuração para contas de plataforma. */
   async hasPlatformPermission(actor: { readonly userId: string; readonly sessionId: string }, permission: PlatformPermissionKey): Promise<boolean> {
     return this.database.withIdentity({ actorId: actor.userId, sessionId: actor.sessionId }, async (transaction) => {

@@ -32,9 +32,11 @@ const TEMPLATE_GRANTS: Readonly<Record<typeof ROLE_TEMPLATES[number]['name'], re
     ['task.evaluate', 'assigned'],
     ['appointment.read', 'assigned'],
     ['appointment.write', 'assigned'],
+    ['report.read', 'assigned'],
+    ['report.export', 'assigned'],
   ],
-  'care-institution': [['student.read', 'institution'], ['student.update', 'institution'], ['student.create', 'institution'], ['guardian.link', 'institution'], ['guardian.unlink', 'institution'], ['assignment.manage', 'institution'], ['record.read', 'institution'], ['record.write', 'institution'], ['task.read', 'institution'], ['task.write', 'institution'], ['task.evaluate', 'institution'], ['appointment.read', 'institution'], ['appointment.write', 'institution']],
-  monitoring: [['student.read', 'assigned']],
+  'care-institution': [['student.read', 'institution'], ['student.update', 'institution'], ['student.create', 'institution'], ['guardian.link', 'institution'], ['guardian.unlink', 'institution'], ['assignment.manage', 'institution'], ['record.read', 'institution'], ['record.write', 'institution'], ['task.read', 'institution'], ['task.write', 'institution'], ['task.evaluate', 'institution'], ['appointment.read', 'institution'], ['appointment.write', 'institution'], ['report.read', 'institution'], ['report.export', 'institution']],
+  monitoring: [['student.read', 'assigned'], ['report.read', 'assigned'], ['report.export', 'assigned']],
   'team-management': [
     ['student.read', 'institution'],
     ['student.create', 'institution'],
@@ -44,6 +46,8 @@ const TEMPLATE_GRANTS: Readonly<Record<typeof ROLE_TEMPLATES[number]['name'], re
     ['membership.read', 'institution'],
     ['membership.invite', 'institution'],
     ['membership.remove', 'institution'],
+    ['report.read', 'institution'],
+    ['report.export', 'institution'],
   ],
 }
 

@@ -32,6 +32,10 @@
       "types": "./dist/tasks.d.ts",
       "import": "./dist/tasks.js"
     },
+    "./reports": {
+      "types": "./dist/reports.d.ts",
+      "import": "./dist/reports.js"
+    },
     "./calendar": {
       "types": "./dist/calendar.d.ts",
       "import": "./dist/calendar.js"

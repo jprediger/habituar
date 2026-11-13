@@ -1,13 +1,14 @@
 import { assertNever } from '@habituar/core/assert-never'
-import type { NavigationEnvironment, NavigationIcon, NavigationItem } from '@habituar/react-client/environment-navigation'
-import { findActiveNavigationItem } from '@habituar/react-client/environment-navigation'
+import type { NavigationEnvironment, NavigationIcon } from '@habituar/react-client/environment-navigation'
 import { Link, useLocation } from '@tanstack/react-router'
 import type { LucideIcon } from 'lucide-react'
-import { Building2, CalendarDays, GraduationCap, House, UserRound, UsersRound } from 'lucide-react'
+import { Building2, CalendarDays, ChartColumnIncreasing, GraduationCap, House, UserRound, UsersRound } from 'lucide-react'
 import type { ReactElement } from 'react'
 import type { TFunction } from 'i18next'
 import { useTranslation } from 'react-i18next'
 import { BrandMark } from './brand-mark.js'
+import { findActiveWebNavigationItem } from './web-navigation.js'
+import type { WebNavigationItem } from './web-navigation.js'
 import {
   Sidebar,
   SidebarMenu,
@@ -23,10 +24,10 @@ import {
 export function AppSidebar({
   environment,
   items,
-}: Readonly<{ environment: NavigationEnvironment; items: readonly NavigationItem[] }>): ReactElement {
+}: Readonly<{ environment: NavigationEnvironment; items: readonly WebNavigationItem[] }>): ReactElement {
   const { t } = useTranslation()
   const pathname = useLocation({ select: (location) => location.pathname })
-  const activeItem = findActiveNavigationItem(items, pathname)
+  const activeItem = findActiveWebNavigationItem(items, pathname)
   const activeIndex = activeItem === undefined ? undefined : items.indexOf(activeItem)
 
   return (
@@ -48,7 +49,7 @@ export function AppSidebar({
         </p>
         <SidebarMenu activeIndex={activeIndex}>
           {items.map((item) => {
-            const Icon = getNavigationIcon(item.icon)
+            const Icon = item.icon === 'reports' ? ChartColumnIncreasing : getNavigationIcon(item.icon)
             const label = t(item.labelKey)
             const isActive = item.id === activeItem?.id
 

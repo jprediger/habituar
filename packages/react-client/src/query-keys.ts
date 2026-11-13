@@ -22,6 +22,7 @@ export const queryKeys = {
   studentAppointmentsScope: (institutionId: InstitutionId, studentId: StudentId) => ['institution', institutionId, 'students', studentId, 'appointments'],
   studentAppointments: (institutionId: InstitutionId, studentId: StudentId, from: LocalDate, to: LocalDate) => ['institution', institutionId, 'students', studentId, 'appointments', from, to],
   institutionAgendaScope: (institutionId: InstitutionId) => ['institution', institutionId, 'appointments'],
+  report: (institutionId: InstitutionId, from: LocalDate, to: LocalDate, studentId?: StudentId) => ['institution', institutionId, 'reports', from, to, studentId ?? 'all'],
   institutionAgenda: (institutionId: InstitutionId, from: LocalDate, to: LocalDate) => ['institution', institutionId, 'appointments', from, to],
   institutionStudents: (institutionId: InstitutionId) => ['institution', institutionId, 'students'],
   platformInstitutions: ['platform', 'institutions'],

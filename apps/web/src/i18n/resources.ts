@@ -1,5 +1,6 @@
 import agenda from './pt-br/agenda.json'
 import common from './pt-br/common.json'
+import reports from './pt-br/reports.json'
 
 /**
  * Único idioma do catálogo (M0). Fonte de tipos do `t()` tipado do app inteiro — chave
@@ -8,5 +9,5 @@ import common from './pt-br/common.json'
 export const resources = {
   // A agenda tem namespace próprio: somada ao `common`, a união de chaves passaria do
   // limite de profundidade de tipos do i18next e quebraria o `t()` tipado do app inteiro.
-  'pt-BR': { common, agenda },
+  'pt-BR': { common, agenda, reports },
 } as const

@@ -6,6 +6,7 @@
 export { createHabituarReactClient } from './create-habituar-react-client.js'
 export type { HabituarReactClient } from './create-habituar-react-client.js'
 export type { HealthState } from './health-state.js'
+export type { ReportAccess, ReportLoadFailure, ReportState } from './report-hooks.js'
 export type {
   ActiveSession,
   AuthenticationActions,

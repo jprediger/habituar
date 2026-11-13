@@ -34,6 +34,8 @@ import type { StudentHomeHooks } from './student-home-hooks.js'
 import { createStudentRecordHooks } from './student-record-hooks.js'
 import type { StudentRecordHooks } from './student-record-hooks.js'
 import type { StaffHooks } from './staff-hooks.js'
+import { createReportHooks } from './report-hooks.js'
+import type { ReportHooks } from './report-hooks.js'
 import { createStudentHooks } from './student-hooks.js'
 import type { StudentHooks } from './student-hooks.js'
 
@@ -103,7 +105,7 @@ type InstitutionSwitcher = Readonly<{ current: MembershipContext | undefined; ot
  */
 export type OfflineStatus = Readonly<{ connection: ConnectionState; pendingChanges: number; discardedChanges: number; syncNow(): Promise<void>; dismissDiscarded(): void }>
 
-export type HabituarReactClient = StaffHooks & StudentHooks & StudentRecordHooks & StudentHomeHooks & RoutineHooks & AgendaHooks & CalendarHooks & HomeMetricsHooks & Readonly<{
+export type HabituarReactClient = StaffHooks & StudentHooks & StudentRecordHooks & StudentHomeHooks & RoutineHooks & AgendaHooks & CalendarHooks & HomeMetricsHooks & ReportHooks & Readonly<{
   Provider(props: PropsWithChildren): ReactElement
   useHealth(): Readonly<{ state: HealthState; retry(): void }>
   useAuthentication(): AuthContextValue
@@ -648,5 +650,6 @@ export function createHabituarReactClient(
   const routineHooks = createRoutineHooks({ apiClient, queryClient })
   const agendaHooks = createAgendaHooks({ apiClient, queryClient, offline })
   const calendarHooks = createCalendarHooks({ apiClient, queryClient, offline, filterStorage: options.calendarFilterStorage ?? createMemoryPreferenceStorage() })
-  return { Provider, useHealth, useAuthentication, useInstitutionSwitcher, useOfflineStatus, usePlatformInstitutions, usePlatformInstitution, useInvitation, ...staffHooks, ...studentHooks, ...studentRecordHooks, ...studentHomeHooks, ...routineHooks, ...agendaHooks, ...calendarHooks, ...createHomeMetricsHooks({ agendaHooks }) }
+  const reportHooks = createReportHooks({ apiClient, queryClient })
+  return { Provider, useHealth, useAuthentication, useInstitutionSwitcher, useOfflineStatus, usePlatformInstitutions, usePlatformInstitution, useInvitation, ...staffHooks, ...studentHooks, ...studentRecordHooks, ...studentHomeHooks, ...routineHooks, ...agendaHooks, ...calendarHooks, ...reportHooks, ...createHomeMetricsHooks({ agendaHooks }) }
 }

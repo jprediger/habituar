@@ -1,5 +1,6 @@
-import type { NavigationEnvironment, NavigationItem } from '@habituar/react-client/environment-navigation'
-import { listNavigationBreadcrumbs } from '@habituar/react-client/environment-navigation'
+import type { NavigationEnvironment } from '@habituar/react-client/environment-navigation'
+import { listWebNavigationBreadcrumbs } from './web-navigation.js'
+import type { WebNavigationItem } from './web-navigation.js'
 import type { ActiveSession } from '@habituar/react-client/react-client'
 import { Link, useLocation } from '@tanstack/react-router'
 import { Bell, Search } from 'lucide-react'
@@ -34,7 +35,7 @@ export function AppShell({
   session,
   navigation,
   children,
-}: PropsWithChildren<Readonly<{ environment: NavigationEnvironment; session: ActiveSession; navigation: readonly NavigationItem[] }>>): ReactElement {
+}: PropsWithChildren<Readonly<{ environment: NavigationEnvironment; session: ActiveSession; navigation: readonly WebNavigationItem[] }>>): ReactElement {
   const { t } = useTranslation()
 
   return (
@@ -90,10 +91,10 @@ export function AppShell({
 
 // A trilha vem do hook compartilhado; aqui só se decide que ancestral é link e o passo
 // atual é texto.
-function EnvironmentBreadcrumbs({ items }: Readonly<{ items: readonly NavigationItem[] }>): ReactElement {
+function EnvironmentBreadcrumbs({ items }: Readonly<{ items: readonly WebNavigationItem[] }>): ReactElement {
   const { t } = useTranslation()
   const pathname = useLocation({ select: (location) => location.pathname })
-  const trail = listNavigationBreadcrumbs(items, pathname)
+  const trail = listWebNavigationBreadcrumbs(items, pathname)
 
   return (
     <Breadcrumb label={t('shell.breadcrumbs.label')}>

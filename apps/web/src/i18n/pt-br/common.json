@@ -180,7 +180,8 @@
     "management": "Gestão",
     "profile": "Perfil",
     "institutions": "Instituições",
-    "students": "Estudantes"
+    "students": "Estudantes",
+    "reports": "Relatórios"
   },
   "shell": {
     "skipToContent": "Pular para o conteúdo",
@@ -256,7 +257,9 @@
     "taskComplete": "Concluir tarefas e registrar fotos e observações",
     "taskEvaluate": "Avaliar as tarefas concluídas pelos alunos",
     "appointmentRead": "Ver agenda de atendimentos",
-    "appointmentWrite": "Agendar atendimentos"
+    "appointmentWrite": "Agendar atendimentos",
+    "reportRead": "Consultar relatórios",
+    "reportExport": "Exportar relatórios em PDF"
   },
   "staff": {
     "title": "Gestão",
@@ -449,14 +452,14 @@
     "record": {
       "sectionsTitle": "Seções da ficha",
       "sections": {
-              "profile": "Informações para o acompanhamento do estudante.",
-              "agenda": "Tarefas e atendimentos do estudante.",
-              "management": "Acompanhamentos profissionais, convites e arquivamento.",
-              "registration": "Data de nascimento e responsáveis.",
-              "profileEmpty": "Ainda não preenchida.",
-              "profileUpdated": "Atualizada em {{date}}.",
-              "consultations": "Atendimentos que já aconteceram.",
-              "history": "Observações e atualizações da ficha."
+        "profile": "Informações para o acompanhamento do estudante.",
+        "agenda": "Tarefas e atendimentos do estudante.",
+        "management": "Acompanhamentos profissionais, convites e arquivamento.",
+        "registration": "Data de nascimento e responsáveis.",
+        "profileEmpty": "Ainda não preenchida.",
+        "profileUpdated": "Atualizada em {{date}}.",
+        "consultations": "Atendimentos que já aconteceram.",
+        "history": "Observações e atualizações da ficha."
       },
       "overviewDescription": "Cadastro, acompanhamento e gestão do estudante, conforme seu acesso.",
       "agendaTitle": "Agenda",

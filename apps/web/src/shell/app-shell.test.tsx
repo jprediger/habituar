@@ -22,6 +22,7 @@ const client = vi.hoisted(
 
 vi.mock('../client/habituar-client.js', () => ({
   habituar: {
+    useReport: () => ({ state: { status: 'loading' }, canExport: false, refresh: vi.fn(), exportPdf: vi.fn() }),
     useTeam: () => ({
       state: { status: 'empty' }, capabilities: {}, searchDraft: '', setSearchDraft: vi.fn(), applySearch: vi.fn(), clearSearch: vi.fn(),
       hasActiveFilters: false, environmentFilter: 'all', setEnvironmentFilter: vi.fn(),
@@ -142,6 +143,21 @@ describe('professional environment routes', () => {
     expect(screen.getByRole('region', { name: 'Estudantes acompanhados' })).toHaveTextContent(
       'Nenhum estudante para mostrar',
     )
+  })
+
+  it('shows reports navigation to a monitor with report.read and blocks direct URLs without it', async () => {
+    client.state = createAuthenticatedState('monitor', [{ key: 'report.read', scope: 'assigned' }])
+    renderAt('/professional/reports')
+    expect(await screen.findByRole('heading', { level: 1, name: 'Relatórios de acompanhamento' })).toBeInTheDocument()
+    const navigation = screen.getByRole('navigation', { name: 'Navegação do ambiente' })
+    expect(within(navigation).getByRole('link', { name: 'Relatórios' })).toBeInTheDocument()
+  })
+
+  it('redirects an unauthorized reports URL back to the professional home', async () => {
+    const router = renderAt('/professional/reports')
+    await waitFor(() => { expect(router.state.location.pathname).toBe('/professional') })
+    const navigation = await screen.findByRole('navigation', { name: 'Navegação do ambiente' })
+    expect(within(navigation).queryByRole('link', { name: 'Relatórios' })).not.toBeInTheDocument()
   })
 
   it('opens the profile screen by its own address', async () => {

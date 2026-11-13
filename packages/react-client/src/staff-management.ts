@@ -117,6 +117,8 @@ export const ROLE_BUNDLE_LABEL_KEYS = {
   'task-evaluate': 'roleBundles.taskEvaluate',
   'appointment-read': 'roleBundles.appointmentRead',
   'appointment-write': 'roleBundles.appointmentWrite',
+  'report-read': 'roleBundles.reportRead',
+  'report-export': 'roleBundles.reportExport',
 } as const satisfies Readonly<Record<RoleBundleKey, `roleBundles.${string}`>>
 
 /**

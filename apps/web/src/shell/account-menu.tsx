@@ -1,5 +1,5 @@
 import { assertNever } from '@habituar/core/assert-never'
-import type { NavigationItem } from '@habituar/react-client/environment-navigation'
+import type { WebNavigationItem } from './web-navigation.js'
 import type { ActiveSession } from '@habituar/react-client/react-client'
 import { Link } from '@tanstack/react-router'
 import { LogOut, UserRound } from 'lucide-react'
@@ -24,7 +24,7 @@ import { habituar } from '../client/habituar-client.js'
 export function AccountMenu({
   items,
   session,
-}: Readonly<{ items: readonly NavigationItem[]; session: ActiveSession }>): ReactElement {
+}: Readonly<{ items: readonly WebNavigationItem[]; session: ActiveSession }>): ReactElement {
   const { t } = useTranslation()
   // Perfil só entra no menu onde o catálogo de navegação o declara: link para rota que o
   // ambiente não tem levaria a pessoa de volta ao guard.

@@ -3,13 +3,15 @@ import type { PropsWithChildren, ReactElement } from 'react'
 import { InstitutionSessionProvider } from '../session/institution-session.js'
 import type { InstitutionSession } from '../session/session-route.js'
 import { AppShell } from './app-shell.js'
+import { withReportsNavigation } from './web-navigation.js'
 
 /**
  * Casca profissional, a mesma para profissionais e monitores. Os destinos saem das
  * concessões atuais do vínculo, e o rótulo do ambiente continua dizendo qual é o vínculo.
  */
 export function ProfessionalAppShell({ session, children }: PropsWithChildren<Readonly<{ session: InstitutionSession }>>): ReactElement {
-  const navigation = useProfessionalNavigation(session.membership)
+  const primary = useProfessionalNavigation(session.membership)
+  const navigation = withReportsNavigation(primary, session.membership.permissions.some(permission => permission.key === 'report.read'))
 
   return (
     <InstitutionSessionProvider session={session}>

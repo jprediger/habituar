@@ -1,6 +1,6 @@
 import { SPACING } from '@habituar/design-tokens/spacing'
-import type { NavigationIcon as NavigationIconName, NavigationItem, NavigationPath } from '@habituar/react-client/environment-navigation'
-import { findActiveNavigationItem } from '@habituar/react-client/environment-navigation'
+import type { NavigationIcon as NavigationIconName } from '@habituar/react-client/environment-navigation'
+import type { MobileNavigationItem } from '../management/management-navigation'
 import { usePathname, useRouter } from 'expo-router'
 import { useTranslation } from 'react-i18next'
 import { Pressable, StyleSheet, View } from 'react-native'
@@ -22,15 +22,20 @@ const MINIMUM_TABS = 2
  * navegação, então esta barra nunca decide sozinha o que a pessoa pode abrir.
  * A administração geral não tem casca no app, só o aviso de que ela acontece na web.
  */
-type MobileNavigationPath = Exclude<NavigationPath<'professional' | 'student'>, '/professional/students'> | '/student/profile'
+export function findActiveMobileTab(items: readonly MobileNavigationItem[], pathname: string): MobileNavigationItem | undefined {
+  const normalized = pathname.length > 1 ? pathname.replace(/\/+$/, '') : pathname
+  return items
+    .filter((item) => normalized === item.path || normalized.startsWith(`${item.path}/`))
+    .reduce<MobileNavigationItem | undefined>((best, item) => best === undefined || item.path.length > best.path.length ? item : best, undefined)
+}
 
-export function EnvironmentTabBar({ items }: Readonly<{ items: readonly NavigationItem<MobileNavigationPath>[] }>) {
+export function EnvironmentTabBar({ items }: Readonly<{ items: readonly MobileNavigationItem[] }>) {
   const { t } = useTranslation()
   const pathname = usePathname()
   const router = useRouter()
   const insets = useSafeAreaInsets()
   const { colors } = useThemeTokens()
-  const activeItem = findActiveNavigationItem(items, pathname)
+  const activeItem = findActiveMobileTab(items, pathname)
   const setToastBottomOffset = useToastBottomOffset()
 
   if (items.length < MINIMUM_TABS) return null
@@ -70,7 +75,7 @@ function EnvironmentTab({
   icon,
   isSelected,
   onPress,
-}: Readonly<{ label: string; icon: NavigationIconName; isSelected: boolean; onPress: () => void }>) {
+}: Readonly<{ label: string; icon: NavigationIconName | 'reports'; isSelected: boolean; onPress: () => void }>) {
   const { colors, minimumTouchTarget } = useThemeTokens()
 
   return (

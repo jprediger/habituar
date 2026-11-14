@@ -3,6 +3,7 @@ import type { NavigationItem, NavigationPath } from '@habituar/react-client/envi
 import { getMembershipCapabilities, listManagementSections } from '@habituar/react-client/staff-management'
 import type { ManagementSection } from '@habituar/react-client/staff-management'
 import type { InstitutionSession } from '../session/session-screen'
+import { canReadReports } from '../reports/report-access'
 
 export type MobileManagementSection = 'students' | ManagementSection
 
@@ -16,9 +17,20 @@ export function listMobileManagementSections(session: InstitutionSession): reado
 }
 
 /** Na barra mobile, Gestão reúne estudantes e equipe; a web mantém sua navegação própria. */
-type MobileProfessionalPath = Exclude<NavigationPath<'professional'>, '/professional/students'>
+export type MobileReportsNavigationItem = Readonly<{
+  id: 'reports'
+  labelKey: 'navigation.reports'
+  path: '/professional/reports'
+  icon: 'reports'
+}>
 
-export function useMobileProfessionalTabs(session: InstitutionSession): readonly NavigationItem<MobileProfessionalPath>[] {
+export type MobileNavigationItem = NavigationItem<Exclude<NavigationPath<'professional' | 'student'>, '/professional/students'> | '/student/profile'> | MobileReportsNavigationItem
+
+const REPORTS_NAVIGATION: MobileReportsNavigationItem = {
+  id: 'reports', labelKey: 'navigation.reports', path: '/professional/reports', icon: 'reports',
+}
+
+export function useMobileProfessionalTabs(session: InstitutionSession): readonly MobileNavigationItem[] {
   const items = useProfessionalNavigation(session.membership)
   const management = {
     id: 'management' as const,
@@ -27,7 +39,14 @@ export function useMobileProfessionalTabs(session: InstitutionSession): readonly
     icon: 'team' as const,
   }
   const withoutStudents = items.flatMap(({ path, ...item }) => path === '/professional/students' ? [] : [{ ...item, path }])
-  if (listMobileManagementSections(session).length === 0 || withoutStudents.some((item) => item.id === 'management')) return withoutStudents
+  const hasManagement = listMobileManagementSections(session).length > 0
   const [home, ...rest] = withoutStudents
-  return home === undefined ? [management] : [home, management, ...rest]
+  const base = hasManagement && !withoutStudents.some((item) => item.id === 'management')
+    ? home === undefined ? [management] : [home, management, ...rest]
+    : withoutStudents
+
+  if (!canReadReports(session.membership.permissions)) return base
+  const agendaIndex = base.findIndex((item) => item.id === 'agenda')
+  const afterIndex = agendaIndex < 0 ? 0 : agendaIndex
+  return base.flatMap((item, index) => index === afterIndex ? [item, REPORTS_NAVIGATION] : [item])
 }

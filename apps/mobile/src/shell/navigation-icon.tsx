@@ -9,7 +9,11 @@ type NavigationIconWeight = 'regular' | 'fill'
 // bundle (o Metro não faz tree-shaking), e o import por ícone expõe a fonte da biblioteca
 // ao nosso typecheck estrito. Ícone novo no catálogo quebra o build aqui até ganhar os
 // pesos `regular` e `fill`, copiados do site.
-const GLYPHS: Readonly<Record<NavigationIconName, Readonly<Record<NavigationIconWeight, string>>>> = {
+const GLYPHS: Readonly<Record<NavigationIconName | 'reports', Readonly<Record<NavigationIconWeight, string>>>> = {
+  reports: {
+    regular: 'M32 224a8 8 0 0 1-8-8V40a8 8 0 0 1 16 0v168h184a8 8 0 0 1 0 16Zm40-32a8 8 0 0 1-8-8v-56a8 8 0 0 1 8-8h32a8 8 0 0 1 8 8v56a8 8 0 0 1-8 8Zm8-16h16v-40H80Zm48 8V88a8 8 0 0 1 8-8h32a8 8 0 0 1 8 8v96a8 8 0 0 1-8 8h-32a8 8 0 0 1-8-8m16-8h16V96h-16Zm48 8V56a8 8 0 0 1 8-8h24a8 8 0 0 1 8 8v128a8 8 0 0 1-8 8h-24a8 8 0 0 1-8-8m16-8h8V64h-8Z',
+    fill: 'M40 40v168h184a8 8 0 0 1 0 16H32a8 8 0 0 1-8-8V40a8 8 0 0 1 16 0Zm40 80h24a8 8 0 0 1 8 8v56a8 8 0 0 1-8 8H80a8 8 0 0 1-8-8v-56a8 8 0 0 1 8-8Zm56-40h32a8 8 0 0 1 8 8v96a8 8 0 0 1-8 8h-32a8 8 0 0 1-8-8V88a8 8 0 0 1 8-8Zm64-32h24a8 8 0 0 1 8 8v128a8 8 0 0 1-8 8h-24a8 8 0 0 1-8-8V56a8 8 0 0 1 8-8Z',
+  },
   home: {
     regular:
       'm219.31 108.68-80-80a16 16 0 0 0-22.62 0l-80 80A15.87 15.87 0 0 0 32 120v96a8 8 0 0 0 8 8h64a8 8 0 0 0 8-8v-56h32v56a8 8 0 0 0 8 8h64a8 8 0 0 0 8-8v-96a15.87 15.87 0 0 0-4.69-11.32M208 208h-48v-56a8 8 0 0 0-8-8h-48a8 8 0 0 0-8 8v56H48v-88l80-80 80 80Z',
@@ -51,7 +55,7 @@ export function NavigationIcon({
   weight,
   size,
   color,
-}: Readonly<{ icon: NavigationIconName; weight: NavigationIconWeight; size: number; color: string }>) {
+}: Readonly<{ icon: NavigationIconName | 'reports'; weight: NavigationIconWeight; size: number; color: string }>) {
   return (
     <Svg width={size} height={size} viewBox="0 0 256 256">
       <Path d={GLYPHS[icon][weight]} fill={color} />

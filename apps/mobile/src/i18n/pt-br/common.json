@@ -208,6 +208,7 @@
   },
   "navigation": {
     "agenda": "Agenda",
+    "reports": "Relatórios",
     "routine": "Rotina",
     "home": "Início",
     "management": "Gestão",
@@ -263,7 +264,9 @@
     "taskComplete": "Concluir tarefas e registrar fotos e observações",
     "taskEvaluate": "Avaliar as tarefas concluídas pelos alunos",
     "appointmentRead": "Ver agenda de atendimentos",
-    "appointmentWrite": "Agendar atendimentos"
+    "appointmentWrite": "Agendar atendimentos",
+    "reportRead": "Consultar relatórios de acompanhamento",
+    "reportExport": "Exportar relatórios de acompanhamento"
   },
   "staff": {
     "title": "Gestão",

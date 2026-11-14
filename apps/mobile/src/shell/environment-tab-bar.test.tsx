@@ -92,6 +92,21 @@ describe('environment tab bar', () => {
     expect(screen.queryByRole('tab')).toBeNull()
   })
 
+  it('exibe Relatórios para gestor, profissional ou monitor com report.read e respeita a navegação', () => {
+    mockRouter.pathname = '/professional/reports'
+    render(<ProfessionalBar permissions={[{ key: 'report.read', scope: 'assigned' }]} />)
+
+    const tab = screen.getByRole('tab', { name: 'Relatórios', selected: true })
+    expect(tab).toBeOnTheScreen()
+    fireEvent.press(tab)
+    expect(mockRouter.navigate).toHaveBeenCalledWith('/professional/reports')
+  })
+
+  it('esconde Relatórios sem report.read mesmo quando existe apenas report.export', () => {
+    render(<ProfessionalBar permissions={[{ key: 'report.export', scope: 'institution' }]} />)
+    expect(screen.queryByRole('tab', { name: 'Relatórios' })).toBeNull()
+  })
+
   it('offers the student home and agenda', () => {
     mockRouter.pathname = '/student/agenda'
 

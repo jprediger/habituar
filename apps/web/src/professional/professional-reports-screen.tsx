@@ -11,12 +11,11 @@ import { habituar } from '../client/habituar-client.js'
 import { Button } from '../components/ui/button.js'
 import { EmptyState } from '../components/ui/empty-state.js'
 import { Input } from '../components/ui/input.js'
-import { MetricTiles } from '../components/ui/metric-tiles.js'
 import { PageHeader } from '../components/ui/page-header.js'
 import { Section } from '../components/ui/section.js'
 import { useInstitutionSession } from '../session/institution-session.js'
 import { readCurrentTime } from '../time/current-time.js'
-import { formatReportDate, formatReportRate, ReportsDailyChart, ReportsWeekdayChart } from './reports-charts.js'
+import { formatReportDate, formatReportRate, ReportStackedBar, ReportStatusLegend, ReportsDailyChart, ReportsWeekdayChart } from './reports-charts.js'
 
 function defaultRange(institutionId: ReportFilter['institutionId']): ReportFilter {
   const today = readLocalDateTime(readCurrentTime()).date
@@ -164,14 +163,27 @@ function ReportsContent({ report }: Readonly<{ report: Report }>): ReactElement 
   return (
     <>
       <Section title={t('summaryTitle')}>
-        <MetricTiles items={[
-          { label: t('completed'), value: String(summary.completed) },
-          { label: t('missed'), value: String(summary.missed) },
-          { label: t('completionRate'), value: rate, hint: t('rateHint') },
-        ]} />
-        <div className="flex flex-wrap gap-md text-caption text-text-muted">
-          <span>{t('upcomingCount', { count: summary.upcoming })}</span>
-          <span>{t('studentsCountValue', { count: report.students.length })}</span>
+        <dl className="grid gap-md sm:grid-cols-2 xl:grid-cols-4">
+          {[
+            { label: t('completed'), value: String(summary.completed), border: 'border-t-primary' },
+            { label: t('missed'), value: String(summary.missed), border: 'border-t-danger' },
+            { label: t('upcoming'), value: String(summary.upcoming), border: 'border-t-info' },
+            { label: t('completionRate'), value: rate, border: 'border-t-primary' },
+          ].map((item) => (
+            <div key={item.label} className={`flex flex-col gap-sm rounded-surface border border-hairline border-t-4 bg-surface p-lg ${item.border}`}>
+              <dt className="text-body font-medium text-text">{item.label}</dt>
+              <dd className="text-display font-semibold tabular-nums break-words text-text">{item.value}</dd>
+            </div>
+          ))}
+        </dl>
+        <p className="text-body text-text-muted">{t('rateHint')}</p>
+        <p className="text-body text-text-muted">{t('studentsCountValue', { count: report.students.length })}</p>
+      </Section>
+
+      <Section title={t('distributionTitle')} description={t('distributionDescription')}>
+        <div className="rounded-surface border border-hairline bg-surface p-lg flex flex-col gap-lg">
+          <ReportStackedBar counters={summary} />
+          <ReportStatusLegend counters={summary} />
         </div>
       </Section>
 
@@ -193,14 +205,18 @@ function ReportsContent({ report }: Readonly<{ report: Report }>): ReactElement 
 
 function ReportKinds({ report }: Readonly<{ report: Report }>): ReactElement {
   const { t } = useTranslation('reports')
+  const visible = report.byKind.filter((row) => row.total > 0)
   return (
     <Section title={t('kindsTitle')} description={t('kindsDescription')}>
-      <div className="grid gap-sm sm:grid-cols-2 lg:grid-cols-3">
-        {report.byKind.filter((row) => row.total > 0).map((row) => (
-          <div key={row.kind ?? 'none'} className="rounded-field border border-hairline bg-surface p-md">
-            <p className="text-caption text-text-muted">{row.kind === null ? t('noKind') : taskKindLabel(row.kind, t)}</p>
-            <p className="text-title font-semibold tabular-nums text-text">{row.total}</p>
-            <p className="text-caption text-text-muted">{t('countSummary', row)}</p>
+      <div className="grid gap-md md:grid-cols-2">
+        {visible.map((row) => (
+          <div key={row.kind ?? 'none'} className="rounded-surface border border-hairline bg-surface p-lg flex flex-col gap-md">
+            <div className="flex items-center justify-between gap-md">
+              <h3 className="text-body font-semibold text-text">{row.kind === null ? t('noKind') : taskKindLabel(row.kind, t)}</h3>
+              <span className="text-title font-semibold tabular-nums text-text">{row.total}</span>
+            </div>
+            <ReportStackedBar counters={row} />
+            <ReportStatusLegend counters={row} />
           </div>
         ))}
       </div>
@@ -225,18 +241,18 @@ function ReportStudents({ report }: Readonly<{ report: Report }>): ReactElement 
     <Section title={t('comparisonTitle')} description={t('comparisonDescription')}>
       {report.students.length === 0 ? <p className="text-body text-text-muted">{t('emptyStudents')}</p> : (
         <div className="overflow-x-auto rounded-field border border-hairline bg-surface">
-          <table className="w-full min-w-[35rem] border-collapse text-left text-body">
+          <table className="w-full min-w-[40rem] border-collapse text-left text-body">
             <thead className="bg-surface-muted text-caption text-text-muted">
               <tr><th scope="col" className="px-md py-sm font-medium">{t('name')}</th><th scope="col" className="px-md py-sm text-right font-medium">{t('completed')}</th><th scope="col" className="px-md py-sm text-right font-medium">{t('missed')}</th><th scope="col" className="px-md py-sm text-right font-medium">{t('upcoming')}</th><th scope="col" className="px-md py-sm text-right font-medium">{t('completionRate')}</th></tr>
             </thead>
             <tbody className="divide-y divide-hairline">
               {report.students.map((student) => (
                 <tr key={student.id}>
-                  <th scope="row" className="px-md py-sm font-medium text-text">{student.name}</th>
-                  <td className="px-md py-sm text-right tabular-nums">{student.completed}</td>
-                  <td className="px-md py-sm text-right tabular-nums">{student.missed}</td>
-                  <td className="px-md py-sm text-right tabular-nums">{student.upcoming}</td>
-                  <td className="px-md py-sm text-right tabular-nums">{formatReportRate(student.completionRate)}</td>
+                  <th scope="row" className="px-md py-md font-medium text-text"><span className="block mb-sm">{student.name}</span><ReportStackedBar counters={student} /></th>
+                  <td className="px-md py-md text-right tabular-nums">{student.completed}</td>
+                  <td className="px-md py-md text-right tabular-nums">{student.missed}</td>
+                  <td className="px-md py-md text-right tabular-nums">{student.upcoming}</td>
+                  <td className="px-md py-md text-right tabular-nums">{formatReportRate(student.completionRate)}</td>
                 </tr>
               ))}
             </tbody>
@@ -255,7 +271,7 @@ function ReportActivities({ report }: Readonly<{ report: Report }>): ReactElemen
     <Section title={t('detailsTitle')} description={t('detailsDescription')}>
       {visible.length === 0 ? <p className="text-body text-text-muted">{t('emptyActivities')}</p> : (
         <div className="overflow-x-auto rounded-field border border-hairline bg-surface">
-          <table className="w-full min-w-[42rem] border-collapse text-left text-caption">
+          <table className="w-full min-w-[42rem] border-collapse text-left text-body">
             <thead className="bg-surface-muted text-text-muted">
               <tr><th scope="col" className="px-md py-sm font-medium">{t('date')}</th><th scope="col" className="px-md py-sm font-medium">{t('student')}</th><th scope="col" className="px-md py-sm font-medium">{t('activity')}</th><th scope="col" className="px-md py-sm font-medium">{t('status')}</th><th scope="col" className="px-md py-sm font-medium">{t('evaluation')}</th></tr>
             </thead>
@@ -265,7 +281,7 @@ function ReportActivities({ report }: Readonly<{ report: Report }>): ReactElemen
                   <td className="px-md py-sm tabular-nums whitespace-nowrap">{formatReportDate(activity.date)}</td>
                   <td className="px-md py-sm">{students.get(activity.studentId) ?? t('student')}</td>
                   <th scope="row" className="px-md py-sm font-medium">{activity.title}</th>
-                  <td className="px-md py-sm">{t(`statusLabels.${activity.status}`)}</td>
+                  <td className="px-md py-sm"><span className={activity.status === 'completed' ? 'inline-flex rounded-pill bg-primary/10 px-sm py-xs font-medium text-primary' : activity.status === 'missed' ? 'inline-flex rounded-pill bg-danger/10 px-sm py-xs font-medium text-danger' : 'inline-flex rounded-pill bg-info/10 px-sm py-xs font-medium text-info'}>{t(`statusLabels.${activity.status}`)}</span></td>
                   <td className="px-md py-sm">{activity.evaluation === null ? t('noEvaluation') : t(`evaluations.${activity.evaluation}`)}</td>
                 </tr>
               ))}

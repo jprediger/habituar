@@ -43,6 +43,8 @@ describe('tela de relatórios', () => {
     mount()
     expect(screen.getByRole('heading', { name: 'Relatórios de acompanhamento' })).toBeInTheDocument()
     expect(screen.getAllByText('75%').length).toBeGreaterThan(0)
+    expect(screen.getByRole('heading', { name: 'Distribuição das ocorrências' })).toBeInTheDocument()
+    expect(screen.getAllByText('Por vir').length).toBeGreaterThan(0)
     expect(screen.getAllByText('Joana').length).toBeGreaterThan(0)
     expect(screen.getByText('Atividade de leitura')).toBeInTheDocument()
   })

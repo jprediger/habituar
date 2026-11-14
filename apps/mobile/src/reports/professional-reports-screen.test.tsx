@@ -10,14 +10,14 @@ const INSTITUTION_ID = '00000000-0000-4000-8000-000000000001'
 const STUDENT_ID = '30000000-0000-4000-8000-000000000001'
 const TASK_ID = '40000000-0000-4000-8000-000000000001'
 const mockUseReport = jest.fn<unknown, unknown[]>()
-const mockShareReportPdf = jest.fn<Promise<void>, [ReportPdf]>()
+const mockSaveReportPdf = jest.fn<Promise<'saved' | 'cancelled' | 'file-options'>, [ReportPdf]>()
 
 jest.mock('../client/habituar-client', () => ({
   habituar: { useReport: (...args: unknown[]) => mockUseReport(...args) },
 }))
 
-jest.mock('./report-sharing', () => ({
-  shareReportPdf: (...args: [ReportPdf]) => mockShareReportPdf(...args),
+jest.mock('./report-file', () => ({
+  saveReportPdf: (...args: [ReportPdf]) => mockSaveReportPdf(...args),
 }))
 
 jest.mock('react-native-safe-area-context', () => ({
@@ -51,7 +51,7 @@ const SESSION = (() => {
 
 beforeEach(() => {
   jest.clearAllMocks()
-  mockShareReportPdf.mockResolvedValue(undefined)
+  mockSaveReportPdf.mockResolvedValue('saved')
   mockUseReport.mockImplementation(() => ({
     state: { status: 'ready', report },
     canExport: true,
@@ -66,6 +66,9 @@ describe('relatórios profissionais no app', () => {
 
     expect(await screen.findByRole('radio', { name: 'Lia Martins' })).toBeOnTheScreen()
     expect(screen.getByText('Leitura diária')).toBeOnTheScreen()
+    expect(screen.getByText('12/11/2026 · Lia Martins')).toBeOnTheScreen()
+    expect(screen.getAllByText('Concluídas: 1').length).toBeGreaterThan(0)
+    expect(screen.getByText('Distribuição das ocorrências')).toBeOnTheScreen()
     fireEvent.press(screen.getByRole('radio', { name: 'Lia Martins' }))
     fireEvent.press(screen.getByRole('button', { name: 'Aplicar filtros' }))
 
@@ -78,12 +81,13 @@ describe('relatórios profissionais no app', () => {
     })
   })
 
-  it('solicita o documento somente por ação explícita e compartilha o PDF devolvido pela API', async () => {
+  it('solicita o documento somente por ação explícita e salva o PDF devolvido pela API', async () => {
     render(<ProfessionalReportsScreen session={SESSION} />)
-    const action = await screen.findByRole('button', { name: 'Compartilhar PDF' })
-    expect(mockShareReportPdf).not.toHaveBeenCalled()
+    const action = await screen.findByRole('button', { name: /Salvar/ })
+    expect(mockSaveReportPdf).not.toHaveBeenCalled()
     fireEvent.press(action)
-    await waitFor(() => { expect(mockShareReportPdf).toHaveBeenCalledWith({ filename: 'relatorio.pdf', mediaType: 'application/pdf', base64: 'JVBERi0=' }) })
+    await waitFor(() => { expect(mockSaveReportPdf).toHaveBeenCalledWith({ filename: 'relatorio.pdf', mediaType: 'application/pdf', base64: 'JVBERi0=' }) })
+    expect(await screen.findByText('PDF salvo na pasta escolhida. Abra o aplicativo Arquivos para visualizar o documento.')).toBeOnTheScreen()
   })
 
   it('não oferece exportação sem report.export', async () => {
@@ -95,6 +99,6 @@ describe('relatórios profissionais no app', () => {
     }))
     render(<ProfessionalReportsScreen session={SESSION} />)
     expect(await screen.findByText('Você pode consultar relatórios, mas não possui permissão para exportá-los.')).toBeOnTheScreen()
-    expect(screen.queryByRole('button', { name: 'Compartilhar PDF' })).toBeNull()
+    expect(screen.queryByRole('button', { name: /Salvar/ })).toBeNull()
   })
 })

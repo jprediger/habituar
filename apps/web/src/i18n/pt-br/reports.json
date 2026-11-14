@@ -9,7 +9,7 @@
   "allStudents": "Todos os estudantes autorizados",
   "apply": "Aplicar filtros",
   "invalidPeriod": "Confira as datas. O intervalo deve ter até 93 dias.",
-  "exportPdf": "Exportar PDF",
+  "exportPdf": "Baixar PDF",
   "exporting": "Gerando PDF...",
   "exportFailed": "Não foi possível exportar o PDF. Tente novamente.",
   "loading": "Preparando indicadores...",
@@ -31,7 +31,7 @@
   "weekdaysTitle": "Atividades por dia da semana",
   "weekdaysDescription": "Distribuição de atividades concluídas, não realizadas e futuras.",
   "dailyTitle": "Evolução diária",
-  "dailyDescription": "Atividades concluídas e não realizadas nos últimos 14 dias do período.",
+  "dailyDescription": "Situação das atividades nos últimos 14 dias do período.",
   "kindsTitle": "Tipos de atividade",
   "kindsDescription": "Quantidade de atividades por categoria, conforme a rotina registrada.",
   "noKind": "Sem categoria",
@@ -82,5 +82,7 @@
   "exportPermission": "Você pode consultar relatórios, mas não possui permissão para exportá-los.",
   "filterHelp": "O período pode conter no máximo 93 dias.",
   "emptyComparison": "Nenhum estudante com atividades no período selecionado.",
-  "exportScopeNarrower": "Seu PDF pode mostrar menos estudantes do que a tela, porque a permissão de exportação está limitada aos alunos vinculados."
+  "exportScopeNarrower": "Seu PDF pode mostrar menos estudantes do que a tela, porque a permissão de exportação está limitada aos alunos vinculados.",
+  "distributionTitle": "Distribuição das ocorrências",
+  "distributionDescription": "Concluídas, não realizadas e futuras no período selecionado."
 }

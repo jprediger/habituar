@@ -3,10 +3,9 @@ import type { Report, ReportCounters, ReportFilter } from '@habituar/core/report
 import { SPACING } from '@habituar/design-tokens/spacing'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { StyleSheet, View } from 'react-native'
+import { Platform, StyleSheet, View } from 'react-native'
 import { habituar } from '../client/habituar-client'
 import { Button } from '../components/ui/button'
-import { Card } from '../components/ui/card'
 import { ChoiceList } from '../components/ui/choice-list'
 import { DateTimeField } from '../components/ui/date-time-field'
 import { EmptyState } from '../components/ui/empty-state'
@@ -14,15 +13,14 @@ import { InlineNotice } from '../components/ui/inline-notice'
 import { Page } from '../components/ui/page'
 import { PageHeader } from '../components/ui/page-header'
 import { Section } from '../components/ui/section'
-import { SummaryCard } from '../components/ui/summary-card'
 import { Text } from '../components/ui/text'
 import type { InstitutionSession } from '../session/session-screen'
 import { useThemeTokens } from '../theme/tokens'
 import { readCurrentTime } from '../time/current-time'
 import { formatReportDate, formatReportRate, initialReportFilter } from './report-format'
-import { shareReportPdf } from './report-sharing'
+import { saveReportPdf } from './report-file'
 
-/** O cliente compartilhado fornece o relatório autorizado e o PDF; o app só apresenta os dados. */
+/** O servidor controla indicadores e escopo; o app apresenta o mesmo recorte do PDF. */
 export function ProfessionalReportsScreen({ session }: Readonly<{ session: InstitutionSession }>) {
   const { t } = useTranslation('reports')
   const institutionId = session.membership.institution.id
@@ -33,6 +31,7 @@ export function ProfessionalReportsScreen({ session }: Readonly<{ session: Insti
   const [invalid, setInvalid] = useState(false)
   const [exporting, setExporting] = useState(false)
   const [exportFailure, setExportFailure] = useState(false)
+  const [exportResult, setExportResult] = useState<'saved' | 'file-options' | null>(null)
 
   const overview = habituar.useReport(session.membership, {
     institutionId, from: filter.from, to: filter.to,
@@ -53,15 +52,18 @@ export function ProfessionalReportsScreen({ session }: Readonly<{ session: Insti
     }
     setInvalid(false)
     setExportFailure(false)
+    setExportResult(null)
     setFilter(parsed.data)
   }
 
   async function exportPdf(): Promise<void> {
     setExportFailure(false)
+    setExportResult(null)
     setExporting(true)
     try {
       const pdf = await current.exportPdf()
-      await shareReportPdf(pdf)
+      const result = await saveReportPdf(pdf)
+      if (result !== 'cancelled') setExportResult(result)
     } catch {
       setExportFailure(true)
     } finally {
@@ -101,24 +103,26 @@ export function ProfessionalReportsScreen({ session }: Readonly<{ session: Insti
             />
           </View>
           <ChoiceList label={t('student')} choices={choices} value={studentId} onChange={setStudentId} />
-          <Text size="caption" tone="muted">{t('filterHelp')}</Text>
+          <Text tone="muted">{t('filterHelp')}</Text>
           {invalid && <Text accessibilityRole="alert" tone="danger">{t('invalidPeriod')}</Text>}
           <Button label={t('apply')} onPress={applyFilters} />
         </View>
       </Section>
 
       {current.canExport ? (
-        <Button
-          label={exporting ? t('exporting') : t('exportPdf')}
-          icon="clipboard-text"
-          variant="outline"
-          isDisabled={current.state.status !== 'ready' || exporting}
-          isBusy={exporting}
-          onPress={() => { void exportPdf() }}
-        />
+        <View style={styles.filters}>
+          <Button
+            label={exporting ? t('exporting') : Platform.OS === 'android' ? t('savePdf') : t('savePdfIos')}
+            isDisabled={current.state.status !== 'ready' || exporting}
+            isBusy={exporting}
+            onPress={() => { void exportPdf() }}
+          />
+          <Text tone="muted">{t(Platform.OS === 'android' ? 'saveHelpAndroid' : 'saveHelpIos')}</Text>
+        </View>
       ) : <InlineNotice message={t('exportPermission')} />}
       {exportScopeNarrower && <InlineNotice message={t('exportScopeNarrower')} />}
       {exportFailure && <Text accessibilityRole="alert" tone="danger">{t('exportFailed')}</Text>}
+      {exportResult !== null && <Text accessibilityRole="alert" tone="primary">{t(exportResult === 'saved' ? 'savedPdf' : 'fileOptionsPdf')}</Text>}
 
       {current.state.status === 'loading' && <Text accessibilityRole="text" tone="muted">{t('loading')}</Text>}
       {current.state.status === 'failed' && (
@@ -136,12 +140,13 @@ export function ProfessionalReportsScreen({ session }: Readonly<{ session: Insti
 
 function ReportContent({ report }: Readonly<{ report: Report }>) {
   const { t } = useTranslation('reports')
+  const { colors, radius } = useThemeTokens()
   const { summary, activities } = report
   const tiles = [
-    { key: 'completed', label: t('completed'), value: String(summary.completed) },
-    { key: 'missed', label: t('missed'), value: String(summary.missed) },
-    { key: 'upcoming', label: t('upcoming'), value: String(summary.upcoming) },
-    { key: 'rate', label: t('completionRate'), value: summary.completionRate === null ? t('noRate') : formatReportRate(summary.completionRate) },
+    { key: 'completed', label: t('completed'), value: String(summary.completed), accent: colors.primary },
+    { key: 'missed', label: t('missed'), value: String(summary.missed), accent: colors.danger },
+    { key: 'upcoming', label: t('upcoming'), value: String(summary.upcoming), accent: colors.info },
+    { key: 'rate', label: t('completionRate'), value: summary.completionRate === null ? t('noRate') : formatReportRate(summary.completionRate), accent: colors.primary },
   ]
 
   return (
@@ -149,16 +154,20 @@ function ReportContent({ report }: Readonly<{ report: Report }>) {
       <Section title={t('summaryTitle')}>
         <View style={styles.tiles}>
           {tiles.map((tile) => (
-            <View key={tile.key} style={styles.tile}>
-              <Card>
-                <Text size="caption" tone="muted">{tile.label}</Text>
-                <Text size="title" weight="bold">{tile.value}</Text>
-              </Card>
+            <View key={tile.key} style={[styles.tile, { backgroundColor: colors.surfaceMuted, borderRadius: radius.surface, borderTopColor: tile.accent }]}>
+              <Text weight="medium">{tile.label}</Text>
+              <Text size={tile.key === 'rate' && summary.completionRate === null ? 'body' : 'display'} weight="bold">{tile.value}</Text>
             </View>
           ))}
         </View>
-        <Text size="caption" tone="muted">{t('rateHint')}</Text>
-        <Text size="caption" tone="muted">{t('studentsCount', { count: report.students.length })}</Text>
+        <Text tone="muted">{t('rateHint')}</Text>
+        <Text tone="muted">{t('studentsCount', { count: report.students.length })}</Text>
+      </Section>
+
+      <Section title={t('distributionTitle')}>
+        <Text tone="muted">{t('distributionDescription')}</Text>
+        <ReportStatusBar counters={summary} />
+        <ReportCounts counters={summary} />
       </Section>
 
       {activities.length === 0 ? (
@@ -168,78 +177,112 @@ function ReportContent({ report }: Readonly<{ report: Report }>) {
           <ReportBarSection title={t('weekdaysTitle')} rows={report.byWeekday.map((row) => ({
             key: String(row.weekday), label: t(`weekdayNames.${weekdayKey(row.weekday)}`), counters: row,
           }))} />
-          <ReportBarSection title={t('dailyTitle')} rows={report.byDay.slice(-14).map((row) => ({
+          <ReportBarSection title={t('dailyTitle')} description={t('dailyDescription')} rows={report.byDay.slice(-7).map((row) => ({
             key: row.date, label: formatReportDate(row.date), counters: row,
           }))} />
-          <Section title={t('kindsTitle')}>
-            {report.byKind.filter((row) => row.total > 0).map((row) => (
-              <SummaryCard key={row.kind ?? 'uncategorized'} items={[
-                { label: row.kind === null ? t('noKind') : t(`kindLabels.${row.kind}`), value: t('countSummary', row) },
-              ]} />
-            ))}
-          </Section>
+          <ReportBarSection title={t('kindsTitle')} rows={report.byKind.filter((row) => row.total > 0).map((row) => ({
+            key: row.kind ?? 'uncategorized',
+            label: row.kind === null ? t('noKind') : t(`kindLabels.${row.kind}`),
+            counters: row,
+          }))} />
         </>
       )}
 
       <Section title={t('comparisonTitle')}>
-        <Text tone="muted" size="caption">{t('comparisonDescription')}</Text>
+        <Text tone="muted">{t('comparisonDescription')}</Text>
         {report.students.length === 0 ? <Text tone="muted">{t('emptyStudents')}</Text> : report.students.map((student) => (
-          <SummaryCard key={student.id} items={[
-            { label: student.name, value: t('countSummary', student) },
-            { label: t('completionRate'), value: student.completionRate === null ? t('noRate') : formatReportRate(student.completionRate) },
-          ]} />
+          <View key={student.id} style={[styles.studentCard, { backgroundColor: colors.surfaceMuted, borderRadius: radius.surface }]}>
+            <Text weight="bold" size="title">{student.name}</Text>
+            <View style={styles.studentRate}>
+              <Text>{t('completionRate')}</Text>
+              <Text size="title" weight="bold">{formatReportRate(student.completionRate)}</Text>
+            </View>
+            <ReportStatusBar counters={student} />
+            <ReportCounts counters={student} />
+          </View>
         ))}
       </Section>
 
       <Section title={t('detailsTitle')}>
-        <Text size="caption" tone="muted">{t('detailsDescription')}</Text>
+        <Text tone="muted">{t('detailsDescription')}</Text>
         {activities.length === 0 ? <Text tone="muted">{t('emptyActivities')}</Text> : activities.slice(-20).reverse().map((activity) => {
           const student = report.students.find((item) => item.id === activity.studentId)
+          const accent = activity.status === 'completed' ? colors.primary : activity.status === 'missed' ? colors.danger : colors.info
           return (
-            <SummaryCard
-              key={`${activity.studentId}-${activity.taskId}-${activity.originalDate}`}
-              items={[
-                { label: `${formatReportDate(activity.date)} · ${student?.name ?? t('unknownStudent')}`, value: activity.title },
-                { label: t(`statusLabels.${activity.status}`), value: activity.evaluation === null ? t('noEvaluation') : t(`evaluations.${activity.evaluation}`) },
-              ]}
-            />
+            <View key={`${activity.studentId}-${activity.taskId}-${activity.originalDate}`} style={[styles.activityCard, { backgroundColor: colors.surfaceMuted, borderColor: accent, borderRadius: radius.surface }]}>
+              <Text size="title" weight="medium">{activity.title}</Text>
+              <Text tone="muted">{t('activityMeta', { date: formatReportDate(activity.date), student: student?.name ?? t('unknownStudent') })}</Text>
+              <Text weight="medium">{t(`statusLabels.${activity.status}`)}</Text>
+              <Text tone="muted">{activity.evaluation === null ? t('noEvaluation') : t(`evaluations.${activity.evaluation}`)}</Text>
+            </View>
           )
         })}
-        {activities.length > 20 && <Text size="caption" tone="muted">{t('limitedActivities', { count: activities.length })}</Text>}
+        {activities.length > 20 && <Text tone="muted">{t('limitedActivities', { count: activities.length })}</Text>}
       </Section>
-      <Text size="caption" tone="muted">{t('generatedAt', { date: new Date(report.generatedAt).toLocaleString('pt-BR', { timeZone: report.timeZone }) })}</Text>
-      <Text size="caption" tone="muted">{t('timeZone', { zone: report.timeZone })}</Text>
+      <Text tone="muted">{t('generatedAt', { date: new Date(report.generatedAt).toLocaleString('pt-BR', { timeZone: report.timeZone }) })}</Text>
+      <Text tone="muted">{t('timeZone', { zone: report.timeZone })}</Text>
     </>
   )
 }
 
 type ReportBarItem = Readonly<{ key: string; label: string; counters: ReportCounters }>
 
-function ReportBarSection({ title, rows }: Readonly<{ title: string; rows: readonly ReportBarItem[] }>) {
-  const { t } = useTranslation('reports')
+function ReportBarSection({ title, description, rows }: Readonly<{ title: string; description?: string; rows: readonly ReportBarItem[] }>) {
   const { colors, radius } = useThemeTokens()
   const largest = Math.max(1, ...rows.map((row) => row.counters.total))
   return (
     <Section title={title}>
+      {description !== undefined && <Text tone="muted">{description}</Text>}
       {rows.map(({ key, label, counters }) => (
-        <View key={key} style={styles.barItem}>
-          <Text weight="medium" size="caption">{label}</Text>
-          <View
-            accessibilityElementsHidden importantForAccessibility="no-hide-descendants"
-            style={[styles.barTrack, { backgroundColor: colors.surfaceMuted, borderRadius: radius.pill }]}
-          >
-            {counters.total > 0 && (
-              <View style={[styles.bar, { width: percent(counters.total / largest) }]}>
-                {counters.completed > 0 && <View style={{ flex: counters.completed, backgroundColor: colors.primary }} />}
-                {counters.missed > 0 && <View style={{ flex: counters.missed, backgroundColor: colors.danger }} />}
-                {counters.upcoming > 0 && <View style={{ flex: counters.upcoming, backgroundColor: colors.border }} />}
-              </View>
-            )}
+        <View key={key} style={[styles.barItem, { backgroundColor: colors.surfaceMuted, borderRadius: radius.surface }]}>
+          <View style={styles.barHeader}>
+            <Text weight="medium">{label}</Text>
+            <Text weight="bold">{String(counters.total)}</Text>
           </View>
-          <Text size="caption" tone="muted">{t('countSummary', counters)}</Text>
+          <ReportStatusBar counters={counters} proportion={counters.total / largest} />
+          <ReportCounts counters={counters} />
         </View>
       ))}
     </Section>
+  )
+}
+
+function ReportStatusBar({ counters, proportion = 1 }: Readonly<{ counters: ReportCounters; proportion?: number }>) {
+  const { colors, radius } = useThemeTokens()
+  const { t } = useTranslation('reports')
+  return (
+    <View
+      accessible accessibilityLabel={t('countSummary', counters)}
+      style={[styles.barTrack, { backgroundColor: colors.divider, borderRadius: radius.pill }]}
+    >
+      {counters.total > 0 && (
+        <View style={[styles.bar, { width: percent(proportion) }]}>
+          {counters.completed > 0 && <View style={{ flex: counters.completed, backgroundColor: colors.primary }} />}
+          {counters.missed > 0 && <View style={{ flex: counters.missed, backgroundColor: colors.danger }} />}
+          {counters.upcoming > 0 && <View style={{ flex: counters.upcoming, backgroundColor: colors.info }} />}
+        </View>
+      )}
+    </View>
+  )
+}
+
+function ReportCounts({ counters }: Readonly<{ counters: ReportCounters }>) {
+  const { t } = useTranslation('reports')
+  const { colors } = useThemeTokens()
+  const items = [
+    { key: 'completed', label: t('completed'), value: counters.completed, color: colors.primary },
+    { key: 'missed', label: t('missed'), value: counters.missed, color: colors.danger },
+    { key: 'upcoming', label: t('upcoming'), value: counters.upcoming, color: colors.info },
+  ]
+  return (
+    <View style={styles.counts}>
+      {items.map((item) => (
+        <View key={item.key} style={styles.count}>
+          <View style={[styles.countDot, { backgroundColor: item.color }]} accessibilityElementsHidden />
+          <Text>{t('statusCount', { label: item.label, value: item.value })}</Text>
+        </View>
+      ))}
+    </View>
   )
 }
 
@@ -261,8 +304,15 @@ const styles = StyleSheet.create({
   filters: { gap: SPACING.lg },
   field: { gap: SPACING.sm },
   tiles: { flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.sm },
-  tile: { width: '48%', minWidth: 120, flexGrow: 1 },
-  barItem: { gap: SPACING.xs },
-  barTrack: { height: SPACING.md, overflow: 'hidden' },
+  tile: { width: '48%', flexGrow: 1, minWidth: 112, padding: SPACING.lg, gap: SPACING.sm, borderTopWidth: 4 },
+  barItem: { gap: SPACING.md, padding: SPACING.lg },
+  barHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: SPACING.sm },
+  barTrack: { height: 16, overflow: 'hidden' },
   bar: { flexDirection: 'row', height: '100%' },
+  counts: { flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.md },
+  count: { flexDirection: 'row', alignItems: 'center', gap: SPACING.xs },
+  countDot: { width: 10, height: 10, borderRadius: 5 },
+  studentCard: { padding: SPACING.lg, gap: SPACING.md },
+  studentRate: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: SPACING.sm },
+  activityCard: { padding: SPACING.lg, gap: SPACING.sm, borderLeftWidth: 4 },
 })

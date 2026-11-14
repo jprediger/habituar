@@ -9,9 +9,9 @@
   "apply": "Aplicar filtros",
   "invalidPeriod": "Confira as datas. O intervalo deve ter até 93 dias.",
   "filterHelp": "O período pode conter no máximo 93 dias.",
-  "exportPdf": "Compartilhar PDF",
+  "exportPdf": "Salvar PDF",
   "exporting": "Preparando PDF...",
-  "exportFailed": "Não foi possível compartilhar o PDF neste dispositivo.",
+  "exportFailed": "Não foi possível salvar o PDF. Escolha outra pasta e tente novamente.",
   "exportPermission": "Você pode consultar relatórios, mas não possui permissão para exportá-los.",
   "exportScopeNarrower": "O PDF pode mostrar menos estudantes porque a exportação está limitada aos alunos vinculados.",
   "loading": "Preparando indicadores...",
@@ -43,6 +43,8 @@
   "generatedAt": "Dados atualizados em {{date}}",
   "timeZone": "Horário da instituição: {{zone}}",
   "countSummary": "{{completed}} concluídas, {{missed}} não realizadas e {{upcoming}} futuras",
+  "activityMeta": "{{date}} · {{student}}",
+  "statusCount": "{{label}}: {{value}}",
   "weekdayNames": {
     "monday": "Segunda-feira",
     "tuesday": "Terça-feira",
@@ -70,5 +72,14 @@
     "partial": "Parcial",
     "not-achieved": "Não alcançado"
   },
-  "unknownStudent": "Estudante"
+  "unknownStudent": "Estudante",
+  "savePdf": "Salvar PDF",
+  "savePdfIos": "Salvar em Arquivos / abrir",
+  "saveHelpAndroid": "Escolha uma pasta do aparelho. Depois, abra o arquivo no app Arquivos ou em seu leitor de PDF para visualizar e compartilhar.",
+  "saveHelpIos": "Escolha Salvar em Arquivos no menu do iPhone, ou abra com seu leitor de PDF.",
+  "savedPdf": "PDF salvo na pasta escolhida. Abra o aplicativo Arquivos para visualizar o documento.",
+  "fileOptionsPdf": "Escolha Salvar em Arquivos para guardar o documento no iPhone.",
+  "distributionTitle": "Distribuição das ocorrências",
+  "distributionDescription": "Concluídas, não realizadas e futuras no período selecionado.",
+  "dailyDescription": "Últimos 7 dias do período. Para consultar todas as datas, abra o PDF."
 }

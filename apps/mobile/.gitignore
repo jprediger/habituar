@@ -41,3 +41,7 @@ example
 # generated native folders
 /ios
 /android
+
+
+/modules/report-downloads/android/build/
+/modules/report-downloads/android/.gradle/

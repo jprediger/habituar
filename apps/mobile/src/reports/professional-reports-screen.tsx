@@ -31,7 +31,7 @@ export function ProfessionalReportsScreen({ session }: Readonly<{ session: Insti
   const [invalid, setInvalid] = useState(false)
   const [exporting, setExporting] = useState(false)
   const [exportFailure, setExportFailure] = useState(false)
-  const [exportResult, setExportResult] = useState<'saved' | 'file-options' | null>(null)
+  const [exportResult, setExportResult] = useState<'saved' | 'opened' | 'file-options' | null>(null)
 
   const overview = habituar.useReport(session.membership, {
     institutionId, from: filter.from, to: filter.to,
@@ -117,12 +117,12 @@ export function ProfessionalReportsScreen({ session }: Readonly<{ session: Insti
             isBusy={exporting}
             onPress={() => { void exportPdf() }}
           />
-          <Text tone="muted">{t(Platform.OS === 'android' ? 'saveHelpAndroid' : 'saveHelpIos')}</Text>
+          <Text tone="muted">{t(Platform.OS === 'android' ? Platform.Version >= 29 ? 'saveHelpAndroid' : 'saveHelpAndroidLegacy' : 'saveHelpIos')}</Text>
         </View>
       ) : <InlineNotice message={t('exportPermission')} />}
       {exportScopeNarrower && <InlineNotice message={t('exportScopeNarrower')} />}
       {exportFailure && <Text accessibilityRole="alert" tone="danger">{t('exportFailed')}</Text>}
-      {exportResult !== null && <Text accessibilityRole="alert" tone="primary">{t(exportResult === 'saved' ? 'savedPdf' : 'fileOptionsPdf')}</Text>}
+      {exportResult !== null && <Text accessibilityRole="alert" tone="primary">{t(exportResult === 'opened' ? 'openedPdf' : exportResult === 'saved' ? Platform.OS === 'android' && Platform.Version < 29 ? 'savedPdfLegacy' : 'savedPdf' : 'fileOptionsPdf')}</Text>}
 
       {current.state.status === 'loading' && <Text accessibilityRole="text" tone="muted">{t('loading')}</Text>}
       {current.state.status === 'failed' && (

@@ -2,6 +2,7 @@ import { reportSchema } from '@habituar/core/reports'
 import type { ReportPdf } from '@habituar/core/reports'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react-native'
 import type { ReactNode } from 'react'
+import { Platform } from 'react-native'
 import '../i18n/i18n'
 import { createInstitutionSession } from '../session/institution-session-fixture'
 import { ProfessionalReportsScreen } from './professional-reports-screen'
@@ -10,7 +11,7 @@ const INSTITUTION_ID = '00000000-0000-4000-8000-000000000001'
 const STUDENT_ID = '30000000-0000-4000-8000-000000000001'
 const TASK_ID = '40000000-0000-4000-8000-000000000001'
 const mockUseReport = jest.fn<unknown, unknown[]>()
-const mockSaveReportPdf = jest.fn<Promise<'saved' | 'cancelled' | 'file-options'>, [ReportPdf]>()
+const mockSaveReportPdf = jest.fn<Promise<'saved' | 'opened' | 'cancelled' | 'file-options'>, [ReportPdf]>()
 
 jest.mock('../client/habituar-client', () => ({
   habituar: { useReport: (...args: unknown[]) => mockUseReport(...args) },
@@ -51,7 +52,9 @@ const SESSION = (() => {
 
 beforeEach(() => {
   jest.clearAllMocks()
-  mockSaveReportPdf.mockResolvedValue('saved')
+  jest.replaceProperty(Platform, 'OS', 'android')
+  jest.spyOn(Platform, 'Version', 'get').mockReturnValue(35)
+  mockSaveReportPdf.mockResolvedValue('opened')
   mockUseReport.mockImplementation(() => ({
     state: { status: 'ready', report },
     canExport: true,
@@ -59,6 +62,8 @@ beforeEach(() => {
     exportPdf: jest.fn().mockResolvedValue({ filename: 'relatorio.pdf', mediaType: 'application/pdf', base64: 'JVBERi0=' }),
   }))
 })
+
+afterEach(() => { jest.restoreAllMocks() })
 
 describe('relatórios profissionais no app', () => {
   it('mostra indicadores e atividades da API e filtra por estudante autorizado', async () => {
@@ -83,11 +88,18 @@ describe('relatórios profissionais no app', () => {
 
   it('solicita o documento somente por ação explícita e salva o PDF devolvido pela API', async () => {
     render(<ProfessionalReportsScreen session={SESSION} />)
-    const action = await screen.findByRole('button', { name: /Salvar/ })
+    const action = await screen.findByRole('button', { name: 'Baixar PDF' })
     expect(mockSaveReportPdf).not.toHaveBeenCalled()
     fireEvent.press(action)
     await waitFor(() => { expect(mockSaveReportPdf).toHaveBeenCalledWith({ filename: 'relatorio.pdf', mediaType: 'application/pdf', base64: 'JVBERi0=' }) })
-    expect(await screen.findByText('PDF salvo na pasta escolhida. Abra o aplicativo Arquivos para visualizar o documento.')).toBeOnTheScreen()
+    expect(await screen.findByText('PDF salvo em Downloads e aberto no leitor de PDF.')).toBeOnTheScreen()
+  })
+
+  it('avisa onde encontrar o PDF quando não foi possível abrir o leitor', async () => {
+    mockSaveReportPdf.mockResolvedValue('saved')
+    render(<ProfessionalReportsScreen session={SESSION} />)
+    fireEvent.press(await screen.findByRole('button', { name: 'Baixar PDF' }))
+    expect(await screen.findByText('PDF salvo em Downloads, mas não foi possível abrir automaticamente. Abra o aplicativo Arquivos ou instale um leitor de PDF.')).toBeOnTheScreen()
   })
 
   it('não oferece exportação sem report.export', async () => {
@@ -99,6 +111,6 @@ describe('relatórios profissionais no app', () => {
     }))
     render(<ProfessionalReportsScreen session={SESSION} />)
     expect(await screen.findByText('Você pode consultar relatórios, mas não possui permissão para exportá-los.')).toBeOnTheScreen()
-    expect(screen.queryByRole('button', { name: /Salvar/ })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Baixar PDF' })).toBeNull()
   })
 })

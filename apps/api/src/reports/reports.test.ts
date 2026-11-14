@@ -83,7 +83,9 @@ describe('relatórios de acompanhamento', () => {
     const pdf = reportPdfSchema.parse(response.body)
     const binary = Buffer.from(pdf.base64, 'base64')
     expect(binary.subarray(0, 8).toString('latin1')).toBe('%PDF-1.4')
-    expect(binary.toString('latin1')).toContain('Relatório de acompanhamento')
+    const content = binary.toString('latin1')
+    expect(content).toContain('RELATÓRIO DE ACOMPANHAMENTO')
+    expect(content).toContain('PEDAGÓGICO')
     expect(pdf.mediaType).toBe('application/pdf')
   })
 

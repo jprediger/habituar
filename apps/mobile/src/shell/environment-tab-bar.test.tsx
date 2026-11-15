@@ -138,6 +138,11 @@ describe('environment tab bar', () => {
     expect(screen.queryByRole('tab', { name: 'Estudantes' })).toBeNull()
   })
 
+  it('mostra Gestão quando o único acesso é consultar turmas', () => {
+    render(<ProfessionalBar permissions={[{ key: 'class.read', scope: 'assigned' }]} />)
+    expect(screen.getByRole('tab', { name: 'Gestão' })).toBeOnTheScreen()
+  })
+
   it('keeps Gestão selected in the student section', () => {
     mockRouter.pathname = '/professional/management/students/student/123'
     render(<ProfessionalBar permissions={[{ key: 'student.read', scope: 'assigned' }]} />)

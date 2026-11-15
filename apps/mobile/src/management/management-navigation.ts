@@ -1,17 +1,19 @@
 import { useProfessionalNavigation } from '@habituar/react-client/environment-navigation'
 import type { NavigationItem, NavigationPath } from '@habituar/react-client/environment-navigation'
 import { getMembershipCapabilities, listManagementSections } from '@habituar/react-client/staff-management'
+import { getClassCapabilities } from '@habituar/react-client/class-hooks'
 import type { ManagementSection } from '@habituar/react-client/staff-management'
 import type { InstitutionSession } from '../session/session-screen'
 import { canReadReports } from '../reports/report-access'
 
-export type MobileManagementSection = 'students' | ManagementSection
+export type MobileManagementSection = 'students' | 'classes' | ManagementSection
 
 /** As seções da Gestão no app dependem das concessões da instituição ativa. */
 export function listMobileManagementSections(session: InstitutionSession): readonly MobileManagementSection[] {
   const capabilities = getMembershipCapabilities(session.membership.permissions)
   return [
     ...(capabilities.canReadStudents ? ['students' as const] : []),
+    ...(getClassCapabilities(session.membership).canRead ? ['classes' as const] : []),
     ...listManagementSections(capabilities),
   ]
 }

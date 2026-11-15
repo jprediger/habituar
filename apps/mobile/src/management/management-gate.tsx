@@ -1,4 +1,5 @@
 import { getMembershipCapabilities } from '@habituar/react-client/staff-management'
+import { getClassCapabilities } from '@habituar/react-client/class-hooks'
 import { Redirect, usePathname } from 'expo-router'
 import type { ReactElement } from 'react'
 import type { InstitutionSession } from '../session/session-screen'
@@ -15,6 +16,8 @@ export function ManagementGate({ session, children }: Readonly<{ session: Instit
   if (sections.length === 0) return <Redirect href="/professional" />
   if (pathname === '/professional/management/students' || pathname.startsWith('/professional/management/students/')) {
     if (!capabilities.canReadStudents) return <Redirect href="/professional/management" />
+  } else if (pathname === '/professional/management/classes' || pathname.startsWith('/professional/management/classes/')) {
+    if (!getClassCapabilities(session.membership).canRead) return <Redirect href="/professional/management" />
   } else if (pathname !== '/professional/management' && !capabilities.canReadTeam) {
     return <Redirect href="/professional/management" />
   }

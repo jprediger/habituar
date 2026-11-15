@@ -273,19 +273,21 @@
   },
   "staff": {
     "title": "Gestão",
-    "description": "Organize a equipe da instituição: pessoas, convites e papéis.",
+    "description": "Organize turmas, estudantes e equipe da instituição.",
     "sectionsLabel": "Seções da gestão",
     "sections": {
       "team": "Equipe",
       "invitations": "Convites",
       "roles": "Papéis",
-      "students": "Estudantes"
+      "students": "Estudantes",
+      "classes": "Turmas"
     },
     "sectionDescriptions": {
       "team": "Pessoas da instituição, seus papéis e novos convites",
       "invitations": "Histórico de convites enviados",
       "roles": "Papéis personalizados e modelos do sistema",
-      "students": "Cadastros, responsáveis e acompanhamentos dos estudantes"
+      "students": "Cadastros, responsáveis e acompanhamentos dos estudantes",
+      "classes": "Agrupamentos de estudantes e profissionais, matrículas e histórico"
     },
     "loading": "Carregando...",
     "retry": "Tentar novamente",

@@ -52,6 +52,8 @@ module.exports = {
     '^@habituar/core/student-records$': '<rootDir>/../../packages/core/src/student-records.ts',
     '^@habituar/core/schedule$': '<rootDir>/../../packages/core/src/schedule.ts',
     '^@habituar/core/reports$': '<rootDir>/../../packages/core/src/reports.ts',
+    '^@habituar/core/classes$': '<rootDir>/../../packages/core/src/classes.ts',
+    '^@habituar/react-client/class-hooks$': '<rootDir>/../../packages/react-client/src/class-hooks.ts',
     '^@habituar/core/tasks$': '<rootDir>/../../packages/core/src/tasks.ts',
     '^@habituar/core/calendar$': '<rootDir>/../../packages/core/src/calendar.ts',
     '^@habituar/core/appointments$': '<rootDir>/../../packages/core/src/appointments.ts',

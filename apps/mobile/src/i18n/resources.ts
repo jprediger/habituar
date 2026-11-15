@@ -1,6 +1,7 @@
 import agenda from './pt-br/agenda.json'
 import common from './pt-br/common.json'
 import reports from './pt-br/reports.json'
+import classes from './pt-br/classes.json'
 
 /**
  * Catálogo do app mobile: só pt-BR existe no M0 e não há seletor de idioma (decisão
@@ -10,5 +11,5 @@ import reports from './pt-br/reports.json'
 export const resources = {
   // A agenda tem namespace próprio: somada ao `common`, a união de chaves passaria do
   // limite de profundidade de tipos do i18next e quebraria o `t()` tipado do app inteiro.
-  'pt-BR': { common, agenda, reports },
+  'pt-BR': { common, agenda, reports, classes },
 } as const

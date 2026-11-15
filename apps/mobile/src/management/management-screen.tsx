@@ -41,6 +41,8 @@ function getSectionIcon(section: MobileManagementSection): IconName {
   switch (section) {
     case 'students':
       return 'user'
+    case 'classes':
+      return 'users-three'
     case 'team':
       return 'users-three'
     case 'invitations':

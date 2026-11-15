@@ -23,6 +23,7 @@ import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as InviteTokenRouteImport } from './routes/invite/$token'
 import { Route as ProfessionalIndexRouteImport } from './routes/professional/index'
 import { Route as ProfessionalAgendaRouteImport } from './routes/professional/agenda'
+import { Route as ProfessionalClassesRouteImport } from './routes/professional/classes'
 import { Route as ProfessionalManagementRouteImport } from './routes/professional/management'
 import { Route as ProfessionalProfileRouteImport } from './routes/professional/profile'
 import { Route as ProfessionalReportsRouteImport } from './routes/professional/reports'
@@ -110,6 +111,11 @@ const ProfessionalIndexRoute = ProfessionalIndexRouteImport.update({
 const ProfessionalAgendaRoute = ProfessionalAgendaRouteImport.update({
   id: '/agenda',
   path: '/agenda',
+  getParentRoute: () => ProfessionalRoute,
+} as any)
+const ProfessionalClassesRoute = ProfessionalClassesRouteImport.update({
+  id: '/classes',
+  path: '/classes',
   getParentRoute: () => ProfessionalRoute,
 } as any)
 const ProfessionalManagementRoute = ProfessionalManagementRouteImport.update({
@@ -225,6 +231,7 @@ export interface FileRoutesByFullPath {
   '/student': typeof StudentRouteWithChildren
   '/invite/$token': typeof InviteTokenRoute
   '/professional/agenda': typeof ProfessionalAgendaRoute
+  '/professional/classes': typeof ProfessionalClassesRoute
   '/professional/management': typeof ProfessionalManagementRouteWithChildren
   '/professional/profile': typeof ProfessionalProfileRoute
   '/professional/reports': typeof ProfessionalReportsRoute
@@ -256,6 +263,7 @@ export interface FileRoutesByTo {
   '/select-institution': typeof SelectInstitutionRoute
   '/invite/$token': typeof InviteTokenRoute
   '/professional/agenda': typeof ProfessionalAgendaRoute
+  '/professional/classes': typeof ProfessionalClassesRoute
   '/professional/profile': typeof ProfessionalProfileRoute
   '/professional/reports': typeof ProfessionalReportsRoute
   '/student/agenda': typeof StudentAgendaRoute
@@ -289,6 +297,7 @@ export interface FileRoutesById {
   '/student': typeof StudentRouteWithChildren
   '/invite/$token': typeof InviteTokenRoute
   '/professional/agenda': typeof ProfessionalAgendaRoute
+  '/professional/classes': typeof ProfessionalClassesRoute
   '/professional/management': typeof ProfessionalManagementRouteWithChildren
   '/professional/profile': typeof ProfessionalProfileRoute
   '/professional/reports': typeof ProfessionalReportsRoute
@@ -325,6 +334,7 @@ export interface FileRouteTypes {
     | '/student'
     | '/invite/$token'
     | '/professional/agenda'
+    | '/professional/classes'
     | '/professional/management'
     | '/professional/profile'
     | '/professional/reports'
@@ -356,6 +366,7 @@ export interface FileRouteTypes {
     | '/select-institution'
     | '/invite/$token'
     | '/professional/agenda'
+    | '/professional/classes'
     | '/professional/profile'
     | '/professional/reports'
     | '/student/agenda'
@@ -388,6 +399,7 @@ export interface FileRouteTypes {
     | '/student'
     | '/invite/$token'
     | '/professional/agenda'
+    | '/professional/classes'
     | '/professional/management'
     | '/professional/profile'
     | '/professional/reports'
@@ -522,6 +534,13 @@ declare module '@tanstack/react-router' {
       path: '/agenda'
       fullPath: '/professional/agenda'
       preLoaderRoute: typeof ProfessionalAgendaRouteImport
+      parentRoute: typeof ProfessionalRoute
+    }
+    '/professional/classes': {
+      id: '/professional/classes'
+      path: '/classes'
+      fullPath: '/professional/classes'
+      preLoaderRoute: typeof ProfessionalClassesRouteImport
       parentRoute: typeof ProfessionalRoute
     }
     '/professional/management': {
@@ -713,6 +732,7 @@ const ProfessionalStudentsRouteWithChildren =
 
 interface ProfessionalRouteChildren {
   ProfessionalAgendaRoute: typeof ProfessionalAgendaRoute
+  ProfessionalClassesRoute: typeof ProfessionalClassesRoute
   ProfessionalManagementRoute: typeof ProfessionalManagementRouteWithChildren
   ProfessionalProfileRoute: typeof ProfessionalProfileRoute
   ProfessionalReportsRoute: typeof ProfessionalReportsRoute
@@ -722,6 +742,7 @@ interface ProfessionalRouteChildren {
 
 const ProfessionalRouteChildren: ProfessionalRouteChildren = {
   ProfessionalAgendaRoute: ProfessionalAgendaRoute,
+  ProfessionalClassesRoute: ProfessionalClassesRoute,
   ProfessionalManagementRoute: ProfessionalManagementRouteWithChildren,
   ProfessionalProfileRoute: ProfessionalProfileRoute,
   ProfessionalReportsRoute: ProfessionalReportsRoute,

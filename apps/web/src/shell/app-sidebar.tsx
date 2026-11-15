@@ -2,7 +2,7 @@ import { assertNever } from '@habituar/core/assert-never'
 import type { NavigationEnvironment, NavigationIcon } from '@habituar/react-client/environment-navigation'
 import { Link, useLocation } from '@tanstack/react-router'
 import type { LucideIcon } from 'lucide-react'
-import { Building2, CalendarDays, ChartColumnIncreasing, GraduationCap, House, UserRound, UsersRound } from 'lucide-react'
+import { Building2, CalendarDays, ChartColumnIncreasing, GraduationCap, House, School, UserRound, UsersRound } from 'lucide-react'
 import type { ReactElement } from 'react'
 import type { TFunction } from 'i18next'
 import { useTranslation } from 'react-i18next'
@@ -49,7 +49,7 @@ export function AppSidebar({
         </p>
         <SidebarMenu activeIndex={activeIndex}>
           {items.map((item) => {
-            const Icon = item.icon === 'reports' ? ChartColumnIncreasing : getNavigationIcon(item.icon)
+            const Icon = item.icon === 'reports' ? ChartColumnIncreasing : item.icon === 'classes' ? School : getNavigationIcon(item.icon)
             const label = t(item.labelKey)
             const isActive = item.id === activeItem?.id
 

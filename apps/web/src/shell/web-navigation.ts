@@ -1,22 +1,39 @@
 import type { NavigationItem } from '@habituar/react-client/environment-navigation'
 
 export type WebNavigationItem = NavigationItem | Readonly<{
+  id: 'classes'
+  labelKey: 'navigation.classes'
+  path: '/professional/classes'
+  icon: 'classes'
+}> | Readonly<{
   id: 'reports'
   labelKey: 'navigation.reports'
   path: '/professional/reports'
   icon: 'reports'
 }>
 
+const CLASSES_NAVIGATION: WebNavigationItem = {
+  id: 'classes', labelKey: 'navigation.classes', path: '/professional/classes', icon: 'classes',
+}
+
 const REPORTS_NAVIGATION: WebNavigationItem = {
   id: 'reports', labelKey: 'navigation.reports', path: '/professional/reports', icon: 'reports',
 }
 
-/** A aba nasce apenas na web; a navegação mobile será integrada no commit seguinte. */
+/** Relatórios continuam visíveis apenas para quem pode consultar seus dados. */
 export function withReportsNavigation(items: readonly NavigationItem[], canRead: boolean): readonly WebNavigationItem[] {
   if (!canRead) return items
   const primary = items.filter(item => item.id === 'home' || item.id === 'agenda')
   const remaining = items.filter(item => item.id !== 'home' && item.id !== 'agenda')
   return [...primary, REPORTS_NAVIGATION, ...remaining]
+}
+
+/** A área de turmas fica após a agenda e antes dos relatórios, independente das demais permissões. */
+export function withClassesNavigation(items: readonly WebNavigationItem[], canAccess: boolean): readonly WebNavigationItem[] {
+  if (!canAccess) return items
+  const primary = items.filter(item => item.id === 'home' || item.id === 'agenda')
+  const remaining = items.filter(item => item.id !== 'home' && item.id !== 'agenda')
+  return [...primary, CLASSES_NAVIGATION, ...remaining]
 }
 
 export function findActiveWebNavigationItem(items: readonly WebNavigationItem[], pathname: string): WebNavigationItem | undefined {

@@ -51,6 +51,10 @@
     "./task-forms": {
       "types": "./dist/task-forms.d.ts",
       "import": "./dist/task-forms.js"
+    },
+    "./class-hooks": {
+      "types": "./dist/class-hooks.d.ts",
+      "import": "./dist/class-hooks.js"
     }
   },
   "scripts": {

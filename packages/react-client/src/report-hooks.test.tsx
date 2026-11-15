@@ -31,11 +31,11 @@ function membership(permissions: readonly Readonly<{ key: 'report.read' | 'repor
 describe('relatórios no cliente compartilhado', () => {
   it('busca indicadores com o filtro e exporta PDF apenas quando autorizado', async () => {
     const requests: Request[] = []
-    const api = createHabituarReactClient({ origin: ORIGIN, fetch: async (input, init) => {
+    const api = createHabituarReactClient({ origin: ORIGIN, fetch: (input, init) => {
       const request = new Request(input, init)
       requests.push(request)
-      if (request.method === 'POST') return Response.json({ filename: 'relatorio.pdf', mediaType: 'application/pdf', base64: 'JVBERi0xLjQK' })
-      return Response.json(report)
+      if (request.method === 'POST') return Promise.resolve(Response.json({ filename: 'relatorio.pdf', mediaType: 'application/pdf', base64: 'JVBERi0xLjQK' }))
+      return Promise.resolve(Response.json(report))
     } })
     const grants = membership([{ key: 'report.read', scope: 'assigned' }, { key: 'report.export', scope: 'assigned' }])
     const hook = renderHook(() => api.useReport(grants, filter), { wrapper: api.Provider })
@@ -50,9 +50,9 @@ describe('relatórios no cliente compartilhado', () => {
 
   it('não busca nem exporta relatórios sem report.read', async () => {
     const requests: Request[] = []
-    const api = createHabituarReactClient({ origin: ORIGIN, fetch: async (input, init) => {
+    const api = createHabituarReactClient({ origin: ORIGIN, fetch: (input, init) => {
       requests.push(new Request(input, init))
-      return Response.json(report)
+      return Promise.resolve(Response.json(report))
     } })
     const hook = renderHook(() => api.useReport(membership([{ key: 'report.export', scope: 'assigned' }]), filter), { wrapper: api.Provider })
     expect(hook.result.current.canExport).toBe(false)

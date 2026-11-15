@@ -23,6 +23,10 @@ const client = vi.hoisted(
 vi.mock('../client/habituar-client.js', () => ({
   habituar: {
     useReport: () => ({ state: { status: 'loading' }, canExport: false, refresh: vi.fn(), exportPdf: vi.fn() }),
+    useClasses: () => ({ state: { status: 'ready', items: [] }, refresh: vi.fn() }),
+    useClassDetail: () => ({ state: { status: 'idle' }, refresh: vi.fn() }),
+    useClassCandidates: () => ({ students: { status: 'unavailable' }, staff: { status: 'unavailable' } }),
+    useClassActions: () => ({ pending: false, failure: undefined, create: vi.fn(), update: vi.fn(), archive: vi.fn(), unarchive: vi.fn(), enrollStudent: vi.fn(), removeStudent: vi.fn(), assignStaff: vi.fn(), removeStaff: vi.fn() }),
     useTeam: () => ({
       state: { status: 'empty' }, capabilities: {}, searchDraft: '', setSearchDraft: vi.fn(), applySearch: vi.fn(), clearSearch: vi.fn(),
       hasActiveFilters: false, environmentFilter: 'all', setEnvironmentFilter: vi.fn(),
@@ -151,6 +155,21 @@ describe('professional environment routes', () => {
     expect(await screen.findByRole('heading', { level: 1, name: 'Relatórios de acompanhamento' })).toBeInTheDocument()
     const navigation = screen.getByRole('navigation', { name: 'Navegação do ambiente' })
     expect(within(navigation).getByRole('link', { name: 'Relatórios' })).toBeInTheDocument()
+  })
+
+  it('shows classes to professionals with class.read and protects direct URLs without access', async () => {
+    client.state = createAuthenticatedState('professional', [{ key: 'class.read', scope: 'institution' }])
+    renderAt('/professional/classes')
+    expect(await screen.findByRole('heading', { level: 1, name: 'Turmas' })).toBeInTheDocument()
+    const navigation = screen.getByRole('navigation', { name: 'Navegação do ambiente' })
+    expect(within(navigation).getByRole('link', { name: 'Turmas' })).toHaveAttribute('aria-current', 'page')
+  })
+
+  it('redirects a classes URL when class permissions are missing', async () => {
+    const router = renderAt('/professional/classes')
+    await waitFor(() => { expect(router.state.location.pathname).toBe('/professional') })
+    const navigation = await screen.findByRole('navigation', { name: 'Navegação do ambiente' })
+    expect(within(navigation).queryByRole('link', { name: 'Turmas' })).not.toBeInTheDocument()
   })
 
   it('redirects an unauthorized reports URL back to the professional home', async () => {

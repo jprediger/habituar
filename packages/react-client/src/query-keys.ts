@@ -10,6 +10,7 @@ import type { InstitutionId, StudentId, TaskPhotoId } from '@habituar/core/ident
 export const queryKeys = {
   institutionScope: ['institution'],
   institutionStaff: (institutionId: InstitutionId) => ['institution', institutionId, 'staff'],
+  institutionClasses: (institutionId: InstitutionId) => ['institution', institutionId, 'classes'],
   students: (institutionId: InstitutionId) => ['institution', institutionId, 'students'],
   studentDetail: (institutionId: InstitutionId, studentId: StudentId) => ['institution', institutionId, 'students', studentId, 'detail'],
   studentRecord: (institutionId: InstitutionId, studentId: StudentId) => ['institution', institutionId, 'students', studentId, 'record'],

@@ -1,0 +1,98 @@
+{
+  "title": "Turmas",
+  "description": "Organize estudantes e profissionais da instituição em turmas, mantendo o histórico dos vínculos.",
+  "showArchived": "Mostrar turmas arquivadas",
+  "listLabel": "Lista de turmas",
+  "detailLabel": "Detalhes da turma",
+  "totalClasses": "{{count}} turma(s)",
+  "empty": "Nenhuma turma cadastrada",
+  "emptyDescription": "Crie uma turma para começar a organizar os participantes.",
+  "emptyArchived": "Nenhuma turma arquivada",
+  "emptyArchivedDescription": "As turmas arquivadas ficam disponíveis aqui para consulta e reabertura.",
+  "selectTitle": "Selecione uma turma",
+  "selectDescription": "Escolha uma turma na lista para ver estudantes, profissionais e histórico.",
+  "loading": "Carregando turmas...",
+  "loadingDetail": "Carregando detalhes...",
+  "active": "Turma ativa",
+  "archived": "Turma arquivada",
+  "membersSummary": "{{students}} estudante(s) e {{staff}} profissional(is)",
+  "editor": {
+    "createTitle": "Nova turma",
+    "editTitle": "Editar turma",
+    "description": "Informe os dados básicos da turma. Os participantes podem ser associados depois.",
+    "name": "Nome da turma",
+    "descriptionLabel": "Descrição",
+    "optional": "Opcional. Até 500 caracteres.",
+    "invalidName": "Informe um nome com até 100 caracteres."
+  },
+  "actions": {
+    "create": "Criar turma",
+    "edit": "Editar",
+    "archive": "Arquivar",
+    "reopen": "Reabrir",
+    "refresh": "Atualizar",
+    "retry": "Tentar novamente",
+    "remove": "Retirar",
+    "cancel": "Cancelar",
+    "confirm": "Confirmar",
+    "save": "Salvar",
+    "saving": "Salvando..."
+  },
+  "students": {
+    "title": "Estudantes",
+    "description": "Matrículas ativas nesta turma. O histórico permanece após transferências.",
+    "empty": "Nenhum estudante matriculado.",
+    "enrolledAt": "Matrícula em {{date}}",
+    "addLabel": "Matricular ou transferir estudante",
+    "choose": "Selecione um estudante",
+    "enroll": "Matricular",
+    "noPermission": "Você precisa da permissão de consulta a estudantes para selecionar uma matrícula.",
+    "transferHint": "Se o estudante já tiver uma turma ativa, a matrícula anterior será encerrada automaticamente.",
+    "history": "Histórico de matrículas ({{count}})",
+    "pastItem": "{{name}}: de {{start}} até {{end}}"
+  },
+  "staff": {
+    "title": "Profissionais e monitores",
+    "description": "Participantes da turma. O vínculo não concede acesso automático a fichas individuais.",
+    "empty": "Nenhum profissional associado.",
+    "linkedAt": "Desde {{date}}",
+    "addLabel": "Vincular profissional ou monitor",
+    "choose": "Selecione um profissional",
+    "link": "Vincular",
+    "noPermission": "Você precisa da permissão de consulta à equipe para selecionar participantes.",
+    "history": "Histórico de profissionais ({{count}})",
+    "pastItem": "{{name}}: de {{start}} até {{end}}",
+    "environments": {
+      "professional": "Profissional",
+      "monitor": "Monitor"
+    },
+    "linkedMeta": "{{environment}}. Desde {{date}}",
+    "option": "{{name}} ({{environment}})"
+  },
+  "confirm": {
+    "title": "Confirme a alteração",
+    "archive": "Arquivar {{name}}? As matrículas e participações ativas serão encerradas; o histórico permanecerá disponível.",
+    "transfer": "Matricular {{name}} em {{className}}? Se houver outra turma ativa, a matrícula anterior será encerrada.",
+    "removeStudent": "Retirar {{name}} desta turma? O histórico ficará registrado.",
+    "removeStaff": "Retirar {{name}} desta turma? O histórico ficará registrado."
+  },
+  "errors": {
+    "readPermission": "Você não tem permissão para consultar turmas. Se puder criar turmas, a criação continua disponível.",
+    "forbidden": "Sem permissão para esta operação.",
+    "load": "Não foi possível carregar as turmas.",
+    "loadDetail": "Não foi possível abrir esta turma.",
+    "candidates": "Não foi possível carregar a lista de participantes.",
+    "save": "Não foi possível concluir a alteração. Tente novamente.",
+    "conflict": "A turma foi alterada por outra pessoa ou já existe uma turma ativa com esse nome. Atualize a tela antes de tentar novamente."
+  },
+  "messages": {
+    "created": "Turma criada com sucesso.",
+    "updated": "Turma atualizada.",
+    "archived": "Turma arquivada com histórico preservado.",
+    "reopened": "Turma reaberta.",
+    "enrolled": "Matrícula registrada.",
+    "studentRemoved": "Matrícula encerrada.",
+    "staffLinked": "Profissional associado.",
+    "staffRemoved": "Participação encerrada."
+  }
+}

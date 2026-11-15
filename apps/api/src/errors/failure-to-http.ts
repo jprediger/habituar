@@ -61,6 +61,10 @@ export function mapFailureToHttpResponse(errors: FailureErrors, failure: Failure
       throw errors['configuration-conflict']()
     case 'invitation-authority-lost':
       throw errors['invitation-authority-lost']()
+    case 'class-not-found':
+      throw errors['class-not-found']()
+    case 'class-archived':
+      throw errors['class-archived']()
     case 'student-not-found':
       throw errors['student-not-found']()
     case 'student-archived':

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { PERMISSION_CATALOG } from './permissions/permission-catalog.js'
 import { ROLE_BUNDLE_CATALOG, ROLE_BUNDLE_KEYS, readBundlesFromGrants, resolveBundleGrants, roleBundleSelectionsSchema } from './role-bundles.js'
 
-const MANAGEMENT_BUNDLES = ['team-read', 'team-invite', 'role-assign', 'member-remove', 'role-customize'] as const
+const MANAGEMENT_BUNDLES = ['class-create', 'class-manage', 'team-read', 'team-invite', 'role-assign', 'member-remove', 'role-customize'] as const
 
 describe('matriz de bundles', () => {
   it('cobre cada permissão do catálogo por exatamente um bundle', () => {
@@ -22,8 +22,9 @@ describe('matriz de bundles', () => {
 
   it('dá ao monitor apenas a consulta de cadastro e de relatórios dos acompanhados', () => {
     const monitorBundles = ROLE_BUNDLE_KEYS.filter(key => ROLE_BUNDLE_CATALOG[key].scopesByEnvironment.monitor !== undefined)
-    expect(monitorBundles).toEqual(['student-read', 'report-read', 'report-export'])
+    expect(monitorBundles).toEqual(['class-read', 'student-read', 'report-read', 'report-export'])
     expect(ROLE_BUNDLE_CATALOG['student-read'].scopesByEnvironment.monitor).toEqual(['assigned'])
+    expect(ROLE_BUNDLE_CATALOG['class-read'].scopesByEnvironment.monitor).toEqual(['assigned'])
   })
 
   it('nunca oferece o alcance próprio em papel personalizado', () => {

@@ -4,6 +4,7 @@ import { healthContract } from '../health/health.contract.js'
 import { platformContract } from '../platform/platform.contract.js'
 import { invitationsContract } from '../invitations/invitations.contract.js'
 import { staffContract } from '../staff/staff.contract.js'
+import { classesContract } from '../classes/contract.js'
 import { studentsContract } from '../students/contract.js'
 import { studentRecordsContract } from '../student-records/contract.js'
 import { tasksContract } from '../tasks/contract.js'
@@ -22,4 +23,4 @@ export const API_VERSION = 'v1'
 export const apiContract = oc
   .errors(FAILURE_ERROR_MAP)
   .prefix(`/${API_VERSION}`)
-  .router({ health: healthContract, auth: authContract, platform: platformContract, invitations: invitationsContract, staff: staffContract, students: studentsContract, studentRecords: studentRecordsContract, tasks: tasksContract, appointments: appointmentsContract, reports: reportsContract })
+  .router({ health: healthContract, auth: authContract, platform: platformContract, invitations: invitationsContract, staff: staffContract, classes: classesContract, students: studentsContract, studentRecords: studentRecordsContract, tasks: tasksContract, appointments: appointmentsContract, reports: reportsContract })

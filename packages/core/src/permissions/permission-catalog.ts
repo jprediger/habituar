@@ -4,6 +4,9 @@
  * arquivo existe para transformar em falha de build (ver regra "único call site").
  */
 export const PERMISSION_CATALOG = [
+  'class.read',
+  'class.create',
+  'class.manage',
   'student.create',
   'student.read',
   'student.update',

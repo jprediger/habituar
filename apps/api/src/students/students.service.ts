@@ -151,6 +151,7 @@ export class StudentsService {
       const [archived] = await this.repository.archiveStudent(transaction, studentId, actor.userId, this.clock.now())
       if (archived === undefined || archived.archivedAt === null) return fail('student-not-found')
       await this.repository.removeStudentAssignments(transaction, studentId)
+      await this.repository.endActiveClassEnrollment(transaction, institutionId, studentId, actor.userId, archived.archivedAt)
       return { status: 'success', value: { id: studentId, archivedAt: archived.archivedAt.toISOString() } }
     })
   }

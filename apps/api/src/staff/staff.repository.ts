@@ -4,7 +4,7 @@ import type { StaffEnvironment } from '@habituar/core/staff'
 import { Injectable } from '@nestjs/common'
 import { and, count, eq, ilike, inArray, isNull, or, sql } from 'drizzle-orm'
 import { DatabaseTransaction } from '../database/database.js'
-import { assignments, membershipRoles, memberships, rolePermissions, roles, users } from '../database/schema.js'
+import { classStaffMembers, assignments, membershipRoles, memberships, rolePermissions, roles, users } from '../database/schema.js'
 
 const STAFF_ENVIRONMENTS = ['professional', 'monitor'] as const satisfies readonly StaffEnvironment[]
 
@@ -123,6 +123,8 @@ export class StaffRepository {
     await transaction.delete(membershipRoles).where(eq(membershipRoles.membershipId, membership.id))
     // A RLS do tenant limita a exclusão à instituição do vínculo; as das outras seguem intactas.
     await transaction.delete(assignments).where(eq(assignments.staffUserId, membership.userId))
+    await transaction.update(classStaffMembers).set({ leftAt: removedAt, changedByUserId: removedByUserId })
+      .where(and(eq(classStaffMembers.membershipId, membership.id), isNull(classStaffMembers.leftAt)))
     return removed
   }
 

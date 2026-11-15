@@ -20,6 +20,9 @@ export type RoleId = z.infer<typeof roleIdSchema>
 export const membershipIdSchema = defineIdSchema('MembershipId')
 export type MembershipId = z.infer<typeof membershipIdSchema>
 
+export const classIdSchema = defineIdSchema('ClassId')
+export type ClassId = z.infer<typeof classIdSchema>
+
 export const studentIdSchema = defineIdSchema('StudentId')
 export type StudentId = z.infer<typeof studentIdSchema>
 

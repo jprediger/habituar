@@ -153,8 +153,8 @@ export const membershipRoles = pgTable('membership_roles', {
   environment: roleEnvironmentEnum().notNull(),
 }, (table) => [
   unique().on(table.membershipId, table.roleId),
-  foreignKey({ columns: [table.membershipId, table.environment], foreignColumns: [memberships.id, memberships.environment] }).onDelete('cascade'),
-  foreignKey({ columns: [table.membershipId, table.institutionId], foreignColumns: [memberships.id, memberships.institutionId] }).onDelete('cascade'),
+  foreignKey({ name: 'class_staff_members_environment_fk', columns: [table.membershipId, table.environment], foreignColumns: [memberships.id, memberships.environment] }).onDelete('cascade'),
+  foreignKey({ name: 'class_staff_members_membership_tenant_fk', columns: [table.membershipId, table.institutionId], foreignColumns: [memberships.id, memberships.institutionId] }).onDelete('cascade'),
   foreignKey({ columns: [table.roleId, table.environment], foreignColumns: [roles.id, roles.environment] }).onDelete('cascade'),
   foreignKey({ columns: [table.roleId, table.institutionId], foreignColumns: [roles.id, roles.institutionId] }).onDelete('cascade'),
 ])
@@ -217,6 +217,63 @@ export const students = pgTable('students', {
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 }, (table) => [unique().on(table.id, table.institutionId), uniqueIndex('students_institution_user_id_unique').on(table.institutionId, table.userId).where(sql`${table.userId} IS NOT NULL`)])
+
+// Turmas institucionais: a matrícula não substitui os acompanhamentos individuais.
+export const classes = pgTable('classes', {
+  id: uuid().primaryKey().defaultRandom(),
+  institutionId: uuid('institution_id').notNull().references(() => institutions.id, { onDelete: 'cascade' }),
+  name: text().notNull(),
+  description: text(),
+  version: integer().notNull().default(1),
+  archivedAt: timestamp('archived_at', { withTimezone: true }),
+  createdByUserId: uuid('created_by_user_id').notNull().references(() => users.id),
+  updatedByUserId: uuid('updated_by_user_id').notNull().references(() => users.id),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, table => [
+  unique().on(table.id, table.institutionId),
+  check('classes_name_length', sql`char_length(btrim(${table.name})) between 1 and 100`),
+  check('classes_description_length', sql`${table.description} is null or char_length(${table.description}) between 1 and 500`),
+  uniqueIndex('classes_active_name').on(table.institutionId, sql`lower(${table.name})`).where(sql`${table.archivedAt} is null`),
+])
+
+// Um aluno pertence a no máximo uma turma ativa; uma troca fecha a matrícula anterior,
+// mas nunca apaga histórico nem modifica suas assignments existentes.
+export const classEnrollments = pgTable('class_enrollments', {
+  id: uuid().primaryKey().defaultRandom(),
+  institutionId: uuid('institution_id').notNull().references(() => institutions.id, { onDelete: 'cascade' }),
+  classId: uuid('class_id').notNull(),
+  studentId: uuid('student_id').notNull(),
+  enrolledAt: timestamp('enrolled_at', { withTimezone: true }).notNull().defaultNow(),
+  leftAt: timestamp('left_at', { withTimezone: true }),
+  changedByUserId: uuid('changed_by_user_id').notNull().references(() => users.id),
+}, table => [
+  foreignKey({ name: 'class_enrollments_class_tenant_fk', columns: [table.classId, table.institutionId], foreignColumns: [classes.id, classes.institutionId] }).onDelete('cascade'),
+  foreignKey({ name: 'class_enrollments_student_tenant_fk', columns: [table.studentId, table.institutionId], foreignColumns: [students.id, students.institutionId] }).onDelete('cascade'),
+  check('class_enrollments_dates', sql`${table.leftAt} is null or ${table.leftAt} >= ${table.enrolledAt}`),
+  uniqueIndex('class_enrollments_one_active').on(table.institutionId, table.studentId).where(sql`${table.leftAt} is null`),
+  index('class_enrollments_class').on(table.classId, table.enrolledAt),
+])
+
+// Profissionais e monitores podem estar em várias turmas; não equivale a assignment.
+export const classStaffMembers = pgTable('class_staff_members', {
+  id: uuid().primaryKey().defaultRandom(),
+  institutionId: uuid('institution_id').notNull().references(() => institutions.id, { onDelete: 'cascade' }),
+  classId: uuid('class_id').notNull(),
+  membershipId: uuid('membership_id').notNull(),
+  environment: roleEnvironmentEnum().notNull(),
+  linkedAt: timestamp('linked_at', { withTimezone: true }).notNull().defaultNow(),
+  leftAt: timestamp('left_at', { withTimezone: true }),
+  changedByUserId: uuid('changed_by_user_id').notNull().references(() => users.id),
+}, table => [
+  foreignKey({ name: 'class_staff_members_class_tenant_fk', columns: [table.classId, table.institutionId], foreignColumns: [classes.id, classes.institutionId] }).onDelete('cascade'),
+  foreignKey({ columns: [table.membershipId, table.institutionId], foreignColumns: [memberships.id, memberships.institutionId] }).onDelete('cascade'),
+  foreignKey({ columns: [table.membershipId, table.environment], foreignColumns: [memberships.id, memberships.environment] }).onDelete('cascade'),
+  check('class_staff_members_environment', sql`${table.environment} in ('professional', 'monitor')`),
+  check('class_staff_members_dates', sql`${table.leftAt} is null or ${table.leftAt} >= ${table.linkedAt}`),
+  uniqueIndex('class_staff_members_one_active').on(table.classId, table.membershipId).where(sql`${table.leftAt} is null`),
+  index('class_staff_members_membership').on(table.membershipId, table.leftAt),
+])
 
 export const guardians = pgTable(
   'guardians',

@@ -14,6 +14,7 @@ import { InvitationsModule } from './invitations/invitations.module.js'
 import { PlatformModule } from './platform/platform.module.js'
 import { RbacModule } from './rbac/rbac.module.js'
 import { StaffModule } from './staff/staff.module.js'
+import { ClassesModule } from './classes/classes.module.js'
 import { StudentsModule } from './students/students.module.js'
 import { StudentRecordsModule } from './student-records/student-records.module.js'
 import { TasksModule } from './tasks/tasks.module.js'
@@ -42,6 +43,7 @@ import { ReportsModule } from './reports/reports.module.js'
     InstitutionsModule,
     InvitationsModule,
     StaffModule,
+    ClassesModule,
     StudentsModule,
     StudentRecordsModule,
     TasksModule,

@@ -16,6 +16,10 @@
       "types": "./dist/staff.d.ts",
       "import": "./dist/staff.js"
     },
+    "./classes": {
+      "types": "./dist/classes.d.ts",
+      "import": "./dist/classes.js"
+    },
     "./students": {
       "types": "./dist/students.d.ts",
       "import": "./dist/students.js"
@@ -43,6 +47,10 @@
     "./appointments": {
       "types": "./dist/appointments.d.ts",
       "import": "./dist/appointments.js"
+    },
+    "./classes/contract": {
+      "types": "./dist/classes/contract.d.ts",
+      "import": "./dist/classes/contract.js"
     },
     "./students/contract": {
       "types": "./dist/students/contract.d.ts",

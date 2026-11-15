@@ -21,6 +21,7 @@ const TEMPLATE_GRANTS: Readonly<Record<typeof ROLE_TEMPLATES[number]['name'], re
   student: [['student.read', 'own'], ['task.read', 'own'], ['task.own.write', 'own'], ['task.complete', 'own'], ['appointment.read', 'own']],
   guardian: [['student.read', 'own'], ['task.read', 'own'], ['appointment.read', 'own']],
   'care-assigned': [
+    ['class.read', 'assigned'],
     ['student.read', 'assigned'],
     ['student.update', 'assigned'],
     ['guardian.link', 'assigned'],
@@ -35,9 +36,12 @@ const TEMPLATE_GRANTS: Readonly<Record<typeof ROLE_TEMPLATES[number]['name'], re
     ['report.read', 'assigned'],
     ['report.export', 'assigned'],
   ],
-  'care-institution': [['student.read', 'institution'], ['student.update', 'institution'], ['student.create', 'institution'], ['guardian.link', 'institution'], ['guardian.unlink', 'institution'], ['assignment.manage', 'institution'], ['record.read', 'institution'], ['record.write', 'institution'], ['task.read', 'institution'], ['task.write', 'institution'], ['task.evaluate', 'institution'], ['appointment.read', 'institution'], ['appointment.write', 'institution'], ['report.read', 'institution'], ['report.export', 'institution']],
-  monitoring: [['student.read', 'assigned'], ['report.read', 'assigned'], ['report.export', 'assigned']],
+  'care-institution': [['class.read', 'institution'], ['class.create', 'institution'], ['class.manage', 'institution'], ['student.read', 'institution'], ['student.update', 'institution'], ['student.create', 'institution'], ['guardian.link', 'institution'], ['guardian.unlink', 'institution'], ['assignment.manage', 'institution'], ['record.read', 'institution'], ['record.write', 'institution'], ['task.read', 'institution'], ['task.write', 'institution'], ['task.evaluate', 'institution'], ['appointment.read', 'institution'], ['appointment.write', 'institution'], ['report.read', 'institution'], ['report.export', 'institution']],
+  monitoring: [['class.read', 'assigned'], ['student.read', 'assigned'], ['report.read', 'assigned'], ['report.export', 'assigned']],
   'team-management': [
+    ['class.read', 'institution'],
+    ['class.create', 'institution'],
+    ['class.manage', 'institution'],
     ['student.read', 'institution'],
     ['student.create', 'institution'],
     ['assignment.manage', 'institution'],

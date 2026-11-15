@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common'
 import { and, asc, count, countDistinct, eq, ilike, inArray, isNull, or, sql } from 'drizzle-orm'
 import { DatabaseTransaction } from '../database/database.js'
-import { assignments, guardians, students, studentGuardians, memberships, studentConsents, users, invitations } from '../database/schema.js'
+import { assignments, classEnrollments, guardians, students, studentGuardians, memberships, studentConsents, users, invitations } from '../database/schema.js'
 
 export type StudentRecord = typeof students.$inferSelect
 
@@ -123,6 +123,11 @@ export class StudentsRepository {
 
   removeStudentAssignments(transaction: DatabaseTransaction, studentId: string) {
     return transaction.delete(assignments).where(eq(assignments.studentId, studentId))
+  }
+
+  endActiveClassEnrollment(transaction: DatabaseTransaction, institutionId: string, studentId: string, actorId: string, leftAt: Date) {
+    return transaction.update(classEnrollments).set({ leftAt, changedByUserId: actorId })
+      .where(and(eq(classEnrollments.institutionId, institutionId), eq(classEnrollments.studentId, studentId), isNull(classEnrollments.leftAt)))
   }
 
   findGuardianByEmail(transaction: DatabaseTransaction, institutionId: string, email: string) {

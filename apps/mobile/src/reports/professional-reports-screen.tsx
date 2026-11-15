@@ -1,5 +1,5 @@
-import { reportFilterSchema } from '@habituar/core/reports'
-import type { Report, ReportCounters, ReportFilter } from '@habituar/core/reports'
+import { classReportFilterSchema, reportFilterSchema } from '@habituar/core/reports'
+import type { ClassReport, ClassReportFilter, Report, ReportCounters, ReportFilter } from '@habituar/core/reports'
 import { SPACING } from '@habituar/design-tokens/spacing'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -28,6 +28,9 @@ export function ProfessionalReportsScreen({ session }: Readonly<{ session: Insti
   const [from, setFrom] = useState<string>(filter.from)
   const [to, setTo] = useState<string>(filter.to)
   const [studentId, setStudentId] = useState('')
+  const [viewMode, setViewMode] = useState<'individual' | 'class'>('individual')
+  const [classId, setClassId] = useState('')
+  const [classFilter, setClassFilter] = useState<ClassReportFilter | undefined>(undefined)
   const [invalid, setInvalid] = useState(false)
   const [exporting, setExporting] = useState(false)
   const [exportFailure, setExportFailure] = useState(false)
@@ -35,25 +38,27 @@ export function ProfessionalReportsScreen({ session }: Readonly<{ session: Insti
 
   const overview = habituar.useReport(session.membership, {
     institutionId, from: filter.from, to: filter.to,
-  })
-  const selected = habituar.useReport(session.membership, filter, filter.studentId !== undefined)
+  }, viewMode === 'individual')
+  const selected = habituar.useReport(session.membership, filter, viewMode === 'individual' && filter.studentId !== undefined)
   const current = filter.studentId === undefined ? overview : selected
+  const classes = habituar.useClasses(session.membership, false)
+  const classReport = habituar.useClassReport(session.membership, classFilter, viewMode === 'class')
+  const canUseClassReports = session.membership.permissions.some(permission => permission.key === 'class.read' && permission.scope !== 'own')
+  const exportAccess = viewMode === 'class' ? classReport : current
 
   function applyFilters(): void {
-    const parsed = reportFilterSchema.safeParse({
-      institutionId,
-      from,
-      to,
-      ...(studentId === '' ? {} : { studentId }),
-    })
-    if (!parsed.success) {
-      setInvalid(true)
-      return
+    if (viewMode === 'class') {
+      const parsed = classReportFilterSchema.safeParse({ institutionId, classId, from, to })
+      if (!parsed.success) { setInvalid(true); return }
+      setClassFilter(parsed.data)
+    } else {
+      const parsed = reportFilterSchema.safeParse({ institutionId, from, to, ...(studentId === '' ? {} : { studentId }) })
+      if (!parsed.success) { setInvalid(true); return }
+      setFilter(parsed.data)
     }
     setInvalid(false)
     setExportFailure(false)
     setExportResult(null)
-    setFilter(parsed.data)
   }
 
   async function exportPdf(): Promise<void> {
@@ -61,7 +66,7 @@ export function ProfessionalReportsScreen({ session }: Readonly<{ session: Insti
     setExportResult(null)
     setExporting(true)
     try {
-      const pdf = await current.exportPdf()
+      const pdf = viewMode === 'class' ? await classReport.exportPdf() : await current.exportPdf()
       const result = await saveReportPdf(pdf)
       if (result !== 'cancelled') setExportResult(result)
     } catch {
@@ -86,6 +91,10 @@ export function ProfessionalReportsScreen({ session }: Readonly<{ session: Insti
       <PageHeader eyebrow={session.membership.institution.name} title={t('title')} />
       <Section title={t('period')}>
         <View style={styles.filters}>
+          {canUseClassReports && <ChoiceList label={t('reportView')} choices={[
+            { value: 'individual' as const, label: t('individualReport') },
+            { value: 'class' as const, label: t('classReport') },
+          ]} value={viewMode} onChange={(mode) => { setViewMode(mode); setInvalid(false); setExportResult(null) }} />}
           <View style={styles.field}>
             <Text weight="medium">{t('from')}</Text>
             <DateTimeField
@@ -102,39 +111,85 @@ export function ProfessionalReportsScreen({ session }: Readonly<{ session: Insti
               accessibilityLabel={t('to')} accessibilityHint={t('filterHelp')} hasError={invalid}
             />
           </View>
-          <ChoiceList label={t('student')} choices={choices} value={studentId} onChange={setStudentId} />
+          {viewMode === 'individual' ? (
+            <ChoiceList label={t('student')} choices={choices} value={studentId} onChange={setStudentId} />
+          ) : (
+            <ChoiceList label={t('selectClass')} choices={[
+              { value: '', label: t('chooseClass') },
+              ...(classes.state.status === 'ready' ? classes.state.items.map(item => ({ value: item.id, label: item.name })) : []),
+            ]} value={classId} onChange={(id) => { setClassId(id); setClassFilter(undefined) }} />
+          )}
           <Text tone="muted">{t('filterHelp')}</Text>
-          {invalid && <Text accessibilityRole="alert" tone="danger">{t('invalidPeriod')}</Text>}
+          {invalid && <Text accessibilityRole="alert" tone="danger">{t(viewMode === 'class' ? 'invalidClassPeriod' : 'invalidPeriod')}</Text>}
           <Button label={t('apply')} onPress={applyFilters} />
         </View>
       </Section>
 
-      {current.canExport ? (
+      {exportAccess.canExport ? (
         <View style={styles.filters}>
           <Button
             label={exporting ? t('exporting') : Platform.OS === 'android' ? t('savePdf') : t('savePdfIos')}
-            isDisabled={current.state.status !== 'ready' || exporting}
+            isDisabled={exportAccess.state.status !== 'ready' || exporting}
             isBusy={exporting}
             onPress={() => { void exportPdf() }}
           />
           <Text tone="muted">{t(Platform.OS === 'android' ? Platform.Version >= 29 ? 'saveHelpAndroid' : 'saveHelpAndroidLegacy' : 'saveHelpIos')}</Text>
         </View>
       ) : <InlineNotice message={t('exportPermission')} />}
-      {exportScopeNarrower && <InlineNotice message={t('exportScopeNarrower')} />}
+      {viewMode === 'individual' && exportScopeNarrower && <InlineNotice message={t('exportScopeNarrower')} />}
+      {viewMode === 'class' && <InlineNotice message={t('classPrivacyNotice')} />}
+      {viewMode === 'class' && classReport.canExport && exportScopeNarrower && <InlineNotice message={t('classExportScopeNarrower')} />}
       {exportFailure && <Text accessibilityRole="alert" tone="danger">{t('exportFailed')}</Text>}
       {exportResult !== null && <Text accessibilityRole="alert" tone="primary">{t(exportResult === 'opened' ? 'openedPdf' : exportResult === 'saved' ? Platform.OS === 'android' && Platform.Version < 29 ? 'savedPdfLegacy' : 'savedPdf' : 'fileOptionsPdf')}</Text>}
 
-      {current.state.status === 'loading' && <Text accessibilityRole="text" tone="muted">{t('loading')}</Text>}
-      {current.state.status === 'failed' && (
-        <View style={styles.filters}>
-          <Text accessibilityRole="alert" tone="danger">
-            {t(current.state.failure === 'forbidden' ? 'forbidden' : current.state.failure === 'not-found' ? 'notFound' : 'failed')}
-          </Text>
-          <Button variant="outline" label={t('retry')} onPress={() => { void current.refresh() }} />
-        </View>
+      {viewMode === 'class' ? (
+        classReport.state.status === 'idle' ? <Text tone="muted">{t('chooseClass')}</Text> :
+        classReport.state.status === 'loading' ? <Text accessibilityRole="text" tone="muted">{t('loading')}</Text> :
+        classReport.state.status === 'failed' ? <Text accessibilityRole="alert" tone="danger">{t(classReport.state.failure === 'forbidden' ? 'forbidden' : classReport.state.failure === 'not-found' ? 'notFoundClass' : 'failed')}</Text> :
+        <ClassReportContent report={classReport.state.report} />
+      ) : (
+        <>
+          {current.state.status === 'loading' && <Text accessibilityRole="text" tone="muted">{t('loading')}</Text>}
+          {current.state.status === 'failed' && (
+            <View style={styles.filters}>
+              <Text accessibilityRole="alert" tone="danger">
+                {t(current.state.failure === 'forbidden' ? 'forbidden' : current.state.failure === 'not-found' ? 'notFound' : 'failed')}
+              </Text>
+              <Button variant="outline" label={t('retry')} onPress={() => { void current.refresh() }} />
+            </View>
+          )}
+          {current.state.status === 'ready' && <ReportContent report={current.state.report} />}
+        </>
       )}
-      {current.state.status === 'ready' && <ReportContent report={current.state.report} />}
     </Page>
+  )
+}
+
+function ClassReportContent({ report }: Readonly<{ report: ClassReport }>) {
+  const { t } = useTranslation('reports')
+  const { colors, radius } = useThemeTokens()
+  const summary = report.summary
+  return (
+    <Section title={`${t('classReport')}: ${report.class.name}`}>
+      {summary === null ? <Text tone="muted">{t('classProtected')}</Text> : (
+        <>
+          <View style={styles.tiles}>
+            {[
+              { label: t('completed'), value: String(summary.completed) },
+              { label: t('missed'), value: String(summary.missed) },
+              { label: t('upcoming'), value: String(summary.upcoming) },
+              { label: t('completionRate'), value: summary.completionRate === null ? t('noRate') : formatReportRate(summary.completionRate) },
+            ].map(item => (
+              <View key={item.label} style={[styles.tile, { backgroundColor: colors.surfaceMuted, borderRadius: radius.surface }]}>
+                <Text weight="medium">{item.label}</Text>
+                <Text size="title" weight="bold">{item.value}</Text>
+              </View>
+            ))}
+          </View>
+          <Text tone="muted">{t('classApproximation')}</Text>
+        </>
+      )}
+    </Section>
   )
 }
 

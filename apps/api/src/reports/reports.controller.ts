@@ -20,6 +20,26 @@ export class ReportsController {
     })
   }
 
+  @Implement(apiContract.reports.getClass)
+  handleGetClass(@Req() request: AuthenticatedRequest) {
+    return implement(apiContract.reports.getClass).handler(async ({ input, errors }) => {
+      if (request.actor === undefined) throw errors.unauthenticated()
+      const outcome = await this.reports.getClass(request.actor, input)
+      if (outcome.status === 'failure') return mapFailureToHttpResponse(errors, outcome.failure)
+      return outcome.value
+    })
+  }
+
+  @Implement(apiContract.reports.exportClassPdf)
+  handleExportClassPdf(@Req() request: AuthenticatedRequest) {
+    return implement(apiContract.reports.exportClassPdf).handler(async ({ input, errors }) => {
+      if (request.actor === undefined) throw errors.unauthenticated()
+      const outcome = await this.reports.exportClassPdf(request.actor, input)
+      if (outcome.status === 'failure') return mapFailureToHttpResponse(errors, outcome.failure)
+      return outcome.value
+    })
+  }
+
   @Implement(apiContract.reports.exportPdf)
   handleExportPdf(@Req() request: AuthenticatedRequest) {
     return implement(apiContract.reports.exportPdf).handler(async ({ input, errors }) => {

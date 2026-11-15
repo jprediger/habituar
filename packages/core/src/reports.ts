@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import { daysBetween, localDateSchema } from './calendar.js'
-import { institutionIdSchema, studentIdSchema, taskIdSchema } from './identity/ids.js'
+import { classIdSchema, institutionIdSchema, studentIdSchema, taskIdSchema } from './identity/ids.js'
 import { taskKindSchema, taskOriginSchema, taskEvaluationOutcomeSchema } from './tasks.js'
 
 export const REPORT_MAX_DAYS = 93
@@ -77,3 +77,29 @@ export const reportPdfSchema = z.object({
   base64: z.base64(),
 }).strict().readonly()
 export type ReportPdf = z.infer<typeof reportPdfSchema>
+
+/** Relatórios de turma não expõem dados individuais nem recortes diários. */
+export const CLASS_REPORT_MIN_CONTRIBUTORS = 3
+export const CLASS_REPORT_MIN_DAYS = 28
+
+export const classReportFilterSchema = z.object({
+  institutionId: institutionIdSchema,
+  classId: classIdSchema,
+  from: localDateSchema,
+  to: localDateSchema,
+}).strict().refine(filter => filter.from <= filter.to && daysBetween(filter.from, filter.to) < REPORT_MAX_DAYS && daysBetween(filter.from, filter.to) >= CLASS_REPORT_MIN_DAYS - 1, {
+  message: 'Class report range must contain between 28 and 93 days.', path: ['to'],
+})
+export type ClassReportFilter = Readonly<z.infer<typeof classReportFilterSchema>>
+
+/** Sem IDs de estudantes, dados clínicos, detalhes ou listas de atividades. */
+export const classReportSchema = z.object({
+  institution: z.object({ id: institutionIdSchema, name: z.string().min(1) }).strict().readonly(),
+  class: z.object({ id: classIdSchema, name: z.string().min(1) }).strict().readonly(),
+  range: z.object({ from: localDateSchema, to: localDateSchema }).strict().readonly(),
+  generatedAt: z.iso.datetime(),
+  timeZone: z.string().min(1),
+  privacy: z.object({ protected: z.boolean(), minimumContributors: z.literal(CLASS_REPORT_MIN_CONTRIBUTORS) }).strict().readonly(),
+  summary: reportCountersSchema.nullable(),
+}).strict().readonly()
+export type ClassReport = z.infer<typeof classReportSchema>

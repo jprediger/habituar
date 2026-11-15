@@ -1,4 +1,4 @@
-import { reportSchema } from '@habituar/core/reports'
+import { classReportSchema, reportSchema } from '@habituar/core/reports'
 import type { ReportPdf } from '@habituar/core/reports'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react-native'
 import type { ReactNode } from 'react'
@@ -11,10 +11,15 @@ const INSTITUTION_ID = '00000000-0000-4000-8000-000000000001'
 const STUDENT_ID = '30000000-0000-4000-8000-000000000001'
 const TASK_ID = '40000000-0000-4000-8000-000000000001'
 const mockUseReport = jest.fn<unknown, unknown[]>()
+const mockUseClassReport = jest.fn<unknown, unknown[]>()
 const mockSaveReportPdf = jest.fn<Promise<'saved' | 'opened' | 'cancelled' | 'file-options'>, [ReportPdf]>()
 
 jest.mock('../client/habituar-client', () => ({
-  habituar: { useReport: (...args: unknown[]) => mockUseReport(...args) },
+  habituar: {
+    useReport: (...args: unknown[]) => mockUseReport(...args),
+    useClasses: () => ({ state: { status: 'ready', items: [{ id: '30000000-0000-4000-8000-000000000011', name: 'Turma Alfa' }] }, refresh: jest.fn() }),
+    useClassReport: (...args: unknown[]) => mockUseClassReport(...args),
+  },
 }))
 
 jest.mock('./report-file', () => ({
@@ -42,11 +47,20 @@ const report = reportSchema.parse({
   ],
 })
 
+const classReport = classReportSchema.parse({
+  institution: { id: INSTITUTION_ID, name: 'Escola Aurora' },
+  class: { id: '30000000-0000-4000-8000-000000000011', name: 'Turma Alfa' },
+  range: { from: '2026-10-15', to: '2026-11-13' },
+  generatedAt: '2026-11-13T12:00:00.000Z', timeZone: 'America/Sao_Paulo',
+  privacy: { protected: true, minimumContributors: 3 }, summary: null,
+})
+
 const SESSION = (() => {
   const base = createInstitutionSession('professional')
   return { ...base, membership: { ...base.membership, permissions: [
     { key: 'report.read', scope: 'institution' },
     { key: 'report.export', scope: 'institution' },
+    { key: 'class.read', scope: 'institution' },
   ] as const } }
 })()
 
@@ -55,6 +69,12 @@ beforeEach(() => {
   jest.replaceProperty(Platform, 'OS', 'android')
   jest.spyOn(Platform, 'Version', 'get').mockReturnValue(35)
   mockSaveReportPdf.mockResolvedValue('opened')
+  mockUseClassReport.mockImplementation((_membership: unknown, filter: unknown) => ({
+    state: filter === undefined ? { status: 'idle' } : { status: 'ready', report: classReport },
+    canExport: true,
+    refresh: jest.fn(),
+    exportPdf: jest.fn().mockResolvedValue({ filename: 'turma.pdf', mediaType: 'application/pdf', base64: 'JVBERi0=' }),
+  }))
   mockUseReport.mockImplementation(() => ({
     state: { status: 'ready', report },
     canExport: true,
@@ -113,4 +133,16 @@ describe('relatórios profissionais no app', () => {
     expect(await screen.findByText('Você pode consultar relatórios, mas não possui permissão para exportá-los.')).toBeOnTheScreen()
     expect(screen.queryByRole('button', { name: 'Baixar PDF' })).toBeNull()
   })
+
+  it('no modo turma não mostra alunos ou atividades individuais', async () => {
+    render(<ProfessionalReportsScreen session={SESSION} />)
+    fireEvent.press(await screen.findByRole('radio', { name: 'Relatório por turma' }))
+    fireEvent.press(screen.getByRole('radio', { name: 'Turma Alfa' }))
+    fireEvent.press(screen.getByRole('button', { name: 'Aplicar filtros' }))
+    expect(await screen.findByText('Relatório por turma: Turma Alfa')).toBeOnTheScreen()
+    expect(screen.getByText(/Indicadores ocultados para proteger a privacidade/)).toBeOnTheScreen()
+    expect(screen.queryByText('Lia Martins')).toBeNull()
+    expect(screen.queryByText('Leitura diária')).toBeNull()
+  })
+
 })

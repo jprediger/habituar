@@ -84,5 +84,16 @@
   "emptyComparison": "Nenhum estudante com atividades no período selecionado.",
   "exportScopeNarrower": "Seu PDF pode mostrar menos estudantes do que a tela, porque a permissão de exportação está limitada aos alunos vinculados.",
   "distributionTitle": "Distribuição das ocorrências",
-  "distributionDescription": "Concluídas, não realizadas e futuras no período selecionado."
+  "distributionDescription": "Concluídas, não realizadas e futuras no período selecionado.",
+  "reportView": "Tipo de relatório",
+  "individualReport": "Acompanhamento individual",
+  "classReport": "Relatório por turma",
+  "selectClass": "Turma",
+  "chooseClass": "Selecione uma turma e aplique os filtros.",
+  "invalidClassPeriod": "Selecione uma turma e um período de 28 a 93 dias.",
+  "notFoundClass": "Turma não encontrada ou sem acesso.",
+  "classPrivacyNotice": "Relatório coletivo sem nomes, atividades ou avaliações individuais. O acesso à turma não libera dados de seus estudantes.",
+  "classProtected": "Indicadores ocultados para proteger a privacidade. São necessários pelo menos 3 estudantes autorizados com atividades no período.",
+  "classApproximation": "Quantidades aproximadas em grupos de 5; taxa arredondada em intervalos de 10 pontos percentuais. Considera matrículas atuais e apenas dados autorizados.",
+  "classExportScopeNarrower": "O PDF pode ocultar os indicadores porque sua permissão de exportação é mais restrita que a de consulta."
 }

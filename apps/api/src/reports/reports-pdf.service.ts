@@ -1,4 +1,4 @@
-import type { Report, ReportActivity, ReportPdf, ReportStudent } from '@habituar/core/reports'
+import type { ClassReport, Report, ReportActivity, ReportPdf, ReportStudent } from '@habituar/core/reports'
 import { Injectable } from '@nestjs/common'
 
 const PAGE_WIDTH = 595
@@ -150,7 +150,7 @@ class PdfCanvas {
     return true
   }
 
-  header(report: Report): void {
+  header(report: Pick<Report, 'institution' | 'range' | 'generatedAt' | 'timeZone'>): void {
     const nameLines = wrap(report.institution.name, CONTENT_WIDTH, 9.5)
     const extra = (nameLines.length - 1) * 12
     this.rect(0, 712 - extra, PAGE_WIDTH, 130 + extra, 'ink')
@@ -432,5 +432,28 @@ export class ReportsPdfService {
     canvas.activityTable(report.activities, names)
     const bytes = canvas.finalize()
     return { filename: `habituar-relatorio-${report.range.from}-${report.range.to}.pdf`, mediaType: 'application/pdf', base64: bytes.toString('base64') }
+  }
+
+  /** PDF da turma traz somente métricas aproximadas, nunca nomes ou atividades. */
+  renderClass(report: ClassReport): ReportPdf {
+    const canvas = new PdfCanvas()
+    canvas.header(report)
+    canvas.heading('Relatório por turma', `Turma: ${report.class.name}. Visão consolidada, sem identificação de estudantes.`, 50)
+    if (report.summary === null) {
+      canvas.heading('Indicadores protegidos', 'Não há estudantes suficientes com atividades no período para divulgar indicadores com privacidade adequada.', 50)
+      canvas.heading('Privacidade', `Exigimos ao menos ${String(report.privacy.minimumContributors)} estudantes com atividades no intervalo selecionado. Nenhum dado individual foi incluído.`, 60)
+    } else {
+      canvas.cards([
+        { label: 'CONCLUÍDAS', value: count(report.summary.completed), detail: 'Estimativa', accent: 'completed' },
+        { label: 'NÃO REALIZADAS', value: count(report.summary.missed), detail: 'Estimativa', accent: 'missed' },
+        { label: 'FUTURAS', value: count(report.summary.upcoming), detail: 'Estimativa', accent: 'upcoming' },
+        { label: 'TAXA DE CONCLUSÃO', value: percent(report.summary.completionRate), detail: 'Aproximada', accent: 'primary' },
+      ])
+      canvas.heading('Leitura dos dados', 'Contagens arredondadas para múltiplos de cinco e taxa arredondada para dezenas. Valores não são individuais.', 65)
+    }
+    canvas.heading('Proteção dos estudantes', 'O documento não contém nomes, atividades, avaliações ou resultados por estudante. O grupo reflete apenas matrículas ativas e o acesso autorizado do emissor.', 55)
+    const bytes = canvas.finalize()
+    const safeClassId = report.class.id.replace(/[^a-zA-Z0-9-]/g, '')
+    return { filename: `habituar-turma-${safeClassId}-${report.range.from}-${report.range.to}.pdf`, mediaType: 'application/pdf', base64: bytes.toString('base64') }
   }
 }

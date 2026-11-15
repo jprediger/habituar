@@ -1,6 +1,6 @@
 import { addDays, readLocalDateTime } from '@habituar/core/calendar'
-import { reportFilterSchema } from '@habituar/core/reports'
-import type { Report, ReportActivity, ReportFilter, ReportPdf } from '@habituar/core/reports'
+import { classReportFilterSchema, reportFilterSchema } from '@habituar/core/reports'
+import type { ClassReport, ClassReportFilter, Report, ReportActivity, ReportFilter, ReportPdf } from '@habituar/core/reports'
 import type { TaskKind } from '@habituar/core/tasks'
 import type { TFunction } from 'i18next'
 import { BarChart3, Download, RefreshCw } from 'lucide-react'
@@ -11,6 +11,7 @@ import { habituar } from '../client/habituar-client.js'
 import { Button } from '../components/ui/button.js'
 import { EmptyState } from '../components/ui/empty-state.js'
 import { Input } from '../components/ui/input.js'
+import { MetricTiles } from '../components/ui/metric-tiles.js'
 import { PageHeader } from '../components/ui/page-header.js'
 import { Section } from '../components/ui/section.js'
 import { useInstitutionSession } from '../session/institution-session.js'
@@ -48,6 +49,9 @@ export function ProfessionalReportsScreen(): ReactElement {
   const [from, setFrom] = useState<string>(filter.from)
   const [to, setTo] = useState<string>(filter.to)
   const [studentId, setStudentId] = useState<string>('')
+  const [viewMode, setViewMode] = useState<'individual' | 'class'>('individual')
+  const [classId, setClassId] = useState('')
+  const [classFilter, setClassFilter] = useState<ClassReportFilter | undefined>(undefined)
   const [invalid, setInvalid] = useState(false)
   const [exporting, setExporting] = useState(false)
   const [exportFailure, setExportFailure] = useState(false)
@@ -57,32 +61,35 @@ export function ProfessionalReportsScreen(): ReactElement {
   const toId = useId()
 
   const allFilter: ReportFilter = { institutionId, from: filter.from, to: filter.to }
-  const overview = habituar.useReport(session.membership, allFilter)
-  const selected = habituar.useReport(session.membership, filter, filter.studentId !== undefined)
+  const overview = habituar.useReport(session.membership, allFilter, viewMode === 'individual')
+  const selected = habituar.useReport(session.membership, filter, viewMode === 'individual' && filter.studentId !== undefined)
   const current = filter.studentId === undefined ? overview : selected
+  const classes = habituar.useClasses(session.membership, false)
+  const classReport = habituar.useClassReport(session.membership, classFilter, viewMode === 'class')
+  const canUseClassReports = session.membership.permissions.some(permission => permission.key === 'class.read' && permission.scope !== 'own')
 
   function apply(event: SyntheticEvent<HTMLFormElement>): void {
     event.preventDefault()
-    const parsed = reportFilterSchema.safeParse({
-      institutionId,
-      from,
-      to,
-      ...(studentId === '' ? {} : { studentId }),
-    })
-    if (!parsed.success) {
-      setInvalid(true)
-      return
+    if (viewMode === 'class') {
+      const parsed = classReportFilterSchema.safeParse({ institutionId, classId, from, to })
+      if (!parsed.success) { setInvalid(true); return }
+      setClassFilter(parsed.data)
+    } else {
+      const parsed = reportFilterSchema.safeParse({
+        institutionId, from, to, ...(studentId === '' ? {} : { studentId }),
+      })
+      if (!parsed.success) { setInvalid(true); return }
+      setFilter(parsed.data)
     }
     setInvalid(false)
     setExportFailure(false)
-    setFilter(parsed.data)
   }
 
   async function exportPdf(): Promise<void> {
     setExportFailure(false)
     setExporting(true)
     try {
-      const pdf = await current.exportPdf()
+      const pdf = viewMode === 'class' ? await classReport.exportPdf() : await current.exportPdf()
       downloadReportPdf(pdf)
     } catch {
       setExportFailure(true)
@@ -91,6 +98,7 @@ export function ProfessionalReportsScreen(): ReactElement {
     }
   }
 
+  const exportAccess = viewMode === 'class' ? classReport : current
   const options = overview.state.status === 'ready' ? overview.state.report.students : []
   const exportScopeNarrower = current.canExport && session.membership.permissions.some(permission => permission.key === 'report.read' && permission.scope === 'institution') && !session.membership.permissions.some(permission => permission.key === 'report.export' && permission.scope === 'institution')
 
@@ -98,8 +106,8 @@ export function ProfessionalReportsScreen(): ReactElement {
     <div className="flex flex-col gap-xxl">
       <div className="flex flex-wrap items-end justify-between gap-md">
         <PageHeader eyebrow={t('eyebrow')} title={t('title')} description={t('description')} />
-        {current.canExport && (
-          <Button type="button" disabled={current.state.status !== 'ready' || exporting} onClick={() => { void exportPdf() }}>
+        {exportAccess.canExport && (
+          <Button type="button" disabled={exportAccess.state.status !== 'ready' || exporting} onClick={() => { void exportPdf() }}>
             <Download aria-hidden="true" className="size-4" />
             {exporting ? t('exporting') : t('exportPdf')}
           </Button>
@@ -108,6 +116,15 @@ export function ProfessionalReportsScreen(): ReactElement {
 
       <form id={formId} onSubmit={apply} className="rounded-field border border-hairline bg-surface p-lg flex flex-col gap-md" noValidate>
         <h2 className="text-body font-semibold text-text">{t('period')}</h2>
+        {canUseClassReports && (
+          <div className="flex flex-col gap-xs">
+            <label htmlFor="report-view-mode" className="text-caption font-medium text-text">{t('reportView')}</label>
+            <select id="report-view-mode" className="min-h-tap-target rounded-field border border-border bg-surface px-sm py-xs text-body text-text" value={viewMode} onChange={event => { setViewMode(event.target.value === 'class' ? 'class' : 'individual'); setInvalid(false) }}>
+              <option value="individual">{t('individualReport')}</option>
+              <option value="class">{t('classReport')}</option>
+            </select>
+          </div>
+        )}
         <div className="grid gap-md sm:grid-cols-2 lg:grid-cols-3">
           <div className="flex flex-col gap-xs">
             <label htmlFor={fromId} className="text-caption font-medium text-text">{t('from')}</label>
@@ -117,25 +134,42 @@ export function ProfessionalReportsScreen(): ReactElement {
             <label htmlFor={toId} className="text-caption font-medium text-text">{t('to')}</label>
             <Input id={toId} type="date" value={to} required aria-invalid={invalid} onChange={(event) => { setTo(event.target.value); setInvalid(false) }} />
           </div>
-          <div className="flex flex-col gap-xs">
-            <label htmlFor={studentSelectId} className="text-caption font-medium text-text">{t('student')}</label>
-            <select id={studentSelectId} className="min-h-tap-target w-full rounded-field border border-border bg-surface px-sm py-xs text-body text-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring" value={studentId} onChange={(event) => { setStudentId(event.target.value) }}>
-              <option value="">{t('allStudents')}</option>
-              {options.map((student) => <option key={student.id} value={student.id}>{student.name}</option>)}
-            </select>
-          </div>
+          {viewMode === 'individual' ? (
+            <div className="flex flex-col gap-xs">
+              <label htmlFor={studentSelectId} className="text-caption font-medium text-text">{t('student')}</label>
+              <select id={studentSelectId} className="min-h-tap-target w-full rounded-field border border-border bg-surface px-sm py-xs text-body text-text" value={studentId} onChange={(event) => { setStudentId(event.target.value) }}>
+                <option value="">{t('allStudents')}</option>
+                {options.map((student) => <option key={student.id} value={student.id}>{student.name}</option>)}
+              </select>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-xs">
+              <label htmlFor="report-class" className="text-caption font-medium text-text">{t('selectClass')}</label>
+              <select id="report-class" className="min-h-tap-target w-full rounded-field border border-border bg-surface px-sm py-xs text-body text-text" value={classId} onChange={event => { setClassId(event.target.value); setClassFilter(undefined) }}>
+                <option value="">{t('chooseClass')}</option>
+                {classes.state.status === 'ready' && classes.state.items.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}
+              </select>
+            </div>
+          )}
         </div>
         <div className="flex flex-wrap items-center justify-between gap-md">
           <p className="text-caption text-text-muted">{t('filterHelp')}</p>
           <Button type="submit">{t('apply')}</Button>
         </div>
-        {invalid && <p role="alert" className="text-caption text-danger">{t('invalidPeriod')}</p>}
+        {invalid && <p role="alert" className="text-caption text-danger">{viewMode === 'class' ? t('invalidClassPeriod') : t('invalidPeriod')}</p>}
       </form>
 
       {exportFailure && <p role="alert" className="text-body text-danger">{t('exportFailed')}</p>}
-      {!current.canExport && <p className="text-caption text-text-muted">{t('exportPermission')}</p>}
-      {exportScopeNarrower && <p role="note" className="text-caption text-text-muted">{t('exportScopeNarrower')}</p>}
-      {(() => {
+      {!exportAccess.canExport && <p className="text-caption text-text-muted">{t('exportPermission')}</p>}
+      {viewMode === 'individual' && exportScopeNarrower && <p role="note" className="text-caption text-text-muted">{t('exportScopeNarrower')}</p>}
+      {viewMode === 'class' && <p role="note" className="text-caption text-text-muted">{t('classPrivacyNotice')}</p>}
+      {viewMode === 'class' && classReport.canExport && exportScopeNarrower && <p role="note" className="text-caption text-text-muted">{t('classExportScopeNarrower')}</p>}
+      {viewMode === 'class' ? (
+        classReport.state.status === 'idle' ? <p className="text-body text-text-muted">{t('chooseClass')}</p> :
+        classReport.state.status === 'loading' ? <p role="status" className="text-body text-text-muted">{t('loading')}</p> :
+        classReport.state.status === 'failed' ? <p role="alert" className="text-body text-danger">{t(classReport.state.failure === 'forbidden' ? 'forbidden' : classReport.state.failure === 'not-found' ? 'notFoundClass' : 'failed')}</p> :
+        <ClassReportContent report={classReport.state.report} />
+      ) : (() => {
         switch (current.state.status) {
           case 'loading':
             return <p role="status" className="text-body text-text-muted">{t('loading')}</p>
@@ -151,6 +185,25 @@ export function ProfessionalReportsScreen(): ReactElement {
         }
       })()}
     </div>
+  )
+}
+
+function ClassReportContent({ report }: Readonly<{ report: ClassReport }>): ReactElement {
+  const { t } = useTranslation('reports')
+  return (
+    <Section title={`${t('classReport')}: ${report.class.name}`} description={t('classPrivacyNotice')}>
+      {report.summary === null ? <p role="note" className="text-body text-text-muted">{t('classProtected')}</p> : (
+        <>
+          <MetricTiles items={[
+            { label: t('completed'), value: String(report.summary.completed) },
+            { label: t('missed'), value: String(report.summary.missed) },
+            { label: t('upcoming'), value: String(report.summary.upcoming) },
+            { label: t('completionRate'), value: report.summary.completionRate === null ? t('noRate') : formatReportRate(report.summary.completionRate) },
+          ]} />
+          <p className="text-caption text-text-muted">{t('classApproximation')}</p>
+        </>
+      )}
+    </Section>
   )
 }
 

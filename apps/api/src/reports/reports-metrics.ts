@@ -1,5 +1,5 @@
 import { type LocalDate, listRangeDays, weekdayOfLocalDate } from '@habituar/core/calendar'
-import { type ReportActivity, type ReportCounters, type ReportStudent, type Report } from '@habituar/core/reports'
+import { CLASS_REPORT_MIN_CONTRIBUTORS, classReportSchema, type ClassReport, type ReportActivity, type ReportCounters, type ReportStudent, type Report } from '@habituar/core/reports'
 import { type TaskKind, TASK_KINDS } from '@habituar/core/tasks'
 import { reportSchema } from '@habituar/core/reports'
 
@@ -42,5 +42,33 @@ export function composeReport(input: Readonly<{
     byKind,
     students,
     activities: [...input.activities].sort((left, right) => right.date.localeCompare(left.date) || left.title.localeCompare(right.title)),
+  })
+}
+
+/** Suprime grupos pequenos e arredonda os totais, sem produzir estatísticas por pessoa. */
+export function composeClassReport(input: Readonly<{
+  institution: ClassReport['institution']
+  class: ClassReport['class']
+  range: ClassReport['range']
+  generatedAt: string
+  timeZone: string
+  activities: readonly ReportActivity[]
+}>): ClassReport {
+  const contributors = new Set(input.activities.map(activity => activity.studentId)).size
+  const protectedGroup = contributors < CLASS_REPORT_MIN_CONTRIBUTORS
+  const raw = summarize(input.activities)
+  const rounded = (value: number) => Math.round(value / 5) * 5
+  const completed = rounded(raw.completed)
+  const missed = rounded(raw.missed)
+  const upcoming = rounded(raw.upcoming)
+  const summary = protectedGroup ? null : {
+    completed, missed, upcoming, total: completed + missed + upcoming,
+    completionRate: raw.completionRate === null ? null : Math.round(raw.completionRate / 10) * 10,
+  }
+  return classReportSchema.parse({
+    institution: input.institution, class: input.class, range: input.range,
+    generatedAt: input.generatedAt, timeZone: input.timeZone,
+    privacy: { protected: protectedGroup, minimumContributors: CLASS_REPORT_MIN_CONTRIBUTORS },
+    summary,
   })
 }

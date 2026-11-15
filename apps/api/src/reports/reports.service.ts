@@ -1,19 +1,19 @@
 import { type LocalDate, localDateInTimeZone, localDateSchema } from '@habituar/core/calendar'
 import { type Outcome } from '@habituar/core/failure'
-import { type Report, type ReportFilter, type ReportPdf, type ReportStatus } from '@habituar/core/reports'
+import { type ClassReport, type ClassReportFilter, type Report, type ReportFilter, type ReportPdf, type ReportStatus } from '@habituar/core/reports'
 import { studentIdSchema, taskIdSchema } from '@habituar/core/identity/ids'
 import { expandOccurrences } from '@habituar/core/schedule'
 import { Injectable } from '@nestjs/common'
 import type { Actor } from '../authorization/authentication.guard.js'
-import { Database } from '../database/database.js'
+import { Database, type DatabaseTransaction } from '../database/database.js'
 import { Clock } from '../platform/clock.js'
 import { RbacService } from '../rbac/rbac.service.js'
 import { readException, readSchedule } from '../tasks/task-records.js'
 import { type ReportOccurrenceRow, type ReportTaskRow, ReportsRepository } from './reports.repository.js'
-import { composeReport } from './reports-metrics.js'
+import { composeClassReport, composeReport } from './reports-metrics.js'
 import { ReportsPdfService } from './reports-pdf.service.js'
 
-type Denial = 'forbidden' | 'student-not-found'
+type Denial = 'forbidden' | 'student-not-found' | 'class-not-found'
 function fail<T>(code: Denial, message: string): Outcome<T> {
   return { status: 'failure', failure: { code, message } }
 }
@@ -56,47 +56,86 @@ export class ReportsService {
       const students = await this.repository.listEligibleStudents(transaction, actor.userId, scope, filter.studentId)
       if (filter.studentId !== undefined && students.length === 0) return fail<Report>('student-not-found', 'Student not found.')
       const range = { from: filter.from, to: filter.to }
-      const rows: ReportTaskRow[] = []
-      const occurrenceRows: ReportOccurrenceRow[] = []
-      // Lotes evitam milhares de parâmetros SQL, sem limitar a visão institucional.
-      for (let index = 0; index < students.length; index += STUDENT_BATCH_SIZE) {
-        const studentIds = students.slice(index, index + STUDENT_BATCH_SIZE).map(student => student.id)
-        rows.push(...await this.repository.listTasks(transaction, studentIds, range))
-        occurrenceRows.push(...await this.repository.listOccurrences(transaction, studentIds, range))
-      }
-      const occurrenceByTask = new Map<string, ReportOccurrenceRow[]>()
-      for (const row of occurrenceRows) {
-        const existing = occurrenceByTask.get(row.occurrence.taskId) ?? []
-        existing.push(row)
-        occurrenceByTask.set(row.occurrence.taskId, existing)
-      }
       const today: LocalDate = localDateInTimeZone(this.clock.now(), institution.timeZone)
-      const activities = rows.flatMap(task => {
-        const recorded = occurrenceByTask.get(task.id) ?? []
-        const byOriginalDate = new Map(recorded.map(row => [row.occurrence.originalDate, row]))
-        const adjustments = recorded.map(row => ({ originalDate: localDateSchema.parse(row.occurrence.originalDate), exception: readException(row.occurrence) }))
-        return expandOccurrences(readSchedule(task), adjustments, range).map(occurrence => {
-          const persisted = byOriginalDate.get(occurrence.originalDate)
-          const status: ReportStatus = persisted?.occurrence.completedAt !== null && persisted?.occurrence.completedAt !== undefined
-            ? 'completed' : occurrence.date < today ? 'missed' : 'upcoming'
-          return {
-            studentId: studentIdSchema.parse(task.studentId),
-            taskId: taskIdSchema.parse(task.id),
-            title: task.title,
-            kind: task.kind,
-            origin: task.origin,
-            originalDate: occurrence.originalDate,
-            date: occurrence.date,
-            status,
-            evaluation: persisted?.evaluation ?? null,
-          }
-        })
-      })
+      const activities = await this.loadActivities(transaction, students.map(student => student.id), range, today)
       return { status: 'success', value: composeReport({
         institution: { id: filter.institutionId, name: institution.name }, range,
         generatedAt: this.clock.now().toISOString(), timeZone: institution.timeZone, today,
         students: students.map(student => ({ id: studentIdSchema.parse(student.id), name: student.name })), activities,
       }) }
+    })
+  }
+
+  async getClass(actor: Actor, filter: ClassReportFilter): Promise<Outcome<ClassReport>> {
+    return this.makeClassReport(actor, filter, false)
+  }
+
+  async exportClassPdf(actor: Actor, filter: ClassReportFilter): Promise<Outcome<ReportPdf>> {
+    const report = await this.makeClassReport(actor, filter, true)
+    if (report.status === 'failure') return report
+    return { status: 'success', value: this.pdf.renderClass(report.value) }
+  }
+
+  private async makeClassReport(actor: Actor, filter: ClassReportFilter, exporting: boolean): Promise<Outcome<ClassReport>> {
+    return this.database.withTenant(async transaction => {
+      const classScopes = await this.rbac.listPermissionScopesInTransaction(transaction, actor, filter.institutionId, 'class.read')
+      const readScopes = await this.rbac.listPermissionScopesInTransaction(transaction, actor, filter.institutionId, 'report.read')
+      const exportScopes = exporting ? await this.rbac.listPermissionScopesInTransaction(transaction, actor, filter.institutionId, 'report.export') : readScopes
+      const readAny = readScopes.includes('assigned') || readScopes.includes('institution')
+      const exportAny = exportScopes.includes('assigned') || exportScopes.includes('institution')
+      const scope = readScopes.includes('institution') && exportScopes.includes('institution')
+        ? 'institution' : readAny && exportAny ? 'assigned' : undefined
+      if (scope === undefined || !classScopes.includes('institution') && !classScopes.includes('assigned')) {
+        return fail<ClassReport>('forbidden', 'Report and class permissions are required.')
+      }
+      const target = await this.repository.findClass(transaction, filter.institutionId, filter.classId)
+      if (target === undefined) return fail<ClassReport>('class-not-found', 'Class not found.')
+      if (!classScopes.includes('institution') && !await this.repository.canReadAssignedClass(transaction, actor.userId, filter.classId)) {
+        return fail<ClassReport>('class-not-found', 'Class not found.')
+      }
+      const institution = await this.repository.institution(transaction, filter.institutionId)
+      if (institution === undefined) return fail<ClassReport>('forbidden', 'Institution is inaccessible.')
+      const students = await this.repository.listClassStudents(transaction, actor.userId, filter.classId, scope)
+      const range = { from: filter.from, to: filter.to }
+      const today: LocalDate = localDateInTimeZone(this.clock.now(), institution.timeZone)
+      const activities = await this.loadActivities(transaction, students.map(student => student.id), range, today)
+      return { status: 'success', value: composeClassReport({
+        institution: { id: filter.institutionId, name: institution.name },
+        class: { id: filter.classId, name: target.name }, range,
+        generatedAt: this.clock.now().toISOString(), timeZone: institution.timeZone, activities,
+      }) }
+    })
+  }
+
+  /** Converte ocorrências em memória; nenhum detalhe individual sai pelo contrato de turma. */
+  private async loadActivities(transaction: DatabaseTransaction, studentIds: readonly string[], range: Readonly<{ from: LocalDate; to: LocalDate }>, today: LocalDate): Promise<Report['activities']> {
+    const rows: ReportTaskRow[] = []
+    const occurrenceRows: ReportOccurrenceRow[] = []
+    for (let index = 0; index < studentIds.length; index += STUDENT_BATCH_SIZE) {
+      const batch = studentIds.slice(index, index + STUDENT_BATCH_SIZE)
+      rows.push(...await this.repository.listTasks(transaction, batch, range))
+      occurrenceRows.push(...await this.repository.listOccurrences(transaction, batch, range))
+    }
+    const occurrenceByTask = new Map<string, ReportOccurrenceRow[]>()
+    for (const row of occurrenceRows) {
+      const existing = occurrenceByTask.get(row.occurrence.taskId) ?? []
+      existing.push(row)
+      occurrenceByTask.set(row.occurrence.taskId, existing)
+    }
+    return rows.flatMap(task => {
+      const recorded = occurrenceByTask.get(task.id) ?? []
+      const byOriginalDate = new Map(recorded.map(row => [row.occurrence.originalDate, row]))
+      const adjustments = recorded.map(row => ({ originalDate: localDateSchema.parse(row.occurrence.originalDate), exception: readException(row.occurrence) }))
+      return expandOccurrences(readSchedule(task), adjustments, range).map(occurrence => {
+        const persisted = byOriginalDate.get(occurrence.originalDate)
+        const status: ReportStatus = persisted?.occurrence.completedAt !== null && persisted?.occurrence.completedAt !== undefined
+          ? 'completed' : occurrence.date < today ? 'missed' : 'upcoming'
+        return {
+          studentId: studentIdSchema.parse(task.studentId), taskId: taskIdSchema.parse(task.id),
+          title: task.title, kind: task.kind, origin: task.origin, originalDate: occurrence.originalDate,
+          date: occurrence.date, status, evaluation: persisted?.evaluation ?? null,
+        }
+      })
     })
   }
 }

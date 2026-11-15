@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common'
 import { and, asc, eq, gte, inArray, isNull, lte, ne, or } from 'drizzle-orm'
 import type { DatabaseTransaction } from '../database/database.js'
-import { assignments, institutions, students, taskOccurrenceEvaluations, taskOccurrences, tasks } from '../database/schema.js'
+import { assignments, classEnrollments, classes, classStaffMembers, memberships, institutions, students, taskOccurrenceEvaluations, taskOccurrences, tasks } from '../database/schema.js'
 
 export type ReportTaskRow = typeof tasks.$inferSelect
 export type ReportOccurrenceRow = Readonly<{
@@ -50,5 +50,24 @@ export class ReportsRepository {
         and(gte(taskOccurrences.originalDate, range.from), lte(taskOccurrences.originalDate, range.to)),
         and(gte(taskOccurrences.movedDate, range.from), lte(taskOccurrences.movedDate, range.to)),
       )))
+  }
+  findClass(transaction: DatabaseTransaction, institutionId: string, classId: string) {
+    return transaction.query.classes.findFirst({ where: and(eq(classes.institutionId, institutionId), eq(classes.id, classId), isNull(classes.archivedAt)) })
+  }
+
+  async canReadAssignedClass(transaction: DatabaseTransaction, actorId: string, classId: string): Promise<boolean> {
+    const [link] = await transaction.select({ id: classStaffMembers.id }).from(classStaffMembers)
+      .innerJoin(memberships, eq(memberships.id, classStaffMembers.membershipId))
+      .where(and(eq(classStaffMembers.classId, classId), eq(memberships.userId, actorId), isNull(memberships.removedAt), isNull(classStaffMembers.leftAt))).limit(1)
+    return link !== undefined
+  }
+
+  listClassStudents(transaction: DatabaseTransaction, actorId: string, classId: string, scope: 'assigned' | 'institution'): Promise<readonly Readonly<{ id: string }>[]> {
+    const assigned = transaction.select({ id: assignments.studentId }).from(assignments).where(eq(assignments.staffUserId, actorId))
+    return transaction.select({ id: students.id }).from(classEnrollments)
+      .innerJoin(students, eq(students.id, classEnrollments.studentId))
+      .where(and(eq(classEnrollments.classId, classId), isNull(classEnrollments.leftAt), isNull(students.archivedAt),
+        scope === 'assigned' ? inArray(students.id, assigned) : undefined))
+      .orderBy(asc(students.id))
   }
 }

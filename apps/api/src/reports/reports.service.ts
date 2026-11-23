@@ -4,6 +4,7 @@ import { type ClassReport, type ClassReportFilter, type Report, type ReportFilte
 import { studentIdSchema, taskIdSchema } from '@habituar/core/identity/ids'
 import { expandOccurrences } from '@habituar/core/schedule'
 import { Injectable } from '@nestjs/common'
+import { AuditService } from '../audit/audit.service.js'
 import type { Actor } from '../authorization/authentication.guard.js'
 import { Database, type DatabaseTransaction } from '../database/database.js'
 import { Clock } from '../platform/clock.js'
@@ -29,6 +30,7 @@ export class ReportsService {
     private readonly rbac: RbacService,
     private readonly clock: Clock,
     private readonly pdf: ReportsPdfService,
+    private readonly audit: AuditService,
   ) {}
 
   async get(actor: Actor, filter: ReportFilter): Promise<Outcome<Report>> {
@@ -58,6 +60,11 @@ export class ReportsService {
       const range = { from: filter.from, to: filter.to }
       const today: LocalDate = localDateInTimeZone(this.clock.now(), institution.timeZone)
       const activities = await this.loadActivities(transaction, students.map(student => student.id), range, today)
+      await this.audit.recordSensitiveRead(transaction, {
+        purpose: exporting ? 'report.export' : 'report.view',
+        subject: filter.studentId === undefined ? { type: 'institution', id: filter.institutionId } : { type: 'student', id: filter.studentId },
+        studentIds: students.map(student => student.id),
+      })
       return { status: 'success', value: composeReport({
         institution: { id: filter.institutionId, name: institution.name }, range,
         generatedAt: this.clock.now().toISOString(), timeZone: institution.timeZone, today,
@@ -99,6 +106,11 @@ export class ReportsService {
       const range = { from: filter.from, to: filter.to }
       const today: LocalDate = localDateInTimeZone(this.clock.now(), institution.timeZone)
       const activities = await this.loadActivities(transaction, students.map(student => student.id), range, today)
+      await this.audit.recordSensitiveRead(transaction, {
+        purpose: exporting ? 'report.export' : 'report.view',
+        subject: { type: 'class', id: filter.classId },
+        studentIds: students.map(student => student.id),
+      })
       return { status: 'success', value: composeClassReport({
         institution: { id: filter.institutionId, name: institution.name },
         class: { id: filter.classId, name: target.name }, range,

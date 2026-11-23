@@ -18,6 +18,7 @@ import type {
   StudentRecord,
 } from '@habituar/core/student-records'
 import { Injectable } from '@nestjs/common'
+import { AuditService } from '../audit/audit.service.js'
 import { Actor } from '../authorization/authentication.guard.js'
 import { Database, DatabaseTransaction } from '../database/database.js'
 import { Clock } from '../platform/clock.js'
@@ -44,13 +45,16 @@ export class StudentRecordsService {
     private readonly database: Database,
     private readonly records: StudentRecordsRepository,
     private readonly clock: Clock,
+    private readonly audit: AuditService,
   ) {}
 
   async getRecord(studentId: StudentId): Promise<Outcome<StudentRecord>> {
     return this.database.withTenant(async (transaction) => {
       const student = await this.records.findStudent(transaction, studentId)
       if (student === undefined) return fail<StudentRecord>('student-not-found', 'Student not found.')
-      return { status: 'success', value: await this.readRecord(transaction, student.id) }
+      const record = await this.readRecord(transaction, student.id)
+      await this.audit.recordSensitiveRead(transaction, { purpose: 'record.view', subject: { type: 'student', id: student.id }, studentIds: [student.id] })
+      return { status: 'success', value: record }
     })
   }
 
@@ -101,6 +105,7 @@ export class StudentRecordsService {
       })
       const observations = await this.records.listObservations(transaction, studentId)
       const entries = [...revisionEntries, ...observations.map(toObservation)]
+      await this.audit.recordSensitiveRead(transaction, { purpose: 'history.view', subject: { type: 'student', id: student.id }, studentIds: [student.id] })
       // ISO 8601 em UTC ordena como texto, e `sort` é estável: empate mantém a ordem acima.
       return { status: 'success', value: entries.sort((first, second) => second.recordedAt.localeCompare(first.recordedAt)) }
     })
@@ -127,6 +132,7 @@ export class StudentRecordsService {
       const student = await this.records.findStudent(transaction, studentId)
       if (student === undefined) return fail<StudentConsultation[]>('student-not-found', 'Student not found.')
       const rows = await this.records.listConsultations(transaction, studentId)
+      await this.audit.recordSensitiveRead(transaction, { purpose: 'consultations.view', subject: { type: 'student', id: student.id }, studentIds: [student.id] })
       return { status: 'success', value: rows.map(toConsultation) }
     })
   }

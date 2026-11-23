@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common'
+import { AuditModule } from '../audit/audit.module.js'
 import { DatabaseModule } from '../database/database.module.js'
 import { PlatformModule } from '../platform/platform.module.js'
 import { RbacModule } from '../rbac/rbac.module.js'
@@ -9,7 +10,7 @@ import { ReportsService } from './reports.service.js'
 
 /** Fatia de relatórios com consultas autorizadas e exportação comum aos clientes. */
 @Module({
-  imports: [DatabaseModule, PlatformModule, RbacModule],
+  imports: [AuditModule, DatabaseModule, PlatformModule, RbacModule],
   controllers: [ReportsController],
   providers: [ReportsService, ReportsRepository, ReportsPdfService],
 })

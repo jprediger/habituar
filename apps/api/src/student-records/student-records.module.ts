@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common'
+import { AuditModule } from '../audit/audit.module.js'
 import { DatabaseModule } from '../database/database.module.js'
 import { PlatformModule } from '../platform/platform.module.js'
 import { StudentRecordsController } from './student-records.controller.js'
@@ -7,7 +8,7 @@ import { StudentRecordsService } from './student-records.service.js'
 
 /** Compõe a ficha do estudante; a autorização vem do guard global de permissão. */
 @Module({
-  imports: [DatabaseModule, PlatformModule],
+  imports: [AuditModule, DatabaseModule, PlatformModule],
   controllers: [StudentRecordsController],
   providers: [StudentRecordsService, StudentRecordsRepository],
 })

@@ -34,10 +34,17 @@ export const PERMISSION_CATALOG = [
 export type PermissionKey = (typeof PERMISSION_CATALOG)[number]
 
 /**
- * Chaves que servem dados sensíveis de acompanhamento pedagógico (LGPD).
- * A auditoria de leitura sensível (D11) parte desta lista, não de um julgamento por rota.
+ * Chaves que servem dados sensíveis de acompanhamento pedagógico (LGPD). Todo evento de
+ * leitura sensível da trilha de auditoria (D11) carrega uma destas chaves, e só elas.
  */
-export const SENSITIVE_PERMISSIONS: readonly PermissionKey[] = ['record.read', 'record.write', 'report.read', 'report.export']
+export const SENSITIVE_PERMISSIONS = ['record.read', 'record.write', 'report.read', 'report.export'] as const satisfies readonly PermissionKey[]
+
+export type SensitivePermission = (typeof SENSITIVE_PERMISSIONS)[number]
+
+/** Decide pelo catálogo se a chave é sensível, sem que o chamador repita a lista. */
+export function isSensitivePermission(key: PermissionKey): key is SensitivePermission {
+  return SENSITIVE_PERMISSIONS.some((sensitive) => sensitive === key)
+}
 
 /**
  * Alcance de uma concessão a partir do titular. `own`: dados do próprio ator.

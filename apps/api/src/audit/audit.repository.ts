@@ -1,10 +1,10 @@
-import type { SensitivePermission } from '@habituar/core/permissions'
+import type { PermissionKey } from '@habituar/core/permissions'
 import { Injectable } from '@nestjs/common'
 import { sql } from 'drizzle-orm'
 import type { DatabaseTransaction } from '../database/database.js'
 
 export type SensitiveReadRow = Readonly<{
-  permission: SensitivePermission
+  permission: PermissionKey
   purpose: string
   subjectType: 'student' | 'class' | 'institution'
   subjectId: string

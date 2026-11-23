@@ -33,10 +33,7 @@ export const PERMISSION_CATALOG = [
 
 export type PermissionKey = (typeof PERMISSION_CATALOG)[number]
 
-/**
- * Chaves que servem dados sensíveis de acompanhamento pedagógico (LGPD). Todo evento de
- * leitura sensível da trilha de auditoria (D11) carrega uma destas chaves, e só elas.
- */
+/** Chaves que servem dados sensíveis de acompanhamento pedagógico (LGPD). */
 export const SENSITIVE_PERMISSIONS = ['record.read', 'record.write', 'report.read', 'report.export'] as const satisfies readonly PermissionKey[]
 
 export type SensitivePermission = (typeof SENSITIVE_PERMISSIONS)[number]

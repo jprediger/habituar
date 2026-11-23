@@ -2,6 +2,7 @@ import { FailureCode, Outcome } from '@habituar/core/failure'
 import { guardianIdSchema } from '@habituar/core/identity/ids'
 import { calculateAgeInYears, CONSENT_TERMS, consentDocumentSchema, deriveAgeRange, AddStudentGuardianInput, Consent, ConsentPath, CreateStudentInput, ListStudentsInput, OwnConsent, OwnConsentPath, ownConsentSchema, PendingConsent, pendingConsentSchema, RecordConsentInput, RemoveStudentGuardianInput, ReplaceAssignmentsInput, StudentDetail, studentDetailSchema, StudentPage, studentPageSchema, StudentSummary, studentSummarySchema, UpdateStudentInput, consentSchema } from '@habituar/core/students'
 import { Injectable } from '@nestjs/common'
+import { AuditService } from '../audit/audit.service.js'
 import { Database } from '../database/database.js'
 import { lockInstitutionAuthorization } from '../database/authorization-lock.js'
 import { Clock } from '../platform/clock.js'
@@ -15,7 +16,7 @@ function fail<T>(code: FailureCode): Outcome<T> { return { status: 'failure', fa
 /** Leitura de alunos com alcance filtrado na consulta e dados familiares protegidos. */
 @Injectable()
 export class StudentsService {
-  constructor(private readonly database: Database, private readonly repository: StudentsRepository, private readonly rbac: RbacService, private readonly clock: Clock) {}
+  constructor(private readonly database: Database, private readonly repository: StudentsRepository, private readonly rbac: RbacService, private readonly clock: Clock, private readonly audit: AuditService) {}
 
   /** Lista alunos no próprio escopo, nunca carrega o tenant inteiro para filtrar em memória. */
   async list(actor: { readonly userId: string; readonly sessionId: string }, input: ListStudentsInput): Promise<StudentPage> {
@@ -226,6 +227,7 @@ export class StudentsService {
     return this.database.withTenantOutsideRequest({ institutionId: input.institutionId, actorId: actor.userId, sessionId: actor.sessionId }, async transaction => {
       const consent = await this.repository.findConsentDocument(transaction, input.institutionId, input.studentId, input.consentId)
       if (consent?.documentName === null || consent?.documentName === undefined || consent.documentMediaType === null || consent.documentBase64 === null) return fail('consent-not-found')
+      await this.audit.recordSensitiveRead(transaction, { purpose: 'consent-document.view', subject: { type: 'student', id: input.studentId }, studentIds: [input.studentId] })
       return { status: 'success', value: consentDocumentSchema.parse({ fileName: consent.documentName, mediaType: consent.documentMediaType, base64: consent.documentBase64 }) }
     })
   }

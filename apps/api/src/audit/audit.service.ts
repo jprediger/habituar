@@ -1,11 +1,11 @@
-import type { SensitivePermission } from '@habituar/core/permissions'
+import type { PermissionKey } from '@habituar/core/permissions'
 import { assertNever } from '@habituar/core/assert-never'
 import { Injectable } from '@nestjs/common'
 import type { DatabaseTransaction } from '../database/database.js'
 import { AuditRepository } from './audit.repository.js'
 
 /** O que foi aberto. A permissão registrada deriva disto, nunca do chamador. */
-export type SensitiveReadPurpose = 'record.view' | 'history.view' | 'consultations.view' | 'report.view' | 'report.export'
+export type SensitiveReadPurpose = 'record.view' | 'history.view' | 'consultations.view' | 'report.view' | 'report.export' | 'consent-document.view'
 
 export type SensitiveReadSubject = Readonly<{ type: 'student' | 'class' | 'institution'; id: string }>
 
@@ -36,7 +36,9 @@ export class AuditService {
   }
 }
 
-function permissionFor(purpose: SensitiveReadPurpose): SensitivePermission {
+// A permissão que autorizou a leitura: é ela que a gestão revisa ao perguntar por que
+// alguém pôde ver aquilo.
+function permissionFor(purpose: SensitiveReadPurpose): PermissionKey {
   switch (purpose) {
     case 'record.view':
     case 'history.view':
@@ -46,6 +48,8 @@ function permissionFor(purpose: SensitiveReadPurpose): SensitivePermission {
       return 'report.read'
     case 'report.export':
       return 'report.export'
+    case 'consent-document.view':
+      return 'guardian.link'
     default:
       return assertNever(purpose)
   }

@@ -1,4 +1,5 @@
 import 'reflect-metadata'
+import { CONSENT_TERMS, consentSchema } from '@habituar/core/students'
 import { Pool, PoolClient } from 'pg'
 import { afterAll, beforeAll, describe, expect, inject, it } from 'vitest'
 import { Account, ProvisionedInstitution, StaffHarness } from '../database/staff-fixture.js'
@@ -122,6 +123,24 @@ describe('trilha de auditoria', () => {
     expect(reports).toEqual([
       expect.objectContaining({ purpose: 'report.view', permission: 'report.read', subject_type: 'institution', subject_id: north.id, actor_user_id: care.userId }),
       expect.objectContaining({ purpose: 'report.export', permission: 'report.export', subject_type: 'institution', subject_id: north.id, actor_user_id: care.userId }),
+    ])
+  })
+
+  it('registra quem baixou o termo assinado, com a permissão que autorizou', async () => {
+    const recorded = await harness.call(care, 'POST', `/institutions/${north.id}/students/${studentId}/consents`, {
+      kind: 'institution-record', termVersion: CONSENT_TERMS.institutionRecord, guardianId: null, signedOn: '2026-01-01',
+      document: { fileName: 'termo.pdf', mediaType: 'application/pdf', base64: Buffer.from('%PDF-1.4').toString('base64') },
+    })
+    expect(recorded.status).toBe(200)
+    const consent = consentSchema.parse(recorded.body)
+    const documentPath = `/institutions/${north.id}/students/${studentId}/consents/${consent.id}/document`
+
+    expect((await harness.call(outsider, 'GET', documentPath)).status).not.toBe(200)
+    expect((await readEvents()).filter((event) => event.purpose === 'consent-document.view')).toEqual([])
+
+    expect((await harness.call(care, 'GET', documentPath)).status).toBe(200)
+    expect((await readEvents()).filter((event) => event.purpose === 'consent-document.view')).toEqual([
+      expect.objectContaining({ actor_user_id: care.userId, session_id: careSession, permission: 'guardian.link', subject_type: 'student', student_ids: [studentId] }),
     ])
   })
 

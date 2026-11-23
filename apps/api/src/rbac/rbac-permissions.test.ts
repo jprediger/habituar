@@ -12,6 +12,8 @@ import { StudentsService } from '../students/students.service.js'
 import { Clock } from '../platform/clock.js'
 import { CONSENT_TERMS, consentPathSchema, updateStudentInputSchema, recordConsentInputSchema, replaceAssignmentsInputSchema } from '@habituar/core/students'
 import { lockInstitutionAuthorization } from '../database/authorization-lock.js'
+import { AuditRepository } from '../audit/audit.repository.js'
+import { AuditService } from '../audit/audit.service.js'
 
 const institutionId = 'b1000000-0000-4000-8000-000000000001'
 const actorId = 'b2000000-0000-4000-8000-000000000001'
@@ -39,7 +41,7 @@ describe('alcance da permissão do aluno', () => {
   const environment = environmentSchema.parse({ NODE_ENV: 'test', APP_VERSION: '0.0.0-test', DATABASE_URL: applicationUrl })
   const database = new Database(new ConfigService(environment), new RequestContext())
   const rbac = new RbacService(database, new RbacRepository())
-  const studentsService = new StudentsService(database, new StudentsRepository(), rbac, new Clock())
+  const studentsService = new StudentsService(database, new StudentsRepository(), rbac, new Clock(), new AuditService(new AuditRepository()))
 
   beforeAll(async () => {
     await database.withTenantOutsideRequest({ institutionId, actorId, sessionId: actor.sessionId }, async transaction => {

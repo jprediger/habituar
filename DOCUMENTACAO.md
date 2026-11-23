@@ -85,7 +85,8 @@ não fica sem gestão completa da equipe e a mudança de um papel mostra antes o
 sobre membros e convites. No mobile, a Gestão abre como uma lista de seções, cada uma
 em tela própria, e a confirmação de uma alteração bem-sucedida aparece como aviso
 passageiro, também anunciado ao leitor de tela; erros permanecem junto da ação que
-falhou. A trilha completa de auditoria dessas mudanças ainda está prevista.
+falhou. O registro dessas mudanças na trilha de auditoria, com autor e valores anteriores
+e novos, está em desenvolvimento.
 
 | Prioridade | Complexidade | Situação | Versão |
 | --- | --- | --- | --- |
@@ -172,10 +173,16 @@ Usuários autorizados devem definir métricas e registrar valores por estudante 
 ### RF0013 – Emitir relatórios
 
 Profissionais devem gerar relatórios consolidados para apoiar o acompanhamento pedagógico.
+Na web e no mobile, a equipe escolhe um período de até 93 dias e, se quiser, um estudante,
+e vê as tarefas concluídas, não entregues e por vir, com taxa de conclusão por dia, dia da
+semana, tipo de tarefa e estudante. O relatório de turma mostra só indicadores agregados,
+sem detalhe individual. Quem tem alcance institucional vê toda a instituição; quem
+atende ou monitora vê somente os estudantes que acompanha. O relatório pode ser
+exportado em PDF, igual nos dois clientes.
 
 | Prioridade | Complexidade | Situação | Versão |
 | --- | --- | --- | --- |
-| Alta | Alta | Previsto | Futura |
+| Alta | Alta | Implementado | Atual |
 
 ### RF0014 – Provisionar instituições
 
@@ -286,10 +293,17 @@ Rotina e tarefas do aluno devem continuar utilizáveis sem conexão, com sincron
 ### RNF0011 – Auditoria sensível
 
 Escritas e leituras sensíveis devem produzir trilha de auditoria vinculada ao ator e à instituição.
+Toda escrita nos dados de instituições, contas, equipe, papéis, convites, estudantes,
+turmas, ficha, agenda e tarefas fica registrada pelo próprio banco, com autor, sessão,
+instituição e valores anteriores e novos; hash de senha, hash de token e termo assinado
+não são copiados. Abrir a ficha, o histórico ou as consultas e ver ou exportar um
+relatório registra quem leu e quais estudantes tiveram dados servidos. A aplicação não
+altera nem apaga a trilha e cada instituição lê somente a própria. Os registros de
+leitura são guardados por cinco anos. A consulta da trilha pela interface está prevista.
 
 | Prioridade | Complexidade | Situação | Versão |
 | --- | --- | --- | --- |
-| Alta | Alta | Previsto | Futura |
+| Alta | Alta | Em desenvolvimento | Atual |
 
 ## Diagrama(s) de Casos de Uso
 
@@ -377,7 +391,7 @@ atual de implementação.
 | UC22 | Confirmar ou revogar consentimento | Responsável | RF0009 | Implementado |
 | UC23 | Provisionar instituição | Administrador geral | RF0014 | Implementado |
 | UC24 | Registrar métricas | Profissional | RF0012 | Previsto |
-| UC25 | Emitir relatórios | Profissional | RF0013 | Previsto |
+| UC25 | Emitir relatórios | Profissional | RF0013 | Implementado |
 | UC26 | Acompanhar tarefas por período | Membro da equipe | RF0010 | Implementado |
 
 ### Especificação dos principais casos de uso
@@ -447,18 +461,24 @@ estudante pode ser cadastrado sem conta própria; seus responsáveis ficam em
 liga um vínculo ativo de profissional ou monitor ao estudante. A ficha do estudante
 fica em `student_profile_revisions`, uma revisão por gravação, as observações em
 `student_observations` e as consultas realizadas em `student_consultations`; as três
-tabelas aceitam somente leitura e inserção, com autoria igual à pessoa autenticada. A
-grade semanal do aluno fica em `routine_blocks`, com versão para recusar edição feita
+tabelas aceitam somente leitura e inserção, com autoria igual à pessoa autenticada. As
+tarefas do aluno ficam em `tasks`, com recorrência e versão para recusar edição feita
 sobre dados desatualizados. Os
 atendimentos ficam em `appointments`, com repetição semanal e versão, e as ocorrências
-canceladas de uma série em `appointment_cancelled_occurrences`; a observação e a entrega de cada
-tarefa do dia ficam em `routine_entries` e as fotos, guardadas fora do banco, têm os
-metadados em `routine_entry_photos`, e a avaliação da equipe sobre a tarefa entregue fica
-em `routine_entry_evaluations`, com versão própria. O banco aplica isolamento por linha para impedir acesso entre instituições.
+canceladas de uma série em `appointment_cancelled_occurrences`; a observação, a entrega e
+as remarcações de cada ocorrência de tarefa ficam em `task_occurrences` e as fotos,
+guardadas fora do banco, têm os metadados em `task_occurrence_photos`, e a avaliação da
+equipe sobre a tarefa entregue fica em `task_occurrence_evaluations`, com versão própria.
+As turmas ficam em `classes`, com versão e arquivamento; a matrícula de cada estudante, no
+máximo uma ativa por vez, fica em `class_enrollments` e a equipe da turma em
+`class_staff_members`, ambas com entrada, saída e autor para preservar o histórico. Em
+desenvolvimento, a trilha de auditoria acrescenta `audit_write_events`, preenchida por
+gatilho a cada escrita, e `audit_read_events`, particionada por mês, para as leituras
+sensíveis; as duas aceitam somente inclusão. O banco aplica isolamento por linha para impedir acesso entre instituições.
 
 _[Modelo atual do banco de dados disponível no DOCX oficial.]_
 
-Entidades previstas para evolução do produto incluem métricas, grupos e relatórios. Elas ainda não fazem parte do modelo físico apresentado.
+Entidades previstas para evolução do produto incluem métricas configuráveis. Elas ainda não fazem parte do modelo físico apresentado.
 
 ## Modelagem UML
 
@@ -598,12 +618,12 @@ A API valida entradas e saídas a partir de contratos compartilhados, nega acess
 | Papéis, permissões e vínculos | Alta | Implementado | Papéis somados, catálogo fechado, isolamento institucional, gestão da equipe e acompanhamentos |
 | Instituições e convites | Média | Implementado | Cadastro, convite de uso único e aceite na web |
 | Interfaces de autenticação | Alta | Implementado | Entrada, cadastro e ambientes por perfil na web e no mobile |
-| Fichas e observações | Alta | Implementado | Cadastro do estudante, termo assinado, ficha, histórico e consultas realizadas; auditoria prevista |
+| Fichas e observações | Alta | Implementado | Cadastro do estudante, termo assinado, ficha, histórico e consultas realizadas |
 | Rotina, tarefas e foco | Alta | Em desenvolvimento | Grade semanal, registro, entrega, avaliação e acompanhamento das tarefas, lembretes e uso sem conexão no app prontos; foco previsto |
 | Agenda e atendimentos | Alta | Em desenvolvimento | Agendamento com repetição semanal e lembretes locais de tarefas no mobile prontos; Perfil do aluno reúne conta, instituição, saída e notificações, com antecedência única de 30 minutos por padrão (10, 15, 30 ou 60 minutos), autorização explícita do aparelho e cancelamento ao concluir, remarcar, excluir ou sair; tarefas de dia inteiro não geram lembretes; perfis profissional e monitor oferecem acesso à permissão de notificações e, quando têm acesso à agenda, lembretes locais das consultas atribuídas à conta ativa, com antecedência de 30 minutos por padrão e opções de 10, 15, 30 ou 60 minutos; séries geram um aviso por ocorrência, remarcações e cancelamentos atualizam o plano ao sincronizar, sair ou trocar de instituição remove os avisos do vínculo e tocar abre o detalhe da consulta; o aluno também escolhe entre tema do sistema, claro ou escuro; registro do atendimento realizado e anotações previstos |
-| Métricas e grupos | Média | Previsto | Indicadores configuráveis por instituição |
-| Relatórios | Alta | Previsto | Consolidação e exportação de acompanhamento |
-| Conformidade e retenção | Alta | Previsto | Consentimento, auditoria e descarte controlado |
+| Métricas e grupos | Média | Em desenvolvimento | Turmas com matrícula, equipe e histórico prontas; indicadores configuráveis por instituição previstos |
+| Relatórios | Alta | Implementado | Consolidação por período, estudante e turma, com exportação em PDF |
+| Conformidade e retenção | Alta | Em desenvolvimento | Consentimento pronto; trilha de auditoria em desenvolvimento; descarte controlado previsto |
 
 ## Sprint 1
 

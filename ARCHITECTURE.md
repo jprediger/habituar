@@ -350,8 +350,9 @@ cria vínculo e atribuições na instituição gravada no convite, não na requi
    não é editável nem excluível pela aplicação; seu ajuste é migração versionada.
 4. Hierarquia — só se administra o que está dentro do próprio limite (ver abaixo).
 5. Administrador geral é invisível aos tenants, não possui membership e **não possui** leitura de ficha.
-6. Toda mudança de permissão é auditada (ator, alvo, antes/depois). **Ainda pendente:** a
-   trilha completa depende do D11; até lá esta proteção não é considerada entregue.
+6. Toda mudança de permissão é auditada (ator, alvo, antes/depois), por gatilho do D11 em
+   `roles`, `role_permissions`, `memberships`, `membership_roles` e convites. **Em
+   desenvolvimento:** implementada e testada localmente, ainda não integrada.
 
 **Hierarquia é inclusão de concessões, não nível numérico.** O limite de um ator é a união
 atual das concessões de todos os seus papéis, lida no servidor a cada operação. Para uma
@@ -438,6 +439,18 @@ esqueça de logar** — nem relatório, nem job, nem migração manual.
   deficiência deste aluno, e quando") sem logar toda listagem.
 - Eventos de leitura em tabela **particionada por mês**, com política de retenção — a LGPD
   também proíbe guardar indefinidamente sem justificativa.
+
+**Como foi feito.** `audit_write_events` recebe uma linha por escrita, gravada por gatilho
+`SECURITY DEFINER` com diff só das colunas alteradas; hash de senha, hash de token e o
+documento do termo são substituídos por um marcador. A leitura sensível chama
+`audit_record_sensitive_read()` na mesma transação que serve o dado, via `AuditService`.
+A função lê ator, sessão e instituição dos GUCs, então o código chamador não tem como
+informá-los, e a permissão registrada deriva do propósito da leitura dentro do catálogo
+`SENSITIVE_PERMISSIONS`. As partições de `audit_read_events` são criadas sob demanda, e
+criar a do mês novo descarta as que passaram da retenção de 60 meses, sem pg_partman nem
+agendador. O papel da aplicação só tem `SELECT` nas duas tabelas, limitado por RLS à
+própria instituição, e não alcança partições diretamente. Fica fora por ora a tela de
+consulta da trilha.
 
 ## D12 — Acessibilidade
 

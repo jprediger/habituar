@@ -185,5 +185,5 @@ afeta todos os titulares e revoga os convites pendentes que o referenciam.
 ## Situação
 
 A gestão de equipe e papéis está **em desenvolvimento**: implementada e testada localmente,
-ainda não integrada. A trilha de auditoria das mudanças de equipe, papéis e convites
-(D11), com autor e valores anteriores e novos, também está em desenvolvimento.
+ainda não integrada. As mudanças de equipe, papéis e convites ficam na trilha de
+auditoria (D11), com autor e valores anteriores e novos.

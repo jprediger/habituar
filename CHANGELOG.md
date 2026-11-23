@@ -26,8 +26,8 @@ versionamento segue [SemVer](https://semver.org/lang/pt-BR/).
 - `[api]` Trilha de auditoria: toda escrita em dados de instituição, equipe, papéis,
   convites, estudantes, turmas, ficha, agenda e tarefas fica registrada com autor, sessão
   e valores anteriores e novos, sem copiar hash de senha, hash de token nem o termo
-  assinado. Abrir a ficha, o histórico ou as consultas e ver ou exportar relatório
-  registra quem leu e de quais estudantes. A aplicação não altera nem apaga a trilha, cada
+  assinado. Abrir a ficha, o histórico ou as consultas, baixar o termo assinado e ver ou
+  exportar relatório registra quem leu, com qual permissão, e de quais estudantes. A aplicação não altera nem apaga a trilha, cada
   instituição lê só a própria, e os registros de leitura são guardados por cinco anos.
 - `[mobile]` O app do aluno funciona sem conexão: agenda, tarefas e a última
   sessão ficam salvas no aparelho, e a observação e a entrega feitas offline entram numa

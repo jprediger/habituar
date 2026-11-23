@@ -351,8 +351,7 @@ cria vínculo e atribuições na instituição gravada no convite, não na requi
 4. Hierarquia — só se administra o que está dentro do próprio limite (ver abaixo).
 5. Administrador geral é invisível aos tenants, não possui membership e **não possui** leitura de ficha.
 6. Toda mudança de permissão é auditada (ator, alvo, antes/depois), por gatilho do D11 em
-   `roles`, `role_permissions`, `memberships`, `membership_roles` e convites. **Em
-   desenvolvimento:** implementada e testada localmente, ainda não integrada.
+   `roles`, `role_permissions`, `memberships`, `membership_roles` e convites.
 
 **Hierarquia é inclusão de concessões, não nível numérico.** O limite de um ator é a união
 atual das concessões de todos os seus papéis, lida no servidor a cada operação. Para uma
@@ -445,8 +444,8 @@ esqueça de logar** — nem relatório, nem job, nem migração manual.
 documento do termo são substituídos por um marcador. A leitura sensível chama
 `audit_record_sensitive_read()` na mesma transação que serve o dado, via `AuditService`.
 A função lê ator, sessão e instituição dos GUCs, então o código chamador não tem como
-informá-los, e a permissão registrada deriva do propósito da leitura dentro do catálogo
-`SENSITIVE_PERMISSIONS`. As partições de `audit_read_events` são criadas sob demanda, e
+informá-los, e a permissão registrada é a que autorizou a leitura e deriva do propósito
+(ficha, histórico, consultas, termo assinado, relatório visto ou exportado). As partições de `audit_read_events` são criadas sob demanda, e
 criar a do mês novo descarta as que passaram da retenção de 60 meses, sem pg_partman nem
 agendador. O papel da aplicação só tem `SELECT` nas duas tabelas, limitado por RLS à
 própria instituição, e não alcança partições diretamente. Fica fora por ora a tela de

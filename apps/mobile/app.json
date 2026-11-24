@@ -23,6 +23,7 @@
     },
     "plugins": [
       "./plugins/with-dev-android-app",
+      "./plugins/with-android-cmake",
       "expo-router",
       "expo-notifications",
       [

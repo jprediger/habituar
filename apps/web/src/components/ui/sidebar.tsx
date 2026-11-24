@@ -97,7 +97,7 @@ export function Sidebar({ header, children }: PropsWithChildren<Readonly<{ heade
           <SheetTitle className="sr-only">{t('shell.sidebar.title')}</SheetTitle>
           {/* Esc e toque fora não bastam: o véu é invisível para o leitor de tela, e quem
               navega por toque com ele precisa de um controle nomeado para sair. */}
-          <div className="flex h-(--shell-header-height) shrink-0 items-center justify-between gap-sm pl-md pr-sm">
+          <div className="flex h-(--shell-header-height) shrink-0 items-center justify-between gap-sm pl-xl pr-sm">
             {header}
             <SheetClose asChild>
               <button type="button" aria-label={t('shell.sidebar.close')} className={SIDEBAR_ICON_BUTTON}>
@@ -126,7 +126,9 @@ export function Sidebar({ header, children }: PropsWithChildren<Readonly<{ heade
     >
       <div
         className={cn(
-          'flex h-(--shell-header-height) shrink-0 items-center justify-between gap-sm pl-md pr-sm',
+          // `xl` é a margem da navegação somada à do item (`md` + `md`): a marca começa na
+          // mesma coluna dos ícones do menu, em vez de ficar sozinha mais à esquerda.
+          'flex h-(--shell-header-height) shrink-0 items-center justify-between gap-sm pl-xl pr-sm',
           'group-data-[state=collapsed]/sidebar:pl-sm',
         )}
       >

@@ -16,7 +16,6 @@ import { Text } from '../components/ui/text'
 import { PasswordInput } from '../components/ui/password-input'
 import { getFieldErrorText } from './form-messages'
 import { habituar } from '../client/habituar-client'
-import authenticationHero from '../../assets/images/authentication-hero.jpg'
 
 const MINIMUM_PASSWORD_LENGTH = 8
 
@@ -96,7 +95,6 @@ export function RegisterScreen() {
     <AuthenticationCard
       heading={t('authentication.register.heading')}
       description={t('authentication.register.description')}
-      hero={authenticationHero}
       footer={
         <View style={styles.footer}>
           <Text tone="muted">

@@ -14,7 +14,6 @@ import { Text } from '../components/ui/text'
 import { PasswordInput } from '../components/ui/password-input'
 import { getFieldErrorText } from './form-messages'
 import { habituar } from '../client/habituar-client'
-import authenticationHero from '../../assets/images/authentication-hero.jpg'
 
 /** Tela de entrada: só autentica quem já tem conta. Criar conta é a rota `/register`. */
 export function LoginScreen() {
@@ -30,7 +29,6 @@ export function LoginScreen() {
     <AuthenticationCard
       heading={t('authentication.login.heading')}
       description={t('authentication.login.description')}
-      hero={authenticationHero}
       footer={
         <View style={styles.footer}>
           <Text tone="muted">

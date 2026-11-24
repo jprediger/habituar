@@ -153,8 +153,8 @@ export const membershipRoles = pgTable('membership_roles', {
   environment: roleEnvironmentEnum().notNull(),
 }, (table) => [
   unique().on(table.membershipId, table.roleId),
-  foreignKey({ name: 'class_staff_members_environment_fk', columns: [table.membershipId, table.environment], foreignColumns: [memberships.id, memberships.environment] }).onDelete('cascade'),
-  foreignKey({ name: 'class_staff_members_membership_tenant_fk', columns: [table.membershipId, table.institutionId], foreignColumns: [memberships.id, memberships.institutionId] }).onDelete('cascade'),
+  foreignKey({ columns: [table.membershipId, table.environment], foreignColumns: [memberships.id, memberships.environment] }).onDelete('cascade'),
+  foreignKey({ columns: [table.membershipId, table.institutionId], foreignColumns: [memberships.id, memberships.institutionId] }).onDelete('cascade'),
   foreignKey({ columns: [table.roleId, table.environment], foreignColumns: [roles.id, roles.environment] }).onDelete('cascade'),
   foreignKey({ columns: [table.roleId, table.institutionId], foreignColumns: [roles.id, roles.institutionId] }).onDelete('cascade'),
 ])
@@ -267,8 +267,8 @@ export const classStaffMembers = pgTable('class_staff_members', {
   changedByUserId: uuid('changed_by_user_id').notNull().references(() => users.id),
 }, table => [
   foreignKey({ name: 'class_staff_members_class_tenant_fk', columns: [table.classId, table.institutionId], foreignColumns: [classes.id, classes.institutionId] }).onDelete('cascade'),
-  foreignKey({ columns: [table.membershipId, table.institutionId], foreignColumns: [memberships.id, memberships.institutionId] }).onDelete('cascade'),
-  foreignKey({ columns: [table.membershipId, table.environment], foreignColumns: [memberships.id, memberships.environment] }).onDelete('cascade'),
+  foreignKey({ name: 'class_staff_members_membership_tenant_fk', columns: [table.membershipId, table.institutionId], foreignColumns: [memberships.id, memberships.institutionId] }).onDelete('cascade'),
+  foreignKey({ name: 'class_staff_members_environment_fk', columns: [table.membershipId, table.environment], foreignColumns: [memberships.id, memberships.environment] }).onDelete('cascade'),
   check('class_staff_members_environment', sql`${table.environment} in ('professional', 'monitor')`),
   check('class_staff_members_dates', sql`${table.leftAt} is null or ${table.leftAt} >= ${table.linkedAt}`),
   uniqueIndex('class_staff_members_one_active').on(table.classId, table.membershipId).where(sql`${table.leftAt} is null`),

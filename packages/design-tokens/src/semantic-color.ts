@@ -37,6 +37,12 @@ export const SEMANTIC_COLOR_LIGHT = {
   eventStaffTask: COLOR.green700,
   eventConsultation: COLOR.purple700,
   onEvent: COLOR.white,
+  // Cores do logo, separadas de `primary` para a interface poder mudar de paleta sem
+  // levar a marca junto. No escuro o verde da marca some no fundo: o símbolo clareia e o
+  // nome vira texto claro; o coral se mantém nos dois temas.
+  brandSymbol: COLOR.green700,
+  brandAccent: COLOR.coral500,
+  brandWordmark: COLOR.green700,
 } as const
 
 export type ColorRole = keyof typeof SEMANTIC_COLOR_LIGHT
@@ -67,4 +73,7 @@ export const SEMANTIC_COLOR_DARK = {
   eventStaffTask: COLOR.green400,
   eventConsultation: COLOR.purple400,
   onEvent: COLOR.gray900,
+  brandSymbol: COLOR.green400,
+  brandAccent: COLOR.coral500,
+  brandWordmark: COLOR.gray50,
 } as const satisfies Record<ColorRole, string>

@@ -89,4 +89,11 @@ export const CONTRAST_PAIRS = [
  * para identificar componente ou estado. Isenção é declarada aqui, nunca por omissão —
  * papel que carrega informação não entra nesta lista.
  */
-export const DECORATIVE_ROLES = ['divider'] as const satisfies readonly ColorRole[]
+export const DECORATIVE_ROLES = [
+  'divider',
+  // Logotipo é isento de contraste mínimo (WCAG 1.4.3); o nome do produto chega ao
+  // leitor de tela pelo rótulo acessível, não pela cor do desenho.
+  'brandSymbol',
+  'brandAccent',
+  'brandWordmark',
+] as const satisfies readonly ColorRole[]

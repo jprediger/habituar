@@ -157,6 +157,16 @@ pnpm turbo run build --filter @habituar/mobile^...   # pacotes compartilhados no
 pnpm --filter @habituar/mobile android:build          # compila, instala e sobe o Metro
 ```
 
+No Windows, o `android:build` não roda: ele define variáveis na sintaxe do `sh`, e o pnpm
+executa scripts pelo `cmd`. O equivalente é `pnpm --filter @habituar/mobile android`, com
+`ANDROID_HOME` definido no ambiente e mais duas condições da máquina:
+
+- **`JAVA_HOME` num JDK 17 ou 21.** O JDK que acompanha o Android Studio (Java 25) emite um
+  aviso de acesso nativo que o Gradle trata como falha na configuração do CMake.
+- **Caminhos longos habilitados** (`LongPathsEnabled` no registro). O codegen gera arquivos
+  com mais de 260 caracteres; o plugin `with-android-cmake` fixa o CMake 3.31, cujo ninja
+  respeita essa opção, e o Gradle instala essa versão no SDK quando ela falta.
+
 Ele só precisa ser refeito quando muda algo nativo: dependência com código nativo, plugin
 ou configuração nativa no `app.json`, versão do SDK. Fora disso, basta subir o Metro com
 `pnpm turbo run dev --filter @habituar/mobile` e abrir o app já instalado.

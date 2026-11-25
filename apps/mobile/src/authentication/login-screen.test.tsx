@@ -75,6 +75,12 @@ describe('sign-in form', () => {
 })
 
 describe('sign-in screen', () => {
+  it('announces the brand as a single image to screen readers', () => {
+    render(<LoginScreen />)
+
+    expect(screen.getByRole('image', { name: 'Habituar' })).toBeTruthy()
+  })
+
   it('keeps the form on screen when the credentials are refused', () => {
     failedWith('invalid-credentials')
 

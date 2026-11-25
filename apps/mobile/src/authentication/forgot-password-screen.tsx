@@ -2,7 +2,6 @@ import { useRouter } from 'expo-router'
 import { useTranslation } from 'react-i18next'
 import { AuthenticationCard } from './authentication-card'
 import { Button } from '../components/ui/button'
-import authenticationHero from '../../assets/images/authentication-hero.jpg'
 
 /**
  * Declara a recuperação de senha sem implementar o envio: o contrato de API
@@ -16,7 +15,6 @@ export function ForgotPasswordScreen() {
     <AuthenticationCard
       heading={t('authentication.forgotPassword.title')}
       description={t('authentication.forgotPassword.unavailable')}
-      hero={authenticationHero}
     >
       <Button
         variant="outline"

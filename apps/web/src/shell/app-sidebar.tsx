@@ -6,7 +6,7 @@ import { Building2, CalendarDays, ChartColumnIncreasing, GraduationCap, House, S
 import type { ReactElement } from 'react'
 import type { TFunction } from 'i18next'
 import { useTranslation } from 'react-i18next'
-import { BrandMark } from './brand-mark.js'
+import { BrandMark } from '../components/ui/brand-mark.js'
 import { findActiveWebNavigationItem } from './web-navigation.js'
 import type { WebNavigationItem } from './web-navigation.js'
 import {
@@ -31,7 +31,7 @@ export function AppSidebar({
   const activeIndex = activeItem === undefined ? undefined : items.indexOf(activeItem)
 
   return (
-    <Sidebar header={<BrandMark />}>
+    <Sidebar header={<BrandMark size="sidebar" />}>
       <nav
         aria-label={t('shell.sidebar.navigationLabel')}
         // No trilho a margem volta a `sm`: a largura recolhida só comporta o alvo de toque

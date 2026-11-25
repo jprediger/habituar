@@ -23,14 +23,25 @@
     },
     "plugins": [
       "./plugins/with-dev-android-app",
+      "./plugins/with-android-cmake",
       "expo-router",
-      "expo-notifications",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/notification-icon.png",
+          "color": "#1F5C3D"
+        }
+      ],
       [
         "expo-splash-screen",
         {
           "backgroundColor": "#FFFFFF",
           "image": "./assets/images/splash-icon.png",
-          "imageWidth": 76
+          "imageWidth": 96,
+          "dark": {
+            "backgroundColor": "#111827",
+            "image": "./assets/images/splash-icon-dark.png"
+          }
         }
       ],
       [

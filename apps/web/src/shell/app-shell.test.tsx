@@ -23,6 +23,7 @@ const client = vi.hoisted(
 vi.mock('../client/habituar-client.js', () => ({
   habituar: {
     useReport: () => ({ state: { status: 'loading' }, canExport: false, refresh: vi.fn(), exportPdf: vi.fn() }),
+    useClassReport: () => ({ state: { status: 'loading' }, canExport: false, refresh: vi.fn(), exportPdf: vi.fn() }),
     useClasses: () => ({ state: { status: 'ready', items: [] }, refresh: vi.fn() }),
     useClassDetail: () => ({ state: { status: 'idle' }, refresh: vi.fn() }),
     useClassCandidates: () => ({ students: { status: 'unavailable' }, staff: { status: 'unavailable' } }),

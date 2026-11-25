@@ -3,6 +3,9 @@
 module.exports = {
   preset: 'jest-expo',
   setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
+  // Cada arquivo de tela leva perto de um minuto no CI, dividindo CPU com a suíte da API;
+  // com os 5s padrão, um teste diferente estoura o tempo a cada execução sem bug nenhum.
+  testTimeout: 20_000,
   // `@orpc/*` só publica ESM (sem condição `require`); sem transformar, o `require()` do
   // Jest não entende `import`/`export` no arquivo. Mantém o resto da lista padrão do
   // `jest-expo` (ver seu `jest-preset.js`) e só acrescenta `@orpc`.
